@@ -1,0 +1,128 @@
+/**
+ *
+ * @author: Guntmar Höche
+ * @license: TBD
+ */
+
+.navbar-inverse .navbar-brand {
+	font-size: 2em;
+	color: #fff;
+}
+
+.navbar-inverse .navbar-brand:hover {
+	color: #ccc;
+}
+
+.navbar-brand .logo {
+	color: #5cb85c;
+}
+
+.main-container {
+	margin-top: 20px;
+}
+
+.registration-form {
+	max-width: 450px;
+	margin: 0 auto;
+}
+
+.small-container-500 {
+	max-width: 500px;
+  	padding: 15px;
+  	margin: 0 auto;
+}
+
+.small-container-330 {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+}
+
+
+.small-container .small-container-heading,
+.small-container .checkbox {
+  margin-bottom: 10px;
+}
+.small-container .checkbox {
+  font-weight: normal;
+}
+.small-container .form-control {
+  position: relative;
+  height: auto;
+  padding: 10px;
+  font-size: 16px;
+}
+.small-container .form-control:focus {
+  z-index: 2;
+}
+
+/* Signin */
+.form-signin input[type="email"] {
+  margin-bottom: 10px;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+}
+.login td {
+    padding-right: 2px;
+    padding-left: 2px;
+}
+
+.login {
+	color: #fff;
+}
+
+canvas {
+	margin-right: 20px;
+}
+
+.tab-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+		border-bottom: 1px solid #ddd;
+    padding: 10px;
+}
+
+.nav-tabs {
+    margin-bottom: 0;
+}
+
+.table th {
+	border-top: 0;
+}
+
+.gauge-container {
+  width: 150px;
+  height: 150px;
+  display: block;
+  padding: 10px;
+}
+.gauge-container > .gauge .dial {
+  stroke: #eee;
+  stroke-width: 2;
+  fill: rgba(0,0,0,0);
+}
+.gauge-container > .gauge .value {
+  stroke: rgb(47, 227, 255);
+  stroke-width: 2;
+  fill: rgba(0,0,0,0);
+}
+.gauge-container > .gauge .value-text {
+  fill: rgb(47, 227, 255);
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1em;
+}
+
+.gauge-container.two {
+  height: auto;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.gauge-container.two > .gauge > .dial {
+  stroke: #334455;
+  stroke-width: 10;
+}
+.gauge-container.two > .gauge > .value {
+  stroke-dasharray: none;
+  stroke-width: 13;
+}
