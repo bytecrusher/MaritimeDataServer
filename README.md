@@ -47,18 +47,18 @@ For the Frontend the user needs to login. Now the user is able to do some config
 - **sql_install** scripts to install and prepare sql DB and create the tables.
 
 #### Installation
-Copy all MDS files to your htdocs dir.
-Create a SQL User and run the sql script "install_db.php" for create the tables.
+Copy all MDS files to your htdocs dir.  
+Create a SQL User and run the sql script "install_db.php" for create the tables.  
 Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 
 ![Preview Sensors](docu_donotdeploy/images/preview_sensors.jpg)
 
 #### MDS Requirements
-For running the MDS you need a Apache Webserver with php support and a SQL DB.
+For running the MDS you need a Apache Webserver with php support and a SQL DB.  
 If you run MDCs outside our local network, your MDS needs to be public.
 
 ###### Development
-For development i use a Bitnami image for XAMPP Stack 8.1.1-2 under MacOS.
+For development i use a Bitnami image for XAMPP Stack 8.1.1-2 under MacOS.  
 In **Applications/XAMPP/xamppfiles/htdocs** i put the project from git.
 
 Now the page is available at **http://localhost/maritimedataserver**
