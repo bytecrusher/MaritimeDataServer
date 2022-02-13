@@ -1,13 +1,16 @@
-
 /**
- *
- * @author: Guntmar Höche
- * @license: TBD
+ * @author      Guntmar Höche
+ * @license     TBD
+ * @datetime    13 Februar 2022
+ * @perpose     Runs if tab "Charts" is selected and collects the last x sensor data and push these data into the canvas object for display in the chart.
+ * @input       -
+ * @output      -
  */
 
-// Now we can create a new instance of our chart, using the Chart.js API
 var ctx = $("#mycanvas");
 var barGraph = null;
+var varIdent = getCookie("identifier");
+var varToken = getCookie("securitytoken");
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -16,32 +19,37 @@ function sleep(ms) {
 // Chart view. Runs on click on "temperature" tab, and collects data to show
 $(document).ready(async function(){
   $('#hreftemperatures').click(async function (e) {
-    var backgroundColor = 'rgba(0, 255, 0, 0.75)';
-    var borderColor = 'rgba(0, 255, 0, 0.75)';
-    var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
-    var hoverBorderColor = 'rgba(0, 100, 0, 1)';
-
-    addDataToChart(8, 200, "Outside", backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
-
-    var backgroundColor = 'rgba(0, 0, 255, 0.75)';
-    var borderColor = 'rgba(0, 0, 255, 0.75)';
-    var hoverBackgroundColor = 'rgba(0, 0, 100, 1)';
-    var hoverBorderColor = 'rgba(0, 0, 100, 1)';
-    addDataToChart(7, 200, "Inside", backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+    $.getJSON( "api/getSensorIds.php", {identifier: varIdent, securitytoken: varToken }, function( data ) {
+      var red = 0;
+      var green = 100;
+      var blue = 0;
+      $.each( data, function( key, val ) {
+        //$('#temperatures').append('<p> Name: ' + val.id + ', ' + val.name + '</p>');
+        var backgroundColor = 'rgba(' + red + ', ' + green + ', 0, 0.75)';
+        //console.log(backgroundColor);
+        var borderColor = 'rgba(' + red + ', ' + green + ', 0, 0.75)';
+        var hoverBackgroundColor = 'rgba(' + red + ', ' + green + ', ' + blue + ', 1)';
+        var hoverBorderColor = 'rgba(' + red + ', ' + green + ', ' + blue + ', 1)';
+        addDataToChart(varIdent, varToken, val.id, 200, val.name, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+        red = red + 200;
+        green = green - 100;
+        blue = blue + 100;
+      });
+    });
   });
 });
 
-function addDataToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
-  $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
+function addDataToChart(varIdent, varToken, varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
+  $.getJSON('api/getSensorDataSet.php', { identifier: varIdent, securitytoken: varToken, sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
     var localLabel = varLabel;
-    console.log(localLabel);
+    //console.log(localLabel + ", " + varsensorId, ", " + data[0].value1);
     var id = [];
     var value1 = [];
     var val_time = [];
     for(var i in data) {
       id.push("id " + data[i].id);
       value1.push(data[i].value1);
-      val_time.push(data[i].val_time);
+      val_time.push(data[i].val_time.substring(0, data[i].val_time.length -3));
     }
 
     var chartdata = {
@@ -64,8 +72,8 @@ function addDataToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor,
         data: chartdata,
       });
     } else {
-      window.barGraph.data.labels.push(localLabel);
       window.barGraph.data.datasets.push({
+        label: localLabel,
         backgroundColor: varbackgroundColor,
         borderColor: varborderColor,
         hoverBackgroundColor: varhoverBackgroundColor,

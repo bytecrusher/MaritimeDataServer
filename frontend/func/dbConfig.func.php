@@ -22,8 +22,8 @@ class dbConfig {
     }
     catch(PDOException $e)
     {
-        printf('Error opening database.<br><br>%s',
-        $e->getMessage); exit();
+        printf('Error opening database.<br><br>%s', $e->getMessage() );
+        exit();
     }
   }
 

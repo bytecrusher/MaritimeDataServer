@@ -1,4 +1,13 @@
 <?php
+/**
+ * @author      Guntmar Höche
+ * @license     TBD
+ * @datetime    13 Februar 2022
+ * @perpose     Displays the "Dashboard" for the Sensors, a "Chart" and a "Board" overview.
+ * @input       -
+ * @output      Render the page and send it to the browser.
+ */
+
   session_start();
   require_once("func/dbConfig.func.php");
   require_once("func/myFunctions.func.php");
@@ -14,7 +23,7 @@
   include("func/get_data.php");
   $deviceOnline = checkDeviceIsOnline2();
 ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/gauge.js"></script>
 
@@ -91,9 +100,15 @@ setInterval(function() {
         <div class="container">
           <div class="row" id="gaugescontainer">
             <?php
+            
             foreach($myboards as $singleRowmyboard) {
               $boardOnlineStatus = false;
               $mysensors2 = myFunctions::getAllSensorsOfBoardWithDashboard($singleRowmyboard['id']);
+              //var_dump($mysensors2);
+              if ((count($mysensors2) == 0 )) {
+                echo "Keine Sensoren gefunden oder konfiguriert.";
+              }
+
               foreach($mysensors2 as $singleRowmysensors) {
                 $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);
                 foreach($mysensors as $singleRowmysensorsLastTimeSeen) {

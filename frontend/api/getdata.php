@@ -1,4 +1,13 @@
 <?php
+/**
+ * @author      Guntmar Höche
+ * @license     TBD
+ * @datetime    13 Februar 2022
+ * @perpose     Get the lastest Data of the given SensorId. Called from JS.
+ * @input       "identifier" and "securitytoken" for user validation, "data" as typ of data, "sensorId" as ID of sensor, "NrOfValues" for max number of values (optional).
+ * @output      return the sensorId as JSON.
+ */
+
 // Get data from DB for display in JS.
 require_once("../func/myFunctions.func.php");
 

@@ -1,9 +1,11 @@
 <?php
 /**
- * a set of functions for handle some user and board functions.
- *
- * @author: Guntmar Höche
- * @license: TBD
+ * @author      Guntmar Höche
+ * @license     TBD
+ * @datetime    13 Februar 2022
+ * @perpose     A set of functions for handle some user and board functions.
+ * @input       Get comment requirement
+ * @output      Show comment represent the way
  */
 
  include_once("password.func.php");
@@ -42,6 +44,16 @@ class myFunctions {
 		$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 		return $protocol.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']).'/';
 	}
+
+  public static function checkSecuritytoken($identifier, $securitytoken) {
+    if ( (isset($identifier)) && (isset($securitytoken)) ) {
+      $pdo = dbConfig::getInstance();
+      $userOnline = $pdo->prepare("SELECT * FROM securitytokens WHERE identifier = '" . $identifier . "' AND securitytoken = '" . sha1($securitytoken) . "' ORDER BY id");
+      $result = $userOnline->execute();
+      $userId = $userOnline->fetchAll(PDO::FETCH_ASSOC);
+      return $userId[0]['user_id'];
+    }
+  }
 
   /*
   * Get all of my Board by user id.
