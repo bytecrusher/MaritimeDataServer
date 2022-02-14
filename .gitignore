@@ -17,3 +17,4 @@ Thumbs.db
 receiver/test_receivejson.php
 frontend/api/testapi.php
 frontend/api/testapiDataSet.php
+configuration.php
