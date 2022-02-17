@@ -27,7 +27,7 @@ if (isset($varIdent) && isset($varToken) && isset($vardata)) {
             if (isset($mysensors)) {
                 $data = array();
                 foreach ($mysensors as &$mysensorSingle) {
-                    $dbtimestamp = strtotime($mysensorSingle['reading_time']);
+                    $dbtimestamp = strtotime($mysensorSingle['sensor_timestamp']);
                     if ($dbtimestamp > $maxtimeout) {
                         $data[] = $mysensorSingle['value1'];
                       } else {

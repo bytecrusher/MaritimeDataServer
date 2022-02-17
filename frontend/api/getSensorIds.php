@@ -31,11 +31,11 @@ if (isset($varIdent) && isset($varToken) ) {
                 $boardOnlineStatus = false;
                 $mysensors = myFunctions::getAllSensorsOfBoardWithDashboard($singleRowmyboard['id']);
                 if ((count($mysensors) == 0 )) {
-                    echo "Keine Sensoren gefunden oder konfiguriert.";
-                }
-
-                foreach ($mysensors as $row) {
-                    $data[] = $row;
+                    //echo "Keine Sensoren gefunden oder konfiguriert.";
+                } else {
+                    foreach ($mysensors as $row) {
+                        $data[] = $row;
+                    }
                 }
             }
             echo json_encode($data);

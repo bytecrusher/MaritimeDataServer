@@ -12,7 +12,7 @@ require_once('./../configuration.php');
 $config  = new configuration();
 
 $api_key_value = $config::$api_key;
-$api_key = $protocollversion = $macaddress = $sensor = $sensorid = $location = $value1 = $value2 = $value3 = $date = $time = "";
+$api_key = $protocollversion = $macaddress = $sensor = $sensorid = $location = $value1 = $value2 = $value3 = $date = $time = $timestamp = "";
 
 $pdo2 = dbConfig::getInstance();
 
@@ -36,8 +36,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 foreach ($sensors as $key => &$sensor) {
                     $owsensorid = test_input($sensors[$key]["sensorAddress"]);
                     $sensorid = check_sensorid($owsensorid, $macaddressid, $pdo2);
-                    $date = test_input($sensors[$key]["date"]);
-                    $time = test_input($sensors[$key]["time"]);
+                    //$date = test_input($sensors[$key]["date"]);
+                    //$time = test_input($sensors[$key]["time"]);
+                    $timestamp = test_input(($sensors[$key]["timestamp"]));
                     if (substr($owsensorid, 0, 2) === "28") {
                         $value1 = test_input($sensors[$key]["value1"]);
                         $value2 = null;
@@ -50,8 +51,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
 
                     // ToDo Change to pdo
-                    $sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, val_date, val_time)
-                    VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '" . $date . "', '" . $time . "')";
+                    //$sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, val_date, val_time)
+                    //VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '" . $date . "', '" . $time . "')";
+                    $sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, sensor_timestamp )
+                    VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '" . $timestamp . "')";
+                    //write_to_log($sql);
                     try {
                         $pdo2->query($sql); //Invalid query
                     } catch (PDOException $ex) {

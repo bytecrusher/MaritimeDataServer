@@ -25,77 +25,99 @@
 
       while($row = $statement->fetch()) {
     ?>
-          <div class="row">
+          <div class="row mb-2">
             <label for='id' class='col col-sm-4 col-form-label'>Id</label>
-            <input type='text' readonly class='col col-sm-4 form-control' id='id' name='id' value='<?=$row['id'];?>'>
+            <div class='col col-sm-4'>
+            <input type='text' readonly class='form-control' id='id' name='id' value='<?=$row['id'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='macaddress' class='col col-sm-4 col-form-label'>ID Macaddress</label>
-            <input type='text' readonly class='col col-sm-4 form-control' id='macaddress' name='macaddress' value='<?=$row['boardid'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' readonly class='form-control' id='macaddress' name='macaddress' value='<?=$row['boardid'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='sensorid' class='col col-sm-4 col-form-label'>Sensor Address</label>
-            <input type='text' class='col col-sm-4 form-control' id='sensorid' name='sensorid' value='<?=$row['sensorAddress'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='sensorid' name='sensorid' value='<?=$row['sensorAddress'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='name' class='col col-sm-4 col-form-label'>Name</label>
-            <input type='text' class='col col-sm-4 form-control' id='name' name='name' value='<?=$row['name'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='name' name='name' value='<?=$row['name'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='description' class='col col-sm-4 col-form-label'>Description</label>
-            <input type='text' class='col col-sm-4 form-control' id='description' name='description' value='<?=$row['description'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='description' name='description' value='<?=$row['description'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='typ' class='col col-sm-4 col-form-label'>Typ id</label>
-            <select class='col col-sm-4 form-select' aria-label='Default select example' name='typid'>
-          </div>
+            <div class='col col-sm-4'>
+              <select class='form-select' aria-label='Default select example' name='typid'>
+          <!--/div-->
 
-          <div class="row">
-            <?php
-            while($singleRowsensortyps = $sensortyps->fetch()) {
-              if ($row['typid'] == $singleRowsensortyps['id']) {
-                echo "<option selected value='" . $singleRowsensortyps['id'] . "'>" . $singleRowsensortyps['name'] . "</option>";
-              } else {
-                echo "<option value='" . $singleRowsensortyps['id'] . "'>" . $singleRowsensortyps['name'] . "</option>";
+          <!--div class="row"-->
+              <?php
+              while($singleRowsensortyps = $sensortyps->fetch()) {
+                if ($row['typid'] == $singleRowsensortyps['id']) {
+                  echo "<option selected value='" . $singleRowsensortyps['id'] . "'>" . $singleRowsensortyps['name'] . "</option>";
+                } else {
+                  echo "<option value='" . $singleRowsensortyps['id'] . "'>" . $singleRowsensortyps['name'] . "</option>";
+                }
               }
-            }
-            ?>
-            </select>
+              ?>
+              </select>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='messOrt' class='col col-sm-4 col-form-label'>Location</label>
-            <input type='text' class='col col-sm-4 form-control' id='messOrt' name='messOrt' value='<?=$row['messOrt'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='messOrt' name='messOrt' value='<?=$row['messOrt'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='nameValue1' class='col col-sm-4 col-form-label'>Name value 1</label>
-            <input type='text' class='col col-sm-4 form-control' id='nameValue1' name='nameValue1' value='<?=$row['nameValue1'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='nameValue1' name='nameValue1' value='<?=$row['nameValue1'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='nameValue2' class='col col-sm-4 col-form-label'>Name value 2</label>
-            <input type='text' class='col col-sm-4 form-control' id='nameValue2' name='nameValue2' value='<?=$row['nameValue2'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='nameValue2' name='nameValue2' value='<?=$row['nameValue2'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='nameValue3' class='col-sm-4 col-form-label'>Name value 3</label>
-            <input type='text' class='col col-sm-4 form-control' id='nameValue3' name='nameValue3' value='<?=$row['nameValue3'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='nameValue3' name='nameValue3' value='<?=$row['nameValue3'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='nameValue4' class='col-sm-4 col-form-label'>Name value 4</label>
-            <input type='text' class='col col-sm-4 form-control' id='nameValue4' name='nameValue4' value='<?=$row['nameValue4'];?>'>
+            <div class='col col-sm-4'>
+              <input type='text' class='form-control' id='nameValue4' name='nameValue4' value='<?=$row['nameValue4'];?>'>
+            </div>
           </div>
 
-          <div class="row">
+          <div class="row mb-2">
             <label for='onDashboard' class='col-sm-4 form-check-label'>on Dashboard </label>
-            <div class='col col-sm-4 p-0'>
+            <div class='col col-sm-4'>
             <?php
             if(isset($row['onDashboard']) && $row['onDashboard'] == '1')
             {
@@ -109,9 +131,15 @@
             </div>
           </div>
 
-          <div class="row">
-            <a class='col col-sm-2 m-1 btn btn-primary' href='eingabemaske_boards.php?id=<?php echo "$_GET[boardid]" ?>' role='button'>Back</a>
-            <input type='submit' class='col col-sm-2 m-1 form-control btn-primary' id='submit_eingabemaske_sensors' name='submit_eingabemaske_sensors' value='Save'>
+          <div class="row mb-2">
+            <div class='col col-sm-4'>
+            <a class='form-control btn btn-primary' href='eingabemaske_boards.php?id=<?php echo "$_GET[boardid]" ?>' role='button'>Back</a>
+            <!--input type='submit' class='col col-sm-2 m-1 form-control btn-primary' id='submit_eingabemaske_sensors' name='submit_eingabemaske_sensors' value='Save'-->
+            </div>
+            
+            <div class='col col-sm-4'>
+              <input type='submit' class='form-control btn-primary' id='submit_eingabemaske_sensors' name='submit_eingabemaske_sensors' value='Save'>
+            </div>
           </div>
   </form>
     <?php

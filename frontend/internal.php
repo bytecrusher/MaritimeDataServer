@@ -23,7 +23,11 @@
   include("func/get_data.php");
   $deviceOnline = checkDeviceIsOnline2();
 ?>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+
+<script src="/MaritimeDataServer/node_modules/chart.js/dist/chart.js"></script>
+<!--script src="/MaritimeDataServer/node_modules/chart.js/dist/chart.min.js"></script-->
+<script src="/MaritimeDataServer/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="/MaritimeDataServer/node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.js"></script>
 <script src="js/app.js"></script>
 <script src="js/gauge.js"></script>
 
@@ -84,19 +88,19 @@ setInterval(function() {
   <div class="container pl-0">
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link active" data-toggle="tab" href="#dashboard">Dashboard</a>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="true">Dashboard</button>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" data-toggle="tab" href="#temperatures" id='hreftemperatures'>Charts</a>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="temperatures-tab" data-bs-toggle="tab" data-bs-target="#temperatures" type="button" role="tab" aria-controls="temperatures" aria-selected="false">Charts</button>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" data-toggle="tab" href="#boards" id='hrefboards'>Boards</a>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="boards-tab" data-bs-toggle="tab" data-bs-target="#boards" type="button" role="tab" aria-controls="boards" aria-selected="false">Boards</button>
       </li>
     </ul>
 
     <div class="tab-content">
-      <div class="container tab-pane active pl-0" id="dashboard">
+      <div class="tab-pane active pl-0" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
         <div class="container">
           <div class="row" id="gaugescontainer">
             <?php
@@ -105,71 +109,78 @@ setInterval(function() {
               $boardOnlineStatus = false;
               $mysensors2 = myFunctions::getAllSensorsOfBoardWithDashboard($singleRowmyboard['id']);
               //var_dump($mysensors2);
-              if ((count($mysensors2) == 0 )) {
-                echo "Keine Sensoren gefunden oder konfiguriert.";
-              }
+              if ((count($mysensors2) != 0 )) {
+                //echo "No sensors found or configured for board '" .$singleRowmyboard['name']. "'.";
+              //}
 
-              foreach($mysensors2 as $singleRowmysensors) {
-                $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);
-                foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-            ?>
-                  <script type="text/javascript">
-                    var typid = "<?php echo $singleRowmysensors['typid']; ?>";
-                    var sensorId = "<?php echo $singleRowmysensors['id']; ?>";
-                    // if typid = 1 (Temp) -> temp 0 - 140°
-                    // if typid = 2 (voltage) -> Voltage 8 - 18V
-                    if (typid == 1) {
-                      var id = "<?php echo $singleRowmysensors['id']; ?>";
-                      nameOfSensor = "<?php echo $singleRowmysensors['name']; ?>";
-                      einheit = " (°C)";
-                      minval = 0;
-                      maxval = 140;
-                    } else if (typid == 2) {
-                      var id = "<?php echo $singleRowmysensors['nameValue1']; ?>";
-                      nameOfSensor = "<?php echo $singleRowmysensors['name']; ?>";
-                      einheit = " (V)";
-                      minval = 8;
-                      maxval = 18;
-                    } 
+                foreach($mysensors2 as $singleRowmysensors) {
+                  $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);
+                  foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
+              ?>
+                    <script type="text/javascript">
+                      var typid = "<?php echo $singleRowmysensors['typid']; ?>";
+                      var sensorId = "<?php echo $singleRowmysensors['id']; ?>";
+                      // if typid = 1 (Temp) -> temp 0 - 140°
+                      // if typid = 2 (voltage) -> Voltage 8 - 18V
+                      if (typid == 1) {
+                        var id = "<?php echo $singleRowmysensors['id']; ?>";
+                        nameOfSensor = "<?php echo $singleRowmysensors['name']; ?>";
+                        if (nameOfSensor == "") {
+                          nameOfSensor = "- no Name -";
+                        }
+                        einheit = " (°C)";
+                        minval = 0;
+                        maxval = 140;
+                      } else if (typid == 2) {
+                        var id = "<?php echo $singleRowmysensors['nameValue1']; ?>";
+                        nameOfSensor = "<?php echo $singleRowmysensors['name']; ?>";
+                        if (nameOfSensor == null) {
+                          nameOfSensor = "- no Name -";
+                        }
+                        einheit = " (V)";
+                        minval = 8;
+                        maxval = 18;
+                      } 
 
-                    var $newdiv1 = $( "<div id='gauge" + id + "' class='gauge-container two bg-secondary rounded border border-dark mt-3 mb-3 mr-3 text-light'>" + nameOfSensor + einheit + "</div>" ); 
-                    $( "#gaugescontainer" ).append( $newdiv1 );
+                      var $newdiv1 = $( "<div id='gauge" + id + "' class='gauge-container two bg-secondary rounded border border-dark mt-3 mb-3 me-3 text-light'>" + nameOfSensor + einheit + "</div>" ); 
+                      $( "#gaugescontainer" ).append( $newdiv1 );
 
-                  var gauge_temp = Gauge(document.getElementById("gauge" + id),
-                    {
-                      min: minval,
-                      max: maxval,
-                      dialStartAngle: 180,
-                      dialEndAngle: 0,
-                      value: '.', // so that "NaN" is displayed as the default value
-                      viewBox: "0 0 100 57",
-                      color: function(value) {    // if temp: 0 - 69 blue, 70 - 99 green, 100 - 140 red
-                        // if typid = 1 (Temp) -> 0 - 69 blue, 70 - 99 green, 100 - 140 red
-                        // if typid = 2 (voltage) -> 0 - 10 red, 11 - 15 lightgreed, > 16 red
-                        if ( typid = 1 ) {
-                          if(value < 70) {
-                              return 'blue';
-                            }else if(value < 100) {
-                              return 'lightgreen';
-                            }else {
-                              return 'red';
-                            }
-                        } else if (typid = 2) {
-                          if(value < 11) {
-                              return 'red';
-                            }else if(value < 16) {
-                              return 'lightgreen';
-                            }else {
-                              return 'red';
-                            }
+                    var gauge_temp = Gauge(document.getElementById("gauge" + id),
+                      {
+                        min: minval,
+                        max: maxval,
+                        dialStartAngle: 180,
+                        dialEndAngle: 0,
+                        value: '.', // so that "NaN" is displayed as the default value
+                        viewBox: "0 0 100 57",
+                        color: function(value) {    // if temp: 0 - 69 blue, 70 - 99 green, 100 - 140 red
+                          // if typid = 1 (Temp) -> 0 - 69 blue, 70 - 99 green, 100 - 140 red
+                          // if typid = 2 (voltage) -> 0 - 10 red, 11 - 15 lightgreed, > 16 red
+                          if ( typid = 1 ) {
+                            if(value < 70) {
+                                return 'blue';
+                              }else if(value < 100) {
+                                return 'lightgreen';
+                              }else {
+                                return 'red';
+                              }
+                          } else if (typid = 2) {
+                            if(value < 11) {
+                                return 'red';
+                              }else if(value < 16) {
+                                return 'lightgreen';
+                              }else {
+                                return 'red';
+                              }
+                          }
                         }
                       }
-                    }
-                  );
-                  gaugesarray.push(gauge_temp);
-                  gaugesArrayHelper.push(sensorId);
-                  </script>
-                  <?php
+                    );
+                    gaugesarray.push(gauge_temp);
+                    gaugesArrayHelper.push(sensorId);
+                    </script>
+                    <?php
+                  }
                 }
               }
             }
@@ -178,13 +189,13 @@ setInterval(function() {
         </div>
       </div>
 
-      <div class="container tab-pane fade pl-0" id="temperatures">
+      <div class="tab-pane fade pl-0" id="temperatures" role="tabpanel" aria-labelledby="temperatures-tab">
         <div id="chart-container">
           <canvas id="mycanvas"></canvas>
         </div>
       </div>
 
-      <div class="container tab-pane fade pl-0" id="boards">
+      <div class="tab-pane fade pl-0" id="boards" role="tabpanel" aria-labelledby="boards-tab">
       <div class="row mt-2">
           <?php
           // Show Online / Offline
@@ -195,7 +206,8 @@ setInterval(function() {
             foreach($mysensors2 as $singleRowmysensors) {
               $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);
               foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-                $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
+                //$dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
+                $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['sensor_timestamp']);
                 if ($dbtimestamp > $maxtimeout) {
                   $deviceIsOnline[$singleRowmyboard['id']] = (bool)true;
                   $boardOnlineStatus = true;
@@ -205,12 +217,12 @@ setInterval(function() {
               }
             }
           ?>
-            <div class='container'>
+            <div class='container mb-2'>
               <?php
               if ($boardOnlineStatus) {
-                echo "<span class='badge badge-success mr-2' style='width: 55px;'>Online</span>";
+                echo "<span class='badge bg-success me-2' style='width: 55px;'>Online</span>";
               } else {
-                echo "<span class='badge badge-danger mr-2' style='width: 55px;'>Offline</span>";
+                echo "<span class='badge bg-danger me-2' style='width: 55px;'>Offline</span>";
               }
               echo "<label class='control-label'>" . $singleRowmyboard['name'] . " (" . $singleRowmyboard['macaddress'] . ")</label>";
               ?>

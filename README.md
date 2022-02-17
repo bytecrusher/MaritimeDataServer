@@ -48,6 +48,7 @@ For the Frontend the user needs to login. Now the user is able to do some config
 
 #### Installation
 Copy all MDS files to your htdocs dir.  
+Rename "configuration.php.example" to "configuration.php" and change the values.
 Create a SQL User and run the sql script "install_db.php" for create the tables.  
 Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 
@@ -78,8 +79,9 @@ In Safari i use "XDebugToggleExtension 1.2".
 For Debug you have to go to "Ausführen" - "Debugger starte" and the green play button (F5).
 
 ## Sensor Schemas
-Due different types of sensors and try to reduce the amount of data transferred via wifi (and later lora) it is good idea to have a schema for sensors to transfer the data.
-Also there is no need to deliver the name of the value. If all values deliver in the correct order, it is clear which value is wich.
+Due different types of sensors and try to reduce the amount of data transferred via wifi (and later lora) it is a good idea to have a schema for sensors to transfer the data.
+Also there is no need to deliver the name of the value.  
+If all values deliver in the correct order, it is clear which value is wich.
 
 Schema #: 1  
 Name: DS18b20  
