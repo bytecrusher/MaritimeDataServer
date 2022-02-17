@@ -25,7 +25,6 @@
 ?>
 
 <script src="/MaritimeDataServer/node_modules/chart.js/dist/chart.js"></script>
-<!--script src="/MaritimeDataServer/node_modules/chart.js/dist/chart.min.js"></script-->
 <script src="/MaritimeDataServer/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="/MaritimeDataServer/node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.js"></script>
 <script src="js/app.js"></script>
