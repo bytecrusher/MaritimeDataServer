@@ -1,6 +1,6 @@
 /**
  *
- * @author: Guntmar Höche
+ * @author: Guntmar Hoeche
  * @license: TBD
  */
 
@@ -20,6 +20,10 @@
 .main-container {
 	margin-top: 20px;
 }
+
+/*.container {*/
+  /*--bs-gutter-x: 0;*/
+/*}*/
 
 .registration-form {
 	max-width: 450px;
@@ -126,3 +130,132 @@ canvas {
   stroke-dasharray: none;
   stroke-width: 13;
 }
+
+fieldset {
+  padding-top: 0.35em;
+  padding-bottom: 0.625em;
+  padding-left: 0.75em;
+  padding-right: 0.75em;
+  border: 1px solid #C5D8E1; 
+	border-radius: 6px; 
+	background: white; 
+}
+
+.row2 {
+  display: flex;
+}
+
+.row {
+  /*padding-bottom: 15px;*/
+  padding-top: 15px
+}
+
+legend {
+  width:inherit; /* Or auto */
+  padding:0 10px; /* To give a bit of padding on the left and right */
+  border-bottom:none;
+}
+
+.form-check-input {
+  position: relative;
+}
+
+/* beispiel Draggable Grid with cards */
+.stretch-card>.card {
+    width: 100%;
+    min-width: 100%
+}
+
+body {
+    background-color: #f9f9fa
+}
+
+.flex {
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto
+}
+
+@media (max-width:991.98px) {
+    .padding {
+        padding: 1.5rem
+    }
+}
+
+@media (max-width:767.98px) {
+    .padding {
+        padding: 1rem
+    }
+}
+
+.padding {
+    padding: 3rem !important
+}
+
+.card {
+    border-radius: 15px;
+    -webkit-box-shadow: 0 1px 20px 0 rgba(69,90,100,0.08);
+    box-shadow: 0 1px 20px 0 rgba(69,90,100,0.08);
+}
+
+.card .card-header {
+    background-color: transparent;
+    border-bottom: none;
+}
+
+.card .card-header+.card-block, .card .card-header+.card-block-big {
+    padding-top: 0;
+}
+
+.m-b-20 {
+    margin-bottom: 20px;
+}
+
+.card-sub {
+    cursor: move;
+    border: none;
+    -webkit-box-shadow: 0 0 1px 2px rgba(0,0,0,0.05), 0 -2px 1px -2px rgba(0,0,0,0.04), 0 0 0 -1px rgba(0,0,0,0.05);
+    box-shadow: 0 0 1px 2px rgba(0,0,0,0.05), 0 -2px 1px -2px rgba(0,0,0,0.04), 0 0 0 -1px rgba(0,0,0,0.05);
+}
+
+
+#ttnvalues {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 200px;
+  text-align: center;
+}
+
+#ttnvalues td, #ttnvalues th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#ttnvalues tr:nth-child(even){background-color: #f2f2f2;}
+
+#ttnvalues tr:hover {background-color: #ddd;}
+
+#ttnvalues th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: center;
+  background-color: #6699ff;
+  color: white;
+}
+
+#map { height: 400px; }
+
+.card-block { 
+  list-style-type: none; 
+  margin: 0; 
+  padding: 0;
+ }
+
+.card-block li { 
+  margin: 10px 10px 10px 0; 
+  float: left; 
+  width: 148px; 
+  height: 128px;
+ }
+
+ /* TODO rename #gaugescontainer24 into wildcard name! */

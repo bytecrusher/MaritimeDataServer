@@ -11,9 +11,25 @@
      static $db_user = 'mds_user';
      static $db_password = 'mds_password_to_change';
 
-     static $api_key = "api_key_to_change";
-     static $baseurl = 'localhost/maritimedataserver/';
-
+     static $api_key = "api_ley_to_change";
+    static $baseurl = "";
+    static $subdir = "/maritimedataserver";     // Enter Subdir, if exist
      //Replace your_secret_string with a string of your choice (>12 characters)
      static $md5secretstring = 'your_secret_string';
+
+    static $write_log = 'false';
+
+    function __construct() {
+        $domain = $_SERVER['HTTP_HOST'];
+        if (isset($_SERVER['HTTPS']) &&
+            ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
+            isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+            $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+            $prefix = 'https://';
+        }
+        else {
+            $prefix = 'http://';
+        }
+        self::$baseurl = $prefix . $domain . self::$subdir;
+    }
  }

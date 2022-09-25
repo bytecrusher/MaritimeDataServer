@@ -20,7 +20,8 @@ include("common/header.inc.php");
 		if (!isset($_POST['email']) || empty($_POST['email'])) {
 			$error = "<b>Please enter mailaddress</b>";
 		} else {
-			$user = dbGetData::getUser($_POST['email']);
+			// TODO change to new user class.
+			$user = dbGetData::getUserOld($_POST['email']);
 			if ($user === false) {
 				$error = "<b>Username not found</b>";
 			} else {

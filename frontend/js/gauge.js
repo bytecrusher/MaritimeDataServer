@@ -1,3 +1,5 @@
+/* source: https://github.com/naikus/svg-gauge */
+
 /* global window, define, module */
 (function(global, factory) {
   var Gauge = factory(global);
@@ -87,7 +89,8 @@
       gaugeClass: "gauge",
       showValue: true,
       gaugeColor: null,
-      label: function(val) {return Math.round(val);}
+      //label: function(val) {return Math.round(val);}
+      label: function(val) {return val.toFixed(1);}
     };
 
     function shallowCopy(/* source, ...targets*/) {
@@ -268,7 +271,15 @@
       }
 
       function updateGauge(theValue, frame) {
-        var val = getValueInPercentage(theValue, min, limit),
+        //console.log("thevalue: " + theValue);
+        var theValue2 = 0;
+        if (theValue.toString() === "NaN") {
+          theValue2 = 0;
+        } else {
+          theValue2 = theValue;
+        }
+
+        var val = getValueInPercentage(theValue2, min, limit),
             // angle = getAngle(val, 360 - Math.abs(endAngle - startAngle)),
             angle = getAngle(val, 360 - Math.abs(startAngle - endAngle)),
             // this is because we are using arc greater than 180deg

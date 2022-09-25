@@ -11,11 +11,10 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
 	$password = $_POST['password'];
 	$userobj = new user($email);
 	$_SESSION['userobj'] = serialize($userobj);
-	$user = $userobj->getUser($email);
 
 	//Check Password
-	if ($user !== false && password_verify($password, $user['password']) && $user['active'] != false) {
-		$_SESSION['userid'] = $user['id'];
+	if ($userobj !== false && password_verify($password, $userobj->getPassword()) && $userobj->isActive() != false) {
+		$_SESSION['userid'] = $userobj->getId();
 
 		//Does the user want to stay logged in?
 		if(isset($_POST['angemeldet_bleiben'])) {

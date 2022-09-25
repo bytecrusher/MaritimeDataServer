@@ -1,25 +1,19 @@
 <!DOCTYPE html>
 <html lang="de">
-
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Loginscript</title>
-
-  <link rel="stylesheet" href="/MaritimeDataServer/node_modules/bootstrap/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="css/all.css">
-  <link rel="stylesheet" href="css/style.css">
-
-  <script src="/MaritimeDataServer/node_modules/jquery/dist/jquery.min.js"></script>
-  <script src="/MaritimeDataServer/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-</head>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Loginscript</title>
+    <?php
+      include("includes.php");
+    ?>
+  </head>
 
 <body>
-
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
   <div class="container-fluid">
-    <a class="navbar-brand" href="index.php"><i class="fas fa-tachometer-alt logo ms-2">.</i> Mausel Industries</a>
+    <a class="navbar-brand" href="index.php"><i class="bi bi-speedometer logo"> </i> Mausel Industries</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon">.</span>
     </button>
@@ -50,8 +44,8 @@
       </div>
 
     <?php else : ?>
-      <div id="navbar" class="collapse navbar-collapse">
-        <ul class="navbar-nav mr-auto navbar-right">
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav mr-auto navbar-right">
           <li class="nav-item"><a class="nav-link" href="internal.php">My Sensors</a></li>
           <li class="nav-item"><a class="nav-link" href="settings.php">Settings</a></li>
           <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
@@ -60,4 +54,3 @@
     <?php endif; ?>
   </div>
   </nav>
-

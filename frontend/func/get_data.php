@@ -36,22 +36,4 @@ function checkDeviceIsOnline($boardid) {
     return false;
 }
 
-/**
- * Checks that the Board is Online WHERE sensor = 'DS18B20'.
- * @return Returns the row of the Board is Online
- */
-function checkDeviceIsOnline2() {
-    $pdo = dbConfig::getInstance();
-    $query = sprintf("SELECT * FROM sensordata WHERE sensorid = '7' ORDER BY id DESC LIMIT 1");
-    $result = $pdo->query($query);
-    $data = array();
-    foreach ($result as $row) {
-        $data[] = $row;
-    }
-
-    $timestamp = time();
-    $nurDatum = date('d.m.Y', $timestamp);
-    $nurUhrmitSekunden = date('H:i:s', $timestamp);
-	return $data;
-}
 ?>

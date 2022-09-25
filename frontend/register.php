@@ -40,7 +40,8 @@ if(isset($_GET['register'])) {
 	//Check that the email address has not yet been registered
 	if(!$error) {
 		//$user = user::getUser($email);
-		$user = dbGetData::getUser($email);
+		// TODO change to new user class.
+		$user = dbGetData::getUserOld($email);
 		if($user !== false) {
 			echo 'The entered email adress already exist.<br>';
 			$error = true;

@@ -8,7 +8,7 @@
 include_once("dbConfig.func.php");
 
 class dbGetData {
-  public static function getUser($email) {
+  public static function getUserOld($email) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("SELECT * FROM users WHERE email = :email");
     $result = $statement->execute(array('email' => $email));

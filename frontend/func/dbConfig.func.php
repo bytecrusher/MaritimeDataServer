@@ -15,15 +15,16 @@ class dbConfig {
   private function __construct ()
   {
     $config  = new configuration();
-    configuration::$api_key;
+    //var_dump(configuration::$api_key);
+    //var_dump($config::$api_key);
 
     try {
-      self::$pdo = new PDO("mysql:host=" . configuration::$db_host . ";dbname=" . configuration::$db_name, configuration::$db_user, configuration::$db_password);
+      self::$pdo = new PDO("mysql:host=" . $config::$db_host . ";dbname=" . $config::$db_name, $config::$db_user, $config::$db_password);
     }
     catch(PDOException $e)
     {
-        printf('Error opening database.<br><br>%s', $e->getMessage() );
-        exit();
+        printf('Error opening database.<br><br>%s',
+        $e->getMessage); exit();
     }
   }
 

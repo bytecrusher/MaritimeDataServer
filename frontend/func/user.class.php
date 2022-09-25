@@ -1,7 +1,7 @@
 
 <?php
 /**
- * create an object of the current user and provide some getter and setter functions
+ * create an object of the current user as an object and provide some getter and setter functions
  * 
  * @author: Guntmar Hoeche
  * @license: TBD
@@ -13,13 +13,9 @@ include_once("password.func.php");
 class user implements JsonSerializable
 {
   private $user = null;
+  private $userobj = null;
   private $object;
-  private $id;
-  private $email;
-  private $firstname;
-  private $lastname;
-  private $usergroup_admin;
-  private $dashboardUpdateInterval;
+  private static $pdo;
 
   /**
   * Method for construct the class.
@@ -27,16 +23,11 @@ class user implements JsonSerializable
   */
   public function __construct($email)
   {
-    $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("SELECT * FROM users WHERE email = :email");
+    self::$pdo = dbConfig::getInstance();
+    $statement = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
     $result = $statement->execute(array('email' => $email));
-    $this->user = $statement->fetch(PDO::FETCH_ASSOC);
-    $this->id = $this->user['id'];
-    $this->email = $this->user['email'];
-    $this->firstname = $this->user['firstname'];
-    $this->lastname = $this->user['lastname'];
-    $this->usergroup_admin = $this->user['usergroup_admin'];
-    $this->dashboardUpdateInterval = $this->user['dashboardUpdateInterval'];
+    $this->userobj = $statement->fetch(PDO::FETCH_OBJ);
+    return $this->userobj;
   }
 
   /**
@@ -45,11 +36,10 @@ class user implements JsonSerializable
    */
   public static function check_user()
   {
-    $pdo = dbConfig::getInstance();
     if (!isset($_SESSION['userid']) && isset($_COOKIE['identifier']) && isset($_COOKIE['securitytoken'])) {
       $identifier = $_COOKIE['identifier'];
       $securitytoken = $_COOKIE['securitytoken'];
-      $statement = $pdo->prepare("SELECT * FROM securitytokens WHERE identifier = ?");
+      $statement = self::$pdo->prepare("SELECT * FROM securitytokens WHERE identifier = ?");
       $result = $statement->execute(array($identifier));
       $securitytoken_row = $statement->fetch();
 
@@ -59,7 +49,7 @@ class user implements JsonSerializable
       } else { //Token was correct
         //Set new token
         $neuer_securitytoken = myFunctions::random_string();
-        $insert = $pdo->prepare("UPDATE securitytokens SET securitytoken = :securitytoken WHERE identifier = :identifier");
+        $insert = self::$pdo->prepare("UPDATE securitytokens SET securitytoken = :securitytoken WHERE identifier = :identifier");
         $insert->execute(array('securitytoken' => sha1($neuer_securitytoken), 'identifier' => $identifier));
         setcookie("identifier", $identifier, time() + (3600 * 24 * 365));
         setcookie("securitytoken", $neuer_securitytoken, time() + (3600 * 24 * 365));
@@ -70,8 +60,18 @@ class user implements JsonSerializable
     if (!isset($_SESSION['userid'])) {
       return false;
     }
+    // TODO change, to object oriented.
     $user = dbGetData::getUserById($_SESSION['userid']);
     return $user;
+  }
+
+/**
+  * Returns true, if user is active.
+  * @return active as bool
+  */
+  public function isActive()
+  {
+     return $this->userobj->active;
   }
 
   /**
@@ -81,49 +81,59 @@ class user implements JsonSerializable
   */
   public function getUser($email)
   {
-    if ($this->user === null) {
+    trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
+    if ($this->userobj === null) {
       $this->object = new self($email);
     }
-    return $this->user;
+    return $this->userobj;
   }
 
   /**
-  * Returns the Id of the User.
+  * Returns the Id of the current User.
   * @return id of the user
   */
   public function getId()
   {
-    return $this->id;
+    return $this->userobj->id;
   }
 
   /**
-  * Returns the Email of the User.
+  * Returns the Email of the current User.
   * @return email of the user
   */
   public function getEmail()
   {
-    return $this->email;
+    return $this->userobj->email;
   }
 
   /**
-  * Returns the Firstname of the User.
+  * Returns the Firstname of the current User.
   * @return firstname of the user
   */
   public function getFirstname()
   {
-    return $this->firstname;
+    return $this->userobj->firstname;
   }
 
   /**
-  * Set the Firstname and the Lastname of the User.
+  * Returns the password of the current User.
+  * @return password of the user
+  */
+  public function getPassword()
+  {
+    return $this->userobj->password;
+  }
+
+  /**
+  * Set the Firstname and the Lastname of the current User.
   * @return firstname and Lastname of the user
   */
   public function setName($post)
   {
-    $this->firstname = trim($post['firstname']);
-    $this->lastname = trim($post['lastname']);
+    $this->userobj->firstname = trim($post['firstname']);
+    $this->userobj->lastname = trim($post['lastname']);
 
-    $updateUserReturn = dbUpdateData::updateUserData($post, $this->id);
+    $updateUserReturn = dbUpdateData::updateUserData($post, $this->userobj->id);
  	 	if (!$updateUserReturn) {
  			$error_msg = "Please enter first and last name.";
       return "Please enter first and last name.";
@@ -134,12 +144,12 @@ class user implements JsonSerializable
   }
 
   /**
-  * Returns the Lastname of the User.
+  * Returns the Lastname of the current User.
   * @return lastname of the user
   */
   public function getLastname()
   {
-    return $this->lastname;
+    return $this->userobj->lastname;
   }
 
   /**
@@ -148,10 +158,37 @@ class user implements JsonSerializable
   */
   public function getUserGroupAdmin()
   {
-    return $this->usergroup_admin;
+    return $this->userobj->usergroup_admin;
   }
 
-  public function jsonSerialize()
+  /*
+  * Get all of my Board by user id.
+  * rename from getMyBoards to getMyBoardsId
+  */
+  public function getMyBoardsId() {
+    if (!$this->userobj->id == null) {
+      $pdo = dbConfig::getInstance();
+      $myboards = $pdo->prepare("SELECT id FROM boardconfig WHERE owner_userid = " . $this->userobj->id . " ORDER BY id");
+      $result = $myboards->execute();
+      $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
+      return $myboards2;
+    }
+  }
+
+  /*
+  * Get all of my Board by user id.
+  */
+  public function getMyBoardsAll() {
+    if (!$this->userobj->id == null) {
+      $pdo = dbConfig::getInstance();
+      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $this->userobj->id . " ORDER BY id");
+      $result = $myboards->execute();
+      $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
+      return $myboards2;
+    }
+  }
+
+  public function jsonSerialize(): mixed
   {
     return 
     [
@@ -163,12 +200,12 @@ class user implements JsonSerializable
   }
 
   public function getDashboardUpdateInterval() {
-    return $this->dashboardUpdateInterval;
+    return $this->userobj->dashboardUpdateInterval;
   }
 
   public function setDashboardUpdateInterval($post) {
-    $this->dashboardUpdateInterval = $post['updateInterval'];
-    $updateUserReturn = dbUpdateData::updateUserDashboardupdateInterval($post, $this->id);
+    $this->userobj->dashboardUpdateInterval = $post['updateInterval'];
+    $updateUserReturn = dbUpdateData::updateUserDashboardupdateInterval($post, $this->userobj->id);
  	 	if (!$updateUserReturn) {
  			$error_msg = "Please enter first and last name.";
       return "Please enter first and last name.";

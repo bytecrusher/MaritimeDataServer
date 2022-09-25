@@ -1,11 +1,9 @@
 <?php
 /**
- * @author      Guntmar Höche
- * @license     TBD
- * @datetime    13 Februar 2022
- * @perpose     A set of functions for handle some user and board functions.
- * @input       Get comment requirement
- * @output      Show comment represent the way
+ * a set of functions for handle some user and board functions.
+ *
+ * @author: Guntmar Höche
+ * @license: TBD
  */
 
  include_once("password.func.php");
@@ -45,23 +43,14 @@ class myFunctions {
 		return $protocol.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']).'/';
 	}
 
-  public static function checkSecuritytoken($identifier, $securitytoken) {
-    if ( (isset($identifier)) && (isset($securitytoken)) ) {
-      $pdo = dbConfig::getInstance();
-      $userOnline = $pdo->prepare("SELECT * FROM securitytokens WHERE identifier = '" . $identifier . "' AND securitytoken = '" . sha1($securitytoken) . "' ORDER BY id");
-      $result = $userOnline->execute();
-      $userId = $userOnline->fetchAll(PDO::FETCH_ASSOC);
-      return $userId[0]['user_id'];
-    }
-  }
-
   /*
   * Get all of my Board by user id.
   */
-  public static function getMyBoards($id) {
-    if (!$id == null) {
+  public static function getMyBoards($userid) {
+    //trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
+    if (!$userid == null) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $id . " ORDER BY id");
+      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $userid . " ORDER BY id");
       $result = $myboards->execute();
       $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
       return $myboards2;
@@ -83,8 +72,9 @@ class myFunctions {
 
   /*
   * Get Board by Board macaddress. Only one dataset will return.
-  * ToDo: get "boardtyp->name" instead of boardtypid. This name should be the name of the firmware.
   */
+  // TODO: get "boardtyp->name" instead of boardtypid. This name should be the name of the firmware.
+
   public static function getBoardByMac($boardMac) {
     if (!$boardMac == null) {
       $pdo = dbConfig::getInstance();
@@ -93,7 +83,24 @@ class myFunctions {
       $result = $myboards->execute();
       $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
       return $myboards2;
-      return $myboards;
+      //return $myboards;
+    }
+  }
+
+/*
+  * Get Board by Board TTN appid and devid. Only one dataset will return.
+  */
+  // TODO: get "boardtyp->name" instead of boardtypid. This name should be the name of the firmware.
+
+  public static function getBoardByTTN($ttn_app_id, $ttn_dev_id) {
+    if ((!$ttn_app_id == null) && (!$ttn_dev_id == null)) {
+      $pdo = dbConfig::getInstance();
+      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE ttn_app_id = '$ttn_app_id' AND ttn_dev_id = '$ttn_dev_id' ORDER BY id LIMIT 1");
+      //var_dump($myboards);
+      $result = $myboards->execute();
+      $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
+      return $myboards2;
+      //return $myboards;
     }
   }
 
@@ -102,8 +109,22 @@ class myFunctions {
   */
   public static function getAllSensorsOfBoard($id) {
     $pdo = dbConfig::getInstance();
-    $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? ORDER BY id");
+    //$mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? ORDER BY id");
+    $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as boardid FROM sensorconfig, sensortypes WHERE (boardid = ?) and (typid = sensortypes.id) ORDER BY sensorconfig.id; ");
     $mysensors2->execute(array($id));
+    $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
+    return $sensorsOfBoard;
+  }
+
+    /*
+  * Get all sensors of a given board id.
+  */
+  public static function getAllSensorsOfBoardold($id) {
+    $pdo = dbConfig::getInstance();
+    $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? ORDER BY id");
+    //$mysensors2 = $pdo->prepare("SELECT sensortypes.*, sensortypes.name as boardid FROM sensorconfig, sensortypes WHERE (boardid = ?) and (typid = sensortypes.id) ORDER BY sensorconfig.id; ");
+    $mysensors2->execute(array($id));
+    //$mysensors2->execute($id);
     $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
@@ -131,26 +152,88 @@ class myFunctions {
   }
 
   /*
+  * Get all sensors of a given board id with dashboard.
+  */
+  public static function getAllSensorsOfBoardWithDashboardWithTypeName($id) {
+    $pdo = dbConfig::getInstance();
+    //$mysensors2 = $pdo->prepare("SELECT *, typeid as sensortypes.name FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.name AND onDashboard = 1 ORDER BY id");
+    $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND onDashboard = 1 ORDER BY id");
+    $mysensors2->execute(array($id));
+    $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
+    return $sensorsOfBoard;
+  }
+
+  /*
   * Get the lastet sensor data of a given sensor id.
   */
   public static function getLatestSensorData($sensorId, $maxNrOfValue = 1) {
     if ($maxNrOfValue >= 1) {
       $pdo = dbConfig::getInstance();
-    $mysensors = $pdo->prepare("SELECT * FROM sensordata WHERE sensorid = ? ORDER BY id DESC LIMIT $maxNrOfValue");
-    $mysensors->execute(array($sensorId));
-    $SensorData = $mysensors->fetchAll(PDO::FETCH_ASSOC);
-    return $SensorData;
+      $mysensors = $pdo->prepare("SELECT * FROM sensordata WHERE sensorid = ? ORDER BY id DESC LIMIT $maxNrOfValue");
+      $mysensors->execute(array($sensorId));
+      $SensorData = $mysensors->fetchAll(PDO::FETCH_ASSOC);
+      return $SensorData;
     }
   }
 
   /*
-  * Get Sensor type of a given sensor id.
+  * Get all GPS data of a given (sensor id).
   */
-  public static function getSensorType($sensorId) {
+  public static function getAllGpsData($boardid, $maxNrOfValue = 1) {
+    if ($maxNrOfValue >= 1) {
+      $pdo = dbConfig::getInstance();
+      $mysensors = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM `sensorconfig`, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND sensortypes.name = 'GPS'");
+      $mysensors->execute(array($boardid));
+      //var_dump($boardid);
+      $SensorData = $mysensors->fetch(PDO::FETCH_ASSOC);
+      //var_dump($SensorData);
+      if ($SensorData != false) {
+        $myGps = $pdo->prepare("SELECT * FROM `sensordata` WHERE sensorid = ?");
+        $myGps->execute(array($SensorData["id"]));
+        $myGpsData = $myGps->fetchAll(PDO::FETCH_ASSOC);
+        //var_dump($myGpsData);
+        return $myGpsData;
+      } else {
+        return 0;
+      }
+    }
+  }
+
+  /*
+  *
+  */
+  public static function getSensorConfig($id) {
+    $pdo = dbConfig::getInstance();
+    //$mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE id = ? AND onDashboard = 1 ORDER BY id LIMIT 1");
+    $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE id = ? ORDER BY id LIMIT 1");
+    $mysensors2->execute(array($id));
+    $sensorsOfBoard = $mysensors2->fetch(PDO::FETCH_ASSOC);
+    return $sensorsOfBoard;
+  }
+
+  /*
+  * Get Sensor type object of a given sensor sensorTypId id.
+  */
+  public static function getSensorType($sensorTypId) {
     $pdo = dbConfig::getInstance();
     $sensortyps = $pdo->prepare("SELECT * FROM sensortypes WHERE id = ? ORDER BY id LIMIT 1");
-    $sensortyps->execute(array($sensorId));
+    $sensortyps->execute(array($sensorTypId));
     $SensorData2 = $sensortyps->fetch(PDO::FETCH_ASSOC);
+    return $SensorData2;
+  }
+
+  /*
+  * Get all Sensor type object of a given sensor sensorTypId id.
+  */
+  public static function getAllSensorType() {
+    $pdo = dbConfig::getInstance();
+    $sensortyps = $pdo->prepare("SELECT * FROM sensortypes ORDER BY id");
+    $sensortyps->execute();
+    $SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
+
+    //$sensortyps = $pdo->prepare("SELECT * FROM sensortypes ORDER BY id ");
+    //$resultsensortyps = $sensortyps->execute();
+    //var_dump($SensorData2);
     return $SensorData2;
   }
 
@@ -173,4 +256,39 @@ class myFunctions {
 		include("common/footer.inc.php");
 		exit();
 	}
+
+  /**
+	 * Write $text into a log file.
+	 */
+  public static function writeToLog($text)
+  {
+    $format = "csv"; // Possibilities: csv and txt
+    $datum_zeit = date("d.m.Y H:i:s");
+    $ip = $_SERVER["REMOTE_ADDR"];
+    $site = $_SERVER['REQUEST_URI'];
+    $browser = $_SERVER["HTTP_USER_AGENT"];
+    $monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
+    $monat = date("n");
+    $jahr = date("y");
+    $dateiname = dirname(__FILE__)."/logs/log_" . $monate[$monat] . "_$jahr.$format";
+    $header = array("Datum", "IP", "Seite", "Browser");
+    $infos = array($datum_zeit, $ip, $site, $browser, $text);
+    if ($format == "csv") {
+      $eintrag2 = '"' . implode('", "', $infos) . '"';
+    } else {
+      $eintrag2 = implode("\t", $infos);
+    }
+    $write_header = !file_exists($dateiname);
+    $datei = fopen($dateiname, "a");
+    if ($write_header) {
+      if ($format == "csv") {
+        $header_line = '"' . implode('", "', $header) . '"';
+      } else {
+        $header_line = implode("\t", $header);
+      }
+      fputs($datei, $header_line . "\n");
+    }
+    fputs($datei, $eintrag2 . "\n");
+    fclose($datei);
+  }
 }

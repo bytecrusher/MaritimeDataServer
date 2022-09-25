@@ -1,146 +1,129 @@
+
 /**
- * @author      Guntmar Höche
- * @license     TBD
- * @datetime    13 Februar 2022
- * @perpose     Runs if tab "Charts" is selected and collects the last x sensor data and push these data into the canvas object for display in the chart.
- * @input       -
- * @output      -
+ *
+ * @author: Guntmar Höche
+ * @license: TBD
+ * TODO: for every Board its own canvas.
+ * TODO: settings options for canvas to define, witch channels will be display.
  */
 
-var ctx = $("#mycanvas");
-var barGraph = null;
-var varIdent = getCookie("identifier");
-var varToken = getCookie("securitytoken");
+const myChart = null;
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-$(async function() {
-  $.getJSON( "api/getSensorIds.php", {identifier: varIdent, securitytoken: varToken }, async function( data ) {
-    var red = 0;
-    var green = 100;
-    var blue = 0;
-    $.each( data, function( key, val ) {
-      var backgroundColor = getRandomColor();
-      var borderColor = backgroundColor;
-      var hoverBackgroundColor = 'rgba(' + red + ', ' + green + ', ' + blue + ', 1)';
-      var hoverBorderColor = 'rgba(' + red + ', ' + green + ', ' + blue + ', 1)';
-      addDataToChart(varIdent, varToken, val.id, 200, val.name, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
-      red = red + 200;
-      green = green - 100;
-      blue = blue + 100;
-    });
-  });
-});
+// Chart view. Runs on click on "Charts" tab, and collects data to show
+$(document).ready(async function(){
+  //$('#hreftemperatures').click(async function (e) {
+    var backgroundColor = null;
+    var borderColor = null;
+    var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
+    var hoverBorderColor = 'rgba(0, 100, 0, 1)';
+    //var hoverBorderColor = Math.floor(Math.random()*16777215).toString(16);
 
-function addDataToChart(varIdent, varToken, varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
-  $.getJSON('api/getSensorDataSet.php', { identifier: varIdent, securitytoken: varToken, sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
-    var localLabel = varLabel;
-    //console.log(localLabel + ", " + varsensorId, ", " + data[0].value1);
-    console.log("data lenght: " + data.length);
+    InitialSetupChart();
+
+    // TODO: check if every channel will be displayed. I think only the first one will display in the chart.
+
+    for (let i in gaugesArrayHelperbig) {
+      varsensorId = gaugesArrayHelperbig[i]["sensorId"];
+      typid = gaugesArrayHelperbig[i]["typid"];
+      sensorname = gaugesArrayHelperbig[i]["NameOfSensors"];
+
+      var randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+      var backgroundColor = randomColor;
+      var borderColor = randomColor;
+
+      //if (typid == 1) {   // If data are Temp ?
+        addDataToChart(varsensorId, 200, varsensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname);
+      //}
+    }
+    addLabelsToChart(varsensorId, 200, varsensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+  });
+//});
+
+function addDataToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor, sensorname) {
+  $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
     var id = [];
     var value1 = [];
-    var val_time = [];
     for(var i in data) {
       id.push("id " + data[i].id);
       value1.push(data[i].value1);
-      val_time.push(data[i].sensor_timestamp);
+      //console.log(data);
     }
 
-    var chartdata = {
-      labels: val_time,
-      datasets : [
-        {
-          label: localLabel,
-          backgroundColor: varbackgroundColor,
-          borderColor: varborderColor,
-          hoverBackgroundColor: varhoverBackgroundColor,
-          hoverBorderColor: varhoverBorderColor,
-          data: value1,
-          tension: 0.5
-        }
-      ]
+    const data1 = window.myChart.data;
+    const dsColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+    const newDataset = {
+      label: sensorname,
+      backgroundColor: dsColor,
+      borderColor: dsColor,
+      data: value1,
     };
-    var ctx = $("#mycanvas");
-    if (window.barGraph == null) {
-      window.barGraph = new Chart(ctx, {
-        type: 'line',
-        data: chartdata,
-        options: {
-          scales: {
-            x: {
-              display: true,
-              offset: true,
-              type: 'time',
-              time: {
-                //unit: 'hour',
-                displayFormats: {
-                  'millisecond': 'SSS',
-                  'second': 'ss:SSS',
-                  'minute': 'HH:mm:ss',
-                  'hour': 'HH:mm',
-                  'day': 'd.M.',
-                  'week': 'd.M.',
-                  'month': 'M.yyyy',
-                  'quarter': 'M.yyyy',
-                  'year': 'yyyy',
-                }
-              },
-              ticks: {
-                major: {
-                  fontStyle: 'bold',
-                  fontColor: '#FFFF00'
-                }
-              }
-            }
-          }
-        },
-      });
-      window.barGraph.update();
-    } else {
-      window.barGraph.data.datasets.push({
-        label: localLabel,
-        backgroundColor: varbackgroundColor,
-        borderColor: varborderColor,
-        hoverBackgroundColor: varhoverBackgroundColor,
-        hoverBorderColor: varhoverBorderColor,
-        data: value1
-      });
-      window.barGraph.update();
-    }
+    window.myChart.data.datasets.push(newDataset);
+    window.myChart.update();
   })
   .done(function () {
     //alert('Request done!');
   })
   .fail(function (jqxhr,settings,ex) {
     alert('failed, '+ ex);
-    console.log(data);
+    //console.log(data);
   });
 }
 
-function getRandomColor() {
-  var letters = '0123456789ABCDEF'.split('');
-  var color = '#';
-  for (var i = 0; i < 6; i++ ) {
-      color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
+function addLabelsToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
+  $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
+    var val_time = [];
+    for(var i in data) {
+      val_time.push(data[i].val_time);
+    }
+    window.myChart.data.labels = val_time;
+    window.myChart.update();
+  })
+  .done(function () {
+  })
+  .fail(function (jqxhr,settings,ex) {
+    alert('failed, '+ ex);
+  });
 }
 
-function getCookie(cname) {
-  let name = cname + "=";
-  let decodedCookie = decodeURIComponent(document.cookie);
-  let ca = decodedCookie.split(';');
-  for(let i = 0; i <ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == ' ') {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) == 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return "";
-}
 
+function InitialSetupChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
+  const ctx = document.getElementById('mycanvas');
+  window.myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        /*labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        datasets: [{
+            label: '# of Votes',
+            data: [12, 19, 3, 5, 2, 3],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]*/
+    },
+    /*options: {
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }*/
+  });
+}
