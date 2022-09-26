@@ -25,7 +25,7 @@ For the Frontend the user needs to login. Now the user is able to do some config
 - [x] Chart view of data
 - [x] configure boards and sensors in web interface
 - [x] change client communication to JSON.
-- [ ] get data from TTN
+- [x] get data from TTN
 
 ## Folder description
 
