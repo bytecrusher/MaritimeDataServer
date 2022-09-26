@@ -6,17 +6,19 @@
  * @license: TBD
  */
 
-require_once("./../frontend/func/dbConfig.func.php");
-require_once('./../configuration.php');
+require_once(dirname(__FILE__, 2) . "/frontend/func/dbConfig.func.php");
+require_once(dirname(__FILE__, 2) . '/configuration.php');
 $config  = new configuration();
 
 $api_key_value = $config::$api_key;
-$api_key = $protocollversion = $macaddress = $sensor = $sensorid = $location = $value1 = $value2 = $value3 = $date = $time = $timestamp = "";
+$api_key = $protocollversion = $macaddress = $sensor = $sensorid = $location = $value1 = $value2 = $value3 = $value4 = $date = $time = $transmissionpath = "";
 
 $pdo2 = dbConfig::getInstance();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $data = json_decode(file_get_contents('php://input'), true);
+    $ttn_post = file_get_contents('php://input');
+    $data = json_decode($ttn_post, true);
+
     $boardData = $data['board'];    // Array of Board informations from "POST"
     $sensors = $data['sensors'];    // Array of Sensors from "POST"
     if (isset($boardData['api_key'])) {
@@ -30,31 +32,76 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ((isset($boardData['protocollversion'])) && ($boardData['protocollversion'] != null)) {
             if ($boardData['protocollversion'] == "1") {
                 $macaddress = test_input($boardData['macaddress']);
-                var_dump($macaddress);
                 $macaddressid = check_macadresse($macaddress, $pdo2);
                 foreach ($sensors as $key => &$sensor) {
-                    $owsensorid = test_input($sensors[$key]["sensorAddress"]);
-                    $sensorid = check_sensorid($owsensorid, $macaddressid, $pdo2);
-                    $timestamp = test_input(($sensors[$key]["timestamp"]));
-                    if (substr($owsensorid, 0, 2) === "28") {
-                        $value1 = test_input($sensors[$key]["value1"]);
-                        $value2 = null;
-                        $value3 = null;
-                        $sensor = "DS18b20 new";
-                    } elseif (substr($owsensorid, 0, 2) === "26") {
-                        $value1 = test_input($sensors[$key]["value1"]);
-                        $value2 = test_input($sensors[$key]["value2"]);
-                        $sensor = "DS2438";
-                    }
+                    $sensorid = null;
+                    if ($sensor != null) {
+                        $mysensorid = $owsensorAddress = null;
+                        if (isset($sensor["sensorId"])) {
+                            $mysensorid = test_input($sensor["sensorId"]);
+                            $sensorid = $mysensorid;
+                            if (isset($sensor["value1"])) {
+                                $value1 = $sensor["value1"];
+                            }
+                            if (isset($sensor["value2"])) {
+                                $value2 = $sensor["value2"];
+                            }
+                            if (isset($sensor["value3"])) {
+                                $value3 = $sensor["value3"];
+                            }
+                            if (isset($sensor["value4"])) {
+                                $value4 = $sensor["value4"];
+                            }
+                        } else {
+                            if(isset($sensor["sensorAddress"])) {
+                                $owsensorAddress = test_input($sensor["sensorAddress"]);
+                                write_to_log("owsensorAddress: " . $owsensorAddress);
+                                $sensorid = check_owsensorAddress($owsensorAddress, $macaddressid, $pdo2);
+                                if (substr($owsensorAddress, 0, 2) === "28") {
+                                    $value1 = test_input($sensor["value1"]);
+                                    $value2 = null;
+                                    $value3 = null;
+                                } elseif (substr($owsensorAddress, 0, 2) === "26") {
+                                    $value1 = test_input($sensor["value1"]);
+                                    $value2 = test_input($sensor["value2"]);
+                                }
+                            } else {
+                               $owsensorAddress = null; 
+                            }
+                            
+                            write_to_log("sensorid: " . $sensorid);
+                            if (isset($sensor["value1"])) {
+                                $value1 = test_input($sensor["value1"]);
+                            }
+                            if (isset($sensor["value2"])) {
+                                $value2 = test_input($sensor["value2"]);
+                            }
+                            if (isset($sensor["value3"])) {
+                                $value3 = test_input($sensor["value3"]);
+                            }
+                            if (isset($sensor["value4"])) {
+                                $value4 = test_input($sensor["value4"]);
+                            }
+                        }
+                        $date = test_input($sensor["date"]);
+                        $time = test_input($sensor["time"]);
 
-                    // TODO Change to pdo
-                    $sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, sensor_timestamp )
-                    VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '" . $timestamp . "')";
-                    try {
-                        $pdo2->query($sql); //Invalid query
-                    } catch (PDOException $ex) {
-                        echo "An Error has occurred while run query.";
-                        write_to_log("An Error has occurred while run query. " . $ex);
+                        if(isset($sensor["transmissionpath"])) {
+                            // 1 = wifi, 2 = lora
+                            $transmissionpath = test_input($sensor["transmissionpath"]);
+                        } else {
+                            $transmissionpath = 1;
+                        }
+
+                        // TODO Change to pdo
+                        $sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, value4, val_date, val_time, transmissionpath)
+                        VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '"  . $value4 . "', '" . $date . "', '" . $time . "', '" . $transmissionpath . "')";
+                        try {
+                            $pdo2->query($sql); //Invalid query
+                        } catch (PDOException $ex) {
+                            echo "An Error has occurred while run query.";
+                            write_to_log("An Error has occurred while run query.");
+                        }
                     }
                 }
             }
@@ -63,7 +110,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             write_to_log("Wrong protocoll version.");
             die();
         }
-        
     } else {
         echo "Wrong API Key provided.";
         write_to_log("Wrong API Key provided.");
@@ -87,8 +133,6 @@ function check_macadresse($macaddress, $pdo2)
     try {
         $idmacaddress_temp = $pdo2->query($sql); //Invalid query
         $idmacaddress = $idmacaddress_temp->fetch();
-        write_to_log("macadress $macaddress ");
-        write_to_log("idmacaddress $idmacaddress[0] ");
     } catch (PDOException $ex) {
         echo "An Error has occurred while check macadress";
         write_to_log("An Error has occurred while check macadress");
@@ -105,7 +149,7 @@ function check_macadresse($macaddress, $pdo2)
     }
 }
 
-function check_sensorid($sensorAddress, $macaddressid, $pdo2)
+function check_owsensorAddress($sensorAddress, $macaddressid, $pdo2)
 {
     $sql = "SELECT id FROM sensorconfig WHERE sensorAddress = '" . $sensorAddress . "' LIMIT 1";
     try {
@@ -117,6 +161,7 @@ function check_sensorid($sensorAddress, $macaddressid, $pdo2)
                 $sql2 = "SELECT id FROM sensortypes WHERE oneWireFamilyCode = '" . $sensorAddressFamilyCode . "' LIMIT 1";
                 $idsensortypes_temp = $pdo2->query($sql2); //Invalid query
                 $idsensortypes = $idsensortypes_temp->fetch();
+                write_to_log("sensor: " . $idsensortypes);
                 $statement2 = "INSERT INTO sensorconfig (boardid, sensorAddress, typid) VALUES ('$macaddressid', '$sensorAddress', '" . $idsensortypes['id'] . "')";
                 $insertsuccess = $pdo2->exec($statement2);
                 write_to_log("Insert sensorconfig " . $statement2) . ", " . $insertsuccess;
