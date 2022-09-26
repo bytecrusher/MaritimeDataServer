@@ -7,7 +7,6 @@
  */
 
 require_once("./../frontend/func/dbConfig.func.php");
-//require_once(dirname(__DIR__).'/../configuration.php');
 require_once('./../configuration.php');
 $config  = new configuration();
 
@@ -36,8 +35,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 foreach ($sensors as $key => &$sensor) {
                     $owsensorid = test_input($sensors[$key]["sensorAddress"]);
                     $sensorid = check_sensorid($owsensorid, $macaddressid, $pdo2);
-                    //$date = test_input($sensors[$key]["date"]);
-                    //$time = test_input($sensors[$key]["time"]);
                     $timestamp = test_input(($sensors[$key]["timestamp"]));
                     if (substr($owsensorid, 0, 2) === "28") {
                         $value1 = test_input($sensors[$key]["value1"]);
@@ -50,18 +47,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $sensor = "DS2438";
                     }
 
-                    // ToDo Change to pdo
-                    //$sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, val_date, val_time)
-                    //VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '" . $date . "', '" . $time . "')";
+                    // TODO Change to pdo
                     $sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, sensor_timestamp )
                     VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '" . $timestamp . "')";
-                    //write_to_log($sql);
                     try {
                         $pdo2->query($sql); //Invalid query
                     } catch (PDOException $ex) {
-                        //$ex->getMessage();
                         echo "An Error has occurred while run query.";
-                        write_to_log("An Error has occurred while run query.");
+                        write_to_log("An Error has occurred while run query. " . $ex);
                     }
                 }
             }
@@ -95,10 +88,8 @@ function check_macadresse($macaddress, $pdo2)
         $idmacaddress_temp = $pdo2->query($sql); //Invalid query
         $idmacaddress = $idmacaddress_temp->fetch();
         write_to_log("macadress $macaddress ");
-       // write_to_log("idmacaddress_temp $idmacaddress_temp ");
         write_to_log("idmacaddress $idmacaddress[0] ");
     } catch (PDOException $ex) {
-        //$ex->getMessage();
         echo "An Error has occurred while check macadress";
         write_to_log("An Error has occurred while check macadress");
     }
@@ -110,9 +101,6 @@ function check_macadresse($macaddress, $pdo2)
         write_to_log("New Board with id $neue_id created");
         return $neue_id;
     } else {
-        // Update Board is online !!
-        // $statement3 = $pdo2->prepare("UPDATE boardconfig SET isOnline = ? WHERE macaddress = '" . $macaddress . "'");
-        // $statement3->execute(array('1', 1));
         return $idmacaddress['id'];
     }
 }
@@ -123,7 +111,6 @@ function check_sensorid($sensorAddress, $macaddressid, $pdo2)
     try {
         $idsensoraddress_temp = $pdo2->query($sql); //Invalid query
         $sensorAddressId = $idsensoraddress_temp->fetch();
-        //if ($sensorAddressId['id'] === null) {
         if ($sensorAddress != "00000000") {
             if (!$sensorAddressId) { // if no sensor found in DB, it should be created.
                 $sensorAddressFamilyCode = substr($sensorAddress, 0, 2);
@@ -145,7 +132,6 @@ function check_sensorid($sensorAddress, $macaddressid, $pdo2)
             }
         }
     } catch (PDOException $ex) {
-        //$ex->getMessage();
         write_to_log("An Error has occurred while add / check sensor. ");
     }
 }
@@ -155,7 +141,6 @@ function write_to_log($text)
     $format = "csv"; // csv or txt
     $datum_zeit = date("d.m.Y H:i:s");
     $site = $_SERVER['REQUEST_URI'];
-    //$dateiname = dirname(__DIR__)."logs/log.$format";
     $dateiname = "./logs/log.$format";
     $header = array("Date", "Site", "Log");
 
