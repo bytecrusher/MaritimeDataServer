@@ -53,6 +53,8 @@ Create a SQL User and run the sql script "install_db.php" for create the tables.
 Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 
 ![Preview Sensors](docu_donotdeploy/images/preview_sensors.jpg)
+![Preview Chart](docu_donotdeploy/images/preview_chart.jpg)
+![Preview Map](docu_donotdeploy/images/preview_map.jpg)
 
 #### MDS Requirements
 For running the MDS you need a Apache Webserver with php support and a SQL DB.  
