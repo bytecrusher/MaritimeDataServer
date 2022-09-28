@@ -41,7 +41,6 @@
           while($row = $statement->fetch()) {
         ?>
 
-        <?php // TODO replace the fix width in spam against some % ?>
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">id</span>
           <input type="text" readonly class="form-control" style="background:#e9ecef" id="id" name='id' value='<?=$row['id'];?>'>
@@ -103,7 +102,6 @@
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">Alarm on unavailable</span>
 
-          <!--div class="col col-sm-6 p-0"-->
           <div class="form-control">
             <?php
               if(isset($row['alarmOnUnavailable']) && $row['alarmOnUnavailable'] == '1') {
@@ -117,8 +115,6 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%;">On Dashboard?</span>
-          <!--label for='onDashboard' class='col-sm-5 form-check-label'>On Dashboard?</label-->
-          <!--div class="col col-sm-6 p-0"-->
             <div class="form-control">
             <?php
               if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
@@ -128,7 +124,6 @@
               }
             ?>
             </div>
-          <!--/div-->
         </div>
 
         <div class="input-group mb-3">
