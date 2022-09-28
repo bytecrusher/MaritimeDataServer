@@ -47,7 +47,6 @@ class myFunctions {
   * Get all of my Board by user id.
   */
   public static function getMyBoards($userid) {
-    //trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
     if (!$userid == null) {
       $pdo = dbConfig::getInstance();
       $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $userid . " ORDER BY id");
@@ -73,35 +72,37 @@ class myFunctions {
   /*
   * Get Board by Board macaddress. Only one dataset will return.
   */
-  // TODO: get "boardtyp->name" instead of boardtypid. This name should be the name of the firmware.
-
   public static function getBoardByMac($boardMac) {
     if (!$boardMac == null) {
       $pdo = dbConfig::getInstance();
       $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE macaddress = '" . $boardMac . "' ORDER BY id LIMIT 1");
-      //var_dump($myboards);
       $result = $myboards->execute();
       $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
       return $myboards2;
-      //return $myboards;
     }
   }
 
 /*
   * Get Board by Board TTN appid and devid. Only one dataset will return.
   */
-  // TODO: get "boardtyp->name" instead of boardtypid. This name should be the name of the firmware.
-
   public static function getBoardByTTN($ttn_app_id, $ttn_dev_id) {
     if ((!$ttn_app_id == null) && (!$ttn_dev_id == null)) {
       $pdo = dbConfig::getInstance();
       $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE ttn_app_id = '$ttn_app_id' AND ttn_dev_id = '$ttn_dev_id' ORDER BY id LIMIT 1");
-      //var_dump($myboards);
       $result = $myboards->execute();
       $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
       return $myboards2;
-      //return $myboards;
     }
+  }
+
+  /*
+  * Add Board by Board TTN appid and devid. Only one dataset will return.
+  */
+  public static function addBoardByTTN($ttn_app_id, $ttn_dev_id) {
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name, ttn_app_id, ttn_dev_id) VALUES (?, ?, ?, ?, ?)");
+    $statement->execute(array("fakeMacAddress" . $ttn_app_id, 3, "- new imported -", $ttn_app_id, $ttn_dev_id));     // ToDo: change default Owner User to one of the admins
+    $neue_id = $pdo->lastInsertId();
   }
 
   /*
@@ -109,22 +110,19 @@ class myFunctions {
   */
   public static function getAllSensorsOfBoard($id) {
     $pdo = dbConfig::getInstance();
-    //$mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? ORDER BY id");
     $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as boardid FROM sensorconfig, sensortypes WHERE (boardid = ?) and (typid = sensortypes.id) ORDER BY sensorconfig.id; ");
     $mysensors2->execute(array($id));
     $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
 
-    /*
+  /*
   * Get all sensors of a given board id.
   */
   public static function getAllSensorsOfBoardold($id) {
     $pdo = dbConfig::getInstance();
     $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? ORDER BY id");
-    //$mysensors2 = $pdo->prepare("SELECT sensortypes.*, sensortypes.name as boardid FROM sensorconfig, sensortypes WHERE (boardid = ?) and (typid = sensortypes.id) ORDER BY sensorconfig.id; ");
     $mysensors2->execute(array($id));
-    //$mysensors2->execute($id);
     $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
@@ -156,7 +154,6 @@ class myFunctions {
   */
   public static function getAllSensorsOfBoardWithDashboardWithTypeName($id) {
     $pdo = dbConfig::getInstance();
-    //$mysensors2 = $pdo->prepare("SELECT *, typeid as sensortypes.name FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.name AND onDashboard = 1 ORDER BY id");
     $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND onDashboard = 1 ORDER BY id");
     $mysensors2->execute(array($id));
     $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
@@ -184,14 +181,11 @@ class myFunctions {
       $pdo = dbConfig::getInstance();
       $mysensors = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM `sensorconfig`, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND sensortypes.name = 'GPS'");
       $mysensors->execute(array($boardid));
-      //var_dump($boardid);
       $SensorData = $mysensors->fetch(PDO::FETCH_ASSOC);
-      //var_dump($SensorData);
       if ($SensorData != false) {
         $myGps = $pdo->prepare("SELECT * FROM `sensordata` WHERE sensorid = ?");
         $myGps->execute(array($SensorData["id"]));
         $myGpsData = $myGps->fetchAll(PDO::FETCH_ASSOC);
-        //var_dump($myGpsData);
         return $myGpsData;
       } else {
         return 0;
@@ -204,7 +198,6 @@ class myFunctions {
   */
   public static function getSensorConfig($id) {
     $pdo = dbConfig::getInstance();
-    //$mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE id = ? AND onDashboard = 1 ORDER BY id LIMIT 1");
     $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE id = ? ORDER BY id LIMIT 1");
     $mysensors2->execute(array($id));
     $sensorsOfBoard = $mysensors2->fetch(PDO::FETCH_ASSOC);
@@ -230,10 +223,6 @@ class myFunctions {
     $sensortyps = $pdo->prepare("SELECT * FROM sensortypes ORDER BY id");
     $sensortyps->execute();
     $SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
-
-    //$sensortyps = $pdo->prepare("SELECT * FROM sensortypes ORDER BY id ");
-    //$resultsensortyps = $sensortyps->execute();
-    //var_dump($SensorData2);
     return $SensorData2;
   }
 

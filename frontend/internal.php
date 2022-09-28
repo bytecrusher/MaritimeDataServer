@@ -85,7 +85,6 @@ setInterval(function() {
     updateGauges();
 }, 30000);
 
-var gaugesSortableCounter = 0;
 </script>
 
   <div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
@@ -119,7 +118,9 @@ var gaugesSortableCounter = 0;
 
       <!-- Show dashboard -->
       <div class="container tab-pane active position-relative" id="dashboard" style="padding-left: 10px; padding-right: 10px;">
-      <div class="position-absolute" id="click_lockUnlock" style="top: -40px; right: 0px;" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false"><i class="bi bi-lock-fill" style="font-size:20px; color: #007bff"></i></div>
+      <div class="position-absolute" id="click_lockUnlock" style="top: -40px; right: 0px;" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
+        <i class="bi bi-lock-fill" style="font-size:20px; color: #007bff"></i>
+      </div>
 
         <div class="page-content page-container" id="page-content" style="--bs-gutter-x: 0rem; ">
         </div>
@@ -129,10 +130,10 @@ var gaugesSortableCounter = 0;
               if($singleRowmyboard->isOnDashboard() == 1) {
                 ?>
                   <div class='row d-flex justify-content-center'>
-                  <div class='col-lg-12 col-xl-12' style='padding-right: 0px; padding-left: 0px;'>
-                  <fieldset>
-                  <legend><?php echo $singleRowmyboard->getName() ?></legend>
-                  <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>'>
+                    <div class='col-lg-12 col-xl-12' style='padding-right: 0px; padding-left: 0px;'>
+                      <fieldset>
+                        <legend><?php echo $singleRowmyboard->getName() ?></legend>
+                          <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>'>
                 <?php
                 $boardOnlineStatus = false;
                 $mysensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
@@ -142,72 +143,85 @@ var gaugesSortableCounter = 0;
                   <?php
                 }
                 ?>
-                </ul></fieldset></div></div>
+                
                 <?php
-                foreach($mysensors2 as $singleRowmysensors) {
-                  $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);                    
-                  foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-                    $sensortype = myFunctions::getSensorType($singleRowmysensors['typid']);
-                    $sensConfig = myFunctions::getSensorConfig($singleRowmysensors['id']);
-                    for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
-              ?>
-                    <script>
-                      var $newdiv1 = $( "" + 
-                        "<li id='gauge" + "<?php echo $singleRowmysensors['id'] . "." . $i; ?>" + "' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light'>" + 
-                          "<div id='div_click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>" + 
-                            "<i id='click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>" +
-                            "<\/i>" + 
-                          "<\/div>" + 
-                          "<div style='height:30px;'>" + "<?php echo $singleRowmysensors['nameValue' . $i]; ?>" + " (" + "<?php echo $sensortype['siUnitVal' . $i]; ?>" + ")" + 
-                          "<\/div>" +
-                        "<\/li>" ); 
-                        gaugesSortableCounter++;
-                      $( "#gaugescontainer" + "<?php echo $singleRowmyboard->getId(); ?>" ).append( $newdiv1 );
+                if ($mysensors2 != null) {
+                  foreach($mysensors2 as $singleRowmysensors) {
+                    $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);                    
+                    foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
+                      $sensortype = myFunctions::getSensorType($singleRowmysensors['typid']);
+                      $sensConfig = myFunctions::getSensorConfig($singleRowmysensors['id']);
+                      for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
+                        if ($mysensors != null) {
+                          //echo("not null");
+                            ?>
+                            <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light'>
+                              <div id='div_click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
+                                <i id='click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
+                                </i>
+                              </div>
+                              <div style='height:30px;'><?php echo $singleRowmysensors['nameValue' . $i]; ?> (<?php echo $sensortype['siUnitVal' . $i]; ?>)
+                              </div>
+                            </li>
+                            <?php
+                        }
+                ?>
+                          
+                      <script>
+                        if (<?php echo sizeof($mysensors); ?> != null) {
 
-                    var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowmysensors['id'] . "." . $i; ?>"),
-                      {
-                        min: <?php echo $sensConfig['Value' . $i . 'GaugeMinValue'] ?>,
-                        max: <?php echo $sensConfig['Value' . $i . 'GaugeMaxValue'] ?>,
-                        dialStartAngle: 180,
-                        dialEndAngle: 0,
-                        value: '.', // so that "NaN" is displayed as the default value
-                        viewBox: "0 0 100 57",
-                        id: "<?php echo $singleRowmysensors['id'] . "." . $i; ?>",
-                        color: function(value) {
-                          if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowValue'] ?>) {
-                            return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowColor'] ?>';
-                          }else if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighValue'] ?>) {
-                            return '<?php echo $sensConfig['Value' . $i . 'GaugeNormalAreaColor'] ?>';
-                          }else {
-                            return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighColor'] ?>';
+                        var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowmysensors['id'] . "." . $i; ?>"),
+                          {
+                            min: <?php echo $sensConfig['Value' . $i . 'GaugeMinValue'] ?>,
+                            max: <?php echo $sensConfig['Value' . $i . 'GaugeMaxValue'] ?>,
+                            dialStartAngle: 180,
+                            dialEndAngle: 0,
+                            value: '.', // so that "NaN" is displayed as the default value
+                            viewBox: "0 0 100 57",
+                            id: "<?php echo $singleRowmysensors['id'] . "." . $i; ?>",
+                            color: function(value) {
+                              if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowValue'] ?>) {
+                                return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowColor'] ?>';
+                              }else if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighValue'] ?>) {
+                                return '<?php echo $sensConfig['Value' . $i . 'GaugeNormalAreaColor'] ?>';
+                              }else {
+                                return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighColor'] ?>';
+                              }
+                            },
                           }
-                        },
+                        );
+                        gaugesArrayHelper.push("<?php echo $singleRowmysensors['id'] . "." . $i; ?>");
+                        gaugesMap.set("<?php echo $singleRowmysensors['id'] . "." . $i; ?>", gauge_temp);
                       }
-                    );
-                    gaugesArrayHelper.push("<?php echo $singleRowmysensors['id'] . "." . $i; ?>");
-                    gaugesMap.set("<?php echo $singleRowmysensors['id'] . "." . $i; ?>", gauge_temp);                    
+                      </script>
+                      <?php
+                    }
+                    ?>
+                    <script>
+                      SensorArrayHelper.push(<?php echo $singleRowmysensors['id']; ?>);
+                      var valuetopush = {};
+                      valuetopush["sensorId"] = "<?php echo $singleRowmysensors['id']; ?>";
+                      valuetopush["typid"] = "<?php echo $singleRowmysensors['typid']; ?>";
+                      valuetopush["NrOfSensors"] = "<?php echo $singleRowmysensors['typid']; ?>";
+                      valuetopush["NameOfSensors"] = "<?php echo $singleRowmysensors['nameValue1']; ?>";
+                      gaugesArrayHelperbig.push(valuetopush);
                     </script>
-                    <?php
-                  }
-                  ?>
-                  <script>
-                    SensorArrayHelper.push(<?php echo $singleRowmysensors['id']; ?>);
-                    var valuetopush = {};
-                    valuetopush["sensorId"] = "<?php echo $singleRowmysensors['id']; ?>";
-                    valuetopush["typid"] = "<?php echo $singleRowmysensors['typid']; ?>";
-                    valuetopush["NrOfSensors"] = "<?php echo $singleRowmysensors['typid']; ?>";
-                    valuetopush["NameOfSensors"] = "<?php echo $singleRowmysensors['nameValue1']; ?>";
-                    gaugesArrayHelperbig.push(valuetopush);
-                  </script>
-                    <?php
+                      <?php
+                    }
                   }
                 }
                 ?>
-                <?php
+                </ul>
+              </fieldset>
+            </div>
+          </div>
+        <?php
               }
             }
             ?>
-          </div>
+            <!--/div-->
+          <!--/div-->
+        </div>
       </div>
 
       <!-- Show temperatures as chart -->
@@ -303,26 +317,30 @@ var gaugesSortableCounter = 0;
           $('.multi-collapse').toggle();
           $('.gauge-container').css("cursor", "auto");
           $(".card-block").sortable("disable");
-          console.log("locked");
-          $(".gauge-container").each(function(index) {
-            $( this ).attr("data-id", index);
-            // TODO: save data-id into db DashboardOrdnerNr
-            console.log("new order nr: " + index + ", old ordner nr: " + $( this ).attr("data-id"));
-          });
+          //console.log("locked");
+
+          wrapper = $('.card-block');
+          for (let i=0; i<wrapper.length; i++) {
+            $("#" + wrapper[i].id + " .gauge-container").each(function(index) {
+              console.log("new order nr: " + index + ", old ordner nr: " + $( this ).attr("data-id"));
+              $( this ).attr("data-id", index);
+              // TODO: save data-id into db DashboardOrdnerNr
+            });
+          }
         }
 
       });
 
+      // TODO: Bug!!! on more than one board, the sensors will be added to everyone.
       $( document ).ready(function() {
         $('.gauge-container').css("cursor", "auto");
-
-        // sort Gauges by data-id (DashboardOrdnerNr)
-        var $wrapper = $('.card-block');
-        $wrapper.find('.gauge-container').sort(function (a, b) {
-            return +a.dataset.id - +b.dataset.id;
-        })
-        .appendTo( $wrapper );
-
+        var wrapper = $('.card-block');
+        for (let i=0; i<wrapper.length; i++) {
+          var wrapper2 = $('#' + wrapper[i].id);
+          wrapper2.find('.gauge-container').sort(function (a, b) {
+          return +a.dataset.id - +b.dataset.id;
+          }).appendTo( wrapper2 );
+        }
       });
       
     (function () {

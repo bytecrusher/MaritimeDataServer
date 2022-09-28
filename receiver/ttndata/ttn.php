@@ -30,9 +30,10 @@
 // load configuration data
 require_once(dirname(__FILE__, 3) . '/configuration.php');
 require_once(dirname(__FILE__, 3) . "/frontend/func/myFunctions.func.php");
+require_once(dirname(__FILE__, 3) . "/frontend/func/dbConfig.func.php");
 
-$config  = new configuration();
-//define('WRITE_LOG', true);
+$pdo2 = dbConfig::getInstance();
+$config = new configuration();
 
 $ttn_post = file('php://input');
 $data = null;
@@ -40,6 +41,7 @@ if(sizeof($ttn_post) > 0) {
     $data = json_decode($ttn_post[0]);
     $sensor_raw_payload = null;
     if(($data != null) && ($data->uplink_message->decoded_payload != null)) {
+        //$payloadversion = $data->uplink_message->decoded_payload->payloadversion;
         $sensor_temperature = $sensor_humidity = $sensor_battery = 0;       // define Variables
 
         // Sensor Data
@@ -47,7 +49,6 @@ if(sizeof($ttn_post) > 0) {
         $sensor_altitude = $data->uplink_message->decoded_payload->altitude;
         $frame_counter = $data->uplink_message->decoded_payload->counter;
         $sensor_dewpoint = $data->uplink_message->decoded_payload->dewpoint;
-        //$sensor_hdop = $data->uplink_message->decoded_payload->hdop;
         $sensor_humidity = $data->uplink_message->decoded_payload->humidity;
         if(isset($data->uplink_message->decoded_payload->Hum_SHT)) {
           $sensor_humidity = $data->uplink_message->decoded_payload->Hum_SHT;
@@ -107,8 +108,18 @@ if(sizeof($ttn_post) > 0) {
 
     // TODO: insert data into 'sensordata' (first get Board-ID by TTN Appid and Devid)
     $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_id);
-
+    
+    // if board not exist, create it.
+    if (!$singleRowBoardIdbyTTN) {
+        myFunctions::addBoardByTTN($ttn_app_id, $ttn_dev_id);
+        echo("new board created.");
+        $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_id);
+    }
+    
     $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
+    if (!$allSensorsOfBoard) {
+      // TODO create sensors
+    }
 
     $url = $config::$baseurl . '/receiver/receivejson.php';
     $ch = curl_init($url);
@@ -122,13 +133,14 @@ if(sizeof($ttn_post) > 0) {
 
     $dateNow = date("d.m.Y");
     $timeNow = date("H:i:s");   
+
     $sensor1 = $sensor2 = $sensor3 = null;
     $sensors = array();
 
     foreach($allSensorsOfBoard AS $eachsensor) {
       $sensor1 = null;
       if ($eachsensor['ttn_payload_id'] != null) {
-        // TODO check, if boardid is the rifht var. I think it should be typid.
+        // TODO check, if boardid is the right var. I think it should be typid.
         if ($eachsensor['boardid'] == "DS18B20") {
           $sensor1 = array(
             "typid" => $eachsensor['typid'],

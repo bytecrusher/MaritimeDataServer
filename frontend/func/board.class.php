@@ -157,7 +157,6 @@ class board //implements JsonSerializable
     */
     public function getAllSensorsOfBoardWithDashboardWithTypeName() {
         $pdo = dbConfig::getInstance();
-        //$mysensors2 = $pdo->prepare("SELECT *, typeid as sensortypes.name FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.name AND onDashboard = 1 ORDER BY id");
         $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND onDashboard = 1 ORDER BY id");
         $mysensors2->execute(array($this->boardobj->id));
         $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
