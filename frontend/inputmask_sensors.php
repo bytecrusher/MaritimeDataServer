@@ -16,10 +16,10 @@
 
   $user = user::check_user();
 
-  if (isset($_POST['submit_inputmaske_sensors'])) {
+  if (isset($_POST['submit_inputmask_sensors'])) {
     if (!isset($_POST['modal'])) {
       $updateBoardReturn = dbUpdateData::updateSensor($_POST);
-      $newURL = "inputmaske_boards.php?id=" . $_POST['macaddress'];
+      $newURL = "inputmask_boards.php?id=" . $_POST['macaddress'];
       header('Location: '.$newURL);
       die();      
     } else {
@@ -49,7 +49,7 @@
 ?>
 </div>
 
-<form method='post' action='inputmaske_sensors.php#confSensors' class='form-horizontal'>
+<form method='post' action='inputmask_sensors.php#confSensors' class='form-horizontal'>
 <div class="container main-container">
 <div class="modal-body">
   
@@ -233,7 +233,7 @@
   <?php
     if (!isset($_GET['modal'])) {
     ?>
-      <a class='col col-sm-2 m-1 btn btn-primary' href='inputmaske_boards.php?id=<?php echo $_GET['boardid'] ?>' role='button'>Back</a>
+      <a class='col col-sm-2 m-1 btn btn-primary' href='inputmask_boards.php?id=<?php echo $_GET['boardid'] ?>' role='button'>Back</a>
     <?php
     } else {
     ?>
@@ -241,7 +241,7 @@
     <?php
     }
   ?>
-  <input type='submit' class='btn btn-primary' id='submit_inputmaske_sensors' name='submit_inputmaske_sensors' value='Save' >
+  <input type='submit' class='btn btn-primary' id='submit_inputmask_sensors' name='submit_inputmask_sensors' value='Save' >
 </div>
 </div>
 </form>

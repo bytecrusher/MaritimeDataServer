@@ -137,7 +137,7 @@
         <div class='row'>
           <div class="col-sm-offset-2 col-sm-10">
             <a class='mr-2 btn btn-primary' href='settings.php#confBoards' role='button'>Back</a>
-            <input type='submit' class="btn btn-primary" id='submit_inputmaske_boards' name='submit_inputmaske_boards' value='Save'>
+            <input type='submit' class="btn btn-primary" id='submit_inputmask_boards' name='submit_inputmask_boards' value='Save'>
           </div>
         </div>
       </form>
@@ -174,7 +174,7 @@
           {
             echo "<td><input type='checkbox' id='onDashboard' name='onDashboard' value='1' disabled></td>";
           }
-          echo "<td><a href=\"inputmaske_sensors.php?id=" . $singleRowMysensor['id'] . "&boardid=" . $_GET['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
+          echo "<td><a href=\"inputmask_sensors.php?id=" . $singleRowMysensor['id'] . "&boardid=" . $_GET['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
           echo "</tr>";
         }
       ?>

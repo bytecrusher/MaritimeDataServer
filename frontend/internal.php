@@ -290,7 +290,7 @@ setInterval(function() {
   <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" role="dialog"  aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
-        <!-- definition in "inputmaske_sensors.php"-->
+        <!-- definition in "inputmask_sensors.php"-->
       </div>
     </div>
   </div>
@@ -376,7 +376,7 @@ setInterval(function() {
         let newStr = str.replace('click_settings', '');
         const myArray = newStr.split(".");
         $.ajax({
-          url: 'inputmaske_sensors.php?id=' + myArray[0] + '&channel=' + myArray[1] + '&modal=true'
+          url: 'inputmask_sensors.php?id=' + myArray[0] + '&channel=' + myArray[1] + '&modal=true'
         }).done(function(response) {
           $('.modal-content').html(response);
         });

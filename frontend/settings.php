@@ -96,15 +96,15 @@ if(isset($_GET['save'])) {
  		 	$success_msg = $updateUserReturn;
  	 	}
 	}
-	else if($save == 'serverSetting') {
+	//else if($save == 'serverSetting') {
 		// save config file.
-		var_dump($_POST);
-		echo("save config");
-	}
+		//var_dump($_POST);
+		//echo("save config");
+	//}
 }
 
 // write passed data back to the database
- if (isset($_POST['submit_inputmaske_boards']))	// Submit-Button of the input mask was pressed
+ if (isset($_POST['submit_inputmask_boards']))	// Submit-Button of the input mask was pressed
  {
 	 $updateBoardReturn = dbUpdateData::updateBoard($_POST);
 	 if (!$updateBoardReturn) {
@@ -338,7 +338,7 @@ if(isset($_GET['save'])) {
 						} else {
 							echo "<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" .$singleRowMyboard['id']. "' disabled name='alarmOnUnavailable' value='1' style='margin-left: 1.25rem'></td>";
 						}
-						echo "<td><a href=\"inputmaske_boards.php?id=" . $singleRowMyboard['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
+						echo "<td><a href=\"inputmask_boards.php?id=" . $singleRowMyboard['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
 						echo "</tr>";
 					}
 					?>
