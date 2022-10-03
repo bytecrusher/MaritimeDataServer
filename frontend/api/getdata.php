@@ -2,13 +2,21 @@
 // Get data from DB for display in JS.
 require_once("../func/myFunctions.func.php");
 
+//require_once(dirname(__FILE__, 2) . '/../../configuration.php');
+$config  = new configuration();
+$varDemoMode = $config::$demoMode;
+
 $varIdent = $_POST['identifier'];
 $varToken = $_POST['securitytoken'];
 $vardata = $_POST['data'];
 $varsensorId = $_POST['sensorId'];
 $varNrOfValues = $_POST['NrOfValues'];
 
-$maxtimeout = strtotime("-15 Minutes");
+if ($varDemoMode == true) {
+    $maxtimeout = strtotime("-15 Years");
+} else {
+    $maxtimeout = strtotime("-15 Minutes");
+}
 
 if (isset($varIdent) && isset($varToken) && isset($vardata)) {
     if ( (!empty($varIdent)) && (!empty($varToken) ) && (!empty($vardata))) {

@@ -6,8 +6,10 @@
  * @license: TBD
  */
 
-include_once("func/dbConfig.func.php");
-require_once("func/user.class.php");
+//include_once("func/dbConfig.func.php");
+include_once(dirname(__FILE__)."/dbConfig.func.php");
+//require_once("func/user.class.php");
+require_once(dirname(__FILE__)."/user.class.php");
 
 class dbUpdateData {
 
@@ -50,8 +52,8 @@ class dbUpdateData {
     $result = null;
     foreach($post['active'] as $i=>$array_wert)
 		{
-			$statement = $pdo->prepare("UPDATE users SET active =? WHERE id =?");
-			$result = $statement->execute(array($post['active'][$i], $i ));
+			$statement = $pdo->prepare("UPDATE users SET active =?, usergroup_admin=? WHERE id =?");
+			$result = $statement->execute(array($post['active'][$i], $post['usergroup_admin'][$i], $i ));
 		}
 		if ($result) {
 			return "Users updated.";
@@ -110,12 +112,27 @@ class dbUpdateData {
       return false;
    	 }
   }
+
   public static function updateSensor($post) {
     $pdo = dbConfig::getInstance();
     $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, typid=?, locationOfMeasurement=?, nameValue1=?, nameValue2=?, nameValue3=?, nameValue4=?, NrOfUsedSensors=?, onDashboard=? WHERE id=?");
   	$statement2->execute(array($post['name'], $post['description'], $post['typid'], $post['locationOfMeasurement'], $post['nameValue1'], $post['nameValue2'], $post['nameValue3'], $post['nameValue4'], $post['NrOfUsedSensors'], $post['onDashboard'], $post['id']));
   	if ($statement2) {
       return "Sensor changes successfully saved.";
+  	 } else {
+      return false;
+  	 }
+  }
+
+  public static function updateSensorOrderNumber($post) {
+    $pdo = dbConfig::getInstance();
+    if ($post['channel'] != null) {
+      $statement2 = $pdo->prepare("UPDATE sensorconfig SET Value" . $post['channel'] . "DashboardOrdnerNr=? WHERE id=?");
+  	  $statement2->execute(array($post['ordnernumber'], $post['id']));
+    }
+    
+  	if ($statement2) {
+      return "Sensor order successfully saved.";
   	 } else {
       return false;
   	 }

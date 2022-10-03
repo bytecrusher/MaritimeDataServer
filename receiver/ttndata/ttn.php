@@ -4,6 +4,8 @@
  *  Created 2020-NOV-27
  *  Update 2021-OCT-11
  *  https://wwww.aeq-web.com
+ * 
+ * Mofified by Guntmar Hoeche
  */
 
 /*
@@ -119,6 +121,22 @@ if(sizeof($ttn_post) > 0) {
     $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
     if (!$allSensorsOfBoard) {
       // TODO create sensors
+      //myFunctions::addSensorConfig($singleRowBoardIdbyTTN, $typId);
+
+    } else {
+      //var_dump($allSensorsOfBoard);
+
+      if(array_search('GPS', array_column($allSensorsOfBoard, 'boardid')) !== false) {
+        echo 'value is in multidim array';
+      }
+      else {
+          echo 'value is not in multidim array';
+          myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
+      }
+
+      if (in_array(array('p', 'h'), $allSensorsOfBoard)) {
+        echo "'ph' was found\n";
+      } 
     }
 
     $url = $config::$baseurl . '/receiver/receivejson.php';
@@ -139,6 +157,7 @@ if(sizeof($ttn_post) > 0) {
 
     foreach($allSensorsOfBoard AS $eachsensor) {
       $sensor1 = null;
+      //write_to_log($eachsensor['boardid']);
       if ($eachsensor['ttn_payload_id'] != null) {
         // TODO check, if boardid is the right var. I think it should be typid.
         if ($eachsensor['boardid'] == "DS18B20") {
@@ -231,7 +250,7 @@ function write_to_log($text)
     $format = "csv"; // Possibilities: csv and txt
     $monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
     $monat = date("n");
-    $jahr = date("y");
+    $jahr = date("yy");
     $dateiname = "./logs/log_" . $monate[$monat] . "_$jahr.$format";
     $header = array("Datum", "IP", "Seite", "Browser");
     $infos = array($text);

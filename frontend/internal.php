@@ -92,9 +92,12 @@ setInterval(function() {
       <h1>Welcome <?php echo htmlentities($currentUser->getFirstname()); ?></h1>
     </div>
   </div>
-  <div class="main-container">
 
+<div class="main-container">
   <div class="container" style="padding: 0px">
+    <div id="alert-container">
+    </div>
+
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" role="tablist">
       <li class="nav-item">
@@ -102,9 +105,6 @@ setInterval(function() {
       </li>
       <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#temperatures" id='hreftemperatures' style="padding-right: 8px;padding-left: 8px;">Charts</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#allSensorsTable" id='hrefallSensorsTable' style="padding-right: 8px;padding-left: 8px;">Table</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#boards" id='hrefboards' style="padding-right: 8px;padding-left: 8px;">Boards</a>
@@ -153,7 +153,6 @@ setInterval(function() {
                       $sensConfig = myFunctions::getSensorConfig($singleRowmysensors['id']);
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
                         if ($mysensors != null) {
-                          //echo("not null");
                             ?>
                             <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light'>
                               <div id='div_click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
@@ -219,8 +218,6 @@ setInterval(function() {
               }
             }
             ?>
-            <!--/div-->
-          <!--/div-->
         </div>
       </div>
 
@@ -237,8 +234,10 @@ setInterval(function() {
       <div class="row mt-2">
           <?php
           // Show Online / Offline
-          $maxtimeout = strtotime("-15 Minutes"); // For show Online / Offline
-            foreach($boardObjsArray as $singleRowmyboard) {
+          // TODO if demo mode == true, then no limit.
+          // $maxtimeout = strtotime("-15 Minutes"); // For show Online / Offline
+          $maxtimeout = strtotime("-10 Years");
+          foreach($boardObjsArray as $singleRowmyboard) {
             $mysensors2 = myFunctions::getAllSensorsOfBoardold($singleRowmyboard->getId());
             $boardOnlineStatus = false;
             foreach($mysensors2 as $singleRowmysensors) {
@@ -257,28 +256,20 @@ setInterval(function() {
             <div class='container'>
               <?php
               if ($boardOnlineStatus) {
-                echo "<span class='badge bg-success mr-2' style='width: 55px;'>Online</span>";
-              } else {
-                echo "<span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>";
-              }
-              echo "<label class='control-label' style='padding-left: 5px'>" . $singleRowmyboard->getName() . " (" . $singleRowmyboard->getMacaddress() . ")</label>";
               ?>
+                <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
+              <?php
+              } else {
+              ?>
+                <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
+              <?php
+              }
+              ?>
+                <label class='control-label' style='padding-left: 5px'><?php echo($singleRowmyboard->getName()) ?> (<?php echo($singleRowmyboard->getMacaddress()) ?>)</label>
             </div>
           <?php
           }
           ?>
-        </div>
-      </div>
-
-      <!-- Show Sensors as table -->
-      <div class="container tab-pane fade pl-0" id="allSensorsTable">
-        <div class="row mt-2">
-        <div class="container table-responsive">
-            All Sensor Values as a table
-          <?php
-            include("./../receiver/ttndata/index.php");
-          ?>
-          </div>
         </div>
       </div>
 
@@ -295,15 +286,16 @@ setInterval(function() {
     </div>
   </div>
 
-<!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" role="dialog"  aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <!-- definition in "inputmaske_sensors.php"-->
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <!-- definition in "inputmaske_sensors.php"-->
+      </div>
     </div>
   </div>
 </div>
-</div>
+
     <script>
       $('#click_lockUnlock').click(function() {
         $("i", this).toggleClass("bi bi-lock-fill bi bi-unlock-fill");
@@ -324,7 +316,42 @@ setInterval(function() {
             $("#" + wrapper[i].id + " .gauge-container").each(function(index) {
               console.log("new order nr: " + index + ", old ordner nr: " + $( this ).attr("data-id"));
               $( this ).attr("data-id", index);
-              // TODO: save data-id into db DashboardOrdnerNr
+              var tempnumber = $( this ).attr("id").replace('gauge', '');
+              var SensorIdChannel = tempnumber.split('.');
+              $.ajax({
+                method: "POST",
+                url: "api/updateData.php",
+                data: { update: "sensorOrdnerNumber",
+                    channel: SensorIdChannel[1],
+                    ordnernumber: $( this ).attr("data-id"),
+                    id: SensorIdChannel[0] }
+              })
+                .done(function( response ) {
+                  /*console.log("done");
+                  g = document.createElement('div');
+                  g.setAttribute("class", "alert alert-primary alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+                  g.setAttribute("role", "alert");
+                  g.innerHTML = "Sensor Order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                  const bsAlert = new bootstrap.Alert(g);
+                  // Dismiss time out
+                  setTimeout(() => {
+                    bsAlert.close();
+                  }, 2000);
+                  $("#alert-container").append(g);*/
+                })
+                .fail(function( response ) {
+                  console.log("fail");
+                  g = document.createElement('div');
+                  g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+                  g.setAttribute("role", "alert");
+                  g.innerHTML = "Sensor Order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                  const bsAlert = new bootstrap.Alert(g);
+                  // Dismiss time out
+                  setTimeout(() => {
+                    bsAlert.close();
+                  }, 2000);
+                  $("#alert-container").append(g);
+                });
             });
           }
         }

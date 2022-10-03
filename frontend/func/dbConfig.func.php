@@ -15,8 +15,6 @@ class dbConfig {
   private function __construct ()
   {
     $config  = new configuration();
-    //var_dump(configuration::$api_key);
-    //var_dump($config::$api_key);
 
     try {
       self::$pdo = new PDO("mysql:host=" . $config::$db_host . ";dbname=" . $config::$db_name, $config::$db_user, $config::$db_password);

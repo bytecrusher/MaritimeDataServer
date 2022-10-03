@@ -10,6 +10,12 @@
  include_once("dbConfig.func.php");
  require_once(dirname(__FILE__).'/../../configuration.php');
 
+ class sensorTyp
+ {
+    public $id;
+    public $name;
+ }
+
 class myFunctions {
 
 	/**
@@ -194,7 +200,7 @@ class myFunctions {
   }
 
   /*
-  *
+  * Get Config Object if a given sensorconfig id
   */
   public static function getSensorConfig($id) {
     $pdo = dbConfig::getInstance();
@@ -202,6 +208,37 @@ class myFunctions {
     $mysensors2->execute(array($id));
     $sensorsOfBoard = $mysensors2->fetch(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
+  }
+
+  /*
+  * Add SensorConfig Object if a given board id
+  */
+  public static function addSensorConfig($boardid, $typIdName, $sensorName) {
+    $pdo = dbConfig::getInstance();
+
+    $mysensorTypId = $pdo->query('SELECT id, name FROM sensortypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
+    //var_dump($mysensorTypId->id);
+
+    // Define Default values:
+    if ($sensorName == "GPS") {
+      $defaultValues['nameValue1'] = "Lat";
+      $defaultValues['nameValue2'] = "Lon";
+      $defaultValues['nameValue3'] = "Alt";
+      $defaultValues['nameValue4'] = "Spd";
+      //$defaultValues['ttn_payload_id'] = 1;
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 4;
+    }
+
+    $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name, nameValue1, nameValue2, nameValue3, nameValue4, ttn_payload_id, NrOfUsedSensors) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $statement->execute(array($boardid, $mysensorTypId->id, $sensorName, $defaultValues['nameValue1'], $defaultValues['nameValue2'], $defaultValues['nameValue3'], $defaultValues['nameValue4'], $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors']));     // ToDo: change default Owner User to one of the admins
+    $neue_id = $pdo->lastInsertId();
+    //____________
+
+
+    //$statement->execute(array($id));
+    //$sensorsOfBoard = $statement->fetch(PDO::FETCH_ASSOC);
+    return $neue_id;
   }
 
   /*

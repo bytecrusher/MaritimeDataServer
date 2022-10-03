@@ -12,6 +12,9 @@ require_once("func/user.class.php");
 include("common/header.inc.php");
 require_once("func/dbUpdateData.php");
 
+$config  = new configuration();
+$varDemoMode = $config::$demoMode;
+
 //Check that the user is logged in
 if (isset($_SESSION['userobj'])) {
 	$userobj = unserialize($_SESSION['userobj']);
@@ -55,7 +58,6 @@ if(isset($_GET['save'])) {
 	 		 	$success_msg = $updateUserPasswordReturn;
 	 	 	}
 		}
-
 	} else if($save == 'password') {
 		$passwordAlt = $_POST['passwordOld'];
 		$passwordNew = trim($_POST['passwordNew']);
@@ -86,7 +88,6 @@ if(isset($_GET['save'])) {
  		 	$success_msg = $updateUserReturn;
  	 	}
 	}
-	
 	else if($save == 'users') {
 		$updateUserReturn = dbUpdateData::updateUserStatus($_POST);
  	 	if (!$updateUserReturn) {
@@ -94,6 +95,11 @@ if(isset($_GET['save'])) {
  	 	} else {
  		 	$success_msg = $updateUserReturn;
  	 	}
+	}
+	else if($save == 'serverSetting') {
+		// save config file.
+		var_dump($_POST);
+		echo("save config");
 	}
 }
 
@@ -341,6 +347,7 @@ if(isset($_GET['save'])) {
 			</div>
 
 			<!-- Configure the user's dashboard -->
+			<!-- TODO add function, for adding a board (with MAC or TTN ID to the user) -->
 			<div role="tabpanel" class="tab-pane" id="confDashboard">
 				<div class="panel panel-default">
 					<br>
@@ -373,7 +380,7 @@ if(isset($_GET['save'])) {
 					<div class="panel panel-default">
 					<table class="table">
 					<tr>
-						<th>#</th><th>Active</th><th>First name</th><th>Last name</th><th>E-Mail</th>
+						<th>#</th><th>Active</th><th>First name</th><th>Last name</th><th>E-Mail</th><th>Admin</th>
 					</tr>
 					<?php
 					if(($userobj->getUserGroupAdmin() != false) ) {
@@ -403,6 +410,22 @@ if(isset($_GET['save'])) {
 								<td><?php echo $singleRowUser['firstname'] ?></td>
 								<td><?php echo $singleRowUser['lastname'] ?></td>
 								<td><a href="mailto:<?php echo $singleRowUser['email'] ?>"><?php echo $singleRowUser['email'] ?></a></td>
+								<?php
+								if(isset($singleRowUser['usergroup_admin']) && $singleRowUser['usergroup_admin'] == '1')
+								{
+								?>
+									<td><input type='hidden' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='0' checked=<?php echo $singleRowUser['usergroup_admin'] ?>>
+									<input type='checkbox' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='1' checked=<?php echo $singleRowUser['usergroup_admin'] ?>></td>
+								<?php
+								}
+								else
+								{
+								?>
+									<td><input type='hidden' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='0'>
+									<input type='checkbox' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='1'></td>
+								<?php
+								}
+								?>
 							</tr>
 							<?php
 						}
@@ -420,19 +443,25 @@ if(isset($_GET['save'])) {
 
 			<!-- Modification of Server Setting -->
 			<div role="tabpanel" class="tab-pane" id="serverSetting">
-				<br>
-				<p>To change Server Setting.</p>
 				<form action="?save=serverSetting" method="post" class="form-horizontal">
-					<div class="panel panel-default">
-						<table class="table">
-							<tr>
-								<th>#</th><th>Active</th><th>First name</th><th>Last name</th><th>E-Mail</th>
-							</tr>
-						</table>
+					<div class="panel panel-default p-2">
+						<?php
+							if ($varDemoMode == true) {
+							?>
+								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1' disabled>   <label for="demoMode">Demo mode (tbd)</label>
+							<?php
+							} else {
+							?>
+								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1' disabled>   <label for="demoMode">Demo mode (tbd)</label>
+							<?php
+							}
+						?>
 					</div>
 					<div class="form-group">
 						<div class="col-sm-offset-2 col-sm-10">
-							<button type="submit" class="btn btn-primary">Save</button>
+							<button type="submit" class="btn btn-primary" disabled>Save</button>
 						</div>
 					</div>
 				</form>

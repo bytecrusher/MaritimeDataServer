@@ -73,12 +73,12 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN app id</span>
-          <input type="text" class="form-control" id='ttn_app_id' name='ttn_app_id' value='<?=$row['ttn_app_id'];?>' pattern="^[_a-z0-9]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
+          <input type="text" class="form-control" id='ttn_app_id' name='ttn_app_id' value='<?=$row['ttn_app_id'];?>' pattern="^[_A-Za-z0-9]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN dev id</span>
-          <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$row['ttn_dev_id'];?>' pattern="^[_a-z0-9]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
+          <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$row['ttn_dev_id'];?>' pattern="^[_A-Za-z0-9]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
         </div>
 
         <div class="input-group mb-3">

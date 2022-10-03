@@ -34,6 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $macaddress = test_input($boardData['macaddress']);
                 $macaddressid = check_macadresse($macaddress, $pdo2);
                 foreach ($sensors as $key => &$sensor) {
+                    //write_to_log($sensor['sensorId']);
                     $sensorid = null;
                     if ($sensor != null) {
                         $mysensorid = $owsensorAddress = null;

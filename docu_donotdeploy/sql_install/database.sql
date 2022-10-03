@@ -60,6 +60,28 @@ CREATE TABLE `boardtype` (
 -- --------------------------------------------------------
 
 --
+-- Tabellenstruktur für Tabelle `ttnDataLoraBoatMonitor`
+--
+
+CREATE TABLE `ttnDataLoraBoatMonitor` (
+  `id` int(11) NOT NULL,
+  `datetime` datetime NOT NULL,
+  `app_id` text NOT NULL,
+  `dev_id` text NOT NULL,
+  `ttn_timestamp` text NOT NULL,
+  `gtw_id` text NOT NULL,
+  `gtw_rssi` float NOT NULL,
+  `gtw_snr` float NOT NULL,
+  `dev_raw_payload` text NOT NULL,
+  `dev_value_1` float NOT NULL,
+  `dev_value_2` float NOT NULL,
+  `dev_value_3` float NOT NULL,
+  `dev_value_4` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Tabellenstruktur für Tabelle `securitytokens`
 --
 
@@ -89,37 +111,37 @@ CREATE TABLE `sensorconfig` (
   `Value1GaugeMinValue` int(11) NOT NULL DEFAULT 0,
   `Value1GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
   `Value1GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value1GaugeRedAreaLowColor` text NOT NULL,
+  `Value1GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
   `Value1GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value1GaugeRedAreaHighColor` text NOT NULL,
-  `Value1GaugeNormalAreaColor` text NOT NULL,
+  `Value1GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
+  `Value1GaugeNormalAreaColor` text NOT NULL DEFAULT 'green',
   `Value1DashboardOrdnerNr` int(11) NOT NULL,
   `nameValue2` varchar(10) DEFAULT NULL,
   `Value2GaugeMinValue` int(11) NOT NULL DEFAULT 0,
   `Value2GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
   `Value2GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value2GaugeRedAreaLowColor` text NOT NULL,
+  `Value2GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
   `Value2GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value2GaugeRedAreaHighColor` text NOT NULL,
-  `Value2GaugeNormalAreaColor` text NOT NULL,
+  `Value2GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
+  `Value2GaugeNormalAreaColor` text NOT NULL DEFAULT 'green',
   `Value2DashboardOrdnerNr` int(11) NOT NULL,
   `nameValue3` varchar(10) DEFAULT NULL,
   `Value3GaugeMinValue` int(11) NOT NULL DEFAULT 0,
   `Value3GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
   `Value3GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value3GaugeRedAreaLowColor` text NOT NULL,
+  `Value3GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
   `Value3GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value3GaugeRedAreaHighColor` text NOT NULL,
-  `Value3GaugeNormalAreaColor` text NOT NULL,
+  `Value3GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
+  `Value3GaugeNormalAreaColor` text NOT NULL DEFAULT 'greed',
   `Value3DashboardOrdnerNr` int(11) NOT NULL,
   `nameValue4` varchar(10) DEFAULT NULL,
   `Value4GaugeMinValue` int(11) NOT NULL DEFAULT 0,
   `Value4GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
   `Value4GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value4GaugeRedAreaLowColor` text NOT NULL,
+  `Value4GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
   `Value4GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value4GaugeRedAreaHighColor` text NOT NULL,
-  `Value4GaugeNormalAreaColor` text NOT NULL,
+  `Value4GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
+  `Value4GaugeNormalAreaColor` text NOT NULL DEFAULT 'green',
   `Value4DashboardOrdnerNr` int(11) NOT NULL,
   `onDashboard` tinyint(1) DEFAULT 0,
   `ttn_payload_id` int(11) DEFAULT NULL COMMENT 'Position in der TTN Payload.',
@@ -245,6 +267,12 @@ ALTER TABLE `sensordata`
 ALTER TABLE `sensortypes`
   ADD PRIMARY KEY (`id`);
 
+  --
+-- Indizes für die Tabelle `ttnDataLoraBoatMonitor`
+--
+ALTER TABLE `ttnDataLoraBoatMonitor`
+  ADD PRIMARY KEY (`id`);
+
 --
 -- Indizes für die Tabelle `users`
 --
@@ -285,6 +313,12 @@ ALTER TABLE `sensorconfig`
 --
 ALTER TABLE `sensordata`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT für Tabelle `ttnDataLoraBoatMonitor`
+--
+ALTER TABLE `ttnDataLoraBoatMonitor`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `sensortypes`
