@@ -1,25 +1,17 @@
 <div class="container">
 </div>
-<!--link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ==" crossorigin=""/-->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" crossorigin=""/>
 
 <!-- Make sure you put this AFTER Leaflet's CSS -->
-<!--script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ==" crossorigin=""></script-->
 <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" crossorigin=""></script>
 <div class="container">
 </div>
 
 <div id="map"></div>
 
-<!--style>
-  #map { height: 400px; }
-</style-->
-
 <script>
 var map = null;
 var myboardidMarkerGroup = null;
-
-//var myIcons = null;
 
 $('#hrefmap').click( function (e) {
   $( document ).ready( function() {
@@ -30,7 +22,7 @@ $('#hrefmap').click( function (e) {
     }
     var layerControl = false;
 
-    map = L.map('map').setView([52.996477, 8.790839], 13);
+    map = L.map('map').setView([53.017585, 8.885182], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, // was 19
       attribution: '© OpenStreetMap'

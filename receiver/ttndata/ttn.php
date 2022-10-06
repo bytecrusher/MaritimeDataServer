@@ -113,30 +113,21 @@ if(sizeof($ttn_post) > 0) {
     
     // if board not exist, create it.
     if (!$singleRowBoardIdbyTTN) {
-        myFunctions::addBoardByTTN($ttn_app_id, $ttn_dev_id);
-        echo("new board created.");
+        $newId = myFunctions::addBoardByTTN($ttn_app_id, $ttn_dev_id);
+        //echo("new board created. BoardID: " . $newId);
+        write_to_log('new board created. BoardID: ' . $newId);
         $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_id);
     }
     
     $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
-    if (!$allSensorsOfBoard) {
-      // TODO create sensors
-      //myFunctions::addSensorConfig($singleRowBoardIdbyTTN, $typId);
+    if(array_search('GPS', array_column($allSensorsOfBoard, 'boardid')) === false) {
+      write_to_log('Sensor GPS does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
+      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
+    }
 
-    } else {
-      //var_dump($allSensorsOfBoard);
-
-      if(array_search('GPS', array_column($allSensorsOfBoard, 'boardid')) !== false) {
-        echo 'value is in multidim array';
-      }
-      else {
-          echo 'value is not in multidim array';
-          myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
-      }
-
-      if (in_array(array('p', 'h'), $allSensorsOfBoard)) {
-        echo "'ph' was found\n";
-      } 
+    if(array_search('Lora', array_column($allSensorsOfBoard, 'boardid')) === false) {
+      write_to_log('Sensor Lora does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
+      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "Lora", "Lora");
     }
 
     $url = $config::$baseurl . '/receiver/receivejson.php';
@@ -158,7 +149,7 @@ if(sizeof($ttn_post) > 0) {
     foreach($allSensorsOfBoard AS $eachsensor) {
       $sensor1 = null;
       //write_to_log($eachsensor['boardid']);
-      if ($eachsensor['ttn_payload_id'] != null) {
+      //if ($eachsensor['ttn_payload_id'] != null) {
         // TODO check, if boardid is the right var. I think it should be typid.
         if ($eachsensor['boardid'] == "DS18B20") {
           $sensor1 = array(
@@ -218,7 +209,7 @@ if(sizeof($ttn_post) > 0) {
           );
         }
         array_push($sensors, $sensor1);
-      }   
+      //}   
     }
     $payload = json_encode(array(
       "board" => $boardInfos,
@@ -248,12 +239,13 @@ if(sizeof($ttn_post) > 0) {
 function write_to_log($text)
   {
     $format = "csv"; // Possibilities: csv and txt
+    $datum_zeit = date("d.m.Y H:i:s");
     $monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
     $monat = date("n");
     $jahr = date("yy");
     $dateiname = "./logs/log_" . $monate[$monat] . "_$jahr.$format";
     $header = array("Datum", "IP", "Seite", "Browser");
-    $infos = array($text);
+    $infos = array($datum_zeit, $text);
     if ($format == "csv") {
       $eintrag2 = '"' . implode('", "' , $infos) . '"';
     } else {

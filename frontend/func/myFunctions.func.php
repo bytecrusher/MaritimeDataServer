@@ -95,6 +95,7 @@ class myFunctions {
     if ((!$ttn_app_id == null) && (!$ttn_dev_id == null)) {
       $pdo = dbConfig::getInstance();
       $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE ttn_app_id = '$ttn_app_id' AND ttn_dev_id = '$ttn_dev_id' ORDER BY id LIMIT 1");
+      //var_dump($myboards);
       $result = $myboards->execute();
       $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
       return $myboards2;
@@ -107,8 +108,9 @@ class myFunctions {
   public static function addBoardByTTN($ttn_app_id, $ttn_dev_id) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name, ttn_app_id, ttn_dev_id) VALUES (?, ?, ?, ?, ?)");
-    $statement->execute(array("fakeMacAddress" . $ttn_app_id, 3, "- new imported -", $ttn_app_id, $ttn_dev_id));     // ToDo: change default Owner User to one of the admins
+    $statement->execute(array("fakeMacAddress" . $ttn_dev_id, 3, "- new imported -", $ttn_app_id, $ttn_dev_id));     // ToDo: change default Owner User to one of the admins
     $neue_id = $pdo->lastInsertId();
+    return $neue_id;
   }
 
   /*
@@ -215,9 +217,8 @@ class myFunctions {
   */
   public static function addSensorConfig($boardid, $typIdName, $sensorName) {
     $pdo = dbConfig::getInstance();
-
+    $valuesDefined = false;
     $mysensorTypId = $pdo->query('SELECT id, name FROM sensortypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
-    //var_dump($mysensorTypId->id);
 
     // Define Default values:
     if ($sensorName == "GPS") {
@@ -225,20 +226,25 @@ class myFunctions {
       $defaultValues['nameValue2'] = "Lon";
       $defaultValues['nameValue3'] = "Alt";
       $defaultValues['nameValue4'] = "Spd";
-      //$defaultValues['ttn_payload_id'] = 1;
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
+      $valuesDefined = true;
+    } elseif ($sensorName == "Lora") {
+      $defaultValues['nameValue1'] = "Gateway";
+      $defaultValues['nameValue2'] = "Empfang";
+      $defaultValues['nameValue3'] = null;
+      $defaultValues['nameValue4'] = null;
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 2;
+      $valuesDefined = true;
     }
 
-    $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name, nameValue1, nameValue2, nameValue3, nameValue4, ttn_payload_id, NrOfUsedSensors) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $statement->execute(array($boardid, $mysensorTypId->id, $sensorName, $defaultValues['nameValue1'], $defaultValues['nameValue2'], $defaultValues['nameValue3'], $defaultValues['nameValue4'], $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors']));     // ToDo: change default Owner User to one of the admins
-    $neue_id = $pdo->lastInsertId();
-    //____________
-
-
-    //$statement->execute(array($id));
-    //$sensorsOfBoard = $statement->fetch(PDO::FETCH_ASSOC);
-    return $neue_id;
+    if ($valuesDefined == true) {
+      $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name, nameValue1, nameValue2, nameValue3, nameValue4, ttn_payload_id, NrOfUsedSensors) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      $statement->execute(array($boardid, $mysensorTypId->id, $sensorName, $defaultValues['nameValue1'], $defaultValues['nameValue2'], $defaultValues['nameValue3'], $defaultValues['nameValue4'], $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors']));     // ToDo: change default Owner User to one of the admins
+      $neue_id = $pdo->lastInsertId();
+      return $neue_id;
+    }
   }
 
   /*

@@ -237,18 +237,22 @@ setInterval(function() {
           // TODO if demo mode == true, then no limit.
           // $maxtimeout = strtotime("-15 Minutes"); // For show Online / Offline
           $maxtimeout = strtotime("-10 Years");
-          foreach($boardObjsArray as $singleRowmyboard) {
-            $mysensors2 = myFunctions::getAllSensorsOfBoardold($singleRowmyboard->getId());
+          foreach($boardObjsArray as $singleBoardObj) {
+            $transmissionpath = 0;
+            //$mysensors2 = myFunctions::getAllSensorsOfBoardold($singleBoardObj->getId());
+            $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
             $boardOnlineStatus = false;
             foreach($mysensors2 as $singleRowmysensors) {
+              //var_dump($singleRowmysensors);
               $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);
               foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
+                $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
                 $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
                 if ($dbtimestamp > $maxtimeout) {
-                  $deviceIsOnline[$singleRowmyboard->getId()] = (bool)true;
+                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
                   $boardOnlineStatus = true;
                 } else {
-                  $deviceIsOnline[$singleRowmyboard->getId()] = (bool)false;
+                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
                 }
               }
             }
@@ -265,7 +269,24 @@ setInterval(function() {
               <?php
               }
               ?>
-                <label class='control-label' style='padding-left: 5px'><?php echo($singleRowmyboard->getName()) ?> (<?php echo($singleRowmyboard->getMacaddress()) ?>)</label>
+
+              <?php
+              if ($transmissionpath == 1) {
+              ?>
+                <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
+              <?php
+              } elseif ($transmissionpath == 2) {
+              ?>
+                <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
+              <?php
+              } else {
+                ?>
+                <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
+              <?php
+              }
+              ?>
+
+                <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacaddress()) ?>)</label>
             </div>
           <?php
           }

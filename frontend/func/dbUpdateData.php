@@ -6,9 +6,7 @@
  * @license: TBD
  */
 
-//include_once("func/dbConfig.func.php");
 include_once(dirname(__FILE__)."/dbConfig.func.php");
-//require_once("func/user.class.php");
 require_once(dirname(__FILE__)."/user.class.php");
 
 class dbUpdateData {
