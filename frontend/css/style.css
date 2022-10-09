@@ -17,9 +17,9 @@
 	color: #5cb85c;
 }
 
-.main-container {
+/*.main-container {
 	margin-top: 20px;
-}
+}*/
 
 /*.container {*/
   /*--bs-gutter-x: 0;*/
@@ -141,13 +141,13 @@ fieldset {
 	background: white; 
 }
 
-.row2 {
-  display: flex;
-}
-
 .row {
   /*padding-bottom: 15px;*/
   padding-top: 15px
+}
+
+.row2 {
+  display: flex;
 }
 
 legend {

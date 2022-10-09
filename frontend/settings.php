@@ -116,10 +116,30 @@ if(isset($_GET['save'])) {
  }
 ?>
 
+<style>
+	th.rotated-text {
+    height: 140px;
+    white-space: nowrap;
+    padding: 0 !important;
+}
+
+th.rotated-text > div {
+    transform:
+        translate(0px, 0px)
+        rotate(270deg);
+    width: 30px;
+}
+
+th.rotated-text > div > span {
+    padding: 5px 10px;
+}
+</style>
+
 <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
 
-<div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;">
+<!--div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;"-->
+<div class="jumbotron" style="padding: 1rem 1rem;">
 	<div class="container">
 		<h1>Settings</h1>
 
@@ -284,21 +304,21 @@ if(isset($_GET['save'])) {
 				<span>toggle collums:</span>
 					<div class="form-check form-check-inline mt-1">
 						<label for="inlineCheckbox1" class="form-check-label">id</label>
-						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" data-style="mr-1" checked>
+						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" data-bs-toggle="toggle" data-bs-style="mr-1" checked>
 					</div>
 					<div class="form-check form-check-inline">
 						<label for="inlineCheckbox2" class="form-check-label">Mac address</label>
-						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" data-style="mr-1" checked>
+						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" data-bs-toggle="toggle" data-bs-style="mr-1" checked>
 					</div>
 
 					<div class="form-check form-check-inline">
 						<label for="inlineCheckbox3" class="form-check-label">Location</label>
-						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" data-style="mr-1" checked>
+						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" data-bs-toggle="toggle" data-bs-style="mr-1" checked>
 					</div>
 
 					<div class="form-check form-check-inline">
 						<label for="inlineCheckbox4" class="form-check-label">TTN id</label>
-						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" data-style="mr-1" checked>
+						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" data-bs-toggle="toggle" data-bs-style="mr-1" checked>
 					</div>
 
 				</div>
@@ -307,14 +327,14 @@ if(isset($_GET['save'])) {
 					<thead>
 					<tr>
 						<th class='toggleDisplayid'>id</th>
-						<th class='toggleDisplayMacaddress'>Mac address</th>
+						<th class='toggleDisplayMacaddress '><div><span>Mac address</span></div></th>
 						<th>Name</th>
 						<th class="toggleDisplayLocation">Location</th>
 						<th>Description</th>
 						<th class="toggleDisplayTtnDevId">TTN dev id</th>
-						<th>Sensors</th>
-						<th>Alarm</th>
-						<th>Details</th>
+						<th class=' rotated-text'><div><span>Sensors</span></div></th>
+						<th class=' rotated-text'><div><span>Alarm</span></div></th>
+						<th class=' rotated-text'><div><span>Details</span></div></th>
 					</tr>
 					</thead>
 					<tbody>
@@ -324,19 +344,19 @@ if(isset($_GET['save'])) {
 					foreach($myboards as $singleRowMyboard) {
 						echo "<tr>";
 						echo "<td class='toggleDisplayid'>".$singleRowMyboard['id']."</td>";
-						echo "<td class='toggleDisplayMacaddress'>".$singleRowMyboard['macaddress']."</td>";
+						echo "<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'>".$singleRowMyboard['macaddress']."</td>";
 						echo "<td>".$singleRowMyboard['name']."</td>";
 						echo "<td class='toggleDisplayLocation'>".$singleRowMyboard['location']."</td>";
 						echo "<td>".$singleRowMyboard['description']."</td>";
-						echo "<td class='toggleDisplayTtnDevId'>".$singleRowMyboard['ttn_dev_id']."</td>";
+						echo "<td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'>".$singleRowMyboard['ttn_dev_id']."</td>";
 
 						$sensorsOfBoard = myFunctions::getAllSensorsOfBoardold($singleRowMyboard['id']);
 						echo "<td>".count($sensorsOfBoard)."</td>";
 
 						if(isset($singleRowMyboard['alarmOnUnavailable']) && $singleRowMyboard['alarmOnUnavailable'] == '1') {
-							echo "<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" .$singleRowMyboard['id']. "' disabled name='alarmOnUnavailable' value=" . $singleRowMyboard['alarmOnUnavailable'] . " checked=" . $singleRowMyboard['alarmOnUnavailable'] . " style='margin-left: 1.25rem'></td>";
+							echo "<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" .$singleRowMyboard['id']. "' disabled name='alarmOnUnavailable' value=" . $singleRowMyboard['alarmOnUnavailable'] . " checked=" . $singleRowMyboard['alarmOnUnavailable'] . "></td>";
 						} else {
-							echo "<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" .$singleRowMyboard['id']. "' disabled name='alarmOnUnavailable' value='1' style='margin-left: 1.25rem'></td>";
+							echo "<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" .$singleRowMyboard['id']. "' disabled name='alarmOnUnavailable' value='1'></td>";
 						}
 						echo "<td><a href=\"inputmask_boards.php?id=" . $singleRowMyboard['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
 						echo "</tr>";

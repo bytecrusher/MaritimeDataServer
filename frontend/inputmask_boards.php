@@ -12,18 +12,18 @@
 
 ?>
 
-<div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;">
+<!--div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;"-->
+<div class="jumbotron">
   <div class="container">
-
-  <div class="row">
-    <div class="col">
-      <h1>Edit board "<?php echo $singleRowBoardId['name'] ?>"</h1>
-    </div>
-    <div class="col"> <!-- Depending on the board type, select the appropriate image -->
-        <img src="img/img_ESP32.png" class="rounded float-right" alt="img/img_ESP32.png" width="100" height="100">
+    <div class="row">
+      <div class="col">
+        <h1>Edit board "<?php echo $singleRowBoardId['name'] ?>"</h1>
+      </div>
+      <div class="col"> <!-- Depending on the board type, select the appropriate image -->
+          <img src="img/img_ESP32.png" class="rounded float-right" alt="img/img_ESP32.png" width="100" height="100">
+      </div>
     </div>
   </div>
-</div>
 </div>
 
 <div class="container main-container">
