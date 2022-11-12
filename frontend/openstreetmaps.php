@@ -1,9 +1,11 @@
 <div class="container">
 </div>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" crossorigin=""/>
+<!--link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" crossorigin=""/-->
+<link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css" crossorigin=""/>
 
 <!-- Make sure you put this AFTER Leaflet's CSS -->
-<script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" crossorigin=""></script>
+<!--script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" crossorigin=""></script-->
+<script src="../node_modules/leaflet/dist/leaflet.js" crossorigin=""></script>
 <div class="container">
 </div>
 
@@ -32,8 +34,8 @@ $('#hrefmap').click( function (e) {
     myboardidMarkerGroup = new Array ();
           
     var greenIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-green.png',
+      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],
@@ -41,8 +43,8 @@ $('#hrefmap').click( function (e) {
     });
 
     var blueIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-blue.png',
+      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],
@@ -50,8 +52,8 @@ $('#hrefmap').click( function (e) {
     });
 
     var orangeIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-orange.png',
+      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],
@@ -59,8 +61,8 @@ $('#hrefmap').click( function (e) {
     });
 
     var redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-red.png',
+      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],

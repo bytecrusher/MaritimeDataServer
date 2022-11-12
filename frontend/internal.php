@@ -22,12 +22,15 @@
 
   include("func/get_data.php");
 ?>
-<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<!--link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"-->
+<link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.js"></script>
+<!--script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.js"></script-->
+<script src="../node_modules/chart.js/dist/chart.js"></script>
 <script src="js/app.js"></script>
 <script src="js/gauge.js"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<!--script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script-->
+<script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script>
 
 <?php
   if ($currentUser != false) {
