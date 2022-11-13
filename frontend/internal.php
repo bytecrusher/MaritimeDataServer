@@ -22,14 +22,10 @@
 
   include("func/get_data.php");
 ?>
-<!--link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"-->
 <link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
-
-<!--script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.js"></script-->
 <script src="../node_modules/chart.js/dist/chart.js"></script>
 <script src="js/app.js"></script>
 <script src="js/gauge.js"></script>
-<!--script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script-->
 <script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script>
 
 <?php
@@ -52,7 +48,25 @@
   var gaugesMap = new Map();
   var gaugesArrayHelperbig = new Array();
 
+  function mychecksession() { 
+    console.log("sessionCheck");
+    $.ajax({
+      method: "POST",
+      url: "api/checkSession.php",
+      data: { }
+    })
+    .done(function( response ) {
+      text = response;
+      if (text == "false") {
+        console.log("sessionCheck = false");
+        window.location.href = "./index.php";
+      }
+    });
+    console.log("sessionCheck = true");
+  }
+
   function updateGauges() { 
+    mychecksession();
     var varIdent = getCookie("identifier");
     var varToken = getCookie("securitytoken");
     var varboardId = null;
@@ -78,7 +92,7 @@
           for (let i4 = 1; i4 < obj.length; i4++) { 
             gaugesMap.get(obj[0]+"."+i4).setValueAnimated(obj[i4])
           }
-      });
+        });
       }
     }
   }
@@ -115,6 +129,13 @@ setInterval(function() {
       <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#mapContainer" id='hrefmap' style="padding-right: 8px;padding-left: 8px;">Map</a>
       </li>
+      <?php
+				if(($currentUser->getUserGroupAdmin() == 1) ) {
+				?>
+					<li class='nav-item' role='presentation'><a class='nav-link' href='#debug' role='tab' data-bs-toggle='tab'>Debug</a></li>
+				<?php
+				}
+			?>
     </ul>
 
     <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px;">
@@ -234,7 +255,7 @@ setInterval(function() {
 
       <!-- Show Board overview -->
       <div class="container tab-pane fade pl-0 pr-0" id="boards">
-      <div class="row mt-2">
+        <div class="row mt-2">
           <?php
           // Show Online / Offline
           // TODO if demo mode == true, then no limit.
@@ -293,6 +314,16 @@ setInterval(function() {
             </div>
           <?php
           }
+          ?>
+        </div>
+      </div>
+
+      <!-- Show temperatures as table, only for admin -->
+      <div class="container tab-pane fade pl-0 pr-0" id="debug">
+        <div id="chart-container">
+          All Sensor Values as a table
+          <?php
+            include("./../receiver/ttndata/index.php");
           ?>
         </div>
       </div>
