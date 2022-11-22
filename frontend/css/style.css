@@ -243,7 +243,7 @@ body {
   color: white;
 }
 
-#map { height: 400px; }
+#map { height: 50vh; }
 
 .card-block { 
   list-style-type: none; 
@@ -259,3 +259,28 @@ body {
  }
 
  /* TODO rename #gaugescontainer24 into wildcard name! */
+
+
+ /* Animation for the water icon of bilge alarm */
+.bi-water {
+  animation: none;
+  -webkit-animation: none;
+  color: white;
+  font-size: 3rem;
+}
+.animation {
+  animation: blink-animation 1s steps(5, start) infinite;
+  -webkit-animation: blink-animation 1s steps(5, start) infinite;
+  color: red;
+  font-size: 3rem;
+}
+@keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}
+@-webkit-keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}

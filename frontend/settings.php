@@ -176,6 +176,7 @@ th.rotated-text > div > span {
 			<?php
 				if(($userobj->getUserGroupAdmin() == 1) ) {
 				?>
+					<li class='nav-item' role='presentation'><a class='nav-link' href='#allBoards' role='tab' data-bs-toggle='tab'>All Boards</a></li>
 					<li class='nav-item' role='presentation'><a class='nav-link' href='#users' role='tab' data-bs-toggle='tab'>Users</a></li>
 					<li class='nav-item' role='presentation'><a class='nav-link' href='#serverSetting' role='tab' data-bs-toggle='tab'>Server Setting</a></li>
 				<?php
@@ -400,6 +401,88 @@ th.rotated-text > div > span {
 					</form>	
 				</div>
 			</div>
+
+			
+
+
+			<div role="tabpanel" class="tab-pane" id="allBoards">
+				<div class="container-fluid border mb-2">
+				<span>toggle collums:</span>
+					<div class="form-check form-check-inline mt-1">
+						<label for="inlineCheckbox1" class="form-check-label">id</label>
+						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+					</div>
+					<div class="form-check form-check-inline">
+						<label for="inlineCheckbox2" class="form-check-label">Mac address</label>
+						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+					</div>
+
+					<div class="form-check form-check-inline">
+						<label for="inlineCheckbox3" class="form-check-label">Location</label>
+						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+					</div>
+
+					<div class="form-check form-check-inline">
+						<label for="inlineCheckbox4" class="form-check-label">TTN id</label>
+						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+					</div>
+
+				</div>
+				<div class="panel panel-default table-responsive">
+					<table class="table table-bordered">
+					<thead>
+					<tr>
+						<th class='toggleDisplayid'>id</th>
+						<th class='toggleDisplayMacaddress '><div><span>Mac address</span></div></th>
+						<th>owner User</th>
+						<th>Name</th>
+						<th class="toggleDisplayLocation">Location</th>
+						<th>Description</th>
+						<th class="toggleDisplayTtnDevId">TTN dev id</th>
+						<th class=' rotated-text'><div><span>Sensors</span></div></th>
+						<th class=' rotated-text'><div><span>Alarm</span></div></th>
+						<th class=' rotated-text'><div><span>Details</span></div></th>
+					</tr>
+					</thead>
+					<tbody>
+					<?php
+					$myboards = $userobj->getAllBoardsAdmin();
+					$countBoardRow = 1;
+					foreach($myboards as $singleRowMyboard) {
+					?>
+						<tr>
+						<td class='toggleDisplayid'> <?php echo $singleRowMyboard['id'] ?></td>
+						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macaddress'] ?></td>
+						<td><?php echo $singleRowMyboard['owner_userid'] ?></td>
+						<td><?php echo $singleRowMyboard['name'] ?></td>
+						<td class='toggleDisplayLocation'><?php echo $singleRowMyboard['location'] ?></td>
+						<td><?php echo $singleRowMyboard['description'] ?></td>
+						<td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['ttn_dev_id'] ?></td>
+					<?php
+						$sensorsOfBoard = myFunctions::getAllSensorsOfBoardold($singleRowMyboard['id']);
+						echo "<td>".count($sensorsOfBoard)."</td>";
+
+						if(isset($singleRowMyboard['alarmOnUnavailable']) && $singleRowMyboard['alarmOnUnavailable'] == '1') {
+						?>
+							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo$singleRowMyboard['id']?> "' disabled name='alarmOnUnavailable' value=" <?php echo $singleRowMyboard['alarmOnUnavailable'] ?> " checked=" <?php echo $singleRowMyboard['alarmOnUnavailable'] ?> "></td>
+						<?php
+						} else {
+						?>
+							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" <?php echo$singleRowMyboard['id'] ?> "' disabled name='alarmOnUnavailable' value='1'></td>
+						<?php
+						}
+						?>
+							<td><a href="inputmask_boards.php?id=<?php echo $singleRowMyboard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
+						</tr>
+						<?php
+					}
+					?>
+					</tbody></table>
+				</div>
+			</div>
+
+
+
 
 			<!-- Modification of other users -->
 			<div role="tabpanel" class="tab-pane" id="users">

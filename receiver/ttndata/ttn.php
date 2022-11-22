@@ -27,6 +27,19 @@
             "temperature":-10.1,
             "voltage":5.37
         },
+
+        "decoded_payload Batmonitor NoWa":{
+            "alarm1":1,
+            "altitude":1,
+            "dewpoint":0,
+            "hdop":1.1,
+            "humidity":0,
+            "latitude":0,
+            "longitude":0,
+            "position":{ "context":{ "lat":0, "lng":0 }, "value":0 },
+            "pressure":0,
+            "tempbattery":0,
+        },
   */
 
 // load configuration data
@@ -49,34 +62,64 @@ if(sizeof($ttn_post) > 0) {
         // Sensor Data
         $sensor_alarm1 = $data->uplink_message->decoded_payload->alarm1;
         $sensor_altitude = $data->uplink_message->decoded_payload->altitude;
-        $frame_counter = $data->uplink_message->decoded_payload->counter;
+        if (isset($data->uplink_message->decoded_payload->counter)) {
+          $frame_counter = $data->uplink_message->decoded_payload->counter;
+        } else {
+          $frame_counter = 0;
+        }
+        
         $sensor_dewpoint = $data->uplink_message->decoded_payload->dewpoint;
         $sensor_humidity = $data->uplink_message->decoded_payload->humidity;
         if(isset($data->uplink_message->decoded_payload->Hum_SHT)) {
           $sensor_humidity = $data->uplink_message->decoded_payload->Hum_SHT;
+        } else {
+          $sensor_humidity = 0;
         }
 
         $sensor_latitude = $data->uplink_message->decoded_payload->latitude;
-        $sensor_level1 = $data->uplink_message->decoded_payload->level1;
-        $sensor_level2 = $data->uplink_message->decoded_payload->level2;
+        if(isset($data->uplink_message->decoded_payload->level1)) {
+          $sensor_level1 = $data->uplink_message->decoded_payload->level1;
+        } else {
+          $sensor_level1 = 0;
+        }
+
+        if(isset($data->uplink_message->decoded_payload->level2)) {
+          $sensor_level2 = $data->uplink_message->decoded_payload->level2;
+        } else {
+          $sensor_level2 = 0;
+        }
         $sensor_longitude = $data->uplink_message->decoded_payload->longitude;
         $position_lat = $data->uplink_message->decoded_payload->position->context->lat;
         $position_lng = $data->uplink_message->decoded_payload->position->context->lng;
         $sensor_pressure = $data->uplink_message->decoded_payload->pressure;
-        $sensor_relay = $data->uplink_message->decoded_payload->relay;
+        if(isset($data->uplink_message->decoded_payload->relay)) {
+          $sensor_relay = $data->uplink_message->decoded_payload->relay;
+        } else {
+          $sensor_relay = 0;
+        }
 
         if(isset($data->uplink_message->decoded_payload->tempbattery)) {
           $sensor_temperature_2 = $data->uplink_message->decoded_payload->tempbattery;
+        } else {
+          $sensor_temperature_2 = 0;
         }
+
         if(isset($data->uplink_message->decoded_payload->BatV)) {
             $sensor_battery = $data->uplink_message->decoded_payload->BatV;
+        } else {
+          $sensor_battery = 0;
         }
-        $sensor_temperature = $data->uplink_message->decoded_payload->temperature;
+
+        if(isset($data->uplink_message->decoded_payload->temperature)) {
+          $sensor_temperature = $data->uplink_message->decoded_payload->temperature;
+        }
         if(isset($data->uplink_message->decoded_payload->TempC_SHT)) {
           $sensor_temperature = $data->uplink_message->decoded_payload->TempC_SHT;
         }
         if(isset($data->uplink_message->decoded_payload->voltage)) {
           $sensor_battery = $data->uplink_message->decoded_payload->voltage;
+        } else {
+          $sensor_battery = 0;
         }
 
         $sensor_raw_payload = $data->uplink_message->frm_payload;
@@ -128,6 +171,31 @@ if(sizeof($ttn_post) > 0) {
     if(array_search('Lora', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor Lora does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
       myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "Lora", "Lora");
+    }
+
+    if(array_search('ADC', array_column($allSensorsOfBoard, 'boardid')) === false) {
+      write_to_log('Sensor ADC does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
+      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "ADC", "ADC");
+    }
+
+    if(array_search('DS18B20', array_column($allSensorsOfBoard, 'boardid')) === false) {
+      write_to_log('Sensor DS18B20 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
+      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "DS18B20", "DS18B20");
+    }
+
+    if(array_search('BME280', array_column($allSensorsOfBoard, 'boardid')) === false) {
+      write_to_log('Sensor BME280 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
+      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "BME280", "BME280");
+    }
+
+    if(array_search('DS2438', array_column($allSensorsOfBoard, 'boardid')) === false) {
+      write_to_log('Sensor DS2438 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
+      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "DS2438", "DS2438");
+    }
+
+    if(array_search('Digital', array_column($allSensorsOfBoard, 'boardid')) === false) {
+      write_to_log('Sensor Digital does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
+      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
     }
 
     $url = $config::$baseurl . '/receiver/receivejson.php';

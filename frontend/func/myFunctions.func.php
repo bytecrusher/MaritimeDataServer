@@ -107,8 +107,10 @@ class myFunctions {
   */
   public static function addBoardByTTN($ttn_app_id, $ttn_dev_id) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name, ttn_app_id, ttn_dev_id) VALUES (?, ?, ?, ?, ?)");
-    $statement->execute(array("fakeMacAddress" . $ttn_dev_id, 3, "- new imported -", $ttn_app_id, $ttn_dev_id));     // ToDo: change default Owner User to one of the admins
+    //$statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name, ttn_app_id, ttn_dev_id) VALUES (?, ?, ?, ?, ?)");
+    $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, name, ttn_app_id, ttn_dev_id, onDashboard ) VALUES (?, ?, ?, ?, ?)");
+    //$statement->execute(array("fakeMacAddress" . $ttn_dev_id, 1, "- new imported -", $ttn_app_id, $ttn_dev_id));     // ToDo: change default Owner User to one of the admins
+    $statement->execute(array("fakeMacAddress" . $ttn_dev_id, "- new imported -", $ttn_app_id, $ttn_dev_id, 1));
     $neue_id = $pdo->lastInsertId();
     return $neue_id;
   }
@@ -237,11 +239,51 @@ class myFunctions {
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
+    } elseif ($sensorName == "ADC") {
+      $defaultValues['nameValue1'] = "ADC1";
+      $defaultValues['nameValue2'] = "ADC2";
+      $defaultValues['nameValue3'] = null;
+      $defaultValues['nameValue4'] = null;
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 2;
+      $valuesDefined = true;
+    } elseif ($sensorName == "DS18B20") {
+      $defaultValues['nameValue1'] = "Ch1";
+      $defaultValues['nameValue2'] = "Ch1";
+      $defaultValues['nameValue3'] = null;
+      $defaultValues['nameValue4'] = null;
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 2;
+      $valuesDefined = true;
+    } elseif ($sensorName == "BME280") {
+      $defaultValues['nameValue1'] = "Temp";
+      $defaultValues['nameValue2'] = "Hum";
+      $defaultValues['nameValue3'] = "Pres";
+      $defaultValues['nameValue4'] = null;
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 3;
+      $valuesDefined = true;
+    } elseif ($sensorName == "DS2438") {
+      $defaultValues['nameValue1'] = "V";
+      $defaultValues['nameValue2'] = "A";
+      $defaultValues['nameValue3'] = null;
+      $defaultValues['nameValue4'] = null;
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 2;
+      $valuesDefined = true;
+    } elseif ($sensorName == "Digital") {
+      $defaultValues['nameValue1'] = "Ch1";
+      $defaultValues['nameValue2'] = "Ch2";
+      $defaultValues['nameValue3'] = null;
+      $defaultValues['nameValue4'] = null;
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 2;
+      $valuesDefined = true;
     }
 
     if ($valuesDefined == true) {
-      $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name, nameValue1, nameValue2, nameValue3, nameValue4, ttn_payload_id, NrOfUsedSensors) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-      $statement->execute(array($boardid, $mysensorTypId->id, $sensorName, $defaultValues['nameValue1'], $defaultValues['nameValue2'], $defaultValues['nameValue3'], $defaultValues['nameValue4'], $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors']));     // ToDo: change default Owner User to one of the admins
+      $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name, nameValue1, nameValue2, nameValue3, nameValue4, ttn_payload_id, NrOfUsedSensors,  	onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      $statement->execute(array($boardid, $mysensorTypId->id, $sensorName, $defaultValues['nameValue1'], $defaultValues['nameValue2'], $defaultValues['nameValue3'], $defaultValues['nameValue4'], $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors'], 1));     // ToDo: change default Owner User to one of the admins
       $neue_id = $pdo->lastInsertId();
       return $neue_id;
     }

@@ -64,6 +64,24 @@ if(isset($_GET['register'])) {
 			echo 'An error occurs while saving.<br>';
 		}
 	}
+
+	// send mail:
+		// the message
+		//$msg = "A new User is registered on esp-data.derguntmar.de";
+		// use wordwrap() if lines are longer than 70 characters
+		//$msg = wordwrap($msg,70);
+		// send email
+		//mail("guntmar.h@gmx.net","new user registered",$msg);
+
+
+		$to      = 'guntmar.h@gmx.net';
+		$subject = 'new user registered';
+		$message = 'A new User is registered on esp-data.derguntmar.de';
+		$headers = 'From: info@derguntmar.de' . "\r\n" .
+			'Reply-To: info@derguntmar.de' . "\r\n" .
+			'X-Mailer: PHP/' . phpversion();
+		mail($to, $subject, $message, $headers);
+
 }
 
 if($showFormular) {

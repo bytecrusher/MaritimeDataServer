@@ -37,38 +37,58 @@ if ($row_cnt > 0) {
     echo 'Error: No values in database!';
 }
 ?>
-        <table id="ttnvalues" class="table" style="<?php echo $show_table; ?>">
-            <tr>
-                <th><?php echo $dev_name; ?></th>
-                <th>Value</th>
-            </tr>
-            <tr>
-                <td>Time</td>
-                <td><?php echo $datetime; ?></td>
-            </tr>
-            <tr>
-                <td>Temperature</td>
-                <td><?php echo $temperature; ?> &deg;C</td>
-            </tr>
-            <tr>
-                <td>Temperature2</td>
-                <td><?php echo $temperature2; ?> &deg;C</td>
-            </tr>
-            <tr>
-                <td>Humidity</td>
-                <td><?php echo $humidity; ?> %</td>
-            </tr>
-            <tr>
-                <td>Battery</td>
-                <td><?php echo $battery; ?> V</td>
-            </tr>
-            <tr>
-                <td>Gateway</td>
-                <td><?php echo $gateway; ?></td>
-            </tr>
-            <tr>
-                <td>RSSI</td>
-                <td><?php echo $rssi; ?></td>
-            </tr>
-        </table>
+    <table id="ttnvalues" class="table" style="<?php echo $show_table; ?>">
+        <tr>
+            <th><?php echo $dev_name; ?></th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Time</td>
+            <td><?php echo $datetime; ?></td>
+        </tr>
+        <tr>
+            <td>Temperature</td>
+            <td><?php echo $temperature; ?> &deg;C</td>
+        </tr>
+        <tr>
+            <td>Temperature2</td>
+            <td><?php echo $temperature2; ?> &deg;C</td>
+        </tr>
+        <tr>
+            <td>Humidity</td>
+            <td><?php echo $humidity; ?> %</td>
+        </tr>
+        <tr>
+            <td>Battery</td>
+            <td><?php echo $battery; ?> V</td>
+        </tr>
+        <tr>
+            <td>Gateway</td>
+            <td><?php echo $gateway; ?></td>
+        </tr>
+        <tr>
+            <td>RSSI</td>
+            <td><?php echo $rssi; ?></td>
+        </tr>
+    </table>
 
+    <table id="ttnvalues2" class="table" style="<?php echo $show_table; ?>">
+    <thead><tr><td>Time</td><td>Dev ID</td><td>Temp</td></tr></thead>
+    <tbody>
+<?php
+    for ($i=0; $i <= 10; $i++) {
+        $mysql_row = mysqli_fetch_array($sel_data);
+
+        $dev_name = $mysql_row["dev_id"];
+        $datetime = $mysql_row["datetime"];
+        $temperature = $mysql_row["dev_value_1"];
+
+        echo "<tr>";
+        echo "<td>" . $datetime . "</td>";
+        echo "<td>" . $dev_name . "</td>";
+        echo "<td>" . $temperature . "</td>";
+        echo "</tr>";
+    }
+?>
+</tbody>
+</table>

@@ -21,8 +21,24 @@
   }
 
   include("func/get_data.php");
+
+  $config  = new configuration();
+  $varDemoMode = $config::$demoMode;
+
+  //var_dump($_SERVER["DOCUMENT_ROOT"]);
+
 ?>
 <link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
+
+<link href="../node_modules/fontawesome-free/css/fontawesome.css" rel="stylesheet">
+<link href="../node_modules/fontawesome-free/css/fontawesome.min.css" rel="stylesheet">
+<link href="../node_modules/fontawesome-free/css/brands.css" rel="stylesheet">
+<link href="../node_modules/fontawesome-free/css/solid.css" rel="stylesheet">
+
+<script defer src="../node_modules/fontawesome-free/js/brands.js"></script>
+<script defer src="../node_modules/fontawesome-free/js/solid.js"></script>
+<script defer src="../node_modules/fontawesome-free/js/fontawesome.js"></script>
+
 <script src="../node_modules/chart.js/dist/chart.js"></script>
 <script src="js/app.js"></script>
 <script src="js/gauge.js"></script>
@@ -97,20 +113,20 @@
     }
   }
 
+var DashboardUpdateInterval = <?php echo($currentUser->getDashboardUpdateInterval()); ?> * 10000;
 setInterval(function() { 
     // run every 30 seconds
     updateGauges();
-}, 30000);
-
+}, DashboardUpdateInterval);
 </script>
 
-  <div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
+<div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
     <div class="container">
       <h1>Welcome <?php echo htmlentities($currentUser->getFirstname()); ?></h1>
     </div>
   </div>
 
-<div class="main-container">
+  <div class="main-container">
   <div class="container" style="padding: 0px">
     <div id="alert-container">
     </div>
@@ -189,7 +205,6 @@ setInterval(function() {
                             <?php
                         }
                 ?>
-                          
                       <script>
                         if (<?php echo sizeof($mysensors); ?> != null) {
 
@@ -234,6 +249,18 @@ setInterval(function() {
                   }
                 }
                 ?>
+
+                <!--li id='gauge' data-id='10' class='ui-state-default justify-content-center gauge-container two bg-secondary rounded border border-dark text-light'>
+                  <div id='div_click_settings' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
+                    <i id='click_settings' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
+                     </i>
+                  </div>
+                  <div style='height:30px;'>Bilgen Alarm</div>
+                  <div class="text-center">
+                    <i class="bi bi-water"></i>
+                  </div>
+                </li-->
+
                 </ul>
               </fieldset>
             </div>
@@ -259,8 +286,12 @@ setInterval(function() {
           <?php
           // Show Online / Offline
           // TODO if demo mode == true, then no limit.
-          // $maxtimeout = strtotime("-15 Minutes"); // For show Online / Offline
-          $maxtimeout = strtotime("-10 Years");
+          if ($varDemoMode) {
+            $maxtimeout = strtotime("-10 Years");
+          } else {
+            $maxtimeout = strtotime("-15 Minutes"); // For show Online / Offline
+          }
+          
           foreach($boardObjsArray as $singleBoardObj) {
             $transmissionpath = 0;
             //$mysensors2 = myFunctions::getAllSensorsOfBoardold($singleBoardObj->getId());
@@ -287,25 +318,22 @@ setInterval(function() {
               ?>
                 <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
               <?php
+                if ($transmissionpath == 1) {
+                  ?>
+                    <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
+                  <?php
+                  } elseif ($transmissionpath == 2) {
+                  ?>
+                    <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
+                  <?php
+                  } else {
+                    ?>
+                    <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
+                  <?php
+                }
               } else {
               ?>
                 <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
-              <?php
-              }
-              ?>
-
-              <?php
-              if ($transmissionpath == 1) {
-              ?>
-                <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
-              <?php
-              } elseif ($transmissionpath == 2) {
-              ?>
-                <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
-              <?php
-              } else {
-                ?>
-                <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
               <?php
               }
               ?>
@@ -330,14 +358,13 @@ setInterval(function() {
 
       <!-- Show map -->
       <div class="container tab-pane fade pl-0" id="mapContainer">
-      <div class="row mt-2">
-      <div class="container">
-          <?php
-            include("./openstreetmaps.php");
-          ?>
+        <div class="row mt-2">
+          <div class="container">
+            <?php include("./openstreetmaps.php"); ?>
           </div>
+        </div>
       </div>
-      </div>
+
     </div>
   </div>
 
@@ -349,6 +376,7 @@ setInterval(function() {
       </div>
     </div>
   </div>
+
 </div>
 
     <script>

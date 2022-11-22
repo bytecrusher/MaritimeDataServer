@@ -1,13 +1,6 @@
-<div class="container">
-</div>
-<!--link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" crossorigin=""/-->
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css" crossorigin=""/>
 
-<!-- Make sure you put this AFTER Leaflet's CSS -->
-<!--script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" crossorigin=""></script-->
 <script src="../node_modules/leaflet/dist/leaflet.js" crossorigin=""></script>
-<div class="container">
-</div>
 
 <div id="map"></div>
 

@@ -4,6 +4,14 @@
   require_once("func/user.class.php");
   require_once("func/dbUpdateData.php");
 
+  if (isset($_SESSION['userobj'])) {
+    $currentUser = unserialize($_SESSION['userobj']);
+  } else {
+    $currentUser = false;
+    header("Location: ./index.php");    // if user not loged in
+    die();
+  }
+
   if (!isset($_GET['modal'])) {
       include("common/header.inc.php");
   } else {
@@ -208,6 +216,7 @@
                   
           <?php 
           }
+          if (!isset($_GET['modal'])) {
           ?>
           <div class="input-group mb-3">
             <span class="input-group-text" style="width: 50%">on Dashboard</span>
@@ -228,6 +237,9 @@
             ?>
             </div>
           </div>
+          <?php
+          }
+          ?>
   </div>
   <div class="modal-footer">
   <?php

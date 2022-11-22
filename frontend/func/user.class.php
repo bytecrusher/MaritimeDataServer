@@ -188,6 +188,20 @@ class user implements JsonSerializable
     }
   }
 
+    /*
+  * Get all Board (only for admin).
+  */
+  public function getAllBoardsAdmin() {
+    //if (!$this->userobj->id == null) {
+    if(($this->userobj->usergroup_admin == 1) ) {
+      $pdo = dbConfig::getInstance();
+      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE 1 ORDER BY id");
+      $result = $myboards->execute();
+      $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
+      return $myboards2;
+    }
+  }
+
   public function jsonSerialize(): mixed
   {
     return 
