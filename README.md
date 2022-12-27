@@ -1,15 +1,15 @@
 # Intro
-**MaritimeDataServer** is the central data server for the Maritime Data. 
+**Maritime Data Server** is the central data server for the Maritime Data. 
 It stores the data that come from MDC in a database and give the user a gui to show the data and do some configurations.
 
 The initial idea was, to have a possibility to be able to see some Maritime data (temperature, battery voltages) while you are not on the boat.  
 
-The **MDC** (MaritimeDataCollector) it a small board with an ESP32 and a few sensors, thas collects the sensor data and transfer it to the server.
+The **MDC** (Maritime Data Collector) it a small board with an ESP32 and a few sensors, thas collects the sensor data and transfer it to the server.
 You will find the **MDC** documentation under **https://github.com/bytecrusher/MaritimeDataCollectorSmall**
 
-## **MDS** (MaritimeDataServer)
+## **MDS** (Maritime Data Server)
 
-The **MaritimeDataServer** is a application to store data and display data for the user.
+The **Maritime Data Server** is a application to store data and display data for the user.
 It requres a SQL Database for storing the data and a webserver to display the pages with data.
 With **MDS** you can view data from sensor in graph or charts.
 Also it is possible to configure your boards and sensors.
