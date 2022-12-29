@@ -206,7 +206,7 @@
         </div>
 
         <div class="form-group row">
-          <label for="md5secretstring" class="col-sm-4 col-form-label">Your Secret String (Replace your_secret_string with a string of your choice (>12 characters))</label>
+          <label for="md5secretstring" class="col-sm-4 col-form-label">Your Secret String (Replace with a string of your choice (>12 characters))</label>
           <div class="col-sm-4">
             <input type="text" class="form-control" id="md5secretstring" name="md5secretstring" value="<?php echo $var_md5secretstring;?>" required>
           </div>
@@ -330,19 +330,20 @@ function api_post_db(action) {
 function api_post_createadmin() {
   action = "createadmin";
   myreturnval = null;
-  if ( ($("#firstname").val() != "") && ($("#lastname").val() != "") && ($("#email").val() != "") && ($("#password").val() != "") && ($("#password2").val() != "") ) {
+  if ( ($("#firstname").val() != "") && ($("#lastname").val() != "") && ($("#email").val() != "") && ($("#password").val() != "") && ($("#password2").val() != "") && ($("#md5secretstring").val() != "") ) {
     firstname = $("#firstname").val();
     lastname = $("#lastname").val();
     email = $("#email").val();
     password = $("#password").val();
     password2 = $("#password2").val();
     apikey = $("#apikey").val();
+    md5secretstring = $("#md5secretstring").val();
     // TODO add user to DB
     $.ajax({
       method: "POST",
       async: false,
       url: "api_createadmin.php",
-      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey }
+      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring }
     })
     .done(function( response ) {
       text = response;

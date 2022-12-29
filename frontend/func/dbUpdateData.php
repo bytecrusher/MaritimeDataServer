@@ -76,8 +76,8 @@ class dbUpdateData {
 
   public static function insertAdmin($email, $password_hash, $vorname, $nachname) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname, usergroup_admin ) VALUES (:email, :password, :firstname, :lastname, :usergroup_admin)");
-    return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname, 'usergroup_admin' => '1'));
+    $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname, usergroup_admin, active ) VALUES (:email, :password, :firstname, :lastname, :usergroup_admin, :active )");
+    return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname, 'usergroup_admin' => '1', 'active' => '1'));
   }
 
   public static function insertSecuritytoken($userid) {
