@@ -10,27 +10,35 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
 	$email = $_POST['email'];
 	$password = $_POST['password'];
 	$userobj = new user($email);
-	$_SESSION['userobj'] = serialize($userobj);
-
-	//Check Password
-	if ($userobj !== false && password_verify($password, $userobj->getPassword()) && $userobj->isActive() != false) {
-		$_SESSION['userid'] = $userobj->getId();
-
-		//Does the user want to stay logged in?
-		if(isset($_POST['angemeldet_bleiben'])) {
-			dbUpdateData::insertSecuritytoken($userobj->getId());
+	
+	if ($userobj->userExist() != false) {
+		$_SESSION['userobj'] = serialize($userobj);
+		if ($userobj->isActive() == true) {
+			//Check Password
+			if ($userobj !== false && password_verify($password, $userobj->getPassword()) && $userobj->isActive() != false) {
+				$_SESSION['userid'] = $userobj->getId();
+	
+				//Does the user want to stay logged in?
+				if(isset($_POST['angemeldet_bleiben'])) {
+					dbUpdateData::insertSecuritytoken($userobj->getId());
+				}
+				header("location: internal.php");
+				exit;
+			} else {
+				$error_msg =  "<div class='alert alert-danger' role='alert'>E-Mail or Password wrong.</div>";
+			}
+		} else {
+			$error_msg =  "<div class='alert alert-danger' role='alert'>Account not activated yet.</div>";
 		}
-		header("location: internal.php");
-		exit;
 	} else {
-		$error_msg =  "E-Mail or Password wrong<br><br>";
+		$error_msg =  "<div class='alert alert-danger' role='alert'>User does not exist.</div>";
 	}
+	
 }
 
 $email_value = "";
 if(isset($_POST['email']))
 	$email_value = htmlentities($_POST['email']);
-
 include("common/header.inc.php");
 ?>
 <div class="container small-container-330 form-signin">

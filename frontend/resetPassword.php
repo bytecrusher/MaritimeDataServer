@@ -20,19 +20,21 @@ include("common/header.inc.php");
 		if (!isset($_POST['email']) || empty($_POST['email'])) {
 			$error = "<b>Please enter mailaddress</b>";
 		} else {
-			// TODO change to new user class.
-			$user = dbGetData::getUserOld($_POST['email']);
+			$user = new user($_POST['email']);
 			if ($user === false) {
 				$error = "<b>Username not found</b>";
+			} else if (!$user->isActive()){ 
+				echo '<div class="alert alert-danger" role="alert">Your Account is not active.</div>';
+				$showForm = false;
 			} else {
 				$passwordcode = myFunctions::random_string();
-				$result = dbUpdateData::updateUserPasswordcode($passwordcode, $user);
-				$empfaenger = $user['email'];
-				$betreff = "New password for your account on www.derguntmar.de"; //Ersetzt hier den Domain-Namen
-				$from = "From: Guntmar <info@derguntmar.de>"; //Ersetzt hier euren Name und E-Mail-Adresse
-				$url_passwordcode = myFunctions::getSiteURL() . 'resetPassword.php?userid=' . $user['id'] . '&code=' . $passwordcode; //Setzt hier eure richtige Domain ein
-				$text = 'Hi ' . $user['firstname'] . ',
-					for your account on www.derguntmar.de a new password was requested. To enter a new password open the following link:
+				$result = dbUpdateData::updateUserPasswordcode($passwordcode, $user->getId());
+				$empfaenger = strval($user->getEmail()); //['email'];
+				$betreff = "New password for your account on " . myFunctions::getSiteURL();
+				$from = "From: Guntmar <info@derguntmar.de>"; // TODO: Ersetzt hier euren Name und E-Mail-Adresse
+				$url_passwordcode = myFunctions::getSiteURL() . 'resetPassword.php?userid=' . $user->getId() /*['id']*/ . '&code=' . $passwordcode;
+				$text = 'Hi ' . $user->getFirstname() /*['firstname']*/ . ',
+					for your account on ' . myFunctions::getSiteURL() . ' a new password was requested. To enter a new password open the following link:
 					' . $url_passwordcode . '
 					You can ignore this mail, if remeber your password again, or didnt requested a new password.
 					best regards,

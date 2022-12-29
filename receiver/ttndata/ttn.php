@@ -10,35 +10,22 @@
 
 /*
       "decoded_payload":{
-            "alarm1":1,
-            "altitude":1,
-            "counter":0,
-            "dewpoint":0,
-            "hdop":1.1,
-            "humidity":0,
-            "latitude":0,
-            "level1":0,
-            "level2":0,
-            "longitude":0,
+            "alarm1":1,           // DIGITAL
+            "altitude":1,         // GPS
+            "counter":0,          // LORA
+            "dewpoint":0,         // (BME) calculated in ESP
+            "hdop":1.1,           // ??
+            "humidity":0,         // BME
+            "latitude":0,         // GPS
+            "level1":0,           // ADC
+            "level2":0,           // ADC
+            "longitude":0,        // GPS
             "position":{ "context":{ "lat":0, "lng":0 }, "value":0 },
-            "pressure":0,
-            "relay":0,
-            "tempbattery":0,
-            "temperature":-10.1,
-            "voltage":5.37
-        },
-
-        "decoded_payload Batmonitor NoWa":{
-            "alarm1":1,
-            "altitude":1,
-            "dewpoint":0,
-            "hdop":1.1,
-            "humidity":0,
-            "latitude":0,
-            "longitude":0,
-            "position":{ "context":{ "lat":0, "lng":0 }, "value":0 },
-            "pressure":0,
-            "tempbattery":0,
+            "pressure":0,         // BME
+            "relay":0,            // DIGITAL
+            "tempbattery":0,      // Temp
+            "temperature":-10.1,  // BME
+            "voltage":5.37        // ADC
         },
   */
 
@@ -52,8 +39,11 @@ $config = new configuration();
 
 $ttn_post = file('php://input');
 $data = null;
+//write_to_log($ttn_post);
 if(sizeof($ttn_post) > 0) {
     $data = json_decode($ttn_post[0]);
+    //$data = json_decode($ttn_post);
+    //write_to_log($data);
     $sensor_raw_payload = null;
     if(($data != null) && ($data->uplink_message->decoded_payload != null)) {
         //$payloadversion = $data->uplink_message->decoded_payload->payloadversion;
@@ -233,9 +223,12 @@ if(sizeof($ttn_post) > 0) {
             "typid" => $eachsensor['typid'],
             "sensorId" => $eachsensor['id'],
             "value1" => $sensor_battery,
-            "value2" => 0,
+            /*"value2" => 0,
             "value3" => $sensor_level1,
-            "value4" => $sensor_level2,
+            "value4" => $sensor_level2,*/
+            "value2" => $sensor_level1,
+            "value3" => $sensor_level2,
+            "value4" => 0,
             "date" => $dateNow,
             "time" => $timeNow,
             "transmissionpath" => "2"
@@ -313,7 +306,8 @@ function write_to_log($text)
     $jahr = date("yy");
     $dateiname = "./logs/log_" . $monate[$monat] . "_$jahr.$format";
     $header = array("Datum", "IP", "Seite", "Browser");
-    $infos = array($datum_zeit, $text);
+    $json = json_encode($text);
+    $infos = array($datum_zeit, $json);
     if ($format == "csv") {
       $eintrag2 = '"' . implode('", "' , $infos) . '"';
     } else {

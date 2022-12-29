@@ -12,7 +12,7 @@ Thumbs.db
 ######################
 *.log
 *.csv
-configuration.php
 node_modules/*
 
 otafirmware/*
+config.json

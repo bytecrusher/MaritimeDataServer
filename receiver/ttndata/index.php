@@ -76,18 +76,24 @@ if ($row_cnt > 0) {
     <thead><tr><td>Time</td><td>Dev ID</td><td>Temp</td></tr></thead>
     <tbody>
 <?php
-    for ($i=0; $i <= 10; $i++) {
+if ($row_cnt >= 10) {
+    $i_max = 10;
+} else {
+    $i_max = $row_cnt - 1;
+}
+    for ($i=0; $i <= $i_max; $i++) {
         $mysql_row = mysqli_fetch_array($sel_data);
-
-        $dev_name = $mysql_row["dev_id"];
-        $datetime = $mysql_row["datetime"];
-        $temperature = $mysql_row["dev_value_1"];
-
-        echo "<tr>";
-        echo "<td>" . $datetime . "</td>";
-        echo "<td>" . $dev_name . "</td>";
-        echo "<td>" . $temperature . "</td>";
-        echo "</tr>";
+        if ($mysql_row != null) {
+            $dev_name = $mysql_row["dev_id"];
+            $datetime = $mysql_row["datetime"];
+            $temperature = $mysql_row["dev_value_1"];
+    
+            echo "<tr>";
+            echo "<td>" . $datetime . "</td>";
+            echo "<td>" . $dev_name . "</td>";
+            echo "<td>" . $temperature . "</td>";
+            echo "</tr>";
+        }
     }
 ?>
 </tbody>

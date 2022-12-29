@@ -87,14 +87,22 @@ if(isset($_GET['save'])) {
  	 	} else {
  		 	$success_msg = $updateUserReturn;
  	 	}
-	}
-	else if($save == 'users') {
+	} else if ($save == 'allBoards') {
+
+	} else if($save == 'users') {
 		$updateUserReturn = dbUpdateData::updateUserStatus($_POST);
  	 	if (!$updateUserReturn) {
  		 	$error_msg = "Error on update User Status.";
  	 	} else {
  		 	$success_msg = $updateUserReturn;
  	 	}
+	} else if($save == 'addNewUserToBorad') {
+		$addNewBoardToUserReturn = dbUpdateData::addNewBoardToUser($_POST, $userobj->getId());
+		if ($addNewBoardToUserReturn === true) {
+			$success_msg = "Board added successfully.<br>Wait for the next Lora update.";
+		} else {
+			$error_msg = $addNewBoardToUserReturn;
+		}
 	}
 	//else if($save == 'serverSetting') {
 		// save config file.
@@ -135,16 +143,12 @@ th.rotated-text > div > span {
 }
 </style>
 
-<!--link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet"-->
 <link href="../node_modules/bootstrap5-toggle/css/bootstrap5-toggle.min.css" rel="stylesheet">
-<!--script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script-->
 <script src="../node_modules/bootstrap5-toggle/js/bootstrap5-toggle.min.js"></script>
 
-<!--div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;"-->
 <div class="jumbotron" style="padding: 1rem 1rem;">
 	<div class="container">
 		<h1>Settings</h1>
-
 	</div>
 </div>
 <div class="container-xl main-container">
@@ -305,23 +309,27 @@ th.rotated-text > div > span {
 			<div role="tabpanel" class="tab-pane" id="confBoards">
 				<div class="container-fluid border mb-2">
 				<span>toggle collums:</span>
-					<div class="form-check form-check-inline mt-1">
+					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox1" class="form-check-label">id</label>
-						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
 					</div>
-					<div class="form-check form-check-inline">
+					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox2" class="form-check-label">Mac address</label>
-						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
 					</div>
 
-					<div class="form-check form-check-inline">
+					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox3" class="form-check-label">Location</label>
-						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+					</div>
+
+					<div class="form-check form-switch d-inline-block pe-4">
+						<label for="inlineCheckbox4" class="form-check-label">TTN id</label>
+						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
 					</div>
 
 					<div class="form-check form-check-inline">
-						<label for="inlineCheckbox4" class="form-check-label">TTN id</label>
-						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+						<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">Add new Board</button>
 					</div>
 
 				</div>
@@ -374,6 +382,32 @@ th.rotated-text > div > span {
 					?>
 					</tbody></table>
 				</div>
+				<!-- Modal -->
+				<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<form class="row g-3" action="?save=addNewUserToBorad" method="post" class="form-horizontal">
+							<div class="modal-header">
+								<h5 class="modal-title" id="exampleModalLabel">Add new Board</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+							</div>
+							<div class="modal-body">
+								<div class="input-group mb-3">
+									<select class="form-select input-group-text" aria-label="Default select example" id="valueType" name="valueType">
+										<option value="ttn" selected>TTN dev id</option>
+										<option value="mac">Mac Adress</option>
+									</select>
+									<input type="text" class="form-control" placeholder="Enter Value" aria-label="Value" aria-describedby="macAdress" name="inputValue" id="inputValue" required>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+								<button type="submit" class="btn btn-primary">Save changes</button>
+							</div>
+						</form>
+					</div>
+				</div>
+				</div>
 			</div>
 
 			<!-- Configure the user's dashboard -->
@@ -406,25 +440,30 @@ th.rotated-text > div > span {
 
 
 			<div role="tabpanel" class="tab-pane" id="allBoards">
+			<form action="?save=allBoards" method="post" class="form-horizontal">
 				<div class="container-fluid border mb-2">
 				<span>toggle collums:</span>
-					<div class="form-check form-check-inline mt-1">
+					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox1" class="form-check-label">id</label>
-						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
 					</div>
-					<div class="form-check form-check-inline">
+					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox2" class="form-check-label">Mac address</label>
-						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
 					</div>
 
-					<div class="form-check form-check-inline">
+					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox3" class="form-check-label">Location</label>
-						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
 					</div>
 
-					<div class="form-check form-check-inline">
-						<label for="inlineCheckbox4" class="form-check-label">TTN id</label>
-						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" data-toggle="toggle" checked data-size="small">
+					<div class="form-check form-switch d-inline-block pe-4">
+						<label for="inlineCheckbox4" class="form-check-label">TTN App id</label>
+						<input id="inlineCheckbox4" value="toggleDisplayTtnAppId" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+					</div>
+					<div class="form-check form-switch d-inline-block pe-4">
+						<label for="inlineCheckbox5" class="form-check-label">TTN Dev id</label>
+						<input id="inlineCheckbox5" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
 					</div>
 
 				</div>
@@ -434,14 +473,15 @@ th.rotated-text > div > span {
 					<tr>
 						<th class='toggleDisplayid'>id</th>
 						<th class='toggleDisplayMacaddress '><div><span>Mac address</span></div></th>
-						<th>owner User</th>
+						<th><div><span>owner User</span></div></th>
 						<th>Name</th>
 						<th class="toggleDisplayLocation">Location</th>
 						<th>Description</th>
+						<th class="toggleDisplayTtnAppId">TTN App id</th>
 						<th class="toggleDisplayTtnDevId">TTN dev id</th>
-						<th class=' rotated-text'><div><span>Sensors</span></div></th>
-						<th class=' rotated-text'><div><span>Alarm</span></div></th>
-						<th class=' rotated-text'><div><span>Details</span></div></th>
+						<th class='rotated-text'><div><span>Sensors</span></div></th>
+						<th class='rotated-text'><div><span>Alarm</span></div></th>
+						<th class='rotated-text'><div><span>Details</span></div></th>
 					</tr>
 					</thead>
 					<tbody>
@@ -454,9 +494,11 @@ th.rotated-text > div > span {
 						<td class='toggleDisplayid'> <?php echo $singleRowMyboard['id'] ?></td>
 						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macaddress'] ?></td>
 						<td><?php echo $singleRowMyboard['owner_userid'] ?></td>
+
 						<td><?php echo $singleRowMyboard['name'] ?></td>
 						<td class='toggleDisplayLocation'><?php echo $singleRowMyboard['location'] ?></td>
 						<td><?php echo $singleRowMyboard['description'] ?></td>
+						<td class='toggleDisplayTtnAppId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['ttn_app_id'] ?></td>
 						<td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['ttn_dev_id'] ?></td>
 					<?php
 						$sensorsOfBoard = myFunctions::getAllSensorsOfBoardold($singleRowMyboard['id']);
@@ -479,6 +521,12 @@ th.rotated-text > div > span {
 					?>
 					</tbody></table>
 				</div>
+				<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-10">
+						<button type="submit" class="btn btn-primary">Save</button>
+						</div>
+					</div>
+				</form>
 			</div>
 
 
@@ -604,4 +652,5 @@ $(function() {
 	  }
     })
   })
+
 </script>
