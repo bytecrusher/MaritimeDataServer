@@ -1,0 +1,7 @@
+RedirectPermanent /index.html /frontend/index.php
+RedirectPermanent /index.htm /frontend/index.php
+RedirectPermanent /index.php /frontend/index.php
+
+<Files "config.json">  
+  Require all denied
+</Files>
