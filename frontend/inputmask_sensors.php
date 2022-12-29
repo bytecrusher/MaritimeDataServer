@@ -16,6 +16,7 @@
       include("common/header.inc.php");
   } else {
   ?>
+
     <div class='modal-header'>
     <h5 class='modal-title' id='exampleModalLabel'>Edit Sensor</h5>
     <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
@@ -173,43 +174,52 @@
             <span class='input-group-text' style='width: 50%'>Name value <?php echo $_GET["channel"] ?></span>
             <input type='text' class='col col-sm-4 form-control' id='nameValue<?php echo $_GET['channel'] ?>' name='nameValue<?php echo $_GET['channel'] ?>' value='<?php echo $SensorConfig['nameValue' . $_GET['channel'] ] ?>'>
           </div>
-                  
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>GaugeMinValue</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeMinValue' name='Value<?php echo $_GET['channel'] ?>GaugeMinValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeMinValue'] ?>'>
-          </div>
 
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>GaugeMaxValue</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeMaxValue' name='Value<?php echo $_GET['channel'] ?>GaugeMaxValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeMaxValue'] ?>'>
-          </div>
+          <fieldset class="border p-2 mysensorsfieldset">
+            <legend  class="float-none w-auto mysensorsfieldsetlegend">Gauge</legend>
+            <div class='input-group mb-3'>
+              <span class='input-group-text' style='width: 50%'>MinValue</span>
+              <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeMinValue' name='Value<?php echo $_GET['channel'] ?>GaugeMinValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeMinValue'] ?>'>
+            </div>
 
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>GaugeRedAreaLowValue</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaLowValue'] ?>'>
-          </div>
+            <div class='input-group'>
+              <span class='input-group-text' style='width: 50%'>MaxValue</span>
+              <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeMaxValue' name='Value<?php echo $_GET['channel'] ?>GaugeMaxValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeMaxValue'] ?>'>
+            </div>
 
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>GaugeRedAreaLowColor</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowColor' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaLowColor'] ?>'>
-          </div>
+            <fieldset class="border p-2">
+              <legend  class="float-none w-auto mysensorsfieldsetlegend">Red Area Low</legend>
+              <div class='input-group mb-3'>
+                <span class='input-group-text' style='width: 50%'>Value</span>
+                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaLowValue'] ?>'>
+              </div>
 
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>GaugeRedAreaHighValue</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaHighValue'] ?>'>
-          </div>
+              <div class='input-group'>
+                <span class='input-group-text' style='width: 50%'>Color</span>
+                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowColor' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaLowColor'] ?>'>
+              </div>
+            </fieldset>
 
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>GaugeRedAreaHighColor</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighColor' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaHighColor'] ?>'>
-          </div>
+            <fieldset class="border p-2">
+              <legend  class="float-none w-auto mysensorsfieldsetlegend">Red Area High</legend>
+              <div class='input-group mb-3'>
+                <span class='input-group-text' style='width: 50%'>Value</span>
+                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaHighValue'] ?>'>
+              </div>
 
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>GaugeNormalAreaColor</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeNormalAreaColor' name='Value<?php echo $_GET['channel'] ?>GaugeNormalAreaColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeNormalAreaColor'] ?>'>
-          </div>
+              <div class='input-group'>
+                <span class='input-group-text' style='width: 50%'>Color</span>
+                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighColor' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaHighColor'] ?>'>
+              </div>
+            </fieldset>
 
-          <div class='input-group mb-3'>
+            <div class='input-group mt-3'>
+              <span class='input-group-text' style='width: 50%'>GaugeNormalAreaColor</span>
+              <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeNormalAreaColor' name='Value<?php echo $_GET['channel'] ?>GaugeNormalAreaColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeNormalAreaColor'] ?>'>
+            </div>
+          </fieldset>
+
+          <div class='input-group mt-3 mb-3'>
             <span class='input-group-text' style='width: 50%'>DashboardOrdnerNr</span>
             <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>DashboardOrdnerNr' name='Value<?php echo $_GET['channel'] ?>DashboardOrdnerNr' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'DashboardOrdnerNr'] ?>' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
           </div>

@@ -68,7 +68,7 @@ function addDataToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor,
     //alert('Request done!');
   })
   .fail(function (jqxhr,settings,ex) {
-    alert('failed, '+ ex);
+    alert('failed (addDataToChart), '+ ex);
     //console.log(data);
   });
 }
@@ -85,7 +85,7 @@ function addLabelsToChart(varsensorId, varmaxValues, varLabel, varbackgroundColo
   .done(function () {
   })
   .fail(function (jqxhr,settings,ex) {
-    alert('failed, '+ ex);
+    alert('failed (addLabelsToChart), '+ ex);
   });
 }
 

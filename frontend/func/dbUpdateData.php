@@ -74,6 +74,12 @@ class dbUpdateData {
     return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname));
   }
 
+  public static function insertAdmin($email, $password_hash, $vorname, $nachname) {
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname, usergroup_admin ) VALUES (:email, :password, :firstname, :lastname, :usergroup_admin)");
+    return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname, 'usergroup_admin' => '1'));
+  }
+
   public static function insertSecuritytoken($userid) {
     $pdo = dbConfig::getInstance();
     $identifier = myFunctions::random_string();
@@ -102,8 +108,11 @@ class dbUpdateData {
     } else {
      $onDashboard = 1;
     }
-   	 $statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
-   	 $statement2->execute(array($post['name'], $post['location'], $post['description'], $post['ttn_app_id'], $post['ttn_dev_id'], $performupdate, $alarmOnUnavailable, $onDashboard, $post['updateDataTimer'], $post['id']));
+    if ($post['ownerid'] == "") {
+      $post['ownerid'] = null;
+    }
+   	 $statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, owner_userid=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
+   	 $statement2->execute(array($post['name'], $post['location'], $post['ownerid'], $post['description'], $post['ttn_app_id'], $post['ttn_dev_id'], $performupdate, $alarmOnUnavailable, $onDashboard, $post['updateDataTimer'], $post['id']));
    	 if ($statement2) {
       return "Board changes saved.";
    	 } else {
@@ -164,9 +173,54 @@ class dbUpdateData {
 
   	if ($statement2) {
       return "Sensor changes successfully saved.";
-  	 } else {
+  	} else {
       return false;
-  	 }
+  	}
+  }
+
+  public static function addNewBoardToUser($post, $userid) {
+    $pdo = dbConfig::getInstance();
+    $return = "test";
+    if ($post['valueType'] == "ttn") {
+      if (json_encode($post['inputValue']) != null) {
+        $statement2 = $pdo->prepare("SELECT * FROM boardconfig WHERE ttn_dev_id = ?");
+        $statement2->execute([$post['inputValue']]);
+        $returnBoard = $statement2->fetch();
+        if ($returnBoard) {
+          if ($returnBoard['owner_userid'] == false) {
+            $sql = "UPDATE boardconfig SET owner_userid=? WHERE id=?";
+            $return = $pdo->prepare($sql)->execute([$userid, $returnBoard['id']]);
+          } else {
+            //$return = $returnBoard['owner_userid'];
+            //$return = false;
+            $return = "Board has an owner.";
+          }
+        } else {
+          //$return = false;
+          $return = "TTN ID not found.";
+        }
+      }
+      //$return = "ttnId";
+      //$return = $statement2;
+    } else if ($post['valueType'] == "mac") {
+      $statement2 = $pdo->prepare("SELECT * FROM boardconfig WHERE macaddress = ?");
+        $statement2->execute([$post['inputValue']]);
+        $returnBoard = $statement2->fetch();
+        if ($returnBoard) {
+          if ($returnBoard['owner_userid'] == false) {
+            $sql = "UPDATE boardconfig SET owner_userid=? WHERE id=?";
+            $return = $pdo->prepare($sql)->execute([$userid, $returnBoard['id']]);
+          } else {
+            //$return = $returnBoard['owner_userid'];
+            //$return = false;
+            $return = "Board has an owner.";
+          }
+        } else {
+          //$return = false;
+          $return = "mac not found.";
+        }
+      //$return = "macadress";
+    }
+    return $return;
   }
 }
-?>

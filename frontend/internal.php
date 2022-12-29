@@ -10,7 +10,7 @@
   require_once("func/myFunctions.func.php");
   require_once("func/user.class.php");
   require_once("func/board.class.php");
-  include("common/header.inc.php");
+  include(__DIR__ . "/common/header.inc.php");
 
   if (isset($_SESSION['userobj'])) {
     $currentUser = unserialize($_SESSION['userobj']);
@@ -22,10 +22,8 @@
 
   include("func/get_data.php");
 
-  $config  = new configuration();
+  $config = new configuration();
   $varDemoMode = $config::$demoMode;
-
-  //var_dump($_SERVER["DOCUMENT_ROOT"]);
 
 ?>
 <link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
@@ -40,8 +38,8 @@
 <script defer src="../node_modules/fontawesome-free/js/fontawesome.js"></script>
 
 <script src="../node_modules/chart.js/dist/chart.js"></script>
-<script src="js/app.js"></script>
-<script src="js/gauge.js"></script>
+<script src="./js/app.js"></script>
+<script src="./js/gauge.js"></script>
 <script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script>
 
 <?php

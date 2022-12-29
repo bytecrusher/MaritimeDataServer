@@ -6,15 +6,15 @@
  * @license: TBD
  */
 
- include_once("password.func.php");
- include_once("dbConfig.func.php");
- require_once(dirname(__FILE__).'/../../configuration.php');
+  include_once("password.func.php");
+  include_once("dbConfig.func.php");
+  require_once(dirname(__FILE__).'/../../configuration.php');
 
- class sensorTyp
- {
+  class sensorTyp
+  {
     public $id;
     public $name;
- }
+  }
 
 class myFunctions {
 
@@ -222,68 +222,308 @@ class myFunctions {
     $valuesDefined = false;
     $mysensorTypId = $pdo->query('SELECT id, name FROM sensortypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
 
-    // Define Default values:
+    // Define Default values (for lora boot monitor):
     if ($sensorName == "GPS") {
       $defaultValues['nameValue1'] = "Lat";
+      $defaultValues['Value1GaugeMinValue'] = 0;
+      $defaultValues['Value1GaugeMaxValue'] = 20;
+      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue2'] = "Lon";
+      $defaultValues['Value2GaugeMinValue'] = 0;
+      $defaultValues['Value2GaugeMaxValue'] = 20;
+      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue3'] = "Alt";
+      $defaultValues['Value3GaugeMinValue'] = 0;
+      $defaultValues['Value3GaugeMaxValue'] = 20;
+      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue4'] = "Spd";
+      $defaultValues['Value4GaugeMinValue'] = 0;
+      $defaultValues['Value4GaugeMaxValue'] = 20;
+      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
+
     } elseif ($sensorName == "Lora") {
       $defaultValues['nameValue1'] = "Gateway";
-      $defaultValues['nameValue2'] = "Empfang";
+      $defaultValues['Value1GaugeMinValue'] = 0;
+      $defaultValues['Value1GaugeMaxValue'] = 20;
+      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue2'] = "RSSI";
+      $defaultValues['Value2GaugeMinValue'] = -130;
+      $defaultValues['Value2GaugeMaxValue'] = 10;
+      $defaultValues['Value2GaugeRedAreaLowValue'] = -120;
+      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue3'] = null;
+      $defaultValues['Value3GaugeMinValue'] = 0;
+      $defaultValues['Value3GaugeMaxValue'] = 20;
+      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue4'] = null;
+      $defaultValues['Value4GaugeMinValue'] = 0;
+      $defaultValues['Value4GaugeMaxValue'] = 20;
+      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
+
     } elseif ($sensorName == "ADC") {
       $defaultValues['nameValue1'] = "ADC1";
-      $defaultValues['nameValue2'] = "ADC2";
-      $defaultValues['nameValue3'] = null;
+      $defaultValues['Value1GaugeMinValue'] = 0;
+      $defaultValues['Value1GaugeMaxValue'] = 20;
+      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value1GaugeRedAreaHighValue'] = 16;
+      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue2'] = "level1";
+      $defaultValues['Value2GaugeMinValue'] = 0;
+      $defaultValues['Value2GaugeMaxValue'] = 20;
+      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value2GaugeRedAreaHighValue'] = 16;
+      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue3'] = "level2";
+      $defaultValues['Value3GaugeMinValue'] = 0;
+      $defaultValues['Value3GaugeMaxValue'] = 20;
+      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue4'] = null;
-      $defaultValues['ttn_payload_id'] = null;
-      $defaultValues['NrOfUsedSensors'] = 2;
-      $valuesDefined = true;
-    } elseif ($sensorName == "DS18B20") {
-      $defaultValues['nameValue1'] = "Ch1";
-      $defaultValues['nameValue2'] = "Ch1";
-      $defaultValues['nameValue3'] = null;
-      $defaultValues['nameValue4'] = null;
-      $defaultValues['ttn_payload_id'] = null;
-      $defaultValues['NrOfUsedSensors'] = 2;
-      $valuesDefined = true;
-    } elseif ($sensorName == "BME280") {
-      $defaultValues['nameValue1'] = "Temp";
-      $defaultValues['nameValue2'] = "Hum";
-      $defaultValues['nameValue3'] = "Pres";
-      $defaultValues['nameValue4'] = null;
+      $defaultValues['Value4GaugeMinValue'] = 0;
+      $defaultValues['Value4GaugeMaxValue'] = 20;
+      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 3;
       $valuesDefined = true;
-    } elseif ($sensorName == "DS2438") {
-      $defaultValues['nameValue1'] = "V";
-      $defaultValues['nameValue2'] = "A";
-      $defaultValues['nameValue3'] = null;
-      $defaultValues['nameValue4'] = null;
+
+    } elseif ($sensorName == "DS18B20") {
+      $defaultValues['nameValue1'] = "Ch1";
+      $defaultValues['Value1GaugeMinValue'] = 0;
+      $defaultValues['Value1GaugeMaxValue'] = 80;
+      $defaultValues['Value1GaugeRedAreaLowValue'] = 10;
+      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value1GaugeRedAreaHighValue'] = 70;
+      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue2'] = "Ch2";
+      $defaultValues['Value2GaugeMinValue'] = 0;
+      $defaultValues['Value2GaugeMaxValue'] = 80;
+      $defaultValues['Value2GaugeRedAreaLowValue'] = 10;
+      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value2GaugeRedAreaHighValue'] = 70;
+      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue3'] = "Ch3";
+      $defaultValues['Value3GaugeMinValue'] = 0;
+      $defaultValues['Value3GaugeMaxValue'] = 80;
+      $defaultValues['Value3GaugeRedAreaLowValue'] = 10;
+      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value3GaugeRedAreaHighValue'] = 70;
+      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue4'] = "Ch4";
+      $defaultValues['Value4GaugeMinValue'] = 0;
+      $defaultValues['Value4GaugeMaxValue'] = 80;
+      $defaultValues['Value4GaugeRedAreaLowValue'] = 10;
+      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value4GaugeRedAreaHighValue'] = 70;
+      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
+
+    } elseif ($sensorName == "BME280") {
+      $defaultValues['nameValue1'] = "Temp";
+      $defaultValues['Value1GaugeMinValue'] = 0;
+      $defaultValues['Value1GaugeMaxValue'] = 40;
+      $defaultValues['Value1GaugeRedAreaLowValue'] = 10;
+      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value1GaugeRedAreaHighValue'] = 26;
+      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue2'] = "Hum";
+      $defaultValues['Value2GaugeMinValue'] = 0;
+      $defaultValues['Value2GaugeMaxValue'] = 20;
+      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue3'] = "Pres";
+      $defaultValues['Value3GaugeMinValue'] = 0;
+      $defaultValues['Value3GaugeMaxValue'] = 20;
+      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue4'] = "Dew.";
+      $defaultValues['Value4GaugeMinValue'] = 0;
+      $defaultValues['Value4GaugeMaxValue'] = 20;
+      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 4;
+      $valuesDefined = true;
+
+    } elseif ($sensorName == "DS2438") {
+      $defaultValues['nameValue1'] = "V";
+      $defaultValues['Value1GaugeMinValue'] = 0;
+      $defaultValues['Value1GaugeMaxValue'] = 20;
+      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue2'] = "A";
+      $defaultValues['Value2GaugeMinValue'] = 0;
+      $defaultValues['Value2GaugeMaxValue'] = 20;
+      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue3'] = null;
+      $defaultValues['Value3GaugeMinValue'] = 0;
+      $defaultValues['Value3GaugeMaxValue'] = 20;
+      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['nameValue4'] = null;
+      $defaultValues['Value4GaugeMinValue'] = 0;
+      $defaultValues['Value4GaugeMaxValue'] = 20;
+      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+
+      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['NrOfUsedSensors'] = 2;
+      $valuesDefined = true;
+      
     } elseif ($sensorName == "Digital") {
       $defaultValues['nameValue1'] = "Ch1";
+      $defaultValues['Value1GaugeMinValue'] = 0;
+      $defaultValues['Value1GaugeMaxValue'] = 1;
+      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue2'] = "Ch2";
+      $defaultValues['Value2GaugeMinValue'] = 0;
+      $defaultValues['Value2GaugeMaxValue'] = 1;
+      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue3'] = null;
+      $defaultValues['Value3GaugeMinValue'] = 0;
+      $defaultValues['Value3GaugeMaxValue'] = 1;
+      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+
       $defaultValues['nameValue4'] = null;
+      $defaultValues['Value4GaugeMinValue'] = 0;
+      $defaultValues['Value4GaugeMaxValue'] = 1;
+      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
+      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
+      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
+      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
     }
 
     if ($valuesDefined == true) {
-      $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name, nameValue1, nameValue2, nameValue3, nameValue4, ttn_payload_id, NrOfUsedSensors,  	onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-      $statement->execute(array($boardid, $mysensorTypId->id, $sensorName, $defaultValues['nameValue1'], $defaultValues['nameValue2'], $defaultValues['nameValue3'], $defaultValues['nameValue4'], $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors'], 1));     // ToDo: change default Owner User to one of the admins
+      $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name," .
+      "nameValue1, Value1GaugeMinValue, Value1GaugeMaxValue, Value1GaugeRedAreaLowValue, Value1GaugeRedAreaLowColor, Value1GaugeRedAreaHighValue, Value1GaugeRedAreaHighColor, Value1GaugeNormalAreaColor," .
+      "nameValue2, Value2GaugeMinValue, Value2GaugeMaxValue, Value2GaugeRedAreaLowValue, Value2GaugeRedAreaLowColor, Value2GaugeRedAreaHighValue, Value2GaugeRedAreaHighColor, Value2GaugeNormalAreaColor," .
+      "nameValue3, Value3GaugeMinValue, Value3GaugeMaxValue, Value3GaugeRedAreaLowValue, Value3GaugeRedAreaLowColor, Value3GaugeRedAreaHighValue, Value3GaugeRedAreaHighColor, Value3GaugeNormalAreaColor," .
+      "nameValue4, Value4GaugeMinValue, Value4GaugeMaxValue, Value4GaugeRedAreaLowValue, Value4GaugeRedAreaLowColor, Value4GaugeRedAreaHighValue, Value4GaugeRedAreaHighColor, Value4GaugeNormalAreaColor," .
+      "ttn_payload_id, NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      $statement->execute(array($boardid, $mysensorTypId->id, $sensorName,
+        $defaultValues['nameValue1'], $defaultValues['Value1GaugeMinValue'], $defaultValues['Value1GaugeMaxValue'], $defaultValues['Value1GaugeRedAreaLowValue'], $defaultValues['Value1GaugeRedAreaLowColor'], $defaultValues['Value1GaugeRedAreaHighValue'], $defaultValues['Value1GaugeRedAreaHighColor'], $defaultValues['Value1GaugeNormalAreaColor'],
+        $defaultValues['nameValue2'], $defaultValues['Value2GaugeMinValue'], $defaultValues['Value2GaugeMaxValue'], $defaultValues['Value2GaugeRedAreaLowValue'], $defaultValues['Value2GaugeRedAreaLowColor'], $defaultValues['Value2GaugeRedAreaHighValue'], $defaultValues['Value2GaugeRedAreaHighColor'], $defaultValues['Value2GaugeNormalAreaColor'], 
+        $defaultValues['nameValue3'], $defaultValues['Value3GaugeMinValue'], $defaultValues['Value3GaugeMaxValue'], $defaultValues['Value3GaugeRedAreaLowValue'], $defaultValues['Value3GaugeRedAreaLowColor'], $defaultValues['Value3GaugeRedAreaHighValue'], $defaultValues['Value3GaugeRedAreaHighColor'], $defaultValues['Value3GaugeNormalAreaColor'], 
+        $defaultValues['nameValue4'], $defaultValues['Value4GaugeMinValue'], $defaultValues['Value4GaugeMaxValue'], $defaultValues['Value4GaugeRedAreaLowValue'], $defaultValues['Value4GaugeRedAreaLowColor'], $defaultValues['Value4GaugeRedAreaHighValue'], $defaultValues['Value4GaugeRedAreaHighColor'], $defaultValues['Value4GaugeNormalAreaColor'], 
+        $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors'], 1));
       $neue_id = $pdo->lastInsertId();
       return $neue_id;
     }
@@ -319,6 +559,24 @@ class myFunctions {
     $statement = $pdo->prepare("SELECT * FROM users ORDER BY id");
     $result = $statement->execute();
     return $statement->fetchAll();
+  }
+
+  /*
+  * Get all Users from db.
+  */
+  public static function isUserRegistred($email) {
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare("SELECT * FROM users WHERE email = ? ORDER BY id LIMIT 1");
+    $statement->execute(array($email));
+    $statement2 = $statement->fetch(PDO::FETCH_ASSOC);
+    if ($statement2 != NULL) {
+      $result = true;
+    } else {
+      $result = false;
+    }
+    //$result = $statement->execute();
+    //return $statement->fetchAll();
+    return $result;
   }
 
 	/**

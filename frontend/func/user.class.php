@@ -1,4 +1,3 @@
-
 <?php
 /**
  * create an object of the current user as an object and provide some getter and setter functions
@@ -27,7 +26,6 @@ class user implements JsonSerializable
     $statement = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
     $result = $statement->execute(array('email' => $email));
     $this->userobj = $statement->fetch(PDO::FETCH_OBJ);
-    return $this->userobj;
   }
 
   /**
@@ -66,12 +64,29 @@ class user implements JsonSerializable
   }
 
 /**
+  * Returns true, if user is exist.
+  * @return active as bool
+  */
+  public function userExist()
+  {
+    if ($this->userobj == false) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+/**
   * Returns true, if user is active.
   * @return active as bool
   */
   public function isActive()
   {
-     return $this->userobj->active;
+    if ($this->userobj == false) {
+      return false;
+    } else {
+      return $this->userobj->active;
+    }
   }
 
   /**

@@ -6,7 +6,8 @@
  * @license: TBD
  */
 
-require_once(dirname(__FILE__).'/../../configuration.php');
+//require_once(dirname(__FILE__).'/../../configuration.php');
+require_once(__DIR__ . '/../../configuration.php');
 
 class dbConfig {
   private static $pdo = null;
@@ -21,8 +22,9 @@ class dbConfig {
     }
     catch(PDOException $e)
     {
-        printf('Error opening database.<br><br>%s',
-        $e->getMessage); exit();
+        //printf('Error opening database.<br><br>%s',
+        //$e->getMessage());
+        exit();
     }
   }
 
@@ -33,4 +35,3 @@ class dbConfig {
       return self::$pdo;
   }
 }
-?>

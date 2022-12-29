@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.1
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Erstellungszeit: 11. Sep 2022 um 00:44
--- Server-Version: 10.4.21-MariaDB
--- PHP-Version: 8.1.1
+-- Host: mysql:3306
+-- Erstellungszeit: 24. Dez 2022 um 13:12
+-- Server-Version: 8.0.31
+-- PHP-Version: 8.0.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Datenbank: `k51971_mds-demo`
+-- Datenbank: `mds_github`
 --
 
 -- --------------------------------------------------------
@@ -28,21 +28,21 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `boardconfig` (
-  `id` int(11) NOT NULL,
-  `owner_userid` int(11) DEFAULT NULL,
+  `id` int NOT NULL,
+  `owner_userid` int DEFAULT NULL,
   `macaddress` varchar(30) NOT NULL,
   `name` varchar(30) DEFAULT NULL,
   `location` varchar(20) DEFAULT NULL,
   `description` varchar(50) DEFAULT NULL,
-  `performupdate` tinyint(1) DEFAULT 0,
+  `performupdate` tinyint DEFAULT '0',
   `firmwareversion` varchar(10) DEFAULT NULL,
-  `alarmOnUnavailable` tinyint(1) DEFAULT 0,
-  `updateDataTimer` int(11) DEFAULT NULL,
-  `boardtypeid` int(10) DEFAULT NULL,
+  `alarmOnUnavailable` tinyint DEFAULT '0',
+  `updateDataTimer` int DEFAULT NULL,
+  `boardtypeid` int DEFAULT NULL,
   `ttn_app_id` text NOT NULL,
-  `ttn_dev_id` text CHARACTER SET utf16 NOT NULL,
-  `onDashboard` tinyint(1) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `ttn_dev_id` text CHARACTER SET utf16 COLLATE utf16_general_ci NOT NULL,
+  `onDashboard` tinyint NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -51,33 +51,11 @@ CREATE TABLE `boardconfig` (
 --
 
 CREATE TABLE `boardtype` (
-  `id` int(10) NOT NULL,
+  `id` int NOT NULL,
   `name` varchar(20) NOT NULL,
   `description` varchar(30) NOT NULL,
   `image` varchar(40) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Tabellenstruktur für Tabelle `ttnDataLoraBoatMonitor`
---
-
-CREATE TABLE `ttnDataLoraBoatMonitor` (
-  `id` int(11) NOT NULL,
-  `datetime` datetime NOT NULL,
-  `app_id` text NOT NULL,
-  `dev_id` text NOT NULL,
-  `ttn_timestamp` text NOT NULL,
-  `gtw_id` text NOT NULL,
-  `gtw_rssi` float NOT NULL,
-  `gtw_snr` float NOT NULL,
-  `dev_raw_payload` text NOT NULL,
-  `dev_value_1` float NOT NULL,
-  `dev_value_2` float NOT NULL,
-  `dev_value_3` float NOT NULL,
-  `dev_value_4` float NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -86,12 +64,12 @@ CREATE TABLE `ttnDataLoraBoatMonitor` (
 --
 
 CREATE TABLE `securitytokens` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `identifier` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `securitytoken` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+  `id` int UNSIGNED NOT NULL,
+  `user_id` int NOT NULL,
+  `identifier` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `securitytoken` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -100,53 +78,53 @@ CREATE TABLE `securitytokens` (
 --
 
 CREATE TABLE `sensorconfig` (
-  `id` int(11) NOT NULL,
-  `boardid` int(11) DEFAULT NULL,
+  `id` int NOT NULL,
+  `boardid` int DEFAULT NULL,
   `sensorAddress` varchar(20) DEFAULT NULL,
   `name` varchar(20) DEFAULT NULL,
   `description` varchar(30) DEFAULT NULL,
-  `typid` int(11) DEFAULT NULL,
+  `typid` int DEFAULT NULL,
   `locationOfMeasurement` varchar(20) DEFAULT NULL,
   `nameValue1` varchar(10) DEFAULT NULL,
-  `Value1GaugeMinValue` int(11) NOT NULL DEFAULT 0,
-  `Value1GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
-  `Value1GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value1GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
-  `Value1GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value1GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
-  `Value1GaugeNormalAreaColor` text NOT NULL DEFAULT 'green',
-  `Value1DashboardOrdnerNr` int(11) NOT NULL,
+  `Value1GaugeMinValue` int NOT NULL DEFAULT '0',
+  `Value1GaugeMaxValue` int NOT NULL DEFAULT '20',
+  `Value1GaugeRedAreaLowValue` int NOT NULL,
+  `Value1GaugeRedAreaLowColor` text NOT NULL,
+  `Value1GaugeRedAreaHighValue` int NOT NULL,
+  `Value1GaugeRedAreaHighColor` text NOT NULL,
+  `Value1GaugeNormalAreaColor` text NOT NULL,
+  `Value1DashboardOrdnerNr` int DEFAULT '1',
   `nameValue2` varchar(10) DEFAULT NULL,
-  `Value2GaugeMinValue` int(11) NOT NULL DEFAULT 0,
-  `Value2GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
-  `Value2GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value2GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
-  `Value2GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value2GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
-  `Value2GaugeNormalAreaColor` text NOT NULL DEFAULT 'green',
-  `Value2DashboardOrdnerNr` int(11) NOT NULL,
+  `Value2GaugeMinValue` int NOT NULL DEFAULT '0',
+  `Value2GaugeMaxValue` int NOT NULL DEFAULT '20',
+  `Value2GaugeRedAreaLowValue` int NOT NULL,
+  `Value2GaugeRedAreaLowColor` text NOT NULL,
+  `Value2GaugeRedAreaHighValue` int NOT NULL,
+  `Value2GaugeRedAreaHighColor` text NOT NULL,
+  `Value2GaugeNormalAreaColor` text NOT NULL,
+  `Value2DashboardOrdnerNr` int DEFAULT '1',
   `nameValue3` varchar(10) DEFAULT NULL,
-  `Value3GaugeMinValue` int(11) NOT NULL DEFAULT 0,
-  `Value3GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
-  `Value3GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value3GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
-  `Value3GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value3GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
-  `Value3GaugeNormalAreaColor` text NOT NULL DEFAULT 'greed',
-  `Value3DashboardOrdnerNr` int(11) NOT NULL,
+  `Value3GaugeMinValue` int NOT NULL DEFAULT '0',
+  `Value3GaugeMaxValue` int NOT NULL DEFAULT '20',
+  `Value3GaugeRedAreaLowValue` int NOT NULL,
+  `Value3GaugeRedAreaLowColor` text NOT NULL,
+  `Value3GaugeRedAreaHighValue` int NOT NULL,
+  `Value3GaugeRedAreaHighColor` text NOT NULL,
+  `Value3GaugeNormalAreaColor` text NOT NULL,
+  `Value3DashboardOrdnerNr` int DEFAULT '1',
   `nameValue4` varchar(10) DEFAULT NULL,
-  `Value4GaugeMinValue` int(11) NOT NULL DEFAULT 0,
-  `Value4GaugeMaxValue` int(11) NOT NULL DEFAULT 20,
-  `Value4GaugeRedAreaLowValue` int(11) NOT NULL,
-  `Value4GaugeRedAreaLowColor` text NOT NULL DEFAULT 'red',
-  `Value4GaugeRedAreaHighValue` int(11) NOT NULL,
-  `Value4GaugeRedAreaHighColor` text NOT NULL DEFAULT 'red',
-  `Value4GaugeNormalAreaColor` text NOT NULL DEFAULT 'green',
-  `Value4DashboardOrdnerNr` int(11) NOT NULL,
-  `onDashboard` tinyint(1) DEFAULT 0,
-  `ttn_payload_id` int(11) DEFAULT NULL COMMENT 'Position in der TTN Payload.',
-  `NrOfUsedSensors` int(11) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `Value4GaugeMinValue` int NOT NULL DEFAULT '0',
+  `Value4GaugeMaxValue` int NOT NULL DEFAULT '20',
+  `Value4GaugeRedAreaLowValue` int NOT NULL,
+  `Value4GaugeRedAreaLowColor` text NOT NULL,
+  `Value4GaugeRedAreaHighValue` int NOT NULL,
+  `Value4GaugeRedAreaHighColor` text NOT NULL,
+  `Value4GaugeNormalAreaColor` text NOT NULL,
+  `Value4DashboardOrdnerNr` int DEFAULT '1',
+  `onDashboard` tinyint DEFAULT '0',
+  `ttn_payload_id` int DEFAULT NULL COMMENT 'Position in der TTN Payload.',
+  `NrOfUsedSensors` int NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -155,17 +133,17 @@ CREATE TABLE `sensorconfig` (
 --
 
 CREATE TABLE `sensordata` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `sensorid` int(11) NOT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `sensorid` int NOT NULL,
   `value1` varchar(20) NOT NULL,
   `value2` varchar(20) DEFAULT NULL,
   `value3` varchar(10) DEFAULT NULL,
   `value4` varchar(10) DEFAULT NULL,
   `val_date` varchar(10) NOT NULL COMMENT 'When was record added.',
   `val_time` varchar(10) NOT NULL COMMENT 'When was record added.',
-  `reading_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `transmissionpath` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `reading_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `transmissionpath` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -174,7 +152,7 @@ CREATE TABLE `sensordata` (
 --
 
 CREATE TABLE `sensortypes` (
-  `id` int(11) NOT NULL,
+  `id` int NOT NULL,
   `name` varchar(10) NOT NULL,
   `siUnitVal1` varchar(10) NOT NULL,
   `siUnitVal2` varchar(10) NOT NULL,
@@ -182,9 +160,9 @@ CREATE TABLE `sensortypes` (
   `siUnitVal4` varchar(10) NOT NULL,
   `oneWireFamilyCode` varchar(2) NOT NULL,
   `description` varchar(20) NOT NULL,
-  `MaxNrOfValues` int(11) NOT NULL COMMENT 'How many values are expected.',
-  `hasAddress` tinyint(1) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `MaxNrOfValues` int NOT NULL COMMENT 'How many values are expected.',
+  `hasAddress` tinyint DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Daten für Tabelle `sensortypes`
@@ -202,23 +180,45 @@ INSERT INTO `sensortypes` (`id`, `name`, `siUnitVal1`, `siUnitVal2`, `siUnitVal3
 -- --------------------------------------------------------
 
 --
+-- Tabellenstruktur für Tabelle `ttnDataLoraBoatMonitor`
+--
+
+CREATE TABLE `ttnDataLoraBoatMonitor` (
+  `id` int NOT NULL,
+  `datetime` datetime NOT NULL,
+  `app_id` text NOT NULL,
+  `dev_id` text NOT NULL,
+  `ttn_timestamp` text NOT NULL,
+  `gtw_id` text NOT NULL,
+  `gtw_rssi` float NOT NULL,
+  `gtw_snr` float NOT NULL,
+  `dev_raw_payload` text NOT NULL,
+  `dev_value_1` float NOT NULL,
+  `dev_value_2` float NOT NULL,
+  `dev_value_3` float NOT NULL,
+  `dev_value_4` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Tabellenstruktur für Tabelle `users`
 --
 
 CREATE TABLE `users` (
-  `id` int(11) NOT NULL,
-  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `password` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `firstname` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-  `lastname` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `active` tinyint(1) NOT NULL DEFAULT 0,
-  `usergroup_admin` tinyint(1) NOT NULL DEFAULT 0,
-  `passwordcode` text COLLATE utf8_unicode_ci DEFAULT NULL,
+  `id` int NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `firstname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `lastname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `active` tinyint NOT NULL DEFAULT '0',
+  `usergroup_admin` tinyint NOT NULL DEFAULT '0',
+  `passwordcode` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `passwordcode_time` date DEFAULT NULL,
-  `dashboardUpdateInterval` int(11) NOT NULL DEFAULT 15
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+  `dashboardUpdateInterval` int NOT NULL DEFAULT '15'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Indizes der exportierten Tabellen
@@ -267,7 +267,7 @@ ALTER TABLE `sensordata`
 ALTER TABLE `sensortypes`
   ADD PRIMARY KEY (`id`);
 
-  --
+--
 -- Indizes für die Tabelle `ttnDataLoraBoatMonitor`
 --
 ALTER TABLE `ttnDataLoraBoatMonitor`
@@ -288,49 +288,49 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT für Tabelle `boardconfig`
 --
 ALTER TABLE `boardconfig`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `boardtype`
 --
 ALTER TABLE `boardtype`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `securitytokens`
 --
 ALTER TABLE `securitytokens`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `sensorconfig`
 --
 ALTER TABLE `sensorconfig`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `sensordata`
 --
 ALTER TABLE `sensordata`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT für Tabelle `ttnDataLoraBoatMonitor`
---
-ALTER TABLE `ttnDataLoraBoatMonitor`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `sensortypes`
 --
 ALTER TABLE `sensortypes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT für Tabelle `ttnDataLoraBoatMonitor`
+--
+ALTER TABLE `ttnDataLoraBoatMonitor`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints der exportierten Tabellen

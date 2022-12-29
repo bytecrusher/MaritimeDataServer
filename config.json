@@ -1,0 +1,11 @@
+{
+    "db_host": "localhost",
+    "db_name": "",
+    "db_user": "",
+    "db_password": "",
+    "api_key": "my_api_key",
+    "baseurl": "",
+    "subdir": "\/maritimedataserver",
+    "demoMode": "false",
+    "md5secretstring": "your_secret_string"
+}

@@ -44,7 +44,7 @@
     <div role="tabpanel" class="tab-pane active" id="board">
       <form method='post' action='settings.php#confBoards' class='form-horizontal col-sm-offset-2 col-sm-9'>
         <?php
-          $statement = $pdo->prepare("SELECT * FROM boardconfig WHERE id=$_GET[id]");
+          $statement = $pdo->prepare("SELECT * FROM boardconfig WHERE id=$_GET[id]"); // TODO: return the name of BoarfType, not the ID.
           $result = $statement->execute();
           while($row = $statement->fetch()) {
         ?>
@@ -61,7 +61,7 @@
 
         <div class="input-group mb-3"><!-- Still needs to be implemented in DB -->
           <span class="input-group-text" style="width: 30%">Board Type</span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardtype' name='boardtype' value='tbd'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardtype' name='boardtype' value='<?=$row['boardtypeid'];?>'>
         </div>
 
         <div class="input-group mb-3">
@@ -89,8 +89,8 @@
           <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$row['ttn_dev_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
         </div>
 
-        <div class="input-group mb-3">
-          <span class="input-group-text" style="width: 30%">Perform update</span>
+        <!--div class="input-group mb-3">
+          <span class="input-group-text" style="width: 30%">Perform Firmware update</span>
           <div class="form-control">
           <?php
             if(isset($row['performupdate']) && $row['performupdate'] == '1') {
@@ -100,11 +100,11 @@
             }
           ?>
           </div>
-        </div>
+        </div-->
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Firmware version</span>
-          <input type="text" class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$row['firmwareversion'];?>'>
+          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$row['firmwareversion'];?>'>
         </div>
 
         <div class="input-group mb-3">
@@ -140,6 +140,33 @@
         </div>
 
         <?php
+				if(($currentUser->getUserGroupAdmin() == 1) ) {
+          $AllUsers =(myFunctions::getAllUsers());
+          //var_dump($row['owner_userid']);
+				?>
+        <div class="input-group mb-3">
+          <span class="input-group-text" style="width: 30%; white-space: break-spaces">owner User</span>
+          <select class='col col-sm-4 form-select' aria-label='Default select example' name='ownerid'>
+							<?php
+              if ($row['owner_userid'] == null) {
+                echo "<option selected value=''></option>";
+              } else {
+                echo "<option value=''></option>";
+              }
+							foreach ($AllUsers as $singleRowUser) {
+								if ($row['owner_userid'] == $singleRowUser['id']) {
+									echo "<option selected value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
+								} else {
+									echo "<option value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
+								}
+							}
+							?></select>
+        </div>
+				<?php
+				}
+			?>
+
+        <?php
           }
         ?>
         <div class='row'>
@@ -160,7 +187,7 @@
         </thead>
       <tbody>
       <?php
-      // collect all Board IDs that belong to the user.
+      // collect all Sensor IDs that belong to the Board.
         $count = 1;
         $Sensorname = null;
         $mysensors = myFunctions::getAllSensorsOfBoardold($varId);

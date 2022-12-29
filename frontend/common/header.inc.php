@@ -18,7 +18,7 @@
       <span class="navbar-toggler-icon">.</span>
     </button>
 
-    <?php if (!myFunctions::is_checked_in()) : ?>
+    <?php if ((!myFunctions::is_checked_in()) && (basename($_SERVER['PHP_SELF']) != "login.php")) : ?>
       <div id="navbar" class="navbar-collapse collapse">
         <form class="navbar-form navbar-right" action="login.php" method="post">
           <table class="login" role="presentation">
@@ -43,7 +43,7 @@
         </form>
       </div>
 
-    <?php else : ?>
+    <?php elseif (basename($_SERVER['PHP_SELF']) != "login.php") : ?>
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav mr-auto navbar-right">
           <li class="nav-item"><a class="nav-link" href="internal.php">My Sensors</a></li>
