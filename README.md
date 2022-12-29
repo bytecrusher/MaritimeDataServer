@@ -33,8 +33,7 @@ For the Frontend the user needs to login. Now the user is able to do some config
 - **backend** files for comunicate with collector and sending mail or telegram messages.
 - **cgi-bin** script for trigger php files to run, to check for sending any message to users (mail).
 - **docu_donotdeploy** folder contains data for documentation.
-     - **sql_install** scripts to install and prepare sql DB and create the tables.
-     - - **images** Images for documentation.
+     - **images** Images for documentation.
 - **frontend** the frontend for this webproject
      - **api** api files for request from JS.
      - **common** common files like "header" and "footer".
@@ -48,6 +47,7 @@ For the Frontend the user needs to login. Now the user is able to do some config
 - **logs** log files for debugging.
 - **otafirmware** contains OTA files for update ESP.
 - **receiver** functions for receiving data from MDCs.
+- **install** scripts to install and prepare sql DB, create the tables and the admin user.
 
 
 #### Installation
