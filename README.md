@@ -1,6 +1,6 @@
 # Intro
-**Maritime Data Server** is the central data server for the Maritime Data. 
-It stores the data that come from MDC in a database and give the user a gui to show the data and do some configurations.
+**Maritime Data Server** is the central data server for Maritime Data. 
+It stores the data that come from **MDC** in a database and gives the user a GUI to show the data and do some configurations.
 
 The initial idea was, to have a possibility to be able to see some Maritime data (temperature, battery voltages) while you are not on the boat.  
 
@@ -15,17 +15,18 @@ With **MDS** you can view data from sensor in graph or charts.
 Also it is possible to configure your boards and sensors.
 
 ## Description
-The server is organized in a Backend (for receiving datan from collector) and a Frontend for displaying data in a Browser for the user.  
+The server is organized in a Backend (API for receiving data from collector) and a Frontend for displaying data in a Browser for the user.  
 The Backend stores the data in a DB. It also checks if data are valid and board and sensors are existing in the DB, otherwise new DB records will be create.  
 For the Frontend the user needs to login. Now the user is able to do some configurations or show some data.
 
-#### Functions / ToDos Status
+#### Functions / ToDos Status / Bugs
 - [x] MDS with Web interface
 - [x] Alert via email an Telegram (need more configuration)
 - [x] Chart view of data
 - [x] configure boards and sensors in web interface
 - [x] change client communication to JSON.
 - [x] get data from TTN
+- [ ] Change static email addresses (sender) into variables. These will be defined in the install script.
 
 ## Folder description
 
@@ -50,9 +51,11 @@ For the Frontend the user needs to login. Now the user is able to do some config
 
 
 #### Installation
-Copy all MDS files to your htdocs dir.  
-Rename "configuration.php.example" to "configuration.php" and change the values.
-Create a SQL User and run the sql script "install_db.php" for create the tables.  
+Copy all **MDS** files to your htdocs dir.
+Create a new Database (with phpmyadmin) and a new User with write privileges to this database.
+Open **http://yourdomain/maritimedataserver/install/index.php** in your Browser and step through the steps.
+After install is finished, remove the dir named "install".
+
 Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 
 ![Preview Sensors](docu_donotdeploy/images/preview_sensors.jpg)
@@ -60,14 +63,14 @@ Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 ![Preview Map](docu_donotdeploy/images/preview_map.jpg)
 
 #### MDS Requirements
-For running the MDS you need a Apache Webserver with php support and a SQL DB.  
-If you run MDCs outside our local network, your MDS needs to be public.
+For running the **MDS** you need a Apache Webserver with php support and a MySQL DB.  
+If you run **MDC**s outside our local network, your **MDS** needs to be public.
 
 ###### Development
 For development i use a Bitnami image for XAMPP Stack 8.1.1-2 under MacOS.  
 In **Applications/XAMPP/xamppfiles/htdocs** i put the project from git.
 
-Now the page is available at **http://localhost/maritimedataserver**
+Now the page is available at **http://yourdomain/maritimedataserver**
 
 ###### Debugging with xDebug
 for php debugging i use xdebug.
