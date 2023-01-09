@@ -270,7 +270,8 @@
         elem.appendChild(gaugeElement);
       }
 
-      function updateGauge(theValue, frame) {
+      //function updateGauge(theValue, frame) {
+      function updateGauge(theValue) {
         //console.log("thevalue: " + theValue);
         var theValue2 = 0;
         if (theValue.toString() === "NaN") {
@@ -336,7 +337,8 @@
             end: value,
             duration: duration || 1,
             step: function(val, frame) {
-              updateGauge(val, frame);
+              //updateGauge(val, frame);
+              updateGauge(val);
             }
           });
         },

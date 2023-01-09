@@ -15,6 +15,7 @@ class user implements JsonSerializable
   private $userobj = null;
   private $object;
   private static $pdo;
+  private $error;
 
   /**
   * Method for construct the class.
@@ -22,10 +23,16 @@ class user implements JsonSerializable
   */
   public function __construct($email)
   {
-    self::$pdo = dbConfig::getInstance();
-    $statement = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
-    $result = $statement->execute(array('email' => $email));
-    $this->userobj = $statement->fetch(PDO::FETCH_OBJ);
+    try {
+      self::$pdo = dbConfig::getInstance();
+      $statement = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
+      $result = $statement->execute(array('email' => $email));
+      $this->userobj = $statement->fetch(PDO::FETCH_OBJ);
+    }
+    catch (PDOException $err) {
+      //Handling query/error
+      $this->error = $err->getCode();
+    }
   }
 
   /**
@@ -174,6 +181,15 @@ class user implements JsonSerializable
   public function getUserGroupAdmin()
   {
     return $this->userobj->usergroup_admin;
+  }
+
+  /**
+  * Returns the Error.
+  * @return Error
+  */
+  public function getError()
+  {
+    return $this->error;
   }
 
   /*

@@ -1,122 +1,167 @@
 <?php
-	session_start();
-	require_once("func/dbConfig.func.php");
-	require_once("func/myFunctions.func.php");
-	require_once("func/user.class.php");
-	require_once("func/dbUpdateData.php");
-	include("common/header.inc.php")
+if (count($_POST) > 0) {
+    /* Form Required Field Validation */
+    foreach ($_POST as $key => $value) {
+        if (empty($_POST[$key])) {
+            $message = ucwords($key) . " field is required";
+            $type = "error";
+            break;
+        }
+    }
+    /* Password Matching Validation */
+    if ($_POST['password'] != $_POST['confirm_password']) {
+        $message = 'Passwords should be same<br>';
+        $type = "error";
+    }
+
+    /* Email Validation */
+    if (! isset($message)) {
+        if (! filter_var($_POST["userEmail"], FILTER_VALIDATE_EMAIL)) {
+            $message = "Invalid UserEmail";
+            $type = "error";
+        }
+    }
+
+    /* Validation to check if Terms and Conditions are accepted */
+    if (! isset($message)) {
+        if (! isset($_POST["terms"])) {
+            $message = "Accept Terms and conditions before submit";
+            $type = "error";
+        }
+    }
+
+    if (! isset($message)) {
+        require_once __DIR__ . '/register/DataSource.php';
+        $database = new DataSource();
+        $query = "SELECT * FROM users where email = ?";
+        $paramType = 's';
+        $paramValue = array(
+            $_POST["userEmail"]
+        );
+        $count = $database->getRecordCount($query, $paramType, $paramValue);
+
+        if ($count == 0) {
+            $hashedpassword = password_hash(($_POST["password"]), PASSWORD_DEFAULT);
+            $query = "INSERT INTO users (email, password, firstname, lastname) VALUES (?, ?, ?, ?)";
+            $paramType = 'ssss';
+            $paramValue = array(
+                $_POST["userEmail"],
+                $hashedpassword,
+                $_POST["firstName"],
+                $_POST["lastName"]
+            );
+            $current_id = $database->insert($query, $paramType, $paramValue);
+            if (! empty($current_id)) {
+                $actual_link = "http://$_SERVER[HTTP_HOST]" . "/frontend/activate.php?id=" . $current_id;
+                $toEmail = $_POST["userEmail"];
+                $subject = "User Registration Activation Email";
+                $content = "Hi " . $_POST["firstName"] . " click this link to activate your account. <a href='" . $actual_link . "'>" . $actual_link . "</a><br>Your MDS Team.";
+                // TODO: replace "from" into variable namfrom config.
+                $mailHeaders = "From: MDS User Registration <info@derguntmar.de>\r\n";
+                $mailHeaders .= "Reply-To: info@derguntmar.de\r\n";
+                $mailHeaders .= "Content-Type: text/html\r\n";
+                if (mail($toEmail, $subject, $content, $mailHeaders)) {
+                    $message = "You have registered and the activation mail is sent to your email. Click the activation link to activate you account.";
+                    $type = "success";
+                }
+                unset($_POST);
+            } else {
+                $message = "problem in registration. Try Again!";
+            }
+        } else {
+            $message = "User Email is already in use.";
+            $type = "error";
+        }
+    }
+}
 ?>
-<div class="container main-container registration-form">
-<h1>Register</h1>
+<html>
+<head>
 <?php
-$showFormular = true; //Variable whether the registration form should be displayed
-
-if(isset($_GET['register'])) {
-	$error = false;
-	$vorname = trim($_POST['firstname']);
-	$nachname = trim($_POST['lastname']);
-	$email = trim($_POST['email']);
-	$password = $_POST['password'];
-	$password2 = $_POST['password2'];
-
-	if(empty($vorname) || empty($nachname) || empty($email)) {
-		echo '<div class="alert alert-danger" role="alert">Please enter all fields.</div>';
-		$error = true;
-	}
-
-	if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-		echo '<div class="alert alert-danger" role="alert">Please enter a valid email adress.</div>';
-		$error = true;
-	}
-	if(strlen($password) == 0) {
-		echo '<div class="alert alert-danger" role="alert">Password necessary.</div>';
-		$error = true;
-	}
-	if($password != $password2) {
-		echo '<div class="alert alert-danger" role="alert">Both passwords must be the same.</div>';
-		$error = true;
-	}
- 
-	//Check that the email address has not yet been registered
-	if(!$error) {
-		if(myFunctions::isUserRegistred($email)) {
-			echo '<div class="alert alert-danger" role="alert">The entered email adress already exist.</div>';
-			$error = true;
-		}
-	}
-
-	//No errors, we can register the user
-	if(!$error) {
-		$password_hash = password_hash($password, PASSWORD_DEFAULT);
-		$result = dbUpdateData::insertUser($email, $password_hash, $vorname, $nachname);
-		if($result) {
-			echo "<div class='alert alert-success' role='alert'>Registration successful.<br>
-			The Admin now needs to activate your account.</div>
-			<a href='login.php' class='btn btn-primary'>Login</a>";
-			$showFormular = false;
-		} else {
-			echo 'An error occurs while saving.<br>';
-		}
-	}
-
-	// send mail to the user:
-	$to      = $email;
-	$subject = 'Your registratoin at MDS-data.';
-	$message = 'Thanks for your registration on MDS-Data. An Administrator needs to activate your Account.';
-	$headers = 'From: info@derguntmar.de' . "\r\n" .
-		'Reply-To: info@derguntmar.de' . "\r\n" .
-		'X-Mailer: PHP/' . phpversion();
-	mail($to, $subject, $message, $headers);
-
-	// send mail to the admin:
-	$to      = 'info@derguntmar.de';
-	$subject = 'new user registered';
-	$message = 'A new User is registered on esp-data.derguntmar.de';
-	$headers = 'From: info@derguntmar.de' . "\r\n" .
-		'Reply-To: info@derguntmar.de' . "\r\n" .
-		'X-Mailer: PHP/' . phpversion();
-	mail($to, $subject, $message, $headers);
+	session_start();
+	//require_once("func/dbConfig.func.php");
+	require_once(__DIR__ . "/func/myFunctions.func.php");
+	require_once(__DIR__ . "/func/user.class.php");
+	//require_once("func/dbUpdateData.php");
+	include(__DIR__ . "/common/header.inc.php");
+?>
+<title>User Registration</title>
+<style>
+.gender-radio {
+    width: auto;
 }
 
-if($showFormular) {
-?>
-
-<form action="?register=1" method="post">
-
-<div class="form-group">
-	<label for="inputVorname">Firstname:</label>
-	<input type="text" id="inputVorname" size="40" maxlength="250" name="firstname" class="form-control" required>
-</div>
-
-<div class="form-group">
-	<label for="inputNachname">Lastname:</label>
-	<input type="text" id="inputNachname" size="40" maxlength="250" name="lastname" class="form-control" required>
-</div>
-
-<div class="form-group">
-	<label for="inputEmail">E-Mail:</label>
-	<input type="email" id="inputEmail" size="40" maxlength="250" name="email" class="form-control" required>
-</div>
-
-<div class="form-group">
-	<label for="inputPassword">Password:</label>
-	<input type="password" id="inputPassword" size="40"  maxlength="250" name="password" class="form-control" required>
-</div>
-
-<div class="form-group">
-	<label for="inputPassword2">Password repeat:</label>
-	<input type="password" id="inputPassword2" size="40" maxlength="250" name="password2" class="form-control" required>
-</div>
-<div class="form-group mt-2">
-	<button type="submit" class="btn btn-lg btn-primary btn-block">Register</button>
-</div>
-</form>
-
+#loader-icon {
+    margin-left: 80px;
+    display: none;
+}
+</style>
+</head>
+<body>
+    <?php
+        $userobj = new user("test@test.de");
+        $myerror = $userobj->getError();
+        if ($myerror == "42S02") {
+            $error_msg =  "<div class='alert alert-danger' role='alert'>Tables does not exist. Please run install. 
+            <a href='./../install/index.php'>Install</a></div>";
+        } 
+        if(isset($error_msg) && !empty($error_msg)) {
+            echo $error_msg;
+        }
+    ?>
+    <!--div class="phppot-container"-->
+    <div class="container main-container registration-form">
+    <?php if(isset($message)) { 
+            $success_msg = $message;
+        ?>
+        <div class="container small-container-330">
+            <div class="message <?php echo $type; ?>"><?php echo $message; ?></div>
+        </div>
+        <?php } else { ?>
+        <form name="frmRegistration" method="post" action="">
+            <h2>User Activation Email</h2>
+            <div class="form-group">
+                <label for="firstName">Firstname:</label>
+                <input type="text" id="firstName" size="40" maxlength="250" name="firstName" class="form-control" required value="<?php if(isset($_POST['firstName'])) echo $_POST['firstName']; ?>">
+            </div>
+            <div class="form-group">
+                <label for="lastName">Lastname:</label>
+                <input type="text" id="lastName" size="40" maxlength="250" name="lastName" class="form-control" required value="<?php if(isset($_POST['lastName'])) echo $_POST['lastName']; ?>">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" size="40"  maxlength="250" name="password" class="form-control" required value="">
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Password repeat:</label>
+                <input type="password" id="confirm_password" size="40" maxlength="250" name="confirm_password" class="form-control" required value="">
+            </div>
+            <div class="form-group">
+                <label for="userEmail">E-Mail:</label>
+                <input type="email" id="userEmail" size="40" maxlength="250" name="userEmail" class="form-control" required value="<?php if(isset($_POST['userEmail'])) echo $_POST['userEmail']; ?>">
+            </div>
+            <div class="form-group">
+                <input type="checkbox" name="terms"> I accept Terms and
+                Conditions
+            </div>
+            <div class="form-group mt-2">
+                <button type="submit" class="btn btn-lg btn-primary btn-block" name="submit" id="btn-submit" value="Register" onclick="showLoader();">Register</button>
+            </div>
+            <div id="loader-icon" class="loader">
+                <img src="register/loader.gif" />
+            </div>
+        </form>
+    <?php } ?>
+    </div>
+    <script>
+    function showLoader() {
+        document.getElementById("loader-icon").style.display = 'block';
+        document.getElementById("btn-submit").style.display = 'none';
+    }
+    //}
+    </script>
 <?php
-} //End of if($showFormular)
-
+    include("./common/footer.inc.php")
 ?>
-</div>
-<?php
-include("common/footer.inc.php")
-?>
+</body>
+</html>

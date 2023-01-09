@@ -21,80 +21,84 @@ $sel_data = mysqli_query($db_connect, "SELECT * FROM `ttnDataLoraBoatMonitor` OR
 $mysql_row = mysqli_fetch_array($sel_data);
 $row_cnt = mysqli_num_rows($sel_data);
 
-$dev_name = $mysql_row["dev_id"];
-$datetime = $mysql_row["datetime"];
-$gateway = $mysql_row["gtw_id"];
-$rssi = $mysql_row["gtw_rssi"];
-$temperature = $mysql_row["dev_value_1"];
-$temperature2 = $mysql_row["dev_value_2"];
-$humidity = $mysql_row["dev_value_3"];
-$battery = $mysql_row["dev_value_4"];
-
 if ($row_cnt > 0) {
-    $show_table = "";
-} else {
-    $show_table = "display: none;";
-    echo 'Error: No values in database!';
-}
-?>
-    <table id="ttnvalues" class="table" style="<?php echo $show_table; ?>">
-        <tr>
-            <th><?php echo $dev_name; ?></th>
-            <th>Value</th>
-        </tr>
-        <tr>
-            <td>Time</td>
-            <td><?php echo $datetime; ?></td>
-        </tr>
-        <tr>
-            <td>Temperature</td>
-            <td><?php echo $temperature; ?> &deg;C</td>
-        </tr>
-        <tr>
-            <td>Temperature2</td>
-            <td><?php echo $temperature2; ?> &deg;C</td>
-        </tr>
-        <tr>
-            <td>Humidity</td>
-            <td><?php echo $humidity; ?> %</td>
-        </tr>
-        <tr>
-            <td>Battery</td>
-            <td><?php echo $battery; ?> V</td>
-        </tr>
-        <tr>
-            <td>Gateway</td>
-            <td><?php echo $gateway; ?></td>
-        </tr>
-        <tr>
-            <td>RSSI</td>
-            <td><?php echo $rssi; ?></td>
-        </tr>
-    </table>
+    $dev_name = $mysql_row["dev_id"];
+    $datetime = $mysql_row["datetime"];
+    $gateway = $mysql_row["gtw_id"];
+    $rssi = $mysql_row["gtw_rssi"];
+    $temperature = $mysql_row["dev_value_1"];
+    $temperature2 = $mysql_row["dev_value_2"];
+    $humidity = $mysql_row["dev_value_3"];
+    $battery = $mysql_row["dev_value_4"];
 
-    <table id="ttnvalues2" class="table" style="<?php echo $show_table; ?>">
-    <thead><tr><td>Time</td><td>Dev ID</td><td>Temp</td></tr></thead>
-    <tbody>
-<?php
-if ($row_cnt >= 10) {
-    $i_max = 10;
-} else {
-    $i_max = $row_cnt - 1;
-}
-    for ($i=0; $i <= $i_max; $i++) {
-        $mysql_row = mysqli_fetch_array($sel_data);
-        if ($mysql_row != null) {
-            $dev_name = $mysql_row["dev_id"];
-            $datetime = $mysql_row["datetime"];
-            $temperature = $mysql_row["dev_value_1"];
-    
-            echo "<tr>";
-            echo "<td>" . $datetime . "</td>";
-            echo "<td>" . $dev_name . "</td>";
-            echo "<td>" . $temperature . "</td>";
-            echo "</tr>";
-        }
+    if ($row_cnt > 0) {
+        $show_table = "";
+    } else {
+        $show_table = "display: none;";
+        echo 'Error: No values in database!';
     }
+    ?>
+        <table id="ttnvalues" class="table" style="<?php echo $show_table; ?>">
+            <tr>
+                <th><?php echo $dev_name; ?></th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Time</td>
+                <td><?php echo $datetime; ?></td>
+            </tr>
+            <tr>
+                <td>Temperature</td>
+                <td><?php echo $temperature; ?> &deg;C</td>
+            </tr>
+            <tr>
+                <td>Temperature2</td>
+                <td><?php echo $temperature2; ?> &deg;C</td>
+            </tr>
+            <tr>
+                <td>Humidity</td>
+                <td><?php echo $humidity; ?> %</td>
+            </tr>
+            <tr>
+                <td>Battery</td>
+                <td><?php echo $battery; ?> V</td>
+            </tr>
+            <tr>
+                <td>Gateway</td>
+                <td><?php echo $gateway; ?></td>
+            </tr>
+            <tr>
+                <td>RSSI</td>
+                <td><?php echo $rssi; ?></td>
+            </tr>
+        </table>
+
+        <table id="ttnvalues2" class="table" style="<?php echo $show_table; ?>">
+        <thead><tr><td>Time</td><td>Dev ID</td><td>Temp</td></tr></thead>
+        <tbody>
+    <?php
+    if ($row_cnt >= 10) {
+        $i_max = 10;
+    } else {
+        $i_max = $row_cnt - 1;
+    }
+        for ($i=0; $i <= $i_max; $i++) {
+            $mysql_row = mysqli_fetch_array($sel_data);
+            if ($mysql_row != null) {
+                $dev_name = $mysql_row["dev_id"];
+                $datetime = $mysql_row["datetime"];
+                $temperature = $mysql_row["dev_value_1"];
+        
+                echo "<tr>";
+                echo "<td>" . $datetime . "</td>";
+                echo "<td>" . $dev_name . "</td>";
+                echo "<td>" . $temperature . "</td>";
+                echo "</tr>";
+            }
+        }
+} else {
+	echo  "<div class='alert alert-danger' role='alert'>No Data received.</div>";
+}
 ?>
 </tbody>
 </table>

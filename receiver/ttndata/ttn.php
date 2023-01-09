@@ -143,6 +143,7 @@ if(sizeof($ttn_post) > 0) {
 
     // TODO: insert data into 'sensordata' (first get Board-ID by TTN Appid and Devid)
     $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_id);
+    $myFunctions = new myFunctions();
     
     // if board not exist, create it.
     if (!$singleRowBoardIdbyTTN) {
@@ -155,37 +156,37 @@ if(sizeof($ttn_post) > 0) {
     $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
     if(array_search('GPS', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor GPS does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
-      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
+      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
     }
 
     if(array_search('Lora', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor Lora does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
-      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "Lora", "Lora");
+      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Lora", "Lora");
     }
 
     if(array_search('ADC', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor ADC does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
-      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "ADC", "ADC");
+      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "ADC", "ADC");
     }
 
     if(array_search('DS18B20', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor DS18B20 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
-      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "DS18B20", "DS18B20");
+      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "DS18B20", "DS18B20");
     }
 
     if(array_search('BME280', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor BME280 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
-      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "BME280", "BME280");
+      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "BME280", "BME280");
     }
 
     if(array_search('DS2438', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor DS2438 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
-      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "DS2438", "DS2438");
+      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "DS2438", "DS2438");
     }
 
     if(array_search('Digital', array_column($allSensorsOfBoard, 'boardid')) === false) {
       write_to_log('Sensor Digital does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id']);
-      myFunctions::addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
+      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
     }
 
     $url = $config::$baseurl . '/receiver/receivejson.php';
@@ -304,7 +305,7 @@ function write_to_log($text)
     $monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
     $monat = date("n");
     $jahr = date("yy");
-    $dateiname = "./logs/log_" . $monate[$monat] . "_$jahr.$format";
+    $dateiname = dirname(__FILE__) . "/logs/log_" . $monate[$monat] . "_$jahr.$format";
     $header = array("Datum", "IP", "Seite", "Browser");
     $json = json_encode($text);
     $infos = array($datum_zeit, $json);

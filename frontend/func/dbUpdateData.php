@@ -125,8 +125,27 @@ class dbUpdateData {
     if (!isset($post['onDashboard'])) {
       $post['onDashboard'] = 0;
     }
-    $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, typid=?, locationOfMeasurement=?, nameValue1=?, nameValue2=?, nameValue3=?, nameValue4=?, NrOfUsedSensors=?, onDashboard=? WHERE id=?");
-  	$statement2->execute(array($post['name'], $post['description'], $post['typid'], $post['locationOfMeasurement'], $post['nameValue1'], $post['nameValue2'], $post['nameValue3'], $post['nameValue4'], $post['NrOfUsedSensors'], $post['onDashboard'], $post['id']));
+
+    $Value1onDashboardvar = $Value2onDashboardvar = $Value3onDashboardvar = $Value4onDashboardvar = 0;
+
+    if (isset($post['Value1onDashboard'])) {
+      $Value1onDashboardvar = $post['Value1onDashboard'];
+    }
+
+    if (isset($post['Value2onDashboard'])) {
+      $Value2onDashboardvar = $post['Value2onDashboard'];
+    }
+
+    if (isset($post['Value3onDashboard'])) {
+      $Value3onDashboardvar = $post['Value3onDashboard'];
+    }
+
+    if (isset($post['Value4onDashboard'])) {
+      $Value4onDashboardvar = $post['Value4onDashboard'];
+    }
+
+    $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, typid=?, locationOfMeasurement=?, nameValue1=?, Value1onDashboard=?, nameValue2=?, Value2onDashboard=?, nameValue3=?, Value3onDashboard=?, nameValue4=?, Value4onDashboard=?, NrOfUsedSensors=?, onDashboard=? WHERE id=?");
+  	$statement2->execute(array($post['name'], $post['description'], $post['typid'], $post['locationOfMeasurement'], $post['nameValue1'], $Value1onDashboardvar, $post['nameValue2'], $Value2onDashboardvar, $post['nameValue3'], $Value3onDashboardvar, $post['nameValue4'], $Value4onDashboardvar, $post['NrOfUsedSensors'], $post['onDashboard'], $post['id']));
   	if ($statement2) {
       return "Sensor changes successfully saved.";
   	 } else {
@@ -156,19 +175,38 @@ class dbUpdateData {
     } else {
       $onDashboardvar = false;
     }*/
+
+    $Value1onDashboardvar = $Value2onDashboardvar = $Value3onDashboardvar = $Value4onDashboardvar = 0;
+
+    if (isset($post['Value1onDashboard'])) {
+      $Value1onDashboardvar = $post['Value1onDashboard'];
+    }
+
+    if (isset($post['Value2onDashboard'])) {
+      $Value2onDashboardvar = $post['Value2onDashboard'];
+    }
+
+    if (isset($post['Value3onDashboard'])) {
+      $Value3onDashboardvar = $post['Value3onDashboard'];
+    }
+
+    if (isset($post['Value4onDashboard'])) {
+      $Value4onDashboardvar = $post['Value4onDashboard'];
+    }
+
     $onDashboardvar = true;
     if ($post['channel'] == 1) {
-      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue1=?, Value1GaugeMinValue=?, Value1GaugeMaxValue=?, Value1GaugeRedAreaLowValue=?, Value1GaugeRedAreaLowColor=?, Value1GaugeRedAreaHighValue=?, Value1GaugeRedAreaHighColor=?, Value1GaugeNormalAreaColor=?, onDashboard=? WHERE id=?");
-      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue1'], $post['Value1GaugeMinValue'], $post['Value1GaugeMaxValue'], $post['Value1GaugeRedAreaLowValue'], $post['Value1GaugeRedAreaLowColor'], $post['Value1GaugeRedAreaHighValue'], $post['Value1GaugeRedAreaHighColor'], $post['Value1GaugeNormalAreaColor'], $onDashboardvar, $post['id']));
+      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue1=?, Value1GaugeMinValue=?, Value1GaugeMaxValue=?, Value1GaugeRedAreaLowValue=?, Value1GaugeRedAreaLowColor=?, Value1GaugeRedAreaHighValue=?, Value1GaugeRedAreaHighColor=?, Value1GaugeNormalAreaColor=?, Value1onDashboard=?, onDashboard=? WHERE id=?");
+      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue1'], $post['Value1GaugeMinValue'], $post['Value1GaugeMaxValue'], $post['Value1GaugeRedAreaLowValue'], $post['Value1GaugeRedAreaLowColor'], $post['Value1GaugeRedAreaHighValue'], $post['Value1GaugeRedAreaHighColor'], $post['Value1GaugeNormalAreaColor'], $Value1onDashboardvar, $onDashboardvar, $post['id']));
     } else if ($post['channel'] == 2) {
-      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue2=?, Value2GaugeMinValue=?, Value2GaugeMaxValue=?, Value2GaugeRedAreaLowValue=?, Value2GaugeRedAreaLowColor=?, Value2GaugeRedAreaHighValue=?, Value2GaugeRedAreaHighColor=?,Value2GaugeNormalAreaColor=?, onDashboard=? WHERE id=?");
-      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue2'], $post['Value2GaugeMinValue'], $post['Value2GaugeMaxValue'], $post['Value2GaugeRedAreaLowValue'], $post['Value2GaugeRedAreaLowColor'], $post['Value2GaugeRedAreaHighValue'], $post['Value2GaugeRedAreaHighColor'], $post['Value2GaugeNormalAreaColor'], $onDashboardvar, $post['id']));
+      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue2=?, Value2GaugeMinValue=?, Value2GaugeMaxValue=?, Value2GaugeRedAreaLowValue=?, Value2GaugeRedAreaLowColor=?, Value2GaugeRedAreaHighValue=?, Value2GaugeRedAreaHighColor=?,Value2GaugeNormalAreaColor=?, Value2onDashboard=?, onDashboard=? WHERE id=?");
+      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue2'], $post['Value2GaugeMinValue'], $post['Value2GaugeMaxValue'], $post['Value2GaugeRedAreaLowValue'], $post['Value2GaugeRedAreaLowColor'], $post['Value2GaugeRedAreaHighValue'], $post['Value2GaugeRedAreaHighColor'], $post['Value2GaugeNormalAreaColor'], $Value2onDashboardvar, $onDashboardvar, $post['id']));
     } else if ($post['channel'] == 3) {
-      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue3=?, Value3GaugeMinValue=?, Value3GaugeMaxValue=?, Value3GaugeRedAreaLowValue=?, Value3GaugeRedAreaLowColor=?, Value3GaugeRedAreaHighValue=?, Value3GaugeRedAreaHighColor=?,Value3GaugeNormalAreaColor=?, onDashboard=? WHERE id=?");
-      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue3'], $post['Value3GaugeMinValue'], $post['Value3GaugeMaxValue'], $post['Value3GaugeRedAreaLowValue'], $post['Value3GaugeRedAreaLowColor'], $post['Value3GaugeRedAreaHighValue'], $post['Value3GaugeRedAreaHighColor'], $post['Value3GaugeNormalAreaColor'], $onDashboardvar, $post['id']));
+      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue3=?, Value3GaugeMinValue=?, Value3GaugeMaxValue=?, Value3GaugeRedAreaLowValue=?, Value3GaugeRedAreaLowColor=?, Value3GaugeRedAreaHighValue=?, Value3GaugeRedAreaHighColor=?,Value3GaugeNormalAreaColor=?, Value3onDashboard=?, onDashboard=? WHERE id=?");
+      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue3'], $post['Value3GaugeMinValue'], $post['Value3GaugeMaxValue'], $post['Value3GaugeRedAreaLowValue'], $post['Value3GaugeRedAreaLowColor'], $post['Value3GaugeRedAreaHighValue'], $post['Value3GaugeRedAreaHighColor'], $post['Value3GaugeNormalAreaColor'], $Value3onDashboardvar, $onDashboardvar, $post['id']));
     } else if ($post['channel'] == 4) {
-      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue4=?, Value4GaugeMinValue=?, Value4GaugeMaxValue=?, Value4GaugeRedAreaLowValue=?, Value4GaugeRedAreaLowColor=?, Value4GaugeRedAreaHighValue=?, Value4GaugeRedAreaHighColor=?,Value4GaugeNormalAreaColor=?, onDashboard=? WHERE id=?");
-      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue4'], $post['Value4GaugeMinValue'], $post['Value4GaugeMaxValue'], $post['Value4GaugeRedAreaLowValue'], $post['Value4GaugeRedAreaLowColor'], $post['Value4GaugeRedAreaHighValue'], $post['Value4GaugeRedAreaHighColor'], $post['Value4GaugeNormalAreaColor'], $onDashboardvar, $post['id']));
+      $statement2 = $pdo->prepare("UPDATE sensorconfig SET name=?, description=?, locationOfMeasurement=?, nameValue4=?, Value4GaugeMinValue=?, Value4GaugeMaxValue=?, Value4GaugeRedAreaLowValue=?, Value4GaugeRedAreaLowColor=?, Value4GaugeRedAreaHighValue=?, Value4GaugeRedAreaHighColor=?,Value4GaugeNormalAreaColor=?, Value4onDashboard=?, onDashboard=? WHERE id=?");
+      $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue4'], $post['Value4GaugeMinValue'], $post['Value4GaugeMaxValue'], $post['Value4GaugeRedAreaLowValue'], $post['Value4GaugeRedAreaLowColor'], $post['Value4GaugeRedAreaHighValue'], $post['Value4GaugeRedAreaHighColor'], $post['Value4GaugeNormalAreaColor'], $Value4onDashboardvar, $onDashboardvar, $post['id']));
     } 
 
   	if ($statement2) {

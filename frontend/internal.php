@@ -92,7 +92,7 @@
 
     for (let i in gaugesArrayHelper) {
       varsensorId = gaugesArrayHelper[i];
-      if (varsensorId.endsWith(".1") ) {
+      //if (varsensorId.endsWith(".1") ) {
         varsensorId = varsensorId.slice(0, -2); 
 
         $.ajax({
@@ -104,10 +104,15 @@
           text = response;
           obj = JSON.parse(text);
           for (let i4 = 1; i4 < obj.length; i4++) { 
-            gaugesMap.get(obj[0]+"."+i4).setValueAnimated(obj[i4])
+            
+            try {
+              gaugesMap.get(obj[0]+"."+i4).setValueAnimated(obj[i4]);
+            } catch (error) {
+              console.error("error accessing: " + obj[0]+"."+i4);
+            }
           }
         });
-      }
+      //}
     }
   }
 
@@ -127,6 +132,16 @@ setInterval(function() {
   <div class="main-container">
   <div class="container" style="padding: 0px">
     <div id="alert-container">
+      <?php
+        if(($currentUser->getUserGroupAdmin() == 1) ) {
+          // test if install folder exist
+          //var_dump(is_dir('./../install'));
+          if (is_dir('./../install')) {
+            echo "<div class='alert alert-danger' role='alert'>Please remember to remove \"install\" dir.</div>";
+          }
+          
+				}
+        ?>
     </div>
 
     <!-- Nav tabs -->
@@ -190,7 +205,8 @@ setInterval(function() {
                       $sensortype = myFunctions::getSensorType($singleRowmysensors['typid']);
                       $sensConfig = myFunctions::getSensorConfig($singleRowmysensors['id']);
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
-                        if ($mysensors != null) {
+                        if (($mysensors != null) && ($singleRowmysensors['Value' . $i . 'onDashboard'])) {
+                          //var_dump($singleRowmysensors['Value' . $i . 'onDashboard'])
                             ?>
                             <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light'>
                               <div id='div_click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
@@ -200,37 +216,35 @@ setInterval(function() {
                               <div style='height:30px;'><?php echo $singleRowmysensors['nameValue' . $i]; ?> (<?php echo $sensortype['siUnitVal' . $i]; ?>)
                               </div>
                             </li>
+                            <script>
+                              if (<?php echo sizeof($mysensors); ?> != null) {
+
+                              var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowmysensors['id'] . "." . $i; ?>"),
+                                {
+                                  min: <?php echo $sensConfig['Value' . $i . 'GaugeMinValue'] ?>,
+                                  max: <?php echo $sensConfig['Value' . $i . 'GaugeMaxValue'] ?>,
+                                  dialStartAngle: 180,
+                                  dialEndAngle: 0,
+                                  value: '.', // so that "NaN" is displayed as the default value
+                                  viewBox: "0 0 100 57",
+                                  id: "<?php echo $singleRowmysensors['id'] . "." . $i; ?>",
+                                  color: function(value) {
+                                    if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowValue'] ?>) {
+                                      return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowColor'] ?>';
+                                    }else if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighValue'] ?>) {
+                                      return '<?php echo $sensConfig['Value' . $i . 'GaugeNormalAreaColor'] ?>';
+                                    }else {
+                                      return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighColor'] ?>';
+                                    }
+                                  },
+                                }
+                              );
+                              gaugesArrayHelper.push("<?php echo $singleRowmysensors['id'] . "." . $i; ?>");
+                              gaugesMap.set("<?php echo $singleRowmysensors['id'] . "." . $i; ?>", gauge_temp);
+                            }
+                            </script>
                             <?php
                         }
-                ?>
-                      <script>
-                        if (<?php echo sizeof($mysensors); ?> != null) {
-
-                        var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowmysensors['id'] . "." . $i; ?>"),
-                          {
-                            min: <?php echo $sensConfig['Value' . $i . 'GaugeMinValue'] ?>,
-                            max: <?php echo $sensConfig['Value' . $i . 'GaugeMaxValue'] ?>,
-                            dialStartAngle: 180,
-                            dialEndAngle: 0,
-                            value: '.', // so that "NaN" is displayed as the default value
-                            viewBox: "0 0 100 57",
-                            id: "<?php echo $singleRowmysensors['id'] . "." . $i; ?>",
-                            color: function(value) {
-                              if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowValue'] ?>) {
-                                return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowColor'] ?>';
-                              }else if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighValue'] ?>) {
-                                return '<?php echo $sensConfig['Value' . $i . 'GaugeNormalAreaColor'] ?>';
-                              }else {
-                                return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighColor'] ?>';
-                              }
-                            },
-                          }
-                        );
-                        gaugesArrayHelper.push("<?php echo $singleRowmysensors['id'] . "." . $i; ?>");
-                        gaugesMap.set("<?php echo $singleRowmysensors['id'] . "." . $i; ?>", gauge_temp);
-                      }
-                      </script>
-                      <?php
                     }
                     ?>
                     <script>

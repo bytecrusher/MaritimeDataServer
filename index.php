@@ -2,7 +2,7 @@
 <html lang="de">
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0; url=./frontend/">
+        <meta http-equiv="refresh" content="0; url=./frontend/index.php">
         <script type="text/javascript">
         </script>
         <title>Page Redirection</title>

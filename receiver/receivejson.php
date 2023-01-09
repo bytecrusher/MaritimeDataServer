@@ -187,7 +187,7 @@ function write_to_log($text)
     $format = "csv"; // csv or txt
     $datum_zeit = date("d.m.Y H:i:s");
     $site = $_SERVER['REQUEST_URI'];
-    $dateiname = "./logs/log.$format";
+    $dateiname = dirname(__FILE__) . "/logs/log.$format";
     $header = array("Date", "Site", "Log");
 
     $infos = array($datum_zeit, $site, $text);

@@ -65,6 +65,7 @@
     $var_dbpassword = $config::$db_password;
     $var_apikey = $config::$api_key;
     $var_md5secretstring = $config::$md5secretstring;
+    $var_baseurl = $config::$baseurl;
   ?>
 
   <div class="container mt-3">
@@ -212,6 +213,13 @@
           </div>
         </div>
 
+        <div class="form-group row">
+          <label for="baseurl" class="col-sm-4 col-form-label">The server internal address (i.E. the docker container ip.)</label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" id="baseurl" name="baseurl" value="<?php echo $var_baseurl;?>" required>
+          </div>
+        </div>
+
         <div class="form-group row justify-content-evenly">
           <a class="col-sm-3 me-3 btn btn-primary btnNext">Next</a>
         </div>
@@ -220,7 +228,8 @@
       <div class="tab-pane container" id="Done">
         <div class="mb-2 mt-2">
           Installation Done.<br>
-          Remember to remove the dir named "install".
+          Remember to remove the dir named "install".<br>
+          <a href='./../frontend/index.php'>Login</a>
         </div>
       </div>
 
@@ -338,12 +347,13 @@ function api_post_createadmin() {
     password2 = $("#password2").val();
     apikey = $("#apikey").val();
     md5secretstring = $("#md5secretstring").val();
+    baseurl = $("#baseurl").val();
     // TODO add user to DB
     $.ajax({
       method: "POST",
       async: false,
       url: "api_createadmin.php",
-      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring }
+      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring, baseurl: baseurl }
     })
     .done(function( response ) {
       text = response;

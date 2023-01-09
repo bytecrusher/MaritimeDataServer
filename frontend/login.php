@@ -10,30 +10,35 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
 	$email = $_POST['email'];
 	$password = $_POST['password'];
 	$userobj = new user($email);
-	
-	if ($userobj->userExist() != false) {
-		$_SESSION['userobj'] = serialize($userobj);
-		if ($userobj->isActive() == true) {
-			//Check Password
-			if ($userobj !== false && password_verify($password, $userobj->getPassword()) && $userobj->isActive() != false) {
-				$_SESSION['userid'] = $userobj->getId();
-	
-				//Does the user want to stay logged in?
-				if(isset($_POST['angemeldet_bleiben'])) {
-					dbUpdateData::insertSecuritytoken($userobj->getId());
+	$myerror = $userobj->getError();
+	if ($myerror == "42S02") {
+		$error_msg =  "<div class='alert alert-danger' role='alert'>Tables does not exist. Please run install. 
+		<a href='./../install/index.php'>Install</a></div>";
+	} else {
+		//var_dump($myerror);
+		if ($userobj->userExist() != false) {
+			$_SESSION['userobj'] = serialize($userobj);
+			if ($userobj->isActive() == true) {
+				//Check Password
+				if ($userobj !== false && password_verify($password, $userobj->getPassword()) && $userobj->isActive() != false) {
+					$_SESSION['userid'] = $userobj->getId();
+		
+					//Does the user want to stay logged in?
+					if(isset($_POST['angemeldet_bleiben'])) {
+						dbUpdateData::insertSecuritytoken($userobj->getId());
+					}
+					header("location: internal.php");
+					exit;
+				} else {
+					$error_msg =  "<div class='alert alert-danger' role='alert'>E-Mail or Password wrong.</div>";
 				}
-				header("location: internal.php");
-				exit;
 			} else {
-				$error_msg =  "<div class='alert alert-danger' role='alert'>E-Mail or Password wrong.</div>";
+				$error_msg =  "<div class='alert alert-danger' role='alert'>Account not activated yet.</div>";
 			}
 		} else {
-			$error_msg =  "<div class='alert alert-danger' role='alert'>Account not activated yet.</div>";
+			$error_msg =  "<div class='alert alert-danger' role='alert'>User does not exist.</div>";
 		}
-	} else {
-		$error_msg =  "<div class='alert alert-danger' role='alert'>User does not exist.</div>";
 	}
-	
 }
 
 $email_value = "";

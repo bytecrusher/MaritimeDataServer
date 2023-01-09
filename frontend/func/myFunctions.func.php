@@ -108,9 +108,9 @@ class myFunctions {
   public static function addBoardByTTN($ttn_app_id, $ttn_dev_id) {
     $pdo = dbConfig::getInstance();
     //$statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name, ttn_app_id, ttn_dev_id) VALUES (?, ?, ?, ?, ?)");
-    $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, name, ttn_app_id, ttn_dev_id, onDashboard ) VALUES (?, ?, ?, ?, ?)");
+    $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, name, ttn_app_id, ttn_dev_id, onDashboard, updateDataTimer  ) VALUES (?, ?, ?, ?, ?, ?)");
     //$statement->execute(array("fakeMacAddress" . $ttn_dev_id, 1, "- new imported -", $ttn_app_id, $ttn_dev_id));     // ToDo: change default Owner User to one of the admins
-    $statement->execute(array("fakeMacAddress" . $ttn_dev_id, "- new imported -", $ttn_app_id, $ttn_dev_id, 1));
+    $statement->execute(array("fakeMacAddress" . $ttn_dev_id, "- new imported -", $ttn_app_id, $ttn_dev_id, 1, 15));
     $neue_id = $pdo->lastInsertId();
     return $neue_id;
   }
@@ -217,10 +217,12 @@ class myFunctions {
   /*
   * Add SensorConfig Object if a given board id
   */
-  public static function addSensorConfig($boardid, $typIdName, $sensorName) {
+  public function addSensorConfig($boardid, $typIdName, $sensorName) {
     $pdo = dbConfig::getInstance();
     $valuesDefined = false;
     $mysensorTypId = $pdo->query('SELECT id, name FROM sensortypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
+
+    $defaultValues['Value1onDashboard'] = $defaultValues['Value2onDashboard'] = $defaultValues['Value3onDashboard'] = $defaultValues['Value4onDashboard'] = 1;
 
     // Define Default values (for lora boot monitor):
     if ($sensorName == "GPS") {
@@ -232,6 +234,7 @@ class myFunctions {
       $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value1onDashboard'] = 0;
 
       $defaultValues['nameValue2'] = "Lon";
       $defaultValues['Value2GaugeMinValue'] = 0;
@@ -241,6 +244,7 @@ class myFunctions {
       $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value2onDashboard'] = 0;
 
       $defaultValues['nameValue3'] = "Alt";
       $defaultValues['Value3GaugeMinValue'] = 0;
@@ -250,6 +254,7 @@ class myFunctions {
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value3onDashboard'] = 0;
 
       $defaultValues['nameValue4'] = "Spd";
       $defaultValues['Value4GaugeMinValue'] = 0;
@@ -273,6 +278,7 @@ class myFunctions {
       $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value1onDashboard'] = 0;
 
       $defaultValues['nameValue2'] = "RSSI";
       $defaultValues['Value2GaugeMinValue'] = -130;
@@ -513,16 +519,20 @@ class myFunctions {
 
     if ($valuesDefined == true) {
       $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name," .
-      "nameValue1, Value1GaugeMinValue, Value1GaugeMaxValue, Value1GaugeRedAreaLowValue, Value1GaugeRedAreaLowColor, Value1GaugeRedAreaHighValue, Value1GaugeRedAreaHighColor, Value1GaugeNormalAreaColor," .
-      "nameValue2, Value2GaugeMinValue, Value2GaugeMaxValue, Value2GaugeRedAreaLowValue, Value2GaugeRedAreaLowColor, Value2GaugeRedAreaHighValue, Value2GaugeRedAreaHighColor, Value2GaugeNormalAreaColor," .
-      "nameValue3, Value3GaugeMinValue, Value3GaugeMaxValue, Value3GaugeRedAreaLowValue, Value3GaugeRedAreaLowColor, Value3GaugeRedAreaHighValue, Value3GaugeRedAreaHighColor, Value3GaugeNormalAreaColor," .
-      "nameValue4, Value4GaugeMinValue, Value4GaugeMaxValue, Value4GaugeRedAreaLowValue, Value4GaugeRedAreaLowColor, Value4GaugeRedAreaHighValue, Value4GaugeRedAreaHighColor, Value4GaugeNormalAreaColor," .
-      "ttn_payload_id, NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      "nameValue1, Value1GaugeMinValue, Value1GaugeMaxValue, Value1GaugeRedAreaLowValue, Value1GaugeRedAreaLowColor, Value1GaugeRedAreaHighValue, Value1GaugeRedAreaHighColor, Value1GaugeNormalAreaColor, Value1onDashboard," .
+      "nameValue2, Value2GaugeMinValue, Value2GaugeMaxValue, Value2GaugeRedAreaLowValue, Value2GaugeRedAreaLowColor, Value2GaugeRedAreaHighValue, Value2GaugeRedAreaHighColor, Value2GaugeNormalAreaColor, Value2onDashboard," .
+      "nameValue3, Value3GaugeMinValue, Value3GaugeMaxValue, Value3GaugeRedAreaLowValue, Value3GaugeRedAreaLowColor, Value3GaugeRedAreaHighValue, Value3GaugeRedAreaHighColor, Value3GaugeNormalAreaColor, Value3onDashboard," .
+      "nameValue4, Value4GaugeMinValue, Value4GaugeMaxValue, Value4GaugeRedAreaLowValue, Value4GaugeRedAreaLowColor, Value4GaugeRedAreaHighValue, Value4GaugeRedAreaHighColor, Value4GaugeNormalAreaColor, Value4onDashboard," .
+      "ttn_payload_id, NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       $statement->execute(array($boardid, $mysensorTypId->id, $sensorName,
         $defaultValues['nameValue1'], $defaultValues['Value1GaugeMinValue'], $defaultValues['Value1GaugeMaxValue'], $defaultValues['Value1GaugeRedAreaLowValue'], $defaultValues['Value1GaugeRedAreaLowColor'], $defaultValues['Value1GaugeRedAreaHighValue'], $defaultValues['Value1GaugeRedAreaHighColor'], $defaultValues['Value1GaugeNormalAreaColor'],
+        $defaultValues['Value1onDashboard'],
         $defaultValues['nameValue2'], $defaultValues['Value2GaugeMinValue'], $defaultValues['Value2GaugeMaxValue'], $defaultValues['Value2GaugeRedAreaLowValue'], $defaultValues['Value2GaugeRedAreaLowColor'], $defaultValues['Value2GaugeRedAreaHighValue'], $defaultValues['Value2GaugeRedAreaHighColor'], $defaultValues['Value2GaugeNormalAreaColor'], 
+        $defaultValues['Value2onDashboard'],
         $defaultValues['nameValue3'], $defaultValues['Value3GaugeMinValue'], $defaultValues['Value3GaugeMaxValue'], $defaultValues['Value3GaugeRedAreaLowValue'], $defaultValues['Value3GaugeRedAreaLowColor'], $defaultValues['Value3GaugeRedAreaHighValue'], $defaultValues['Value3GaugeRedAreaHighColor'], $defaultValues['Value3GaugeNormalAreaColor'], 
+        $defaultValues['Value3onDashboard'],
         $defaultValues['nameValue4'], $defaultValues['Value4GaugeMinValue'], $defaultValues['Value4GaugeMaxValue'], $defaultValues['Value4GaugeRedAreaLowValue'], $defaultValues['Value4GaugeRedAreaLowColor'], $defaultValues['Value4GaugeRedAreaHighValue'], $defaultValues['Value4GaugeRedAreaHighColor'], $defaultValues['Value4GaugeNormalAreaColor'], 
+        $defaultValues['Value4onDashboard'],
         $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors'], 1));
       $neue_id = $pdo->lastInsertId();
       return $neue_id;
@@ -592,33 +602,29 @@ class myFunctions {
   /**
 	 * Write $text into a log file.
 	 */
-  public static function writeToLog($text)
+  private function write_to_log($text)
   {
-    $format = "csv"; // Possibilities: csv and txt
+    $format = "csv"; // csv or txt
     $datum_zeit = date("d.m.Y H:i:s");
-    $ip = $_SERVER["REMOTE_ADDR"];
     $site = $_SERVER['REQUEST_URI'];
-    $browser = $_SERVER["HTTP_USER_AGENT"];
-    $monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
-    $monat = date("n");
-    $jahr = date("y");
-    $dateiname = dirname(__FILE__)."/logs/log_" . $monate[$monat] . "_$jahr.$format";
-    $header = array("Datum", "IP", "Seite", "Browser");
-    $infos = array($datum_zeit, $ip, $site, $browser, $text);
+    $dateiname = dirname(__FILE__)."/logs/log.$format";
+    $header = array("Date", "Site", "Log");
+    $json = json_encode($text);
+    $infos = array($datum_zeit, $site, $json);
     if ($format == "csv") {
-      $eintrag2 = '"' . implode('", "', $infos) . '"';
+        $eintrag2 = '"' . implode('", "', $infos) . '"';
     } else {
-      $eintrag2 = implode("\t", $infos);
+        $eintrag2 = implode("\t", $infos);
     }
     $write_header = !file_exists($dateiname);
     $datei = fopen($dateiname, "a");
     if ($write_header) {
-      if ($format == "csv") {
-        $header_line = '"' . implode('", "', $header) . '"';
-      } else {
-        $header_line = implode("\t", $header);
-      }
-      fputs($datei, $header_line . "\n");
+        if ($format == "csv") {
+            $header_line = '"' . implode('", "', $header) . '"';
+        } else {
+            $header_line = implode("\t", $header);
+        }
+        fputs($datei, $header_line . "\n");
     }
     fputs($datei, $eintrag2 . "\n");
     fclose($datei);
