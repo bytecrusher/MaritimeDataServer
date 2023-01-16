@@ -58,9 +58,9 @@ After install is finished, remove the dir named "install".
 
 Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 
-![Preview Sensors](docu_donotdeploy/images/preview_sensors.jpg)
-![Preview Chart](docu_donotdeploy/images/preview_chart.jpg)
-![Preview Map](docu_donotdeploy/images/preview_map.jpg)
+![MDS Dashboard](docu_donotdeploy/images/MDS_Dashboard.png)
+![MDS Graph](docu_donotdeploy/images/MDS_Graph.png)
+![MDS Map](docu_donotdeploy/images/MDS_Map.png)
 
 #### MDS Requirements
 For running the **MDS** you need a Apache Webserver with php support and a MySQL DB.  
