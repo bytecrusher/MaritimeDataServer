@@ -32,7 +32,7 @@
       header('Location: '.$newURL);
       die();      
     } else {
-      var_dump($_POST);
+      //var_dump($_POST);
       $updateBoardReturn = dbUpdateData::updateSensorModal($_POST);
       header("Location: internal.php");
       die();      
@@ -59,7 +59,7 @@
 ?>
 </div>
 
-<form method='post' action='inputmask_sensors.php#confSensors' class='form-horizontal'>
+<form method='post' action='inputmask_sensors.php#confSensors' class='form-horizontal mt-3'>
 <div class="container main-container">
 <div class="modal-body">
   
@@ -147,6 +147,7 @@
             <?php
             if (!isset($_GET['channel'])) {
             ?>
+
             <div class='input-group mb-3'>
               <span class='input-group-text' style='width: 50%'>Name</span>
               <input type='text' class='col col-sm-4 form-control' id='nameValue1' name='nameValue1' value='<?php echo $SensorConfig['nameValue1'] ?>'>
@@ -256,6 +257,11 @@
           <?php
           } else {
           ?>
+
+            <div class='input-group mb-3'>
+              <span class='input-group-text' style='width: 50%'>Channel</span>
+              <input type='text' class='col col-sm-4 form-control' id='channel' name='channel' value='<?php echo $_GET['channel'] ?>'>
+            </div>
 
           <div class='input-group mb-3'>
             <span class='input-group-text' style='width: 50%'>Name</span>

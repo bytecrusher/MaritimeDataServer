@@ -1,6 +1,6 @@
 <?php
 /*
-*   Collects all GPS from a specific board.
+*   Collects all Boardnames for the given user.
 */
     header('Content-Type: application/json');
     // Get data from DB for display in JS.
@@ -15,8 +15,7 @@
                 foreach ($myboards as $myboard) {
                     $myGpsData = myFunctions::getAllGpsData($myboard['id']);
                     if ($myGpsData != 0) {
-                        $aResult[$myboard['id']] = $myGpsData;
-                        //$aResult['name'] = $myboard['name'];
+                        $aResult[$myboard['id']] = $myboard['name'];
                     }
                 }
                break;

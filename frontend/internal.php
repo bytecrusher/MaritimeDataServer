@@ -10,7 +10,6 @@
   require_once("func/myFunctions.func.php");
   require_once("func/user.class.php");
   require_once("func/board.class.php");
-  include(__DIR__ . "/common/header.inc.php");
 
   if (isset($_SESSION['userobj'])) {
     $currentUser = unserialize($_SESSION['userobj']);
@@ -20,6 +19,7 @@
     die();
   }
 
+  include(__DIR__ . "/common/header.inc.php");
   include("func/get_data.php");
 
   $config = new configuration();
@@ -63,7 +63,7 @@
   var gaugesArrayHelperbig = new Array();
 
   function mychecksession() { 
-    console.log("sessionCheck");
+    //console.log("sessionCheck");
     $.ajax({
       method: "POST",
       url: "api/checkSession.php",
@@ -72,11 +72,11 @@
     .done(function( response ) {
       text = response;
       if (text == "false") {
-        console.log("sessionCheck = false");
+        //console.log("sessionCheck = false");
         window.location.href = "./index.php";
       }
     });
-    console.log("sessionCheck = true");
+    //console.log("sessionCheck = true");
   }
 
   function updateGauges() { 
@@ -92,27 +92,27 @@
 
     for (let i in gaugesArrayHelper) {
       varsensorId = gaugesArrayHelper[i];
-      //if (varsensorId.endsWith(".1") ) {
-        varsensorId = varsensorId.slice(0, -2); 
+      varsensorId = varsensorId.slice(0, -2); 
 
-        $.ajax({
+      $.ajax({
         method: "POST",
         url: "api/getdata.php",
-        data: { identifier: varIdent, securitytoken: varToken, data: vardata, sensorId: varsensorId, NrOfValues: varNrOfValues }
-        })
-        .done(function( response ) {
-          text = response;
-          obj = JSON.parse(text);
-          for (let i4 = 1; i4 < obj.length; i4++) { 
-            
-            try {
+        data: { identifier: varIdent, securitytoken: varToken, data: vardata, sensorId: varsensorId,    NrOfValues: varNrOfValues }
+      })
+      .done(function( response ) {
+        text = response;
+        obj = JSON.parse(text);
+        for (let i4 = 1; i4 < obj.length; i4++) {   
+          try {
+            //console.error("obj[0]+i4:" + obj[0]+"."+i4 + ", " + gaugesArrayHelper.includes(obj[0]+"."+i4));
+            if (gaugesArrayHelper.includes(obj[0]+"."+i4)) {
               gaugesMap.get(obj[0]+"."+i4).setValueAnimated(obj[i4]);
-            } catch (error) {
-              console.error("error accessing: " + obj[0]+"."+i4);
             }
+          } catch (error) {
+            console.error("error accessing: " + obj[0]+"."+i4);
           }
-        });
-      //}
+        }
+      });
     }
   }
 

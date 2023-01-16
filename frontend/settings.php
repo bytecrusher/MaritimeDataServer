@@ -9,7 +9,6 @@ session_start();
 require_once("func/dbConfig.func.php");
 require_once("func/myFunctions.func.php");
 require_once("func/user.class.php");
-include("common/header.inc.php");
 require_once("func/dbUpdateData.php");
 
 $config  = new configuration();
@@ -22,6 +21,8 @@ if (isset($_SESSION['userobj'])) {
 	$userobj = false;
 	header("Location: ./index.php");
 }
+
+include("common/header.inc.php");
 
 function fixObject (&$object)
 {
@@ -175,7 +176,7 @@ th.rotated-text > div > span {
 			<li class="nav-item" role="presentation"><a class="nav-link active" href="#data" role="tab" data-bs-toggle="tab">Personal data</a></li>
 			<li class="nav-item" role="presentation"><a class="nav-link" href="#email" role="tab" data-bs-toggle="tab">E-Mail</a></li>
 			<li class="nav-item" role="presentation"><a class="nav-link" href="#password" role="tab" data-bs-toggle="tab">Password</a></li>
-			<li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab">Boards</a></li>
+			<li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab">My Boards</a></li>
 			<li class="nav-item" role="presentation"><a class="nav-link" href="#confDashboard" role="tab" data-bs-toggle="tab">Dashboard</a></li>
 			<?php
 				if(($userobj->getUserGroupAdmin() == 1) ) {
@@ -418,7 +419,7 @@ th.rotated-text > div > span {
 					<form action="?save=dashboard_data" method="post" class="form-horizontal">
 						<div class="form-group">
 							<div class="row">
-								<label for="inputUpdateInterval" class="col-sm-2 control-label">Update interval (in Minutes)</label>
+								<label for="inputUpdateInterval" class="col-sm-2 control-label">Update interval (in Minutes) (tbd)</label>
 								<div class="col-sm-4">
 									<input class="form-control" id="inputUpdateInterval" name="updateInterval" type="number" value="<?php echo htmlentities($userobj->getDashboardUpdateInterval()); ?>" required>
 								</div>

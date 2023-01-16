@@ -64,6 +64,26 @@ $('#hrefmap').click( function (e) {
 
     var myIcons = new Array (greenIcon, blueIcon, orangeIcon, redIcon)
 
+    let myobjnames = null;
+
+    // function for getting all Boardnames.
+    jQuery.ajax({
+      type: "POST",
+      url: 'api/getBoardname.php',
+      dataType: 'json',
+      data: {functionname: 'get', userid: <?php echo($currentUser->getId()); ?>},
+      async: false,
+      success: function (obj, textstatus) {
+        if( !('error' in obj) ) {
+          var iconcounter = 0;
+          myobjnames = obj;
+        }
+        else {
+          console.log(obj.error);
+        }
+      }
+    });
+
     // function for getting all GPS for a given Board and create marker for each.
     jQuery.ajax({
       type: "POST",
@@ -75,21 +95,19 @@ $('#hrefmap').click( function (e) {
         if( !('error' in obj) ) {
           var iconcounter = 0;
           Object.keys(obj).forEach(key => {
-            //console.log(key, obj[key]);
             myboardidMarkerGroup[key] = new L.LayerGroup().addTo(map);
             yourVariable = obj[key];
             yourVariable.forEach(
               function(element) { 
                 // TODO extend to loop for boards of the user, and adapt to the color for each group / board
-                myboardidMarkerGroup[key].addLayer(L.marker([element["value1"], element["value2"]], {icon: myIcons[iconcounter]}).bindPopup("<b>Hello world!</b><br>I am a new popup.")).addTo(map);
+                myboardidMarkerGroup[key].addLayer(L.marker([element["value1"], element["value2"]], {icon: myIcons[iconcounter]}).bindPopup("<b>" + myobjnames[key] + "</b><br>Timestamp: " + element["reading_time"])).addTo(map);
               }
             );
 
             if(layerControl === false) {  // var layerControl set to false in init phase; 
               layerControl = L.control.layers().addTo(map);
             }
-            //layerControl.addOverlay(myboardidMarkerGroup , "Board id: " + myboardid);
-            layerControl.addOverlay(myboardidMarkerGroup[key] , "Board id: " + key);
+            layerControl.addOverlay(myboardidMarkerGroup[key] , "Board: " + myobjnames[key]);
             iconcounter++;
           });
         }

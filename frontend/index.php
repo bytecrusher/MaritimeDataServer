@@ -22,9 +22,9 @@
       <div class="row">
         <div class="col-md-6">
           <h2>About</h2>
-          <p>MDS (Maritime Data Server) is used to store and visualize sensor data (temperature, voltage,...).</p>
+          <p>MDS (Maritime Data Server) is used to store and visualize sensor data (temperature, voltage,...) that was send from a smal devices.</p>
           <p>My first data collector is an ESP32 with several sensors (DS18B20).</p>
-          <p>The ESP32 sends the data via Wifi and/or Lora to this server.</p>
+          <p>The ESP32 sends the data via Wifi and/or LoRa to the MDS.</p>
           <ul>
           	<li>Accessing to personal dashboard after registration.</li>
           	<li>Graphical representation of your sensor data.</li>
