@@ -1,10 +1,10 @@
 {
-    "db_host": "localhost",
-    "db_name": "",
-    "db_user": "",
-    "db_password": "",
+    "db_host": "dbhost",
+    "db_name": "dbname",
+    "db_user": "dbuser",
+    "db_password": "dbpassword",
     "api_key": "my_api_key",
-    "baseurl": "",
+    "baseurl": "http://localhost",
     "subdir": "/maritimedataserver",
     "demoMode": "false",
     "md5secretstring": "your_secret_string"
