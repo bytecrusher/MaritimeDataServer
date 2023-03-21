@@ -63,7 +63,7 @@ if(sizeof($ttn_post) > 0) {
         if(isset($data->uplink_message->decoded_payload->Hum_SHT)) {
           $sensor_humidity = $data->uplink_message->decoded_payload->Hum_SHT;
         } else {
-          $sensor_humidity = 0;
+          //$sensor_humidity = 0;
         }
 
         $sensor_latitude = $data->uplink_message->decoded_payload->latitude;
@@ -110,6 +110,12 @@ if(sizeof($ttn_post) > 0) {
           $sensor_battery = $data->uplink_message->decoded_payload->voltage;
         } else {
           $sensor_battery = 0;
+        }
+
+        if(isset($data->uplink_message->decoded_payload->voltage2)) {
+          $sensor_battery2 = $data->uplink_message->decoded_payload->voltage2;
+        } else {
+          $sensor_battery2 = 0;
         }
 
         $sensor_raw_payload = $data->uplink_message->frm_payload;
@@ -224,12 +230,9 @@ if(sizeof($ttn_post) > 0) {
             "typid" => $eachsensor['typid'],
             "sensorId" => $eachsensor['id'],
             "value1" => $sensor_battery,
-            /*"value2" => 0,
+            "value2" => $sensor_battery2,
             "value3" => $sensor_level1,
-            "value4" => $sensor_level2,*/
-            "value2" => $sensor_level1,
-            "value3" => $sensor_level2,
-            "value4" => 0,
+            "value4" => $sensor_level2,
             "date" => $dateNow,
             "time" => $timeNow,
             "transmissionpath" => "2"
@@ -297,16 +300,34 @@ if(sizeof($ttn_post) > 0) {
     curl_close($ch);
 }
 
-
 function write_to_log($text)
   {
-    $format = "csv"; // Possibilities: csv and txt
+    $format = "log"; // Possibilities: csv and txt
     $datum_zeit = date("d.m.Y H:i:s");
     $monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
     $monat = date("n");
-    $jahr = date("yy");
+    $jahr = date("y");
+    $dateiname = dirname(__FILE__) . "/logs/log_" . $monate[$monat] . "_$jahr.$format";
+    $header = "Date                File     Log Info";
+    $write_header = !file_exists($dateiname);
+    if ($write_header) {
+      error_log( print_r($header . "\r\n", true), 3, $dateiname );
+    }
+    error_log( print_r($datum_zeit . " " . basename($_SERVER["SCRIPT_FILENAME"]) . ": ", true), 3, $dateiname );
+    error_log( print_r($text, true), 3, $dateiname );
+    error_log( print_r("\r\n", true), 3, $dateiname );
+  }
+
+  function write_to_log_old($text)
+  {
+    $format = "log"; // Possibilities: csv and txt
+    $datum_zeit = date("d.m.Y H:i:s");
+    $monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
+    $monat = date("n");
+    $jahr = date("y");
     $dateiname = dirname(__FILE__) . "/logs/log_" . $monate[$monat] . "_$jahr.$format";
     $header = array("Datum", "IP", "Seite", "Browser");
+
     $json = json_encode($text);
     $infos = array($datum_zeit, $json);
     if ($format == "csv") {
