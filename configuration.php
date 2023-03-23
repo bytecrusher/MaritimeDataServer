@@ -14,6 +14,7 @@ class configuration {
     static $db_password = null;
     static $api_key = null;
     static $baseurl = null;
+    static $extbaseurl = null;
     static $subdir = null;
     static $demoMode = null;
     static $md5secretstring = null;
@@ -41,6 +42,7 @@ class configuration {
 
         self::$api_key = $jsonData['api_key'];
         self::$baseurl = $jsonData['baseurl'];
+        self::$extbaseurl = $jsonData['extbaseurl'];
         self::$subdir = $jsonData['subdir'];
 
         self::$demoMode = $jsonData['demoMode'];
