@@ -414,7 +414,7 @@ class myFunctions {
 
       $defaultValues['nameValue3'] = "Pres";
       $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 20;
+      $defaultValues['Value3GaugeMaxValue'] = 3000;
       $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
       $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;

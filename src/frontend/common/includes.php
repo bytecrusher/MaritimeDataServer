@@ -1,6 +1,6 @@
 <?php
 $config = new configuration();
-$httpdirroot = $config::$baseurl;
+$httpdirroot = $config::$extbaseurl;
 ?>
 <!--link rel="stylesheet" href="<?php echo($httpdirroot); ?>/node_modules/bootstrap/dist/css/bootstrap.min.css"-->
 <link rel="stylesheet" href="./../node_modules/bootstrap/dist/css/bootstrap.min.css">
@@ -8,8 +8,8 @@ $httpdirroot = $config::$baseurl;
 <!--link rel="stylesheet" href="<?php echo($httpdirroot); ?>/frontend/css/style.css"-->
 <link rel="stylesheet" href="./../frontend/css/style.css">
 
-<!--link rel="stylesheet" href="<?php echo($httpdirroot); ?>/node_modules/bootstrap-icons/font/bootstrap-icons.css"-->
-<link rel="stylesheet" href="./../node_modules/bootstrap-icons/font/bootstrap-icons.css">
+<!--link rel="stylesheet" href="./../node_modules/bootstrap-icons/font/bootstrap-icons.css"-->
+<link rel="stylesheet" href="<?php echo($httpdirroot); ?>/node_modules/bootstrap-icons/font/bootstrap-icons.css">
 
 <!--link rel="stylesheet" href="<?php echo($httpdirroot); ?>/node_modules/jquery-ui/dist/themes/base/jquery-ui.css"-->
 <link rel="stylesheet" href="./../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
