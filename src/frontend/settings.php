@@ -230,10 +230,7 @@ th.rotated-text > div > span {
 					<div class="form-group">
 						<div class="row">
 							<label for="inputLastname" class="col-sm-2 control-label">Timezone</label>
-							<?php $userTimezone = htmlentities($userobj->getTimezone()); 
-							var_dump($userTimezone);
-							var_dump($_SESSION['userobj']);
-							?>
+							<?php $userTimezone = htmlentities($userobj->getTimezone()); ?>
 							<div class="col-sm-4">
 							<select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
 								<option value="0">Please, select your timezone</option>
