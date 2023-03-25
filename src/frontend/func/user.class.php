@@ -166,12 +166,55 @@ class user implements JsonSerializable
   }
 
   /**
+  * Set the Email of the current User.
+  * @return firstname and Lastname of the user
+  */
+  public function setEmail($post)
+  {
+    $this->userobj->email = trim($post['email']);
+    $updateUserEmailReturn = dbUpdateData::updateUserMail($post, $this->userobj->id);
+ 	 	if (!$updateUserEmailReturn) {
+ 			$error_msg = "Please a correct Email Adress.";
+      return "Please a correct Email Adress.";
+ 	 	} else {
+ 		 	$success_msg = $updateUserEmailReturn;
+      return $updateUserEmailReturn;
+ 	 	}
+  }
+
+  /**
+  * Set the setUserTimeZone of the current User.
+  * @return Timezone of the user
+  */
+  public function setUserTimeZone($post)
+  {
+    $this->userobj->Timezone = $post['Timezone'];
+    $updateUserReturn = dbUpdateData::updateUserTimeZoneData($post, $this->userobj->id);
+ 	 	if (!$updateUserReturn) {
+ 			$error_msg = "Please enter Timezone.";
+      return "Please enter Timezone.";
+ 	 	} else {
+ 		 	$success_msg = $updateUserReturn;
+      return $updateUserReturn;
+ 	 	}
+  }
+
+  /**
   * Returns the Lastname of the current User.
   * @return lastname of the user
   */
   public function getLastname()
   {
     return $this->userobj->lastname;
+  }
+
+  /**
+  * Returns the Lastname of the current User.
+  * @return lastname of the user
+  */
+  public function getTimezone()
+  {
+    return $this->userobj->Timezone;
   }
 
   /**
@@ -240,7 +283,8 @@ class user implements JsonSerializable
       'userId'   => $this->getId(),
       'email' => $this->getEmail(),
       'Firstname' => $this->getFirstname(),
-      'Lastname' => $this->getLastname()
+      'Lastname' => $this->getLastname(),
+      'Timezone' => $this->getTimezone()
     ];
   }
 

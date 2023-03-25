@@ -10,6 +10,7 @@ require_once("func/dbConfig.func.php");
 require_once("func/myFunctions.func.php");
 require_once("func/user.class.php");
 require_once("func/dbUpdateData.php");
+require_once("func/writeToLogFunction.func.php");
 
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;
@@ -21,7 +22,6 @@ if (isset($_SESSION['userobj'])) {
 	$userobj = false;
 	header("Location: ./index.php");
 }
-
 include("common/header.inc.php");
 
 function fixObject (&$object)
@@ -37,9 +37,11 @@ if(isset($_GET['save'])) {
 		$updateUserReturn = $userobj->setName($_POST);
 		if (!$updateUserReturn) {
 			$error_msg = "Please enter first and last name.";
-		 } else {
-			 $success_msg = $updateUserReturn;
-		 }
+		} else {
+			$success_msg = $updateUserReturn;
+		}
+		$updateUserTimezoneReturn = $userobj->setUserTimeZone($_POST);
+		$_SESSION['userobj'] = serialize($userobj);
 	} else if($save == 'email') {
 		$password = $_POST['password'];
 		$email = trim($_POST['email']);
@@ -49,14 +51,16 @@ if(isset($_GET['save'])) {
 			$error_msg = "The entered email adresses are not the same.";
 		} else if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 			$error_msg = "The entered email adress are not valid.";
-		} else if(!password_verify($password, $userobj['password'])) {
+		} else if(!password_verify($password, $userobj->getPassword())) {
 			$error_msg = "Wrong password.";
 		} else {
-			$updateUserPasswordReturn = dbUpdateData::updateUserMail($_POST, $userobj->getId);
+			//$updateUserPasswordReturn = dbUpdateData::updateUserMail($_POST, $userobj->getId());
+			$updateUserPasswordReturn = $userobj->setEmail($_POST);
 	 	 	if (!$updateUserPasswordReturn) {
 	 		 	$error_msg = "Error on update User Mail.";
 	 	 	} else {
 	 		 	$success_msg = $updateUserPasswordReturn;
+				$_SESSION['userobj'] = serialize($userobj);
 	 	 	}
 		}
 	} else if($save == 'password') {
@@ -72,14 +76,14 @@ if(isset($_GET['save'])) {
 			$error_msg = "Please enter correct password.";
 		} else {
 			$password_hash = password_hash($passwordNew, PASSWORD_DEFAULT);
-
 			$updateUserPasswordReturn = dbUpdateData::updateUserPassword($password_hash, $userobj->getId());
 	 	 	if (!$updateUserPasswordReturn) {
 	 		 	$error_msg = "Error on update User Password.";
+				  writeToLogFunction::write_to_log("Error on update User Password for UserID: " . $userobj->getId(), $_SERVER["SCRIPT_FILENAME"]);
 	 	 	} else {
 	 		 	$success_msg = $updateUserPasswordReturn;
+				$_SESSION['userobj'] = serialize($userobj);
 	 	 	}
-
 		}
 	} else if($save == 'dashboard_data') {
 		$updateUserReturn = $userobj->setDashboardUpdateInterval($_POST);
@@ -121,7 +125,6 @@ if(isset($_GET['save'])) {
 	 } else {
 		 $success_msg = $updateBoardReturn;
 	 }
-
  }
 ?>
 
@@ -208,6 +211,47 @@ th.rotated-text > div > span {
 							<label for="inputLastname" class="col-sm-2 control-label">Last name</label>
 							<div class="col-sm-4">
 								<input class="form-control" id="inputLastname" name="lastname" type="text" value="<?php echo htmlentities($userobj->getLastname()); ?>" required>
+							</div>
+						</div>
+					</div>
+
+					<?php
+						function time_zonelist() {
+						$allzones = array();
+						$timestamp = time();
+						foreach(timezone_identifiers_list() as $key => $live_zone) {
+							date_default_timezone_set($live_zone);
+							$allzones[$key]['zone'] = $live_zone;
+							$allzones[$key]['diff_from_GMT'] = 'UTC/GMT ' . date('P', $timestamp);
+						}
+							return $allzones;
+						}
+					?>
+					<div class="form-group">
+						<div class="row">
+							<label for="inputLastname" class="col-sm-2 control-label">Timezone</label>
+							<?php $userTimezone = htmlentities($userobj->getTimezone()); 
+							var_dump($userTimezone);
+							var_dump($_SESSION['userobj']);
+							?>
+							<div class="col-sm-4">
+							<select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
+								<option value="0">Please, select your timezone</option>
+								<?php foreach(time_zonelist() as $t) { ?>
+									<?php if($t['zone'] == $userTimezone ) {
+										?>
+											<option value="<?php print $t['zone'] ?>" selected>
+												<?php print $t['zone'] . ' - ' . $t['diff_from_GMT'] ?>
+											</option>
+										<?php } else { ?>
+											<option value="<?php print $t['zone'] ?>">
+												<?php print $t['zone'] . ' - ' . $t['diff_from_GMT'] ?>
+											</option>
+
+										<?php }
+										?>
+								<?php } ?>
+							</select>
 							</div>
 						</div>
 					</div>

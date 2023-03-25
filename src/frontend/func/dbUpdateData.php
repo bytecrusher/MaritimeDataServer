@@ -24,6 +24,18 @@ class dbUpdateData {
     }
   }
 
+  public static function updateUserTimeZoneData($post, $userid) {
+    $pdo = dbConfig::getInstance();
+    $Timezone = trim($post['Timezone']);
+    if($Timezone == "") {
+      return false;
+    } else {
+      $statement = $pdo->prepare("UPDATE users SET Timezone = :Timezone, updated_at=NOW() WHERE id = :userid");
+      $result = $statement->execute(array('Timezone' => $Timezone, 'userid' => $userid ));
+      return "User Zimezone Data sucessfully saved.";
+    }
+  }
+
   public static function updateUserMail($post, $userid) {
     $pdo = dbConfig::getInstance();
     $email = trim($post['email']);

@@ -10,6 +10,8 @@
   require_once("func/myFunctions.func.php");
   require_once("func/user.class.php");
   require_once("func/board.class.php");
+  require_once("func/writeToLogFunction.func.php");
+  //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
   if (isset($_SESSION['userobj'])) {
     $currentUser = unserialize($_SESSION['userobj']);

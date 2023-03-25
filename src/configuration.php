@@ -18,6 +18,8 @@ class configuration {
     static $subdir = null;
     static $demoMode = null;
     static $md5secretstring = null;
+    static $install_finished = null;
+    static $admin_email_adress = null;
 
     function __construct() {
         $domain = $_SERVER['HTTP_HOST'];
@@ -39,16 +41,14 @@ class configuration {
         self::$db_name = $jsonData['db_name'];
         self::$db_user = $jsonData['db_user'];
         self::$db_password = $jsonData['db_password'];
-
         self::$api_key = $jsonData['api_key'];
         self::$baseurl = $jsonData['baseurl'];
         self::$extbaseurl = $jsonData['extbaseurl'];
         self::$subdir = $jsonData['subdir'];
-
         self::$demoMode = $jsonData['demoMode'];
-
         self::$md5secretstring = $jsonData['md5secretstring'];
+        self::$install_finished = $jsonData['install_finished'];
+        self::$admin_email_adress = $jsonData['admin_email_adress'];
     }
 }
-
 ?>
