@@ -6,36 +6,63 @@
  * @license: TBD
  */
 
-include_once(dirname(__FILE__)."/dbConfig.func.php");
-require_once(dirname(__FILE__)."/user.class.php");
+include_once(dirname(__FILE__) . "/dbConfig.func.php");
+require_once(dirname(__FILE__) . "/user.class.php");
+require_once(dirname(__FILE__) . "/writeToLogFunction.func.php");
 
 class dbUpdateData {
-
+  /**
+  * Update User Data.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateUserData($post, $userid) {
     $pdo = dbConfig::getInstance();
     $firstname = trim($post['firstname']);
     $lastname = trim($post['lastname']);
     if($firstname == "" || $lastname == "") {
-      return false;
+      throw new Exception('Firstname and Lastname shall not be empty for userid: ' . $userid);
     } else {
-      $statement = $pdo->prepare("UPDATE users SET firstname = :firstname, lastname = :lastname, updated_at=NOW() WHERE id = :userid");
-      $result = $statement->execute(array('firstname' => $firstname, 'lastname'=> $lastname, 'userid' => $userid ));
-      return "User Data sucessfully saved.";
+      try {
+        $statement = $pdo->prepare("UPDATE users SET firstname = :firstname, lastname = :lastname, updated_at=NOW() WHERE id = :userid");
+        $result = $statement->execute(array('firstname' => $firstname, 'lastname'=> $lastname, 'userid' => $userid ));
+        return $result;
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: User Data not saved for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('User Data not saved.');
+      }
     }
   }
 
+  /**
+  * Update Timezone.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateUserTimeZoneData($post, $userid) {
     $pdo = dbConfig::getInstance();
     $Timezone = trim($post['Timezone']);
     if($Timezone == "") {
-      return false;
+      throw new Exception('Timezone infunction updateUserTimeZoneData shall not be empty for user: ' . $userid);
     } else {
-      $statement = $pdo->prepare("UPDATE users SET Timezone = :Timezone, updated_at=NOW() WHERE id = :userid");
-      $result = $statement->execute(array('Timezone' => $Timezone, 'userid' => $userid ));
-      return "User Zimezone Data sucessfully saved.";
+      try {
+        $statement = $pdo->prepare("UPDATE users SET Timezone = :Timezone, updated_at=NOW() WHERE id = :userid");
+        $result = $statement->execute(array('Timezone' => $Timezone, 'userid' => $userid ));
+        return $result;
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: Timezone not successfully saved for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('Timezone not successfully saved.');
+      }
     }
   }
 
+  /**
+  * Update User Email Adress.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateUserMail($post, $userid) {
     $pdo = dbConfig::getInstance();
     $email = trim($post['email']);
@@ -44,6 +71,11 @@ class dbUpdateData {
     return "E-Mail address successfully saved.";
   }
 
+  /**
+  * Update User Password.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateUserPassword($password_hash, $userid) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("UPDATE users SET password = :password WHERE id = :userid");
@@ -51,12 +83,22 @@ class dbUpdateData {
     return "Password successfully saved.";
   }
 
+  /**
+  * Update User Passwordcode.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateUserPasswordcode($passwordcode, $userid) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("UPDATE users SET passwordcode = :passwordcode, passwordcode_time = NOW() WHERE id = :userid");
     return $statement->execute(array('passwordcode' => sha1($passwordcode), 'userid' => $userid));
   }
 
+  /**
+  * Update User Status.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateUserStatus($post) {
     $pdo = dbConfig::getInstance();
     $result = null;
@@ -72,6 +114,11 @@ class dbUpdateData {
 		}
   }
 
+  /**
+  * Update User Dashboard update interval.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateUserDashboardupdateInterval($post, $userid) {
     $pdo = dbConfig::getInstance();
     $dashboardUpdateInterval = ($post['updateInterval']);
@@ -80,18 +127,33 @@ class dbUpdateData {
     return "Dashboard Update Interval successfully saved.";
   }
 
+  /**
+  * Insert User.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function insertUser($email, $password_hash, $vorname, $nachname) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname) VALUES (:email, :password, :firstname, :lastname)");
     return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname));
   }
 
+  /**
+  * Insert Admin User.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function insertAdmin($email, $password_hash, $vorname, $nachname) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname, usergroup_admin, active ) VALUES (:email, :password, :firstname, :lastname, :usergroup_admin, :active )");
     return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname, 'usergroup_admin' => '1', 'active' => '1'));
   }
 
+  /**
+  * Insert Securitytoken.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function insertSecuritytoken($userid) {
     $pdo = dbConfig::getInstance();
     $identifier = myFunctions::random_string();
@@ -103,6 +165,11 @@ class dbUpdateData {
     setcookie("securitytoken",$securitytoken,time()+(3600*24*365)); //Valid for 1 year
   }
 
+  /**
+  * Update Board.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateBoard($post) {
     $pdo = dbConfig::getInstance();
    	 if (!isset($post['performupdate'])) {
@@ -116,22 +183,27 @@ class dbUpdateData {
    		$alarmOnUnavailable = 1;
    	 }
     if (!isset($post['onDashboard'])) {
-     $onDashboard = 0;
+      $onDashboard = 0;
     } else {
-     $onDashboard = 1;
+      $onDashboard = 1;
     }
     if ($post['ownerid'] == "") {
       $post['ownerid'] = null;
     }
-   	 $statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, owner_userid=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
-   	 $statement2->execute(array($post['name'], $post['location'], $post['ownerid'], $post['description'], $post['ttn_app_id'], $post['ttn_dev_id'], $performupdate, $alarmOnUnavailable, $onDashboard, $post['updateDataTimer'], $post['id']));
-   	 if ($statement2) {
-      return "Board changes saved.";
-   	 } else {
-      return false;
-   	 }
+   	  $statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, owner_userid=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
+   	  $statement2->execute(array($post['name'], $post['location'], $post['ownerid'], $post['description'], $post['ttn_app_id'], $post['ttn_dev_id'], $performupdate, $alarmOnUnavailable, $onDashboard, $post['updateDataTimer'], $post['id']));
+   	  if ($statement2) {
+        return "Board changes saved.";
+   	  } else {
+        return false;
+   	  }
   }
 
+  /**
+  * Update Sensor.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateSensor($post) {
     $pdo = dbConfig::getInstance();
     if (!isset($post['onDashboard'])) {
@@ -165,6 +237,11 @@ class dbUpdateData {
   	 }
   }
 
+  /**
+  * Update Sensor order number.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateSensorOrderNumber($post) {
     $pdo = dbConfig::getInstance();
     //error_log(json_encode($post['channel']), 0);
@@ -180,6 +257,11 @@ class dbUpdateData {
   	 }
   }
 
+  /**
+  * Update Sensor modal.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function updateSensorModal($post) {
     $pdo = dbConfig::getInstance();
     /*if (isset($post['onDashboard'])) {
@@ -228,6 +310,11 @@ class dbUpdateData {
   	}
   }
 
+  /**
+  * Add new board to user.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
   public static function addNewBoardToUser($post, $userid) {
     $pdo = dbConfig::getInstance();
     $return = "test";

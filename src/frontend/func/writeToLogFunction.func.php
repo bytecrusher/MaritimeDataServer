@@ -18,7 +18,7 @@ class writeToLogFunction {
     $monat = date("n");
     $jahr = date("y");
     $dateiname = dirname(__FILE__) . "/../../logs/log_" . $monate[$monat] . "_$jahr.$format";
-    var_dump(dirname(__FILE__));
+    //var_dump(dirname(__FILE__));
     $header = "Date                File     Log Info";
     $write_header = !file_exists($dateiname);
     if ($write_header) {

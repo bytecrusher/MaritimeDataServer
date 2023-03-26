@@ -34,14 +34,20 @@ function fixObject (&$object)
 if(isset($_GET['save'])) {
 	$save = $_GET['save'];
 	if($save == 'personal_data') {
-		$updateUserReturn = $userobj->setName($_POST);
-		if (!$updateUserReturn) {
-			$error_msg = "Please enter first and last name.";
-		} else {
-			$success_msg = $updateUserReturn;
+		try {
+			$userobj->setName($_POST);
+		} catch (Exception $e) {
+			$error_msg = $e->getMessage();
 		}
-		$updateUserTimezoneReturn = $userobj->setUserTimeZone($_POST);
+		try {
+			$userobj->setUserTimeZone($_POST);
+		} catch (Exception $e) {
+			$error_msg = $e->getMessage();
+		}
 		$_SESSION['userobj'] = serialize($userobj);
+		if (!isset($error_msg)) {
+			$success_msg = "User Data sucessfully saved.";
+		}
 	} else if($save == 'email') {
 		$password = $_POST['password'];
 		$email = trim($_POST['email']);
@@ -109,11 +115,10 @@ if(isset($_GET['save'])) {
 			$error_msg = $addNewBoardToUserReturn;
 		}
 	}
-	//else if($save == 'serverSetting') {
-		// save config file.
-		//var_dump($_POST);
-		//echo("save config");
-	//}
+	else if($save == 'serverSetting') {
+		$config->setDemoMode($_POST);
+		$varDemoMode = $config::$demoMode;
+	}
 }
 
 // write passed data back to the database
@@ -651,19 +656,19 @@ th.rotated-text > div > span {
 							if ($varDemoMode == true) {
 							?>
 								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1' disabled>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>   <label for="demoMode">Demo mode (tbd)</label>
 							<?php
 							} else {
 							?>
 								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1' disabled>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>   <label for="demoMode">Demo mode (tbd)</label>
 							<?php
 							}
 						?>
 					</div>
 					<div class="form-group">
 						<div class="col-sm-offset-2 col-sm-10">
-							<button type="submit" class="btn btn-primary" disabled>Save</button>
+							<button type="submit" class="btn btn-primary">Save</button>
 						</div>
 					</div>
 				</form>

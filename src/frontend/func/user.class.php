@@ -8,6 +8,7 @@
 include_once("dbConfig.func.php");
 include_once("dbGetData.php");
 include_once("password.func.php");
+require_once("writeToLogFunction.func.php");
 
 class user implements JsonSerializable
 {
@@ -31,6 +32,7 @@ class user implements JsonSerializable
     }
     catch (PDOException $err) {
       //Handling query/error
+      writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
       $this->error = $err->getCode();
     }
   }
@@ -152,17 +154,38 @@ class user implements JsonSerializable
   */
   public function setName($post)
   {
-    $this->userobj->firstname = trim($post['firstname']);
-    $this->userobj->lastname = trim($post['lastname']);
+    try {
+      $updateUserDataStatus = dbUpdateData::updateUserData($post, $this->userobj->id);
+      $this->userobj->firstname = trim($post['firstname']);
+      $this->userobj->lastname = trim($post['lastname']);
+      return $updateUserDataStatus;
+    } catch (Exception $e) {
+      throw new Exception('User Data not saved.');
+    }
+  }
 
-    $updateUserReturn = dbUpdateData::updateUserData($post, $this->userobj->id);
- 	 	if (!$updateUserReturn) {
- 			$error_msg = "Please enter first and last name.";
-      return "Please enter first and last name.";
+  /**
+  * Set the setUserTimeZone of the current User.
+  * @return Timezone of the user
+  */
+  public function setUserTimeZone($post)
+  {
+    try {
+      $updateUserReturn = dbUpdateData::updateUserTimeZoneData($post, $this->userobj->id);
+      $this->userobj->Timezone = $post['Timezone'];
+      return $updateUserReturn;
+    } catch (Exception $e) {
+      throw new Exception('Timezone not saved.');
+      //throw new Exception($e);
+    }
+
+/* 	 	if (!$updateUserReturn) {
+ 			$error_msg = "Please enter Timezone.";
+      //return "Please enter Timezone.";
+      return false;
  	 	} else {
  		 	$success_msg = $updateUserReturn;
-      return $updateUserReturn;
- 	 	}
+ 	 	}*/
   }
 
   /**
@@ -175,27 +198,11 @@ class user implements JsonSerializable
     $updateUserEmailReturn = dbUpdateData::updateUserMail($post, $this->userobj->id);
  	 	if (!$updateUserEmailReturn) {
  			$error_msg = "Please a correct Email Adress.";
-      return "Please a correct Email Adress.";
+      //return "Please a correct Email Adress.";
+      return false;
  	 	} else {
  		 	$success_msg = $updateUserEmailReturn;
       return $updateUserEmailReturn;
- 	 	}
-  }
-
-  /**
-  * Set the setUserTimeZone of the current User.
-  * @return Timezone of the user
-  */
-  public function setUserTimeZone($post)
-  {
-    $this->userobj->Timezone = $post['Timezone'];
-    $updateUserReturn = dbUpdateData::updateUserTimeZoneData($post, $this->userobj->id);
- 	 	if (!$updateUserReturn) {
- 			$error_msg = "Please enter Timezone.";
-      return "Please enter Timezone.";
- 	 	} else {
- 		 	$success_msg = $updateUserReturn;
-      return $updateUserReturn;
  	 	}
   }
 
@@ -262,7 +269,7 @@ class user implements JsonSerializable
     }
   }
 
-    /*
+  /*
   * Get all Board (only for admin).
   */
   public function getAllBoardsAdmin() {

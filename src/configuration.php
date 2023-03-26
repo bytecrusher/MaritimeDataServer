@@ -50,5 +50,18 @@ class configuration {
         self::$install_finished = $jsonData['install_finished'];
         self::$admin_email_adress = $jsonData['admin_email_adress'];
     }
+
+    function setDemoMode($post) {
+        self::$demoMode = $post['demoMode'];
+        $path = __DIR__ . '/config.json';
+        $jsonString = file_get_contents($path);
+        $jsonData = json_decode($jsonString, true);
+        $jsonData['demoMode'] = $post['demoMode'];
+        $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
+        // Write in the file
+        $fp = fopen($path, 'w');
+        fwrite($fp, $jsonString);
+        fclose($fp);
+    }
 }
 ?>
