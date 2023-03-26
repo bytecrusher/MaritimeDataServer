@@ -8,5 +8,7 @@
     "extbaseurl": "https://localhost",
     "subdir": "/maritimedataserver",
     "demoMode": "false",
-    "md5secretstring": "your_secret_string"
+    "md5secretstring": "your_secret_string",
+    "install_finished": true,
+    "admin_email_adress": "info@yourdomain.de"
 }
