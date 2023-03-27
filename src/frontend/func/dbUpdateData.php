@@ -66,9 +66,15 @@ class dbUpdateData {
   public static function updateUserMail($post, $userid) {
     $pdo = dbConfig::getInstance();
     $email = trim($post['email']);
-    $statement = $pdo->prepare("UPDATE users SET email = :email WHERE id = :userid");
-    $result = $statement->execute(array('email' => $email, 'userid' => $userid ));
-    return "E-Mail address successfully saved.";
+    try {
+      $statement = $pdo->prepare("UPDATE users SET email = :email WHERE id = :userid");
+      $result = $statement->execute(array('email' => $email, 'userid' => $userid ));
+      return $result;
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User Mail not successfully saved for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User Mail not successfully saved.');
+    }
   }
 
   /**
@@ -78,20 +84,32 @@ class dbUpdateData {
   */
   public static function updateUserPassword($password_hash, $userid) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("UPDATE users SET password = :password WHERE id = :userid");
-    $result = $statement->execute(array('password' => $password_hash, 'userid' => $userid ));
-    return "Password successfully saved.";
+    try {
+      $statement = $pdo->prepare("UPDATE users SET password = :password WHERE id = :userid");
+      $result = $statement->execute(array('password' => $password_hash, 'userid' => $userid ));
+      return $result;
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User Password not successfully saved for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User Password not successfully saved.');
+    }
   }
 
   /**
-  * Update User Passwordcode.
+  * Update User Passwordcode (for password reset).
   * @return bool — TRUE on success or FALSE on failure.
   * @throws Exception — Return Exception message on error.
   */
   public static function updateUserPasswordcode($passwordcode, $userid) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("UPDATE users SET passwordcode = :passwordcode, passwordcode_time = NOW() WHERE id = :userid");
-    return $statement->execute(array('passwordcode' => sha1($passwordcode), 'userid' => $userid));
+    try {
+      $statement = $pdo->prepare("UPDATE users SET passwordcode = :passwordcode, passwordcode_time = NOW() WHERE id = :userid");
+      return $statement->execute(array('passwordcode' => sha1($passwordcode), 'userid' => $userid));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User Password reset not successfully saved for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User Password resest Update in DB not successfully saved.');
+    }
   }
 
   /**
@@ -104,13 +122,14 @@ class dbUpdateData {
     $result = null;
     foreach($post['active'] as $i=>$array_wert)
 		{
-			$statement = $pdo->prepare("UPDATE users SET active =?, usergroup_admin=? WHERE id =?");
-			$result = $statement->execute(array($post['active'][$i], $post['usergroup_admin'][$i], $i ));
-		}
-		if ($result) {
-			return "Users updated.";
-		} else {
-			return false;
+      try {
+        $statement = $pdo->prepare("UPDATE users SET active =?, usergroup_admin=? WHERE id =?");
+        $statement->execute(array($post['active'][$i], $post['usergroup_admin'][$i], $i ));
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: User Status in DB not successfully updated for userid: " . $post['active'][$i], $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('User Status in DB not successfully updated.');
+      }
 		}
   }
 
@@ -246,15 +265,15 @@ class dbUpdateData {
     $pdo = dbConfig::getInstance();
     //error_log(json_encode($post['channel']), 0);
     if (json_encode($post['channel']) != null) {
-      $statement2 = $pdo->prepare("UPDATE sensorconfig SET Value" . $post['channel'] . "DashboardOrdnerNr=? WHERE id=?");
-  	  $statement2->execute(array($post['ordnernumber'], $post['id']));
+      try {
+        $statement2 = $pdo->prepare("UPDATE sensorconfig SET Value" . $post['channel'] . "DashboardOrdnerNr=? WHERE id=?");
+  	    return $statement2->execute(array($post['ordnernumber'], $post['id']));
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: Sensor order number not saved.", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('Sensor order number not saved.');
+      }
     }
-    
-  	if ($statement2) {
-      return "Sensor order successfully saved.";
-  	 } else {
-      return false;
-  	 }
   }
 
   /**
@@ -317,46 +336,62 @@ class dbUpdateData {
   */
   public static function addNewBoardToUser($post, $userid) {
     $pdo = dbConfig::getInstance();
-    $return = "test";
-    if ($post['valueType'] == "ttn") {
+    $return = false;
+    if ( ($post['valueType'] == "ttn") && (json_encode($post['inputValue']) != null) ) {
       if (json_encode($post['inputValue']) != null) {
-        $statement2 = $pdo->prepare("SELECT * FROM boardconfig WHERE ttn_dev_id = ?");
-        $statement2->execute([$post['inputValue']]);
-        $returnBoard = $statement2->fetch();
+        try {
+          $statement2 = $pdo->prepare("SELECT * FROM boardconfig WHERE ttn_dev_id = ?");
+          $statement2->execute([$post['inputValue']]);
+          $returnBoard = $statement2->fetch();
+        } catch (Exception $e) {
+          writeToLogFunction::write_to_log("Error: Unable to loads boards.", $_SERVER["SCRIPT_FILENAME"]);
+          writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+          throw new Exception('Boards not loaded.');
+        }
+        
         if ($returnBoard) {
           if ($returnBoard['owner_userid'] == false) {
-            $sql = "UPDATE boardconfig SET owner_userid=? WHERE id=?";
-            $return = $pdo->prepare($sql)->execute([$userid, $returnBoard['id']]);
+            try {
+              $sql = "UPDATE boardconfig SET owner_userid=? WHERE id=?";
+              $return = $pdo->prepare($sql)->execute([$userid, $returnBoard['id']]);
+            } catch (Exception $e) {
+              writeToLogFunction::write_to_log("Error: Unable to add board to the userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+              writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+              throw new Exception('Board not added.');
+            }
           } else {
-            //$return = $returnBoard['owner_userid'];
-            //$return = false;
-            $return = "Board has an owner.";
+            throw new Exception('Board has an owner.');
           }
         } else {
-          //$return = false;
-          $return = "TTN ID not found.";
+          throw new Exception('TTN ID not found.');
         }
+      } else if ( ($post['valueType'] == "mac")  && (json_encode($post['inputValue']) != null) ) {
+        try {
+          $statement2 = $pdo->prepare("SELECT * FROM boardconfig WHERE macaddress = ?");
+          $statement2->execute([$post['inputValue']]);
+          $returnBoard = $statement2->fetch();
+        } catch (Exception $e) {
+          writeToLogFunction::write_to_log("Error: Unable to load boards.", $_SERVER["SCRIPT_FILENAME"]);
+          writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+          throw new Exception('Boards not loaded.');
+        }
+          if ($returnBoard) {
+            if ($returnBoard['owner_userid'] == false) {
+              try {
+                $sql = "UPDATE boardconfig SET owner_userid=? WHERE id=?";
+                $return = $pdo->prepare($sql)->execute([$userid, $returnBoard['id']]);
+              } catch (Exception $e) {
+                writeToLogFunction::write_to_log("Error: Unable to add board to the userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+                writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+                throw new Exception('Board not added.');
+              }
+            } else {
+              throw new Exception('Board has an owner.');
+            }
+          } else {
+            throw new Exception('mac not found.');
+          }
       }
-      //$return = "ttnId";
-      //$return = $statement2;
-    } else if ($post['valueType'] == "mac") {
-      $statement2 = $pdo->prepare("SELECT * FROM boardconfig WHERE macaddress = ?");
-        $statement2->execute([$post['inputValue']]);
-        $returnBoard = $statement2->fetch();
-        if ($returnBoard) {
-          if ($returnBoard['owner_userid'] == false) {
-            $sql = "UPDATE boardconfig SET owner_userid=? WHERE id=?";
-            $return = $pdo->prepare($sql)->execute([$userid, $returnBoard['id']]);
-          } else {
-            //$return = $returnBoard['owner_userid'];
-            //$return = false;
-            $return = "Board has an owner.";
-          }
-        } else {
-          //$return = false;
-          $return = "mac not found.";
-        }
-      //$return = "macadress";
     }
     return $return;
   }

@@ -5,7 +5,6 @@
     "db_password": "dbpassword",
     "api_key": "my_api_key",
     "baseurl": "http://localhost",
-    "extbaseurl": "https://localhost",
     "subdir": "/maritimedataserver",
     "demoMode": "false",
     "md5secretstring": "your_secret_string",

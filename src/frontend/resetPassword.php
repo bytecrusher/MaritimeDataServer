@@ -11,6 +11,7 @@ require_once("func/myFunctions.func.php");
 require_once("func/user.class.php");
 require_once("func/dbUpdateData.php");
 include("common/header.inc.php");
+require_once("func/writeToLogFunction.func.php");
 ?>
 <div class="container small-container-330">
 	<h2>Reset password</h2>
@@ -28,7 +29,12 @@ include("common/header.inc.php");
 				$showForm = false;
 			} else {
 				$passwordcode = myFunctions::random_string();
-				$result = dbUpdateData::updateUserPasswordcode($passwordcode, $user->getId());
+				try {
+					$result = dbUpdateData::updateUserPasswordcode($passwordcode, $user->getId());
+				} catch (Exception $e) {
+					$error_msg = $e->getMessage();
+				}
+				
 				$empfaenger = strval($user->getEmail()); //['email'];
 				$betreff = "New password for your account on " . myFunctions::getSiteURL();
 				$from = "From: Guntmar <info@derguntmar.de>"; // TODO: Ersetzt hier euren Name und E-Mail-Adresse
@@ -39,8 +45,12 @@ include("common/header.inc.php");
 					You can ignore this mail, if remeber your password again, or didnt requested a new password.
 					best regards,
 					your derguntmar.de-Team';
-				mail($empfaenger, $betreff, $text, $from);
-				echo "A link to reset your password was send.";
+				if (mail($empfaenger, $betreff, $text, $from)) {
+					echo "A link to reset your password was send.";
+				} else {
+					writeToLogFunction::write_to_log("Error: Unable to send email to: " . $empfaenger, $_SERVER["SCRIPT_FILENAME"]);
+					echo "Error: Unable to send email.";
+				}
 				$showForm = false;
 			}
 		}

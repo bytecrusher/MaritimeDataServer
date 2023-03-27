@@ -176,16 +176,22 @@ class user implements JsonSerializable
       return $updateUserReturn;
     } catch (Exception $e) {
       throw new Exception('Timezone not saved.');
-      //throw new Exception($e);
     }
+  }
 
-/* 	 	if (!$updateUserReturn) {
- 			$error_msg = "Please enter Timezone.";
-      //return "Please enter Timezone.";
-      return false;
- 	 	} else {
- 		 	$success_msg = $updateUserReturn;
- 	 	}*/
+  /**
+  * Set the Password of the current User.
+  * @return Password of the user
+  */
+  public function setUserPassword($password_hash)
+  {
+    try {
+      $updateUserReturn = dbUpdateData::updateUserPassword($password_hash, $this->userobj->id);
+      $this->userobj->password = $password_hash;
+      return $updateUserReturn;
+    } catch (Exception $e) {
+      throw new Exception('Password not saved.');
+    }
   }
 
   /**
@@ -194,16 +200,13 @@ class user implements JsonSerializable
   */
   public function setEmail($post)
   {
-    $this->userobj->email = trim($post['email']);
-    $updateUserEmailReturn = dbUpdateData::updateUserMail($post, $this->userobj->id);
- 	 	if (!$updateUserEmailReturn) {
- 			$error_msg = "Please a correct Email Adress.";
-      //return "Please a correct Email Adress.";
-      return false;
- 	 	} else {
- 		 	$success_msg = $updateUserEmailReturn;
+    try {
+      $updateUserEmailReturn = dbUpdateData::updateUserMail($post, $this->userobj->id);
+      $this->userobj->email = trim($post['email']);
       return $updateUserEmailReturn;
- 	 	}
+    } catch (Exception $e) {
+      throw new Exception('Email not saved.');
+    }
   }
 
   /**
