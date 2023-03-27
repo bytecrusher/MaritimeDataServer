@@ -8,6 +8,7 @@
 
 //require_once(dirname(__FILE__).'/../../configuration.php');
 require_once(__DIR__ . '/../../configuration.php');
+require_once(dirname(__FILE__) . "/writeToLogFunction.func.php");
 
 class dbConfig {
   private static $pdo = null;
@@ -22,8 +23,9 @@ class dbConfig {
     }
     catch(PDOException $e)
     {
-        //printf('Error opening database.<br><br>%s',
         //$e->getMessage());
+        writeToLogFunction::write_to_log("Error while create PDO object: ", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log($e, $_SERVER["SCRIPT_FILENAME"]);
         exit();
     }
   }

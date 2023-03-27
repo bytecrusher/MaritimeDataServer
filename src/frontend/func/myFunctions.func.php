@@ -9,6 +9,8 @@
   include_once("password.func.php");
   include_once("dbConfig.func.php");
   require_once(dirname(__FILE__).'/../../configuration.php');
+  require_once("writeToLogFunction.func.php");
+  //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
   class sensorTyp
   {
@@ -414,7 +416,7 @@ class myFunctions {
 
       $defaultValues['nameValue3'] = "Pres";
       $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 20;
+      $defaultValues['Value3GaugeMaxValue'] = 3000;
       $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
       $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
@@ -598,35 +600,4 @@ class myFunctions {
 		include("common/footer.inc.php");
 		exit();
 	}
-
-  /**
-	 * Write $text into a log file.
-	 */
-  private function write_to_log($text)
-  {
-    $format = "csv"; // csv or txt
-    $datum_zeit = date("d.m.Y H:i:s");
-    $site = $_SERVER['REQUEST_URI'];
-    $dateiname = dirname(__FILE__)."/logs/log.$format";
-    $header = array("Date", "Site", "Log");
-    $json = json_encode($text);
-    $infos = array($datum_zeit, $site, $json);
-    if ($format == "csv") {
-        $eintrag2 = '"' . implode('", "', $infos) . '"';
-    } else {
-        $eintrag2 = implode("\t", $infos);
-    }
-    $write_header = !file_exists($dateiname);
-    $datei = fopen($dateiname, "a");
-    if ($write_header) {
-        if ($format == "csv") {
-            $header_line = '"' . implode('", "', $header) . '"';
-        } else {
-            $header_line = implode("\t", $header);
-        }
-        fputs($datei, $header_line . "\n");
-    }
-    fputs($datei, $eintrag2 . "\n");
-    fclose($datei);
-  }
 }

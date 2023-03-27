@@ -30,29 +30,28 @@ For the Frontend the user needs to login. Now the user is able to do some config
 
 ## Folder description
 
-- **backend** files for comunicate with collector and sending mail or telegram messages.
-- **cgi-bin** script for trigger php files to run, to check for sending any message to users (mail).
 - **docu_donotdeploy** folder contains data for documentation.
      - **images** Images for documentation.
-- **frontend** the frontend for this webproject
-     - **api** api files for request from JS.
-     - **common** common files like "header" and "footer".
-     - **css** stylesheets
-     - **func** php functions for internal use (DB connection, user, boards...).
-     - **img** images for pages, i.e. board images.
-     - **js** javascript files.
+- **src**
+     - **frontend** the frontend files for this web project
+          - **api** api files for request from JS.
+          - **common** common files like "header" and "footer".
+          - **css** stylesheets
+          - **func** php functions for internal use (DB connection, user, boards...).
+          - **img** images for pages, i.e. board images.
+          - **js** javascript files.
+          - **register** Files for new user registering.
+     - **install** scripts to install and prepare sql DB, create the tables and the admin user.
      - **logs** log files for debugging.
-- **logs** log files for debugging.
-- **otafirmware** contains OTA files for update ESP.
-- **receiver** functions for receiving data from MDCs.
-- **install** scripts to install and prepare sql DB, create the tables and the admin user.
+     - **otafirmware** contains OTA files for update ESP.
+     - **receiver** functions for receiving data from MDCs.
 
 
 #### Installation
-Copy all **MDS** files to your htdocs dir.
-Create a new Database (with phpmyadmin) and a new User with write privileges to this database.
-Open **http://yourdomain/maritimedataserver/install/index.php** in your Browser and step through the steps.
-After install is finished, remove the dir named "install".
+Copy all **MDS** files from the "src" folder into your htdocs dir.
+Create a new Database (with phpmyadmin) and create a new User with write privileges to this database.
+Open **http://yourdomain/maritimedataserver/install/index.php** in your Browser and step through the instalation steps.
+After install is finished, remove the dir named "install" (for security reasons).
 
 Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 
@@ -61,10 +60,29 @@ Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 ![MDS Map](docu_donotdeploy/images/MDS_Map.png)
 
 #### MDS Requirements
-For running the **MDS** you need a Apache Webserver with php support and a MySQL DB.  
-If you run **MDC**s outside our local network, your **MDS** needs to be public.
+For running the **MDS** you need a (Apache) Webserver with PHP support and a MySQL DB.  
+If you run **MDC**s outside our local network, your **MDS** needs to be public (TTN should be able to reach this server).
 
 ###### Development
+For development is differen solutions.
+First is local Docker container that runs on my coding computer.
+Second i have on my webhosting a subdomain, that pulls my "developtment" branch from guthub there.
+
+######## My current way
+First wave:
+I setup 4 containers (one for each service):
+- Apache
+- PHP
+- PHPmyAdmin
+- MySQL
+
+I configured my VSC to be able work direct in the htdocs folder if apache.
+So there is no manual synch of files needed.
+
+Second wave:
+in my webhosting subdomain, i setup my respository, so i am able to run a pull request from the plesk panel and have tha latest development branch there.
+
+######## My Old way (currently unsused):
 For development i use a Bitnami image for XAMPP Stack 8.1.1-2 under MacOS.  
 In **Applications/XAMPP/xamppfiles/htdocs** i put the project from git.
 

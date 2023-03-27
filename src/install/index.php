@@ -202,14 +202,14 @@
         <div class="form-group row">
           <label for="apikey" class="col-sm-4 col-form-label">API key</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="apikey" name="apikey" value="<?php echo $var_apikey;?>" required>
+            <input type="text" class="form-control" id="apikey" name="apikey" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_apikey;?>" required>
           </div>
         </div>
 
         <div class="form-group row">
           <label for="md5secretstring" class="col-sm-4 col-form-label">Your Secret String (Replace with a string of your choice (>12 characters))</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="md5secretstring" name="md5secretstring" value="<?php echo $var_md5secretstring;?>" required>
+            <input type="text" class="form-control" id="md5secretstring" name="md5secretstring" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_md5secretstring;?>" required>
           </div>
         </div>
 

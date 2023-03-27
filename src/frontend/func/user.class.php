@@ -8,6 +8,7 @@
 include_once("dbConfig.func.php");
 include_once("dbGetData.php");
 include_once("password.func.php");
+require_once("writeToLogFunction.func.php");
 
 class user implements JsonSerializable
 {
@@ -28,9 +29,9 @@ class user implements JsonSerializable
       $statement = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
       $result = $statement->execute(array('email' => $email));
       $this->userobj = $statement->fetch(PDO::FETCH_OBJ);
-    }
-    catch (PDOException $err) {
+    } catch (PDOException $err) {
       //Handling query/error
+      writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
       $this->error = $err->getCode();
     }
   }
@@ -152,17 +153,59 @@ class user implements JsonSerializable
   */
   public function setName($post)
   {
-    $this->userobj->firstname = trim($post['firstname']);
-    $this->userobj->lastname = trim($post['lastname']);
+    try {
+      $updateUserDataStatus = dbUpdateData::updateUserData($post, $this->userobj->id);
+      $this->userobj->firstname = trim($post['firstname']);
+      $this->userobj->lastname = trim($post['lastname']);
+      return $updateUserDataStatus;
+    } catch (Exception $e) {
+      throw new Exception('User Data not saved.');
+    }
+  }
 
-    $updateUserReturn = dbUpdateData::updateUserData($post, $this->userobj->id);
- 	 	if (!$updateUserReturn) {
- 			$error_msg = "Please enter first and last name.";
-      return "Please enter first and last name.";
- 	 	} else {
- 		 	$success_msg = $updateUserReturn;
+  /**
+  * Set the setUserTimeZone of the current User.
+  * @return Timezone of the user
+  */
+  public function setUserTimeZone($post)
+  {
+    try {
+      $updateUserReturn = dbUpdateData::updateUserTimeZoneData($post, $this->userobj->id);
+      $this->userobj->Timezone = $post['Timezone'];
       return $updateUserReturn;
- 	 	}
+    } catch (Exception $e) {
+      throw new Exception('Timezone not saved.');
+    }
+  }
+
+  /**
+  * Set the Password of the current User.
+  * @return Password of the user
+  */
+  public function setUserPassword($password_hash)
+  {
+    try {
+      $updateUserReturn = dbUpdateData::updateUserPassword($password_hash, $this->userobj->id);
+      $this->userobj->password = $password_hash;
+      return $updateUserReturn;
+    } catch (Exception $e) {
+      throw new Exception('Password not saved.');
+    }
+  }
+
+  /**
+  * Set the Email of the current User.
+  * @return firstname and Lastname of the user
+  */
+  public function setEmail($post)
+  {
+    try {
+      $updateUserEmailReturn = dbUpdateData::updateUserMail($post, $this->userobj->id);
+      $this->userobj->email = trim($post['email']);
+      return $updateUserEmailReturn;
+    } catch (Exception $e) {
+      throw new Exception('Email not saved.');
+    }
   }
 
   /**
@@ -172,6 +215,15 @@ class user implements JsonSerializable
   public function getLastname()
   {
     return $this->userobj->lastname;
+  }
+
+  /**
+  * Returns the Lastname of the current User.
+  * @return lastname of the user
+  */
+  public function getTimezone()
+  {
+    return $this->userobj->Timezone;
   }
 
   /**
@@ -219,7 +271,7 @@ class user implements JsonSerializable
     }
   }
 
-    /*
+  /*
   * Get all Board (only for admin).
   */
   public function getAllBoardsAdmin() {
@@ -240,7 +292,8 @@ class user implements JsonSerializable
       'userId'   => $this->getId(),
       'email' => $this->getEmail(),
       'Firstname' => $this->getFirstname(),
-      'Lastname' => $this->getLastname()
+      'Lastname' => $this->getLastname(),
+      'Timezone' => $this->getTimezone()
     ];
   }
 

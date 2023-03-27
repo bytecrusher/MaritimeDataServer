@@ -4,6 +4,8 @@ require_once("func/dbConfig.func.php");
 require_once("func/myFunctions.func.php");
 require_once("func/user.class.php");
 require_once("func/dbUpdateData.php");
+require_once("func/writeToLogFunction.func.php");
+//writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
 $error_msg = "";
 if(isset($_POST['email']) && isset($_POST['password'])) {

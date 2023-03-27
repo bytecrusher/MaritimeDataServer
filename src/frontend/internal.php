@@ -10,6 +10,8 @@
   require_once("func/myFunctions.func.php");
   require_once("func/user.class.php");
   require_once("func/board.class.php");
+  require_once("func/writeToLogFunction.func.php");
+  //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
   if (isset($_SESSION['userobj'])) {
     $currentUser = unserialize($_SESSION['userobj']);
@@ -135,11 +137,9 @@ setInterval(function() {
       <?php
         if(($currentUser->getUserGroupAdmin() == 1) ) {
           // test if install folder exist
-          //var_dump(is_dir('./../install'));
           if (is_dir('./../install')) {
-            echo "<div class='alert alert-danger' role='alert'>Please remember to remove \"install\" dir.</div>";
+            echo "<div class='alert alert-danger alert-dismissible' role='alert'>Please remember to remove \"install\" dir. <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
           }
-          
 				}
         ?>
     </div>
@@ -407,9 +407,11 @@ setInterval(function() {
           //console.log("locked");
 
           wrapper = $('.card-block');
+          onceSensorOrderFail = false;
+          onceSensorOrderDone = false;
           for (let i=0; i<wrapper.length; i++) {
             $("#" + wrapper[i].id + " .gauge-container").each(function(index) {
-              console.log("new order nr: " + index + ", old ordner nr: " + $( this ).attr("data-id"));
+              //console.log("new order nr: " + index + ", old ordner nr: " + $( this ).attr("data-id"));
               $( this ).attr("data-id", index);
               var tempnumber = $( this ).attr("id").replace('gauge', '');
               var SensorIdChannel = tempnumber.split('.');
@@ -422,30 +424,36 @@ setInterval(function() {
                     id: SensorIdChannel[0] }
               })
                 .done(function( response ) {
-                  /*console.log("done");
-                  g = document.createElement('div');
-                  g.setAttribute("class", "alert alert-primary alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
-                  g.setAttribute("role", "alert");
-                  g.innerHTML = "Sensor Order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
-                  const bsAlert = new bootstrap.Alert(g);
-                  // Dismiss time out
-                  setTimeout(() => {
-                    bsAlert.close();
-                  }, 2000);
-                  $("#alert-container").append(g);*/
+                  if (!onceSensorOrderDone) {
+                    //console.log("done");
+                    g = document.createElement('div');
+                    g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+                    g.setAttribute("role", "alert");
+                    g.innerHTML = "Sensor Order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                    const bsAlert = new bootstrap.Alert(g);
+                    // Dismiss time out
+                    setTimeout(() => {
+                      bsAlert.close();
+                    }, 5000);
+                    $("#alert-container").append(g);
+                    onceSensorOrderDone = true;
+                  }
                 })
                 .fail(function( response ) {
-                  console.log("fail");
-                  g = document.createElement('div');
-                  g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
-                  g.setAttribute("role", "alert");
-                  g.innerHTML = "Sensor Order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
-                  const bsAlert = new bootstrap.Alert(g);
-                  // Dismiss time out
-                  setTimeout(() => {
-                    bsAlert.close();
-                  }, 2000);
-                  $("#alert-container").append(g);
+                  if (!onceSensorOrderFail) {
+                    //console.log("fail");
+                    g = document.createElement('div');
+                    g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+                    g.setAttribute("role", "alert");
+                    g.innerHTML = "Sensor Order not saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                    const bsAlert = new bootstrap.Alert(g);
+                    // Dismiss time out
+                    setTimeout(() => {
+                      bsAlert.close();
+                    }, 5000);
+                    $("#alert-container").append(g);
+                    onceSensorOrderFail = true;
+                  }
                 });
             });
           }

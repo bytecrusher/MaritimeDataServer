@@ -1,6 +1,6 @@
 <?php 
 /**
- * receives data from Collectors (MDCs) in JSON format.
+ * receives data from Collectors/Devices (MDCs) in JSON format.
  * 
  * @author: Guntmar Hoeche
  * @license: TBD
@@ -8,6 +8,7 @@
 
 require_once(dirname(__FILE__, 2) . "/frontend/func/dbConfig.func.php");
 require_once(dirname(__FILE__, 2) . '/configuration.php');
+require_once(dirname(__FILE__, 2) . "/frontend/func/writeToLogFunction.func.php");
 $config  = new configuration();
 
 $api_key_value = $config::$api_key;
@@ -24,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($boardData['api_key'])) {
         $api_key = ($boardData['api_key']);
     } else {
-        write_to_log("Wrong Api key!!");
+        writeToLogFunction::write_to_log("Wrong Api key!!", $_SERVER["SCRIPT_FILENAME"]);
     }
 
     $sql = null;
@@ -34,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $macaddress = test_input($boardData['macaddress']);
                 $macaddressid = check_macadresse($macaddress, $pdo2);
                 foreach ($sensors as $key => &$sensor) {
-                    //write_to_log($sensor['sensorId']);
+                    //writeToLogFunction::write_to_log($sensor['sensorId'], $_SERVER["SCRIPT_FILENAME"]);
                     $sensorid = null;
                     if ($sensor != null) {
                         $mysensorid = $owsensorAddress = null;
@@ -56,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         } else {
                             if(isset($sensor["sensorAddress"])) {
                                 $owsensorAddress = test_input($sensor["sensorAddress"]);
-                                write_to_log("owsensorAddress: " . $owsensorAddress);
+                                writeToLogFunction::write_to_log("owsensorAddress: " . $owsensorAddress, $_SERVER["SCRIPT_FILENAME"]);
                                 $sensorid = check_owsensorAddress($owsensorAddress, $macaddressid, $pdo2);
                                 if (substr($owsensorAddress, 0, 2) === "28") {
                                     $value1 = test_input($sensor["value1"]);
@@ -70,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                $owsensorAddress = null; 
                             }
                             
-                            write_to_log("sensorid: " . $sensorid);
+                            writeToLogFunction::write_to_log("sensorid: " . $sensorid, $_SERVER["SCRIPT_FILENAME"]);
                             if (isset($sensor["value1"])) {
                                 $value1 = test_input($sensor["value1"]);
                             }
@@ -101,23 +102,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $pdo2->query($sql); //Invalid query
                         } catch (PDOException $ex) {
                             echo "An Error has occurred while run query.";
-                            write_to_log("An Error has occurred while run query.");
+                            writeToLogFunction::write_to_log("An Error has occurred while run query.", $_SERVER["SCRIPT_FILENAME"]);
+                            writeToLogFunction::write_to_log($ex, $_SERVER["SCRIPT_FILENAME"]);
                         }
                     }
                 }
             }
         } else {
             echo "Wrong protocoll version.";
-            write_to_log("Wrong protocoll version.");
+            writeToLogFunction::write_to_log("Wrong protocoll version.", $_SERVER["SCRIPT_FILENAME"]);
             die();
         }
     } else {
         echo "Wrong API Key provided.";
-        write_to_log("Wrong API Key provided.");
+        writeToLogFunction::write_to_log("Wrong API Key provided.", $_SERVER["SCRIPT_FILENAME"]);
     }
 } else {
     echo "No data posted with HTTP POST.";
-    write_to_log("No data posted with HTTP POST.");
+    writeToLogFunction::write_to_log("No data posted with HTTP POST.", $_SERVER["SCRIPT_FILENAME"]);
 }
 
 function test_input($data)
@@ -136,14 +138,15 @@ function check_macadresse($macaddress, $pdo2)
         $idmacaddress = $idmacaddress_temp->fetch();
     } catch (PDOException $ex) {
         echo "An Error has occurred while check macadress";
-        write_to_log("An Error has occurred while check macadress");
+        writeToLogFunction::write_to_log("An Error has occurred while check macadress", $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if ( (!isset($idmacaddress['id']) ) || ($idmacaddress['id'] == null) ) {
         $statement = $pdo2->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name) VALUES (?, ?, ?)");
         $statement->execute(array($macaddress, 1, "- new imported -"));     // Default Owner User
         $neue_id = $pdo2->lastInsertId();
-        write_to_log("New Board with id $neue_id created");
+        writeToLogFunction::write_to_log("New Board with id $neue_id created", $_SERVER["SCRIPT_FILENAME"]);
+
         return $neue_id;
     } else {
         return $idmacaddress['id'];
@@ -162,13 +165,13 @@ function check_owsensorAddress($sensorAddress, $macaddressid, $pdo2)
                 $sql2 = "SELECT id FROM sensortypes WHERE oneWireFamilyCode = '" . $sensorAddressFamilyCode . "' LIMIT 1";
                 $idsensortypes_temp = $pdo2->query($sql2); //Invalid query
                 $idsensortypes = $idsensortypes_temp->fetch();
-                write_to_log("sensor: " . $idsensortypes);
+                writeToLogFunction::write_to_log("sensor: " . $idsensortypes, $_SERVER["SCRIPT_FILENAME"]);
                 $statement2 = "INSERT INTO sensorconfig (boardid, sensorAddress, typid) VALUES ('$macaddressid', '$sensorAddress', '" . $idsensortypes['id'] . "')";
                 $insertsuccess = $pdo2->exec($statement2);
-                write_to_log("Insert sensorconfig " . $statement2) . ", " . $insertsuccess;
+                writeToLogFunction::write_to_log("Insert sensorconfig " . $statement2 . ", " . $insertsuccess, $_SERVER["SCRIPT_FILENAME"]);
                 if ($insertsuccess) {
                     $neue_id = $pdo2->lastInsertId();
-                    write_to_log("New Sensor with id $neue_id created");
+                    writeToLogFunction::write_to_log("New Sensor with id $neue_id created", $_SERVER["SCRIPT_FILENAME"]);
                     return $neue_id;
                 } else {
                     return false;
@@ -178,35 +181,7 @@ function check_owsensorAddress($sensorAddress, $macaddressid, $pdo2)
             }
         }
     } catch (PDOException $ex) {
-        write_to_log("An Error has occurred while add / check sensor. ");
+        writeToLogFunction::write_to_log("An Error has occurred while add / check sensor. ", $_SERVER["SCRIPT_FILENAME"]);
     }
-}
-
-function write_to_log($text)
-{
-    $format = "csv"; // csv or txt
-    $datum_zeit = date("d.m.Y H:i:s");
-    $site = $_SERVER['REQUEST_URI'];
-    $dateiname = dirname(__FILE__) . "/logs/log.$format";
-    $header = array("Date", "Site", "Log");
-
-    $infos = array($datum_zeit, $site, $text);
-    if ($format == "csv") {
-        $eintrag2 = '"' . implode('", "', $infos) . '"';
-    } else {
-        $eintrag2 = implode("\t", $infos);
-    }
-    $write_header = !file_exists($dateiname);
-    $datei = fopen($dateiname, "a");
-    if ($write_header) {
-        if ($format == "csv") {
-            $header_line = '"' . implode('", "', $header) . '"';
-        } else {
-            $header_line = implode("\t", $header);
-        }
-        fputs($datei, $header_line . "\n");
-    }
-    fputs($datei, $eintrag2 . "\n");
-    fclose($datei);
 }
 ?>

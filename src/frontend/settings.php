@@ -10,6 +10,7 @@ require_once("func/dbConfig.func.php");
 require_once("func/myFunctions.func.php");
 require_once("func/user.class.php");
 require_once("func/dbUpdateData.php");
+require_once("func/writeToLogFunction.func.php");
 
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;
@@ -21,7 +22,6 @@ if (isset($_SESSION['userobj'])) {
 	$userobj = false;
 	header("Location: ./index.php");
 }
-
 include("common/header.inc.php");
 
 function fixObject (&$object)
@@ -34,12 +34,20 @@ function fixObject (&$object)
 if(isset($_GET['save'])) {
 	$save = $_GET['save'];
 	if($save == 'personal_data') {
-		$updateUserReturn = $userobj->setName($_POST);
-		if (!$updateUserReturn) {
-			$error_msg = "Please enter first and last name.";
-		 } else {
-			 $success_msg = $updateUserReturn;
-		 }
+		try {
+			$userobj->setName($_POST);
+		} catch (Exception $e) {
+			$error_msg = $e->getMessage();
+		}
+		try {
+			$userobj->setUserTimeZone($_POST);
+		} catch (Exception $e) {
+			$error_msg = $e->getMessage();
+		}
+		$_SESSION['userobj'] = serialize($userobj);
+		if (!isset($error_msg)) {
+			$success_msg = "User Data sucessfully saved.";
+		}
 	} else if($save == 'email') {
 		$password = $_POST['password'];
 		$email = trim($_POST['email']);
@@ -49,15 +57,19 @@ if(isset($_GET['save'])) {
 			$error_msg = "The entered email adresses are not the same.";
 		} else if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 			$error_msg = "The entered email adress are not valid.";
-		} else if(!password_verify($password, $userobj['password'])) {
+		} else if(!password_verify($password, $userobj->getPassword())) {
 			$error_msg = "Wrong password.";
 		} else {
-			$updateUserPasswordReturn = dbUpdateData::updateUserMail($_POST, $userobj->getId);
-	 	 	if (!$updateUserPasswordReturn) {
-	 		 	$error_msg = "Error on update User Mail.";
-	 	 	} else {
-	 		 	$success_msg = $updateUserPasswordReturn;
-	 	 	}
+			try {
+				$userobj->setEmail($_POST);
+			} catch (Exception $e) {
+				//$error_msg = $e->getMessage();
+				$error_msg = "Email address not successully saved.";
+			}
+			$_SESSION['userobj'] = serialize($userobj);
+			if (!isset($error_msg)) {
+				$success_msg = "E-Mail address successfully saved.";
+			}
 		}
 	} else if($save == 'password') {
 		$passwordAlt = $_POST['passwordOld'];
@@ -72,14 +84,16 @@ if(isset($_GET['save'])) {
 			$error_msg = "Please enter correct password.";
 		} else {
 			$password_hash = password_hash($passwordNew, PASSWORD_DEFAULT);
-
-			$updateUserPasswordReturn = dbUpdateData::updateUserPassword($password_hash, $userobj->getId());
-	 	 	if (!$updateUserPasswordReturn) {
-	 		 	$error_msg = "Error on update User Password.";
-	 	 	} else {
-	 		 	$success_msg = $updateUserPasswordReturn;
-	 	 	}
-
+			try {
+				$userobj->setUserPassword($password_hash);
+			} catch (Exception $e) {
+				//$error_msg = $e->getMessage();
+				$error_msg = "Password reset not successfully.";
+			}
+			$_SESSION['userobj'] = serialize($userobj);
+			if (!isset($error_msg)) {
+				$success_msg = "Password successfully saved.";
+			}
 		}
 	} else if($save == 'dashboard_data') {
 		$updateUserReturn = $userobj->setDashboardUpdateInterval($_POST);
@@ -91,25 +105,41 @@ if(isset($_GET['save'])) {
 	} else if ($save == 'allBoards') {
 
 	} else if($save == 'users') {
-		$updateUserReturn = dbUpdateData::updateUserStatus($_POST);
- 	 	if (!$updateUserReturn) {
- 		 	$error_msg = "Error on update User Status.";
- 	 	} else {
- 		 	$success_msg = $updateUserReturn;
- 	 	}
+		try {
+			dbUpdateData::updateUserStatus($_POST);
+			$success_msg = "User Status updated.";
+		} catch (Exception $e) {
+			$error_msg = "Error on update User Status.";
+		}
 	} else if($save == 'addNewUserToBorad') {
-		$addNewBoardToUserReturn = dbUpdateData::addNewBoardToUser($_POST, $userobj->getId());
-		if ($addNewBoardToUserReturn === true) {
+		try {
+			$addNewBoardToUserReturn = dbUpdateData::addNewBoardToUser($_POST, $userobj->getId());
+			if ($addNewBoardToUserReturn) {
+				$success_msg = "Board added successfully.<br>Wait for the next Lora update.";
+			} else {
+				$error_msg = "Board not added.";
+			}
+		} catch (Exception $e) {
+			//$error_msg = "Error on add new board.";
+			$error_msg = $e->getMessage();
+		}
+
+		/*if ($addNewBoardToUserReturn === true) {
 			$success_msg = "Board added successfully.<br>Wait for the next Lora update.";
 		} else {
 			$error_msg = $addNewBoardToUserReturn;
+		}*/
+	}
+	else if($save == 'serverSetting') {
+		try {
+			$config->setDemoMode($_POST);
+			$varDemoMode = $config::$demoMode;
+			$success_msg = "DemoMode saved.";
+		} catch (Exception $e) {
+			//$error_msg = "Error on add new board.";
+			$error_msg = $e->getMessage();
 		}
 	}
-	//else if($save == 'serverSetting') {
-		// save config file.
-		//var_dump($_POST);
-		//echo("save config");
-	//}
 }
 
 // write passed data back to the database
@@ -121,7 +151,6 @@ if(isset($_GET['save'])) {
 	 } else {
 		 $success_msg = $updateBoardReturn;
 	 }
-
  }
 ?>
 
@@ -208,6 +237,41 @@ th.rotated-text > div > span {
 							<label for="inputLastname" class="col-sm-2 control-label">Last name</label>
 							<div class="col-sm-4">
 								<input class="form-control" id="inputLastname" name="lastname" type="text" value="<?php echo htmlentities($userobj->getLastname()); ?>" required>
+							</div>
+						</div>
+					</div>
+
+					<?php
+						function time_zonelist() {
+						$allzones = array();
+						$timestamp = time();
+						foreach(timezone_identifiers_list() as $key => $live_zone) {
+							date_default_timezone_set($live_zone);
+							$allzones[$key]['zone'] = $live_zone;
+							$allzones[$key]['diff_from_GMT'] = 'UTC/GMT ' . date('P', $timestamp);
+						}
+							return $allzones;
+						}
+					?>
+					<div class="form-group">
+						<div class="row">
+							<label for="inputLastname" class="col-sm-2 control-label">Timezone</label>
+							<?php $userTimezone = htmlentities($userobj->getTimezone()); ?>
+							<div class="col-sm-4">
+							<select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
+								<option value="0">Please, select your timezone</option>
+								<?php foreach(time_zonelist() as $t) { ?>
+									<?php if($t['zone'] == $userTimezone ) { ?>
+										<option value="<?php print $t['zone'] ?>" selected>
+											<?php print $t['zone'] . ' - ' . $t['diff_from_GMT'] ?>
+										</option>
+									<?php } else { ?>
+										<option value="<?php print $t['zone'] ?>">
+											<?php print $t['zone'] . ' - ' . $t['diff_from_GMT'] ?>
+										</option>
+									<?php } ?>
+								<?php } ?>
+							</select>
 							</div>
 						</div>
 					</div>
@@ -607,22 +671,22 @@ th.rotated-text > div > span {
 				<form action="?save=serverSetting" method="post" class="form-horizontal">
 					<div class="panel panel-default p-2">
 						<?php
-							if ($varDemoMode == true) {
+							if ($varDemoMode) {
 							?>
-								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1' disabled>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>   <label for="demoMode">Demo mode (tbd)</label>
 							<?php
 							} else {
 							?>
-								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1' disabled>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>   <label for="demoMode">Demo mode (tbd)</label>
 							<?php
 							}
 						?>
 					</div>
 					<div class="form-group">
 						<div class="col-sm-offset-2 col-sm-10">
-							<button type="submit" class="btn btn-primary" disabled>Save</button>
+							<button type="submit" class="btn btn-primary">Save</button>
 						</div>
 					</div>
 				</form>

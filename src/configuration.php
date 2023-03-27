@@ -6,6 +6,7 @@
  * @author: Guntmar Höche
  * @license: TBD
  */
+require_once(dirname(__FILE__) . "/frontend/func/writeToLogFunction.func.php");
 
 class configuration {
     static $db_host = null;
@@ -17,6 +18,8 @@ class configuration {
     static $subdir = null;
     static $demoMode = null;
     static $md5secretstring = null;
+    static $install_finished = null;
+    static $admin_email_adress = null;
 
     function __construct() {
         $domain = $_SERVER['HTTP_HOST'];
@@ -38,15 +41,32 @@ class configuration {
         self::$db_name = $jsonData['db_name'];
         self::$db_user = $jsonData['db_user'];
         self::$db_password = $jsonData['db_password'];
-
         self::$api_key = $jsonData['api_key'];
         self::$baseurl = $jsonData['baseurl'];
         self::$subdir = $jsonData['subdir'];
-
         self::$demoMode = $jsonData['demoMode'];
-
         self::$md5secretstring = $jsonData['md5secretstring'];
+        self::$install_finished = $jsonData['install_finished'];
+        self::$admin_email_adress = $jsonData['admin_email_adress'];
+    }
+
+    function setDemoMode($post) {
+        try {
+            self::$demoMode = $post['demoMode'];
+            $path = __DIR__ . '/config.json';
+            $jsonString = file_get_contents($path);
+            $jsonData = json_decode($jsonString, true);
+            $jsonData['demoMode'] = $post['demoMode'];
+            $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
+            // Write in the file
+            $fp = fopen($path, 'w');
+            fwrite($fp, $jsonString);
+            fclose($fp);
+        } catch (PDOException $err) {
+            //Handling query/error
+            writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
+            //$this->error = $err->getCode();
+        }
     }
 }
-
 ?>
