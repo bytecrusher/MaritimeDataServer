@@ -131,8 +131,14 @@ if(isset($_GET['save'])) {
 		}*/
 	}
 	else if($save == 'serverSetting') {
-		$config->setDemoMode($_POST);
-		$varDemoMode = $config::$demoMode;
+		try {
+			$config->setDemoMode($_POST);
+			$varDemoMode = $config::$demoMode;
+			$success_msg = "DemoMode saved.";
+		} catch (Exception $e) {
+			//$error_msg = "Error on add new board.";
+			$error_msg = $e->getMessage();
+		}
 	}
 }
 
@@ -665,15 +671,15 @@ th.rotated-text > div > span {
 				<form action="?save=serverSetting" method="post" class="form-horizontal">
 					<div class="panel panel-default p-2">
 						<?php
-							if ($varDemoMode == true) {
+							if ($varDemoMode) {
 							?>
-								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='false'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='true'>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>   <label for="demoMode">Demo mode (tbd)</label>
 							<?php
 							} else {
 							?>
-								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='false'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='true'>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>   <label for="demoMode">Demo mode (tbd)</label>
 							<?php
 							}
 						?>

@@ -6,6 +6,7 @@
  * @author: Guntmar Höche
  * @license: TBD
  */
+require_once(dirname(__FILE__) . "/frontend/func/writeToLogFunction.func.php");
 
 class configuration {
     static $db_host = null;
@@ -50,16 +51,22 @@ class configuration {
     }
 
     function setDemoMode($post) {
-        self::$demoMode = $post['demoMode'];
-        $path = __DIR__ . '/config.json';
-        $jsonString = file_get_contents($path);
-        $jsonData = json_decode($jsonString, true);
-        $jsonData['demoMode'] = $post['demoMode'];
-        $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
-        // Write in the file
-        $fp = fopen($path, 'w');
-        fwrite($fp, $jsonString);
-        fclose($fp);
+        try {
+            self::$demoMode = $post['demoMode'];
+            $path = __DIR__ . '/config.json';
+            $jsonString = file_get_contents($path);
+            $jsonData = json_decode($jsonString, true);
+            $jsonData['demoMode'] = $post['demoMode'];
+            $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
+            // Write in the file
+            $fp = fopen($path, 'w');
+            fwrite($fp, $jsonString);
+            fclose($fp);
+        } catch (PDOException $err) {
+            //Handling query/error
+            writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
+            //$this->error = $err->getCode();
+        }
     }
 }
 ?>
