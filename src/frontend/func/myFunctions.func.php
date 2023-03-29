@@ -407,7 +407,7 @@ class myFunctions {
 
       $defaultValues['nameValue2'] = "Hum";
       $defaultValues['Value2GaugeMinValue'] = 0;
-      $defaultValues['Value2GaugeMaxValue'] = 20;
+      $defaultValues['Value2GaugeMaxValue'] = 100;
       $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
       $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
       $defaultValues['Value2GaugeRedAreaHighValue'] = 0;

@@ -302,14 +302,11 @@ class user implements JsonSerializable
   }
 
   public function setDashboardUpdateInterval($post) {
-    $this->userobj->dashboardUpdateInterval = $post['updateInterval'];
-    $updateUserReturn = dbUpdateData::updateUserDashboardupdateInterval($post, $this->userobj->id);
- 	 	if (!$updateUserReturn) {
- 			$error_msg = "Please enter first and last name.";
-      return "Please enter first and last name.";
- 	 	} else {
- 		 	$success_msg = $updateUserReturn;
-      return $updateUserReturn;
- 	 	}
+    try {
+      $updateUserReturn = dbUpdateData::updateUserDashboardupdateInterval($post, $this->userobj->id);
+      $this->userobj->dashboardUpdateInterval = $post['updateInterval'];
+    } catch (Exception $e) {
+      throw new Exception('Dashboard Update Interval not saved.');
+    }
   }
 }

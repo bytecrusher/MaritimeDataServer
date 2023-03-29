@@ -141,9 +141,14 @@ class dbUpdateData {
   public static function updateUserDashboardupdateInterval($post, $userid) {
     $pdo = dbConfig::getInstance();
     $dashboardUpdateInterval = ($post['updateInterval']);
-    $statement = $pdo->prepare("UPDATE users SET dashboardUpdateInterval = :dashboardUpdateInterval WHERE id = :userid");
-    $result = $statement->execute(array('dashboardUpdateInterval' => $dashboardUpdateInterval, 'userid' => $userid ));
-    return "Dashboard Update Interval successfully saved.";
+    try {
+      $statement = $pdo->prepare("UPDATE users SET dashboardUpdateInterval = :dashboardUpdateInterval WHERE id = :userid");
+      return $statement->execute(array('dashboardUpdateInterval' => $dashboardUpdateInterval, 'userid' => $userid ));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User Dashboard Update Interval in DB not successfully updated for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User Dashboard Update Interval in DB not successfully updated.');
+    }
   }
 
   /**
@@ -153,8 +158,14 @@ class dbUpdateData {
   */
   public static function insertUser($email, $password_hash, $vorname, $nachname) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname) VALUES (:email, :password, :firstname, :lastname)");
-    return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname));
+    try {
+      $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname) VALUES (:email, :password, :firstname, :lastname)");
+      return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User not inserted successfully for email: " . $email, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User not inserted successfully.');
+    }
   }
 
   /**
@@ -164,8 +175,14 @@ class dbUpdateData {
   */
   public static function insertAdmin($email, $password_hash, $vorname, $nachname) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname, usergroup_admin, active ) VALUES (:email, :password, :firstname, :lastname, :usergroup_admin, :active )");
-    return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname, 'usergroup_admin' => '1', 'active' => '1'));
+    try {
+      $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname, usergroup_admin, active ) VALUES (:email, :password, :firstname, :lastname, :usergroup_admin, :active )");
+      return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname, 'usergroup_admin' => '1', 'active' => '1'));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Admin not inserted successfully for email: " . $email, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Admin not inserted successfully.');
+    }
   }
 
   /**
@@ -177,9 +194,14 @@ class dbUpdateData {
     $pdo = dbConfig::getInstance();
     $identifier = myFunctions::random_string();
     $securitytoken = myFunctions::random_string();
-
-    $insert = $pdo->prepare("INSERT INTO securitytokens (user_id, identifier, securitytoken) VALUES (:user_id, :identifier, :securitytoken)");
-    $insert->execute(array('user_id' => $userid, 'identifier' => $identifier, 'securitytoken' => sha1($securitytoken)));
+    try {
+      $insert = $pdo->prepare("INSERT INTO securitytokens (user_id, identifier, securitytoken) VALUES (:user_id, :identifier, :securitytoken)");
+      $insert->execute(array('user_id' => $userid, 'identifier' => $identifier, 'securitytoken' => sha1($securitytoken)));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: insertSecuritytoken not inserted successfully for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('insertSecuritytoken not inserted successfully.');
+    }
     setcookie("identifier",$identifier,time()+(3600*24*365)); //Valid for 1 year
     setcookie("securitytoken",$securitytoken,time()+(3600*24*365)); //Valid for 1 year
   }
@@ -209,13 +231,14 @@ class dbUpdateData {
     if ($post['ownerid'] == "") {
       $post['ownerid'] = null;
     }
-   	  $statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, owner_userid=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
-   	  $statement2->execute(array($post['name'], $post['location'], $post['ownerid'], $post['description'], $post['ttn_app_id'], $post['ttn_dev_id'], $performupdate, $alarmOnUnavailable, $onDashboard, $post['updateDataTimer'], $post['id']));
-   	  if ($statement2) {
-        return "Board changes saved.";
-   	  } else {
-        return false;
-   	  }
+    try {
+      $statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, owner_userid=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
+      $statement2->execute(array($post['name'], $post['location'], $post['ownerid'], $post['description'], $post['ttn_app_id'], $post['ttn_dev_id'], $performupdate, $alarmOnUnavailable, $onDashboard, $post['updateDataTimer'], $post['id']));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Board not updated successfully for userid: " . $post['ownerid'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Board not updated successfully.');
+    }
   }
 
   /**
@@ -228,9 +251,7 @@ class dbUpdateData {
     if (!isset($post['onDashboard'])) {
       $post['onDashboard'] = 0;
     }
-
     $Value1onDashboardvar = $Value2onDashboardvar = $Value3onDashboardvar = $Value4onDashboardvar = 0;
-
     if (isset($post['Value1onDashboard'])) {
       $Value1onDashboardvar = $post['Value1onDashboard'];
     }

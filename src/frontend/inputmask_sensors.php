@@ -27,15 +27,42 @@
 
   if (isset($_POST['submit_inputmask_sensors'])) {
     if (!isset($_POST['modal'])) {
-      $updateBoardReturn = dbUpdateData::updateSensor($_POST);
-      $newURL = "inputmask_boards.php?id=" . $_POST['macaddress'];
-      header('Location: '.$newURL);
-      die();      
+      try {
+        $updateBoardReturn = dbUpdateData::updateSensor($_POST);
+        $success_msg = "Board changes saved.";
+        $newURL = "inputmask_boards.php?id=" . $_POST['macaddress'];
+        header('Location: '.$newURL);
+        // ToDo: send error or success mgs to header.
+      } catch (Exception $e) {
+				$error_msg = "Error while saving changes to sensors.";
+        ?>
+        <div class="alert alert-danger">
+          <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
+        <?php echo $error_msg; ?>
+      </div>
+      <?php
+      die();
+			}
+      
+      //die();
     } else {
-      //var_dump($_POST);
-      $updateBoardReturn = dbUpdateData::updateSensorModal($_POST);
-      header("Location: internal.php");
-      die();      
+      try {
+        $updateBoardReturn = dbUpdateData::updateSensorModal($_POST);
+        $success_msg = "Board changes saved.";
+        header("Location: internal.php");
+        // ToDo: send error or success mgs to header.
+      } catch (Exception $e) {
+				$error_msg = "Error while saving changes to sensors.";
+        ?>
+        <div class="alert alert-danger">
+			<a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
+			<?php echo $error_msg; ?>
+		</div>
+    <?php
+    die();
+			}
+      
+      //die();
     }
 
     if (!isset($_GET['modal'])) {
@@ -50,11 +77,11 @@
       echo "Channel: " . $_GET['channel'];
     }
 
-    if (!$updateBoardReturn) {
+    /*if (!$updateBoardReturn) {
       $error_msg = "Error while saving changes to sensors.";
     } else {
       $success_msg = $updateBoardReturn;
-    }
+    }*/
   }
 ?>
 </div>

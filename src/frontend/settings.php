@@ -87,7 +87,6 @@ if(isset($_GET['save'])) {
 			try {
 				$userobj->setUserPassword($password_hash);
 			} catch (Exception $e) {
-				//$error_msg = $e->getMessage();
 				$error_msg = "Password reset not successfully.";
 			}
 			$_SESSION['userobj'] = serialize($userobj);
@@ -96,12 +95,15 @@ if(isset($_GET['save'])) {
 			}
 		}
 	} else if($save == 'dashboard_data') {
-		$updateUserReturn = $userobj->setDashboardUpdateInterval($_POST);
- 	 	if (!$updateUserReturn) {
- 			$error_msg = "Please enter first and last name.";
- 	 	} else {
- 		 	$success_msg = $updateUserReturn;
- 	 	}
+		try {
+			$updateUserReturn = $userobj->setDashboardUpdateInterval($_POST);
+		} catch (Exception $e) {
+			$error_msg = "Dashboard Update Interval not saved.";
+		}
+		$_SESSION['userobj'] = serialize($userobj);
+		if (!isset($error_msg)) {
+			$success_msg = "Dashboard Update Interval successfully saved.";
+		}
 	} else if ($save == 'allBoards') {
 
 	} else if($save == 'users') {

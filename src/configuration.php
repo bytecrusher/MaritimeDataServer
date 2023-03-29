@@ -63,9 +63,7 @@ class configuration {
             fwrite($fp, $jsonString);
             fclose($fp);
         } catch (PDOException $err) {
-            //Handling query/error
             writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
-            //$this->error = $err->getCode();
         }
     }
 }

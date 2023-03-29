@@ -60,7 +60,13 @@ if (isset($_POST["action"])) {
             $rtn = array("error"=>"true", "error_text"=>"Email already exist in db.");
           } else {
             $password_hash = password_hash($var_password, PASSWORD_DEFAULT);
-            $result = dbUpdateData::insertAdmin($var_email, $password_hash, $var_firstname, $var_lastname);
+            try {
+              $result = dbUpdateData::insertAdmin($var_email, $password_hash, $var_firstname, $var_lastname);
+            } catch (Exception $e) {
+              $error_msg = "Admin not inserted successfully.";
+              $rtn = array("error"=>"true", "error_text"=>"An error occurs while saving.");
+            }
+            
             if($result) {
               //echo "<div class='alert alert-success' role='alert'>Registration successful.<br>
               //The Admin now needs to activate your account.</div>
@@ -71,7 +77,6 @@ if (isset($_POST["action"])) {
               //echo 'An error occurs while saving.<br>';
               $rtn = array("error"=>"true", "error_text"=>"An error occurs while saving.");
             }
-
             
           }
         }
