@@ -242,6 +242,44 @@ class dbUpdateData {
   }
 
   /**
+  * Update Board.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
+  public static function removeBoardOwner($post) {
+    $pdo = dbConfig::getInstance();
+   	 if (!isset($post['performupdate'])) {
+   		$performupdate = 0;
+   	 } else {
+   		$performupdate = 1;
+   	 }
+   	 if (!isset($post['alarmOnUnavailable'])) {
+   		$alarmOnUnavailable = 0;
+   	 } else {
+   		$alarmOnUnavailable = 1;
+   	 }
+    if (!isset($post['onDashboard'])) {
+      $onDashboard = 0;
+    } else {
+      $onDashboard = 1;
+    }
+    if ($post['ownerid'] == "") {
+      $post['ownerid'] = null;
+    }
+    try {
+      //$statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, owner_userid=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
+
+      $statement2 = $pdo->prepare("UPDATE boardconfig SET owner_userid=NULL WHERE id=?");
+
+      return $statement2->execute(array($post['id']));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Board not updated successfully for userid: " . $post['ownerid'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Board not updated successfully.');
+    }
+  }
+
+  /**
   * Update Sensor.
   * @return bool — TRUE on success or FALSE on failure.
   * @throws Exception — Return Exception message on error.

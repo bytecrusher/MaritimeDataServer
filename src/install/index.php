@@ -65,7 +65,6 @@
     $var_dbpassword = $config::$db_password;
     $var_apikey = $config::$api_key;
     $var_md5secretstring = $config::$md5secretstring;
-    $var_baseurl = $config::$baseurl;
   ?>
 
   <div class="container mt-3">
@@ -159,9 +158,7 @@
             </form>
           </div>
         </div>
-        
       </div>
-
 
       <div class="tab-pane container fade" id="Config">
         <div class="form-group row">
@@ -213,13 +210,6 @@
           </div>
         </div>
 
-        <div class="form-group row">
-          <label for="baseurl" class="col-sm-4 col-form-label">The server internal address (i.E. the docker container ip.)</label>
-          <div class="col-sm-4">
-            <input type="text" class="form-control" id="baseurl" name="baseurl" value="<?php echo $var_baseurl;?>" required>
-          </div>
-        </div>
-
         <div class="form-group row justify-content-evenly">
           <a class="col-sm-3 me-3 btn btn-primary btnNext">Next</a>
         </div>
@@ -251,7 +241,6 @@
   const currentTab = $('.nav-tabs .active').attr('id');
   if (currentTab === "database") {
     returnval = write_db();
-    //returnval = check_db();
     if (returnval) {
       const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
       const nextTab = new bootstrap.Tab(nextTabLinkEl);
@@ -347,13 +336,12 @@ function api_post_createadmin() {
     password2 = $("#password2").val();
     apikey = $("#apikey").val();
     md5secretstring = $("#md5secretstring").val();
-    baseurl = $("#baseurl").val();
     // TODO add user to DB
     $.ajax({
       method: "POST",
       async: false,
       url: "api_createadmin.php",
-      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring, baseurl: baseurl }
+      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring }
     })
     .done(function( response ) {
       text = response;
@@ -373,7 +361,6 @@ function api_post_createadmin() {
   }
   return myreturnval;
 }
-
 
 function createAlert(summary, details, severity, dismissible, autoDismiss, appendToId) {
   var iconMap = {

@@ -6,7 +6,6 @@
  * @license: TBD
  */
 
-//require_once(dirname(__FILE__).'/../../configuration.php');
 require_once(__DIR__ . '/../../configuration.php');
 require_once(dirname(__FILE__) . "/writeToLogFunction.func.php");
 

@@ -22,7 +22,8 @@ class configuration {
     static $admin_email_adress = null;
 
     function __construct() {
-        $domain = $_SERVER['HTTP_HOST'];
+        self::$subdir = str_replace($_SERVER['PWD'],"",__DIR__);
+        $domain = $_SERVER['SERVER_ADDR'];
         if (isset($_SERVER['HTTPS']) &&
             ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
             isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
@@ -42,8 +43,6 @@ class configuration {
         self::$db_user = $jsonData['db_user'];
         self::$db_password = $jsonData['db_password'];
         self::$api_key = $jsonData['api_key'];
-        self::$baseurl = $jsonData['baseurl'];
-        self::$subdir = $jsonData['subdir'];
         self::$demoMode = $jsonData['demoMode'];
         self::$md5secretstring = $jsonData['md5secretstring'];
         self::$install_finished = $jsonData['install_finished'];

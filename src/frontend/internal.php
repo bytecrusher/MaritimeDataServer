@@ -404,7 +404,6 @@ setInterval(function() {
           $('.multi-collapse').toggle();
           $('.gauge-container').css("cursor", "auto");
           $(".card-block").sortable("disable");
-          //console.log("locked");
 
           wrapper = $('.card-block');
           onceSensorOrderFail = false;
@@ -425,7 +424,6 @@ setInterval(function() {
               })
                 .done(function( response ) {
                   if (!onceSensorOrderDone) {
-                    //console.log("done");
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");
@@ -441,7 +439,6 @@ setInterval(function() {
                 })
                 .fail(function( response ) {
                   if (!onceSensorOrderFail) {
-                    //console.log("fail");
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");

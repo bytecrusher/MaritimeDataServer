@@ -16,14 +16,11 @@
       include("common/header.inc.php");
   } else {
   ?>
-
     <div class='modal-header'>
     <h5 class='modal-title' id='exampleModalLabel'>Edit Sensor</h5>
     <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
   <?php
   }
-
-  //$user = user::check_user();
 
   if (isset($_POST['submit_inputmask_sensors'])) {
     if (!isset($_POST['modal'])) {
@@ -174,7 +171,6 @@
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
               <div class="form-control">
                 <?php
-                  //if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
                     if(isset($SensorConfig['Value1onDashboard']) && $SensorConfig['Value1onDashboard'] == '1') {
                       ?>
                       <input class='col col-sm-4 form-check-input' type='checkbox' id='Value1onDashboard' name='Value1onDashboard' value='1' checked='1'>
@@ -200,7 +196,6 @@
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
               <div class="form-control">
                 <?php
-                  //if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
                     if(isset($SensorConfig['Value2onDashboard']) && $SensorConfig['Value2onDashboard'] == '1') {
                       ?>
                       <input class='col col-sm-4 form-check-input' type='checkbox' id='Value2onDashboard' name='Value2onDashboard' value='1' checked='1'>
@@ -226,7 +221,6 @@
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
               <div class="form-control">
                 <?php
-                  //if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
                     if(isset($SensorConfig['Value3onDashboard']) && $SensorConfig['Value3onDashboard'] == '1') {
                       ?>
                       <input class='col col-sm-4 form-check-input' type='checkbox' id='Value3onDashboard' name='Value3onDashboard' value='1' checked='1'>
@@ -252,15 +246,14 @@
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
               <div class="form-control">
                 <?php
-                  //if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
-                    if(isset($SensorConfig['Value4onDashboard']) && $SensorConfig['Value4onDashboard'] == '1') {
-                      ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1' checked='1'>
-                    <?php
+                  if(isset($SensorConfig['Value4onDashboard']) && $SensorConfig['Value4onDashboard'] == '1') {
+                  ?>
+                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1' checked='1'>
+                  <?php
                   } else {
-                    ?>
+                  ?>
                       <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1'>
-                    <?php
+                  <?php
                   }
                 ?>
               </div>
@@ -333,15 +326,14 @@
             <span class='input-group-text' style='width: 50%'>show on Dashboard</span>
             <div class="form-control">
               <?php
-                //if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
-                  if(isset($SensorConfig['Value' . $_GET['channel'] . 'onDashboard']) && $SensorConfig['Value' . $_GET['channel'] . 'onDashboard'] == '1') {
-                    ?>
-                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1' checked='1'>
-                  <?php
+                if(isset($SensorConfig['Value' . $_GET['channel'] . 'onDashboard']) && $SensorConfig['Value' . $_GET['channel'] . 'onDashboard'] == '1') {
+                ?>
+                  <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1' checked='1'>
+                <?php
                 } else {
-                  ?>
-                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1'>
-                  <?php
+                ?>
+                  <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1'>
+                <?php
                 }
               ?>
             </div>

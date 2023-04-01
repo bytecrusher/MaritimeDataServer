@@ -147,6 +147,14 @@ if(isset($_GET['save'])) {
 	} catch (Exception $e) {
 		$error_msg = "Error while saving board changes.";
 	}
+ } elseif (isset($_POST['submit_inputmask_boards_remove']))	// remove-Button of the input mask was pressed
+ {
+	try {
+		$updateBoardReturn = dbUpdateData::removeBoardOwner($_POST);
+		$success_msg = "Board successfully removed.";
+	} catch (Exception $e) {
+		$error_msg = "Error while removing board.";
+	}
  }
 ?>
 
@@ -218,7 +226,6 @@ th.rotated-text > div > span {
 		<!-- Personal data -->
 		<div class="tab-content">
 			<div role="tabpanel" class="tab-pane active" id="data">
-				<br>
 				<form action="?save=personal_data" method="post" class="form-horizontal">
 					<div class="form-group">
 						<div class="row">
@@ -285,8 +292,7 @@ th.rotated-text > div > span {
 
 			<!-- change of email address -->
 			<div role="tabpanel" class="tab-pane" id="email">
-				<br>
-				<p>To change your email adress, please enter your current password and the new email adress.</p>
+				<p style="margin-bottom: 0px; margin-top: 1rem;">To change your email adress, please enter your current password and the new email adress.</p>
 				<form action="?save=email" method="post" class="form-horizontal">
 					<div class="form-group">
 						<div class="row">
@@ -327,8 +333,7 @@ th.rotated-text > div > span {
 
 			<!-- change password -->
 			<div role="tabpanel" class="tab-pane" id="password">
-				<br>
-				<p>To change your password, please enter your current password and the new password.</p>
+				<p style="margin-bottom: 0px; margin-top: 1rem;">To change your password, please enter your current password and the new password.</p>
 				<form action="?save=password" method="post" class="form-horizontal">
 					<div class="form-group">
 						<div class="row">
@@ -476,7 +481,6 @@ th.rotated-text > div > span {
 			<!-- TODO add function, for adding a board (with MAC or TTN ID to the user) -->
 			<div role="tabpanel" class="tab-pane" id="confDashboard">
 				<div class="panel panel-default">
-					<br>
 					<form action="?save=dashboard_data" method="post" class="form-horizontal">
 						<div class="form-group">
 							<div class="row">
@@ -592,12 +596,9 @@ th.rotated-text > div > span {
 			</div>
 
 
-
-
 			<!-- Modification of other users -->
 			<div role="tabpanel" class="tab-pane" id="users">
-				<br>
-				<p>To change and activate Users.</p>
+				<p style="margin-bottom: 0px; margin-top: 1rem;">To change and activate Users.</p>
 				<form action="?save=users" method="post" class="form-horizontal">
 					<div class="panel panel-default">
 					<table class="table">
@@ -666,6 +667,7 @@ th.rotated-text > div > span {
 			<!-- Modification of Server Setting -->
 			<div role="tabpanel" class="tab-pane" id="serverSetting">
 				<form action="?save=serverSetting" method="post" class="form-horizontal">
+					<div class="panel panel-default p-2">Some server settings.</div>
 					<div class="panel panel-default p-2">
 						<?php
 							if ($varDemoMode) {
@@ -691,21 +693,30 @@ th.rotated-text > div > span {
 
 			<!-- Modification of Log -->
 			<div role="tabpanel" class="tab-pane" id="log">
-				<div class="form-group">The log file of the current month will be displayed.</div>
-					<div class="panel panel-default p-2">
-						<?php
-							$format = "log"; // Possibilities: csv and txt
-							date_default_timezone_set('Europe/Berlin');
-							$datum_zeit = date("d.m.Y H:i:s");
-							$monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
-							$monat = date("n");
-							$jahr = date("Y");
-							$dateiname = dirname(__FILE__) . "/../logs/log_" . $monate[$monat] . "_$jahr.$format";
+				<div class="panel panel-default p-2">The log file of the current month will be displayed.</div>
+				<div class="panel panel-default p-2">
+					<?php
+						$format = "log"; // Possibilities: csv and txt
+						date_default_timezone_set('Europe/Berlin');
+						$datum_zeit = date("d.m.Y H:i:s");
+						$monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
+						$monat = date("n");
+						$jahr = date("Y");
+						$dateiname = dirname(__FILE__) . "/../logs/log_" . $monate[$monat] . "_$jahr.$format";
+						$data = false;
 
+						if (file_exists($dateiname)) {
 							$data = file_get_contents($dateiname);
-							echo '<textarea style="height: 400px; width: 100%;" readonly>' . htmlspecialchars($data). '</textarea>';
-						?>
-					</div>
+							if ($data != false) {
+								echo '<textarea style="height: 400px; width: 100%;" readonly>' . htmlspecialchars($data). '</textarea>';
+							} else {
+								echo '<textarea style="height: 400px; width: 100%;" readonly>Error while opening Log file.</textarea>';
+							}
+						} else {
+							echo '<textarea style="height: 400px; width: 100%;" readonly>Log file not found.</textarea>';
+						}
+					?>
+				</div>
 			</div>
 		</div>
 	</div>

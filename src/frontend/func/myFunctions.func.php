@@ -126,9 +126,7 @@ class myFunctions {
   */
   public static function addBoardByTTN($ttn_app_id, $ttn_dev_id) {
     $pdo = dbConfig::getInstance();
-    //$statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name, ttn_app_id, ttn_dev_id) VALUES (?, ?, ?, ?, ?)");
     $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, name, ttn_app_id, ttn_dev_id, onDashboard, updateDataTimer  ) VALUES (?, ?, ?, ?, ?, ?)");
-    //$statement->execute(array("fakeMacAddress" . $ttn_dev_id, 1, "- new imported -", $ttn_app_id, $ttn_dev_id));     // ToDo: change default Owner User to one of the admins
     $statement->execute(array("fakeMacAddress" . $ttn_dev_id, "- new imported -", $ttn_app_id, $ttn_dev_id, 1, 15));
     $neue_id = $pdo->lastInsertId();
     return $neue_id;

@@ -13,7 +13,6 @@
     die();
   }
 
-  //$user = user::check_user();
   $pdo = dbConfig::getInstance();
   $varId = $_GET['id'];
   $singleRowBoardId = myFunctions::getBoardById($varId);
@@ -141,7 +140,6 @@
         <?php
 				if(($currentUser->getUserGroupAdmin() == 1) ) {
           $AllUsers =(myFunctions::getAllUsers());
-          //var_dump($row['owner_userid']);
 				?>
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">owner User</span>
@@ -169,9 +167,14 @@
           }
         ?>
         <div class='row'>
-          <div class="col-sm-offset-2 col-sm-10">
+          <div class="col-sm-offset-2 col-sm-8">
+            <input type='submit' class="btn btn-danger" id='submit_inputmask_boards_remove' name='submit_inputmask_boards_remove' value='Remove Board' onclick="clicked(event)">
+          </div>
+          <div class="col-sm-offset-2 col-sm-4">
+          <div class="float-end">
             <a class='mr-2 btn btn-primary' href='settings.php#confBoards' role='button'>Back</a>
             <input type='submit' class="btn btn-primary" id='submit_inputmask_boards' name='submit_inputmask_boards' value='Save'>
+          </div>
           </div>
         </div>
       </form>
@@ -216,6 +219,14 @@
     </div>
   </div>
 </div>
+<script>
+  function clicked(e)
+  {
+    if(!confirm('Are you sure to remove your board?')) {
+      e.preventDefault();
+    }
+  }
+</script>
 <?php
   include("common/footer.inc.php");
 ?>
