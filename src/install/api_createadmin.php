@@ -90,6 +90,7 @@ if (isset($_POST["action"])) {
       //$jsonData['db_name'] = $var_dbname;
       //$jsonData['db_user'] = $var_dbusername;
       //$jsonData['db_password'] = $var_dbpassword;
+      $jsonData['install_finished'] = true;
       $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
       // Write in the file
       $fp = fopen($path, 'w');

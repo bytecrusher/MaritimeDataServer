@@ -37,30 +37,40 @@ class user implements JsonSerializable
   }
 
   /**
-   * Checks that the user is logged in.
+   * @deprecated Checks that the user is logged in.
    * @return Returns the row of the logged in user
+   *
+   * @return void $user or False if user is not logged in
+   * @throws Exception Return Exception message on error.
+   * 
    */
   public static function check_user()
   {
+    trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
     if (!isset($_SESSION['userid']) && isset($_COOKIE['identifier']) && isset($_COOKIE['securitytoken'])) {
       $identifier = $_COOKIE['identifier'];
       $securitytoken = $_COOKIE['securitytoken'];
-      $statement = self::$pdo->prepare("SELECT * FROM securitytokens WHERE identifier = ?");
-      $result = $statement->execute(array($identifier));
-      $securitytoken_row = $statement->fetch();
+      try {
+        $statement = self::$pdo->prepare("SELECT * FROM securitytokens WHERE identifier = ?");
+        $result = $statement->execute(array($identifier));
+        $securitytoken_row = $statement->fetch();
 
-      if (sha1($securitytoken) !== $securitytoken_row['securitytoken']) {
-        //The security token was probably stolen
-        //If necessary, display a warning or similar here
-      } else { //Token was correct
-        //Set new token
-        $neuer_securitytoken = myFunctions::random_string();
-        $insert = self::$pdo->prepare("UPDATE securitytokens SET securitytoken = :securitytoken WHERE identifier = :identifier");
-        $insert->execute(array('securitytoken' => sha1($neuer_securitytoken), 'identifier' => $identifier));
-        setcookie("identifier", $identifier, time() + (3600 * 24 * 365));
-        setcookie("securitytoken", $neuer_securitytoken, time() + (3600 * 24 * 365));
-        //Log in the user
-        $_SESSION['userid'] = $securitytoken_row['user_id'];
+        if (sha1($securitytoken) !== $securitytoken_row['securitytoken']) {
+          //The security token was probably stolen
+          //If necessary, display a warning or similar here
+        } else { //Token was correct
+          //Set new token
+          $neuer_securitytoken = myFunctions::random_string();
+          $insert = self::$pdo->prepare("UPDATE securitytokens SET securitytoken = :securitytoken WHERE identifier = :identifier");
+          $insert->execute(array('securitytoken' => sha1($neuer_securitytoken), 'identifier' => $identifier));
+          setcookie("identifier", $identifier, time() + (3600 * 24 * 365));
+          setcookie("securitytoken", $neuer_securitytoken, time() + (3600 * 24 * 365));
+          //Log in the user
+          $_SESSION['userid'] = $securitytoken_row['user_id'];
+        }
+      } catch (PDOException $err) {
+        writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
+        //$this->error = $err->getCode();
       }
     }
     if (!isset($_SESSION['userid'])) {
@@ -98,7 +108,7 @@ class user implements JsonSerializable
   }
 
   /**
-  * Returns the user of the emailadress.
+  * @deprecated Returns the user of the emailadress.
   * @param email adress of the user.
   * @return user as object
   */
@@ -246,7 +256,6 @@ class user implements JsonSerializable
 
   /*
   * Get all of my Board by user id.
-  * rename from getMyBoards to getMyBoardsId
   */
   public function getMyBoardsId() {
     if (!$this->userobj->id == null) {

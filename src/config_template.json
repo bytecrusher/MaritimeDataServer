@@ -8,6 +8,6 @@
     "subdir": "/maritimedataserver",
     "demoMode": "false",
     "md5secretstring": "your_secret_string",
-    "install_finished": true,
+    "install_finished": "false",
     "admin_email_adress": "info@yourdomain.de"
 }

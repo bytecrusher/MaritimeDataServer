@@ -13,11 +13,10 @@
     die();
   }
 
-  $user = user::check_user();
+  //$user = user::check_user();
   $pdo = dbConfig::getInstance();
   $varId = $_GET['id'];
   $singleRowBoardId = myFunctions::getBoardById($varId);
-
 ?>
 
 <!--div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;"-->

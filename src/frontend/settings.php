@@ -125,12 +125,6 @@ if(isset($_GET['save'])) {
 			//$error_msg = "Error on add new board.";
 			$error_msg = $e->getMessage();
 		}
-
-		/*if ($addNewBoardToUserReturn === true) {
-			$success_msg = "Board added successfully.<br>Wait for the next Lora update.";
-		} else {
-			$error_msg = $addNewBoardToUserReturn;
-		}*/
 	}
 	else if($save == 'serverSetting') {
 		try {
@@ -147,12 +141,12 @@ if(isset($_GET['save'])) {
 // write passed data back to the database
  if (isset($_POST['submit_inputmask_boards']))	// Submit-Button of the input mask was pressed
  {
-	 $updateBoardReturn = dbUpdateData::updateBoard($_POST);
-	 if (!$updateBoardReturn) {
-		 $error_msg = "Error while saving board changes.";
-	 } else {
-		 $success_msg = $updateBoardReturn;
-	 }
+	try {
+		$updateBoardReturn = dbUpdateData::updateBoard($_POST);
+		$success_msg = "Board successfully updated.";
+	} catch (Exception $e) {
+		$error_msg = "Error while saving board changes.";
+	}
  }
 ?>
 
@@ -215,6 +209,7 @@ th.rotated-text > div > span {
 					<li class='nav-item' role='presentation'><a class='nav-link' href='#allBoards' role='tab' data-bs-toggle='tab'>All Boards</a></li>
 					<li class='nav-item' role='presentation'><a class='nav-link' href='#users' role='tab' data-bs-toggle='tab'>Users</a></li>
 					<li class='nav-item' role='presentation'><a class='nav-link' href='#serverSetting' role='tab' data-bs-toggle='tab'>Server Setting</a></li>
+					<li class='nav-item' role='presentation'><a class='nav-link' href='#log' role='tab' data-bs-toggle='tab'>Log</a></li>
 				<?php
 				}
 			?>
@@ -692,6 +687,25 @@ th.rotated-text > div > span {
 						</div>
 					</div>
 				</form>
+			</div>
+
+			<!-- Modification of Log -->
+			<div role="tabpanel" class="tab-pane" id="log">
+				<div class="form-group">The log file of the current month will be displayed.</div>
+					<div class="panel panel-default p-2">
+						<?php
+							$format = "log"; // Possibilities: csv and txt
+							date_default_timezone_set('Europe/Berlin');
+							$datum_zeit = date("d.m.Y H:i:s");
+							$monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
+							$monat = date("n");
+							$jahr = date("Y");
+							$dateiname = dirname(__FILE__) . "/../logs/log_" . $monate[$monat] . "_$jahr.$format";
+
+							$data = file_get_contents($dateiname);
+							echo '<textarea style="height: 400px; width: 100%;" readonly>' . htmlspecialchars($data). '</textarea>';
+						?>
+					</div>
 			</div>
 		</div>
 	</div>

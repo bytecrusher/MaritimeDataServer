@@ -23,12 +23,12 @@
   <?php
   }
 
-  $user = user::check_user();
+  //$user = user::check_user();
 
   if (isset($_POST['submit_inputmask_sensors'])) {
     if (!isset($_POST['modal'])) {
       try {
-        $updateBoardReturn = dbUpdateData::updateSensor($_POST);
+        $updateSensorReturn = dbUpdateData::updateSensor($_POST);
         $success_msg = "Board changes saved.";
         $newURL = "inputmask_boards.php?id=" . $_POST['macaddress'];
         header('Location: '.$newURL);
@@ -43,11 +43,9 @@
       <?php
       die();
 			}
-      
-      //die();
     } else {
       try {
-        $updateBoardReturn = dbUpdateData::updateSensorModal($_POST);
+        $updateSensorReturn = dbUpdateData::updateSensorModal($_POST);
         $success_msg = "Board changes saved.";
         header("Location: internal.php");
         // ToDo: send error or success mgs to header.
@@ -61,8 +59,6 @@
     <?php
     die();
 			}
-      
-      //die();
     }
 
     if (!isset($_GET['modal'])) {
@@ -76,12 +72,6 @@
     } elseif (isset($_GET['channel'])) {
       echo "Channel: " . $_GET['channel'];
     }
-
-    /*if (!$updateBoardReturn) {
-      $error_msg = "Error while saving changes to sensors.";
-    } else {
-      $success_msg = $updateBoardReturn;
-    }*/
   }
 ?>
 </div>

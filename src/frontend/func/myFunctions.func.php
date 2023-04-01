@@ -6,29 +6,32 @@
  * @license: TBD
  */
 
-  include_once("password.func.php");
-  include_once("dbConfig.func.php");
-  require_once(dirname(__FILE__).'/../../configuration.php');
-  require_once("writeToLogFunction.func.php");
-  //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
+include_once("password.func.php");
+include_once("dbConfig.func.php");
+require_once(dirname(__FILE__).'/../../configuration.php');
+require_once("writeToLogFunction.func.php");
+//writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
-  class sensorTyp
-  {
-    public $id;
-    public $name;
-  }
+class sensorTyp
+{
+  public $id;
+  public $name;
+}
 
 class myFunctions {
 
 	/**
-	 * Returns true when the user is checked in, else false
+	 * Check if user is checked in.
+   * @return void true when user is checked in, false when not.
 	 */
 	public static function is_checked_in() {
 		return isset($_SESSION['userid']);
 	}
 
 	/**
-	 * Returns a random string
+	 * Returns a random string.
+	 *
+	 * @return void
 	 */
 	public static function random_string() {
 		if(function_exists('openssl_random_pseudo_bytes')) {
@@ -44,36 +47,50 @@ class myFunctions {
 	}
 
 	/**
-	 * Returns the URL to the site without the script name
+	 * Returns the URL to the site without the script name.
 	 */
 	public static function getSiteURL() {
 		$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 		return $protocol.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']).'/';
 	}
 
-  /*
+  /**
   * Get all of my Board by user id.
+  * @return void Boards from Userid.
+  * @throws Exception — Return Exception message on error.
   */
   public static function getMyBoards($userid) {
     if (!$userid == null) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $userid . " ORDER BY id");
-      $result = $myboards->execute();
-      $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
-      return $myboards2;
+      try {
+        $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $userid . " ORDER BY id");
+        $result = $myboards->execute();
+        return $myboards->fetchAll(PDO::FETCH_ASSOC);
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: Unable to getmyboards for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('Unable to getmyboards.');
+      }
     }
   }
 
-  /*
+  /**
   * Get Board by Board id. Only one dataset will return.
+  * @return void Board of given id.
+  * @throws Exception — Return Exception message on error.
   */
   public static function getBoardById($boardId) {
     if (!$boardId == null) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE id = " . $boardId . " ORDER BY id LIMIT 1");
-      $result = $myboards->execute();
-      $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
-      return $myboards2;
+      try {
+        $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE id = " . $boardId . " ORDER BY id LIMIT 1");
+        $result = $myboards->execute();
+        return $myboards->fetch(PDO::FETCH_ASSOC);
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: Unable to getBoardById for boardId: " . $boardId, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('Unable to getBoardById.');
+      }
     }
   }
 
@@ -266,6 +283,7 @@ class myFunctions {
       $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value4onDashboard'] = 0;
 
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
@@ -290,6 +308,7 @@ class myFunctions {
       $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value2onDashboard'] = 1;
 
       $defaultValues['nameValue3'] = null;
       $defaultValues['Value3GaugeMinValue'] = 0;
@@ -299,6 +318,7 @@ class myFunctions {
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value3onDashboard'] = 0;
 
       $defaultValues['nameValue4'] = null;
       $defaultValues['Value4GaugeMinValue'] = 0;
@@ -308,6 +328,7 @@ class myFunctions {
       $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value4onDashboard'] = 0;
 
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
@@ -322,6 +343,7 @@ class myFunctions {
       $defaultValues['Value1GaugeRedAreaHighValue'] = 16;
       $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value1onDashboard'] = 1;
 
       $defaultValues['nameValue2'] = "level1";
       $defaultValues['Value2GaugeMinValue'] = 0;
@@ -331,6 +353,7 @@ class myFunctions {
       $defaultValues['Value2GaugeRedAreaHighValue'] = 16;
       $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value2onDashboard'] = 1;
 
       $defaultValues['nameValue3'] = "level2";
       $defaultValues['Value3GaugeMinValue'] = 0;
@@ -340,6 +363,7 @@ class myFunctions {
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value3onDashboard'] = 0;
 
       $defaultValues['nameValue4'] = null;
       $defaultValues['Value4GaugeMinValue'] = 0;
@@ -349,6 +373,7 @@ class myFunctions {
       $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value4onDashboard'] = 0;
 
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 3;
@@ -363,6 +388,7 @@ class myFunctions {
       $defaultValues['Value1GaugeRedAreaHighValue'] = 70;
       $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value1onDashboard'] = 1;
 
       $defaultValues['nameValue2'] = "Ch2";
       $defaultValues['Value2GaugeMinValue'] = 0;
@@ -372,6 +398,7 @@ class myFunctions {
       $defaultValues['Value2GaugeRedAreaHighValue'] = 70;
       $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value2onDashboard'] = 1;
 
       $defaultValues['nameValue3'] = "Ch3";
       $defaultValues['Value3GaugeMinValue'] = 0;
@@ -381,6 +408,7 @@ class myFunctions {
       $defaultValues['Value3GaugeRedAreaHighValue'] = 70;
       $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value3onDashboard'] = 0;
 
       $defaultValues['nameValue4'] = "Ch4";
       $defaultValues['Value4GaugeMinValue'] = 0;
@@ -390,6 +418,7 @@ class myFunctions {
       $defaultValues['Value4GaugeRedAreaHighValue'] = 70;
       $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value4onDashboard'] = 0;
 
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
@@ -404,6 +433,7 @@ class myFunctions {
       $defaultValues['Value1GaugeRedAreaHighValue'] = 26;
       $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value1onDashboard'] = 1;
 
       $defaultValues['nameValue2'] = "Hum";
       $defaultValues['Value2GaugeMinValue'] = 0;
@@ -413,6 +443,7 @@ class myFunctions {
       $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value2onDashboard'] = 1;
 
       $defaultValues['nameValue3'] = "Pres";
       $defaultValues['Value3GaugeMinValue'] = 0;
@@ -422,6 +453,7 @@ class myFunctions {
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value3onDashboard'] = 1;
 
       $defaultValues['nameValue4'] = "Dew.";
       $defaultValues['Value4GaugeMinValue'] = 0;
@@ -431,6 +463,7 @@ class myFunctions {
       $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value4onDashboard'] = 1;
 
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
@@ -445,6 +478,7 @@ class myFunctions {
       $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value1onDashboard'] = 1;
 
       $defaultValues['nameValue2'] = "A";
       $defaultValues['Value2GaugeMinValue'] = 0;
@@ -454,6 +488,7 @@ class myFunctions {
       $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value2onDashboard'] = 1;
 
       $defaultValues['nameValue3'] = null;
       $defaultValues['Value3GaugeMinValue'] = 0;
@@ -463,6 +498,7 @@ class myFunctions {
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value3onDashboard'] = 0;
 
       $defaultValues['nameValue4'] = null;
       $defaultValues['Value4GaugeMinValue'] = 0;
@@ -472,6 +508,7 @@ class myFunctions {
       $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value4onDashboard'] = 0;
 
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
@@ -486,6 +523,7 @@ class myFunctions {
       $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value1GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value1onDashboard'] = 1;
 
       $defaultValues['nameValue2'] = "Ch2";
       $defaultValues['Value2GaugeMinValue'] = 0;
@@ -495,6 +533,7 @@ class myFunctions {
       $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value2GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value2onDashboard'] = 0;
 
       $defaultValues['nameValue3'] = null;
       $defaultValues['Value3GaugeMinValue'] = 0;
@@ -504,6 +543,7 @@ class myFunctions {
       $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value3GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value3onDashboard'] = 0;
 
       $defaultValues['nameValue4'] = null;
       $defaultValues['Value4GaugeMinValue'] = 0;
@@ -513,6 +553,7 @@ class myFunctions {
       $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
       $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
+      $defaultValues['Value4onDashboard'] = 0;
 
       $defaultValues['ttn_payload_id'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
@@ -591,6 +632,13 @@ class myFunctions {
     return $result;
   }
 
+  /*
+  * Get all unique Board Ids from Sensorconfig from db.
+  */
+  public static function getAllUniqueBoardIdsFromSensorconfig() {
+    //SELECT DISTINCT `boardid` FROM `sensorconfig` WHERE 1; 
+  }
+
 	/**
 	 * Outputs an error message and stops the further exectution of the script.
 	 */
@@ -598,6 +646,7 @@ class myFunctions {
 		include("common/header.inc.php");
 		include("common/error.inc.php");
 		include("common/footer.inc.php");
+    writeToLogFunction::write_to_log("Error: function error was triggered.", $_SERVER["SCRIPT_FILENAME"]);
 		exit();
 	}
 }
