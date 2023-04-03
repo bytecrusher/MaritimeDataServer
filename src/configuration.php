@@ -22,7 +22,7 @@ class configuration {
     static $admin_email_adress = null;
 
     function __construct() {
-        self::$subdir = str_replace($_SERVER['PWD'],"",__DIR__);
+        self::$subdir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
         $domain = $_SERVER['SERVER_ADDR'];
         if (isset($_SERVER['HTTPS']) &&
             ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||

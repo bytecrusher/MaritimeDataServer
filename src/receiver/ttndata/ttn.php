@@ -206,8 +206,6 @@ if(sizeof($ttn_post) > 0) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_HEADER, 0);
 
-    writeToLogFunction::write_to_log("debug: " . $url, $_SERVER["SCRIPT_FILENAME"]);
-
     $boardInfos = array(
         "api_key" => $config::$api_key,
         // TODO: Anhand der Dev_IDE die Mac ermitteln
@@ -307,7 +305,7 @@ if(sizeof($ttn_post) > 0) {
     }
     else
     {
-        writeToLogFunction::write_to_log('Operation completed without any errors', $_SERVER["SCRIPT_FILENAME"]);
+        //writeToLogFunction::write_to_log('Operation completed without any errors', $_SERVER["SCRIPT_FILENAME"]);
     }
 
     // Close cURL resource
