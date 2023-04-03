@@ -198,7 +198,7 @@ if(sizeof($ttn_post) > 0) {
       writeToLogFunction::write_to_log('Sensor Digital does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
     }
-    $url = $config::$baseurl . '/receiver/receivejson.php';
+    $url = $config::$baseurl . 'receiver/receivejson.php';
     // create a new cURL resource
     $ch = curl_init();
 
