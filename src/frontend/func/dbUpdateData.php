@@ -231,6 +231,9 @@ class dbUpdateData {
     if ($post['ownerid'] == "") {
       $post['ownerid'] = null;
     }
+    if ($post['updateDataTimer'] == "") {
+      $post['updateDataTimer'] = 15;
+    }
     try {
       $statement2 = $pdo->prepare("UPDATE boardconfig SET name=?, location=?, owner_userid=?, description=?, ttn_app_id=?, ttn_dev_id=?, performupdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
       return $statement2->execute(array($post['name'], $post['location'], $post['ownerid'], $post['description'], $post['ttn_app_id'], $post['ttn_dev_id'], $performupdate, $alarmOnUnavailable, $onDashboard, $post['updateDataTimer'], $post['id']));

@@ -360,12 +360,12 @@ setInterval(function() {
 
       <!-- Show temperatures as table, only for admin -->
       <div class="container tab-pane fade pl-0 pr-0" id="debug">
-        <div id="chart-container">
-          All Sensor Values as a table
-          <?php
+        <div class="p-2" id="chart-container">
+          All Sensor Values as a table from ttnDataLoraBoatMonitor:
+        </div>
+        <?php
             include("./../receiver/ttndata/index.php");
           ?>
-        </div>
       </div>
 
       <!-- Show map -->

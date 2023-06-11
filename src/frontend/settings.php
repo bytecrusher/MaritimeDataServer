@@ -14,6 +14,7 @@ require_once("func/writeToLogFunction.func.php");
 
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;
+$varShowQrCode = $config::$ShowQrCode;
 
 //Check that the user is logged in
 if (isset($_SESSION['userobj'])) {
@@ -679,6 +680,21 @@ th.rotated-text > div > span {
 							?>
 								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
 								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>   <label for="demoMode">Demo mode (tbd)</label>
+							<?php
+							}
+						?>
+					</div>
+					<div class="panel panel-default p-2">
+						<?php
+							if ($varShowQrCode) {
+							?>
+								<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='0'>
+								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='1'>   <label for="ShowQrCode">Show QR Code</label>
+							<?php
+							} else {
+							?>
+								<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='0'>
+								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='1'>   <label for="ShowQrCode">Show QR Code</label>
 							<?php
 							}
 						?>

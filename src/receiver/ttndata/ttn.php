@@ -278,6 +278,17 @@ if(sizeof($ttn_post) > 0) {
           "time" => $timeNow,
           "transmissionpath" => "2"
         );
+      } elseif ($eachsensor['boardid'] == "Digital") {
+        $sensor1 = array(
+          "typid" => $eachsensor['typid'],
+          "sensorId" => $eachsensor['id'],
+          "value1" => $sensor_alarm1,
+          //"value2" => $gtw_rssi,
+          //"value3" => $gtw_snr,
+          "date" => $dateNow,
+          "time" => $timeNow,
+          "transmissionpath" => "2"
+        );
       }
       array_push($sensors, $sensor1);
     }

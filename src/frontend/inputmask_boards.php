@@ -79,12 +79,12 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN app id</span>
-          <input type="text" class="form-control" id='ttn_app_id' name='ttn_app_id' value='<?=$row['ttn_app_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
+          <input type="text" class="form-control" id='ttn_app_id' name='ttn_app_id' value='<?=$row['ttn_app_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN dev id</span>
-          <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$row['ttn_dev_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
+          <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$row['ttn_dev_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <!--div class="input-group mb-3">
@@ -102,7 +102,7 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Firmware version</span>
-          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$row['firmwareversion'];?>'>
+          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$row['firmwareversion'];?>' style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
@@ -134,7 +134,7 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">Update interval (Minutes)</span>
-          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$row['updateDataTimer'];?>' required>
+          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$row['updateDataTimer'];?>' style="background:#e9ecef" readonly>
         </div>
 
         <?php

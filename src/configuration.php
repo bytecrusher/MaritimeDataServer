@@ -20,6 +20,7 @@ class configuration {
     static $md5secretstring = null;
     static $install_finished = null;
     static $admin_email_adress = null;
+    static $ShowQrCode = null;
 
     function __construct() {
         self::$subdir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
@@ -48,15 +49,18 @@ class configuration {
         self::$md5secretstring = $jsonData['md5secretstring'];
         self::$install_finished = $jsonData['install_finished'];
         self::$admin_email_adress = $jsonData['admin_email_adress'];
+        self::$ShowQrCode = $jsonData['ShowQrCode'];
     }
 
     function setDemoMode($post) {
         try {
             self::$demoMode = $post['demoMode'];
+            self::$ShowQrCode = $post['ShowQrCode'];
             $path = __DIR__ . '/config.json';
             $jsonString = file_get_contents($path);
             $jsonData = json_decode($jsonString, true);
             $jsonData['demoMode'] = $post['demoMode'];
+            $jsonData['ShowQrCode'] = $post['ShowQrCode'];
             $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
             // Write in the file
             $fp = fopen($path, 'w');

@@ -4,6 +4,8 @@
  *  Created 2020-NOV-27
  *  Update 2021-OCT-11
  *  https://wwww.aeq-web.com
+ * 
+ *  Modified by: Guntmar Höche 2023-04-05
  */
 
 require_once(dirname(__FILE__, 3).'/configuration.php');
@@ -14,85 +16,57 @@ $DATABASE_USERNAME = $config::$db_user;
 $DATABASE_PASSWORD = $config::$db_password;
 $DATABASE_NAME = $config::$db_name;
 
-//$db_connect = mysqli_connect($DATABASE_HOST, $DATABASE_USERNAME, $DATABASE_PASSWORD, $DATABASE_NAME) or die(mysql_error());
 $db_connect = mysqli_connect($DATABASE_HOST, $DATABASE_USERNAME, $DATABASE_PASSWORD, $DATABASE_NAME);
 $sel_data = mysqli_query($db_connect, "SELECT * FROM `ttnDataLoraBoatMonitor` ORDER BY `id` DESC");
-
-$mysql_row = mysqli_fetch_array($sel_data);
 $row_cnt = mysqli_num_rows($sel_data);
 
 if ($row_cnt > 0) {
-    $dev_name = $mysql_row["dev_id"];
-    $datetime = $mysql_row["datetime"];
-    $gateway = $mysql_row["gtw_id"];
-    $rssi = $mysql_row["gtw_rssi"];
-    $temperature = $mysql_row["dev_value_1"];
-    $temperature2 = $mysql_row["dev_value_2"];
-    $humidity = $mysql_row["dev_value_3"];
-    $battery = $mysql_row["dev_value_4"];
-
     if ($row_cnt > 0) {
         $show_table = "";
     } else {
         $show_table = "display: none;";
         echo 'Error: No values in database!';
     }
-    ?>
-        <table id="ttnvalues" class="table" style="<?php echo $show_table; ?>">
-            <tr>
-                <th><?php echo $dev_name; ?></th>
-                <th>Value</th>
-            </tr>
-            <tr>
-                <td>Time</td>
-                <td><?php echo $datetime; ?></td>
-            </tr>
-            <tr>
-                <td>Temperature</td>
-                <td><?php echo $temperature; ?> &deg;C</td>
-            </tr>
-            <tr>
-                <td>Temperature2</td>
-                <td><?php echo $temperature2; ?> &deg;C</td>
-            </tr>
-            <tr>
-                <td>Humidity</td>
-                <td><?php echo $humidity; ?> %</td>
-            </tr>
-            <tr>
-                <td>Battery</td>
-                <td><?php echo $battery; ?> V</td>
-            </tr>
-            <tr>
-                <td>Gateway</td>
-                <td><?php echo $gateway; ?></td>
-            </tr>
-            <tr>
-                <td>RSSI</td>
-                <td><?php echo $rssi; ?></td>
-            </tr>
-        </table>
 
-        <table id="ttnvalues2" class="table" style="<?php echo $show_table; ?>">
-        <thead><tr><td>Time</td><td>Dev ID</td><td>Temp</td></tr></thead>
-        <tbody>
-    <?php
-    if ($row_cnt >= 10) {
-        $i_max = 10;
+    echo "<table id='ttnvalues' class='table' style=" . $show_table . ">" .
+            "<thead><tr>" .
+                "<th>Time</th>" .
+                "<th>TTN Dev ID</th>" .
+                "<th>Value1 (Temp &deg;C)</th>" .
+                "<th>Value2 (Temp2 &deg;C)</th>" .
+                "<th>Value3 (Humidity %)</th>" .
+                "<th>Value4 (Battery V)</th>" .
+                "<th>Gateway</th>" .
+                "<th>RSSI</th>" .
+            "</tr></thead>" .
+        "<tbody>";
+    if ($row_cnt >= 30) {
+        $i_max = 30;
     } else {
         $i_max = $row_cnt - 1;
     }
         for ($i=0; $i <= $i_max; $i++) {
             $mysql_row = mysqli_fetch_array($sel_data);
             if ($mysql_row != null) {
+                $dev_name;
                 $dev_name = $mysql_row["dev_id"];
                 $datetime = $mysql_row["datetime"];
-                $temperature = $mysql_row["dev_value_1"];
+                $value1 = $mysql_row["dev_value_1"];
+                $value2 = $mysql_row["dev_value_2"];
+                $value3 = $mysql_row["dev_value_3"];
+                $value4 = $mysql_row["dev_value_4"];
+                $gateway = $mysql_row["gtw_id"];
+                $rssi = $mysql_row["gtw_rssi"];
         
                 echo "<tr>";
                 echo "<td>" . $datetime . "</td>";
                 echo "<td>" . $dev_name . "</td>";
-                echo "<td>" . $temperature . "</td>";
+                echo "<td>" . $value1 . "</td>";
+                echo "<td>" . $value2 . "</td>";
+                echo "<td>" . $value3 . "</td>";
+                echo "<td>" . $value4 . "</td>";
+                echo "<td>" . $gateway . "</td>";
+                echo "<td>" . $rssi . "</td>";
                 echo "</tr>";
             }
         }
