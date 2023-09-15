@@ -137,6 +137,11 @@
           <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$row['updateDataTimer'];?>' style="background:#e9ecef" readonly>
         </div>
 
+        <div class="input-group mb-3">
+          <span class="input-group-text" style="width: 30%; white-space: break-spaces">Mark as offline after (Minutes)</span>
+          <input type="text" class="form-control" id='offlineDataTimer' name='offlineDataTimer' value='<?=$row['offlineDataTimer'];?>' title="After this timer, the board displays as offline.">
+        </div>
+
         <?php
 				if(($currentUser->getUserGroupAdmin() == 1) ) {
           $AllUsers =(myFunctions::getAllUsers());

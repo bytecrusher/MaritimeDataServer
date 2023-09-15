@@ -39,6 +39,7 @@ CREATE TABLE `boardconfig` (
   `alarmOnUnavailable` tinyint DEFAULT '0',
   `updateDataTimer` int DEFAULT NULL,
   `boardtypeid` int DEFAULT NULL,
+  `offlineDataTimer` int DEFAULT '15',
   `ttn_app_id` text NOT NULL,
   `ttn_dev_id` text CHARACTER SET utf16 COLLATE utf16_general_ci NOT NULL,
   `onDashboard` tinyint NOT NULL DEFAULT '0'

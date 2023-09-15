@@ -94,6 +94,26 @@ class myFunctions {
     }
   }
 
+  /**
+  * Get Board by Board id. Only one dataset will return.
+  * @return void Board of given Sensor id.
+  * @throws Exception — Return Exception message on error.
+  */
+  public static function getBoardBySensorId($sensorId) {
+    if (!$sensorId == null) {
+      $pdo = dbConfig::getInstance();
+      try {
+        $myboards = $pdo->prepare("SELECT boardid FROM sensorconfig WHERE id = " . $sensorId . " ORDER BY id LIMIT 1");
+        $result = $myboards->execute();
+        return $myboards->fetch(PDO::FETCH_ASSOC);
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: Unable to getBoardById for sensorId: " . $sensorId, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('Unable to getBoardById.');
+      }
+    }
+  }
+
   /*
   * Get Board by Board macaddress. Only one dataset will return.
   */

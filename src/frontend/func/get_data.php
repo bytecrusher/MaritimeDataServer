@@ -6,16 +6,17 @@
  * @license: TBD
  */
 
-require_once("func/dbConfig.func.php");
+require_once(dirname(__FILE__)."/dbConfig.func.php");
+require_once(dirname(__FILE__)."/board.class.php");
 
 /**
  * Checks that the Board is Online WHERE sensor = 'DS18B20'.
- * @return Returns the row of the Board is Online
+ * @return bool the row of the Board is Online
  */
 function checkDeviceIsOnline($boardid) {
     $pdo = dbConfig::getInstance();
-    $maxtimeout=strtotime("-15 Minutes"."+1 hour");
-    $statement = $pdo->prepare("UPDATE boardconfig SET isOnline = ? WHERE id = ?");
+    $boardobj = new board($boardid);
+    $maxtimeout = strtotime("-" . $boardobj->getOfflineDataTimer() . " Minutes"); // For 
 
     // get all sensors
     $query2 = sprintf("SELECT * FROM sensorconfig WHERE boardid = " . $boardid . " ORDER BY id");
@@ -28,7 +29,6 @@ function checkDeviceIsOnline($boardid) {
             $data[] = $row;
             $dbtimestamp=strtotime($data[0]['reading_time']);
             if ($dbtimestamp >= $maxtimeout) {
-                $statement->execute(array('1', $boardid));
                 return true;
             }
         }

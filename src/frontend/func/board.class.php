@@ -116,6 +116,15 @@ class board //implements JsonSerializable
     }
 
     /**
+     * Returns the board offlineDataTimer
+     * 
+     * @return offlineDataTimer of the board
+     */
+    public function getOfflineDataTimer() {
+        return $this->boardobj->offlineDataTimer;
+    }
+
+    /**
      * Returns the board boardtypeid
      * 
      * @return boardtypeid of the board

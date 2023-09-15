@@ -295,15 +295,7 @@ setInterval(function() {
       <!-- Show Board overview -->
       <div class="container tab-pane fade pl-0 pr-0" id="boards">
         <div class="row mt-2">
-          <?php
-          // Show Online / Offline
-          // TODO if demo mode == true, then no limit.
-          if ($varDemoMode) {
-            $maxtimeout = strtotime("-10 Years");
-          } else {
-            $maxtimeout = strtotime("-15 Minutes"); // For show Online / Offline
-          }
-          
+          <?php          
           foreach($boardObjsArray as $singleBoardObj) {
             $transmissionpath = 0;
             $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
@@ -320,6 +312,15 @@ setInterval(function() {
             foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
               $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
               $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
+
+              // Show Online / Offline
+              // TODO if demo mode == true, then no limit.
+              if ($varDemoMode) {
+                $maxtimeout = strtotime("-10 Years");
+              } else {
+                $maxtimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+              }
+
               if ($dbtimestamp > $maxtimeout) {
                 $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
                 $boardOnlineStatus = true;
