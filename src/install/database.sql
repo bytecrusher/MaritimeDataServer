@@ -179,7 +179,7 @@ INSERT INTO `sensortypes` (`id`, `name`, `siUnitVal1`, `siUnitVal2`, `siUnitVal3
 (4, 'Digital', '1/0', '1/0', '1/0', '1/0', '', 'input from Digital', 4, 0),
 (5, 'BME280', '&deg;C', '%', 'mbar', '&deg;C', '', 'Temp, Hum, Pres, Dew', 4, 0),
 (6, 'GPS', 'Lat', 'Lon', 'Alt', 'Spd', '', 'Coorinates', 4, 0),
-(7, 'Lora', 'Gtw', 'db', '', '', '', 'TTN data', 3, 0);
+(7, 'Lora', 'Gtw', 'db', 'snr', 'counter', '', 'TTN data', 4, 0);
 
 -- --------------------------------------------------------
 

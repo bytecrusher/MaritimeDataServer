@@ -186,7 +186,7 @@ setInterval(function() {
                     <div class='col-lg-12 col-xl-12' style='padding-right: 0px; padding-left: 0px;'>
                       <fieldset>
                         <legend><?php echo $singleRowmyboard->getName() ?></legend>
-                          <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>'>
+                          <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>' style="display: flex; justify-content: center; flex-wrap: wrap;">
                 <?php
                 $boardOnlineStatus = false;
                 $mysensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
@@ -306,21 +306,25 @@ setInterval(function() {
           
           foreach($boardObjsArray as $singleBoardObj) {
             $transmissionpath = 0;
-            //$mysensors2 = myFunctions::getAllSensorsOfBoardold($singleBoardObj->getId());
             $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
             $boardOnlineStatus = false;
+            $mysensorIdlist = null;
             foreach($mysensors2 as $singleRowmysensors) {
-              //var_dump($singleRowmysensors);
-              $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);
-              foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-                $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
-                $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
-                if ($dbtimestamp > $maxtimeout) {
-                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
-                  $boardOnlineStatus = true;
-                } else {
-                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
-                }
+              if ($mysensorIdlist == null) {
+                $mysensorIdlist = $singleRowmysensors['id'];
+              } else {
+                $mysensorIdlist = $mysensorIdlist . ", " . $singleRowmysensors['id'];
+              }
+            }
+            $mysensors = myFunctions::getLatestSensorData($mysensorIdlist);
+            foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
+              $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
+              $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
+              if ($dbtimestamp > $maxtimeout) {
+                $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
+                $boardOnlineStatus = true;
+              } else {
+                $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
               }
             }
           ?>
@@ -334,11 +338,11 @@ setInterval(function() {
                   ?>
                     <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
                   <?php
-                  } elseif ($transmissionpath == 2) {
+                } elseif ($transmissionpath == 2) {
                   ?>
                     <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
                   <?php
-                  } else {
+                } else {
                     ?>
                     <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
                   <?php

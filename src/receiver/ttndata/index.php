@@ -32,12 +32,17 @@ if ($row_cnt > 0) {
             "<thead><tr>" .
                 "<th>Time</th>" .
                 "<th>TTN Dev ID</th>" .
+                "<th>Counter</th>" .
                 "<th>Value1 (Temp &deg;C)</th>" .
                 "<th>Value2 (Temp2 &deg;C)</th>" .
                 "<th>Value3 (Humidity %)</th>" .
                 "<th>Value4 (Battery V)</th>" .
                 "<th>Gateway</th>" .
                 "<th>RSSI</th>" .
+                "<th>SNR</th>" .
+                "<th>Channel Index</th>" .
+                "<th>Bandwidth</th>" .
+                "<th>Spreading Factor</th>" .
             "</tr></thead>" .
         "<tbody>";
     if ($row_cnt >= 30) {
@@ -49,24 +54,34 @@ if ($row_cnt > 0) {
             $mysql_row = mysqli_fetch_array($sel_data);
             if ($mysql_row != null) {
                 $dev_name;
-                $dev_name = $mysql_row["dev_id"];
                 $datetime = $mysql_row["datetime"];
+                $dev_name = $mysql_row["dev_id"];
+                $dev_counter = $mysql_row["dev_counter"];
                 $value1 = $mysql_row["dev_value_1"];
                 $value2 = $mysql_row["dev_value_2"];
                 $value3 = $mysql_row["dev_value_3"];
                 $value4 = $mysql_row["dev_value_4"];
                 $gateway = $mysql_row["gtw_id"];
                 $rssi = $mysql_row["gtw_rssi"];
+                $snr = $mysql_row["gtw_snr"];
+                $channel_index = $mysql_row["gtw_channel_index"];
+                $bandwidth = $mysql_row["gtw_bandwidth"];
+                $spreading_factor = $mysql_row["gtw_sf"];
         
                 echo "<tr>";
                 echo "<td>" . $datetime . "</td>";
                 echo "<td>" . $dev_name . "</td>";
+                echo "<td>" . $dev_counter . "</td>";
                 echo "<td>" . $value1 . "</td>";
                 echo "<td>" . $value2 . "</td>";
                 echo "<td>" . $value3 . "</td>";
                 echo "<td>" . $value4 . "</td>";
                 echo "<td>" . $gateway . "</td>";
                 echo "<td>" . $rssi . "</td>";
+                echo "<td>" . $snr . "</td>";
+                echo "<td>" . $channel_index . "</td>";
+                echo "<td>" . $bandwidth . "</td>";
+                echo "<td>" . $spreading_factor . "</td>";
                 echo "</tr>";
             }
         }

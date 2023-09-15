@@ -122,6 +122,9 @@ if(sizeof($ttn_post) > 0) {
     $gtw_id = $data->uplink_message->rx_metadata[0]->gateway_ids->gateway_id;
     $gtw_rssi = $data->uplink_message->rx_metadata[0]->rssi;
     $gtw_snr = $data->uplink_message->rx_metadata[0]->snr;
+    $gtw_channel_index = $data->uplink_message->rx_metadata[0]->channel_index;
+    $bandwidth = $data->uplink_message->settings->data_rate->lora->bandwidth;
+    $sf = $data->uplink_message->settings->data_rate->lora->spreading_factor;
 
     $ttn_app_id = $data->end_device_ids->application_ids->application_id;
     $ttn_dev_id = $data->end_device_ids->dev_eui;
@@ -141,9 +144,9 @@ if(sizeof($ttn_post) > 0) {
     if ($sensor_raw_payload != null) {
       try {
         mysqli_query($db_connect, "INSERT INTO `ttnDataLoraBoatMonitor` (`id`, `datetime`, `app_id`, `dev_id`, `ttn_timestamp`, `gtw_id`, `gtw_rssi`,"
-        . " `gtw_snr`, `dev_raw_payload`, `dev_value_1`, `dev_value_2`, `dev_value_3`, `dev_value_4`) "
-        . "VALUES (NULL, '$server_datetime', '$ttn_app_id', '$ttn_dev_id', '$ttn_time', '$gtw_id', '$gtw_rssi', '$gtw_snr',"
-        . " '$sensor_raw_payload', '$sensor_temperature', '$sensor_temperature_2', '$sensor_humidity', '$sensor_battery');
+        . " `gtw_snr`, `gtw_channel_index`, `gtw_bandwidth`, `gtw_sf`, `dev_raw_payload`, `dev_counter`, `dev_value_1`, `dev_value_2`, `dev_value_3`, `dev_value_4`) "
+        . "VALUES (NULL, '$server_datetime', '$ttn_app_id', '$ttn_dev_id', '$ttn_time', '$gtw_id', '$gtw_rssi', '$gtw_snr', '$gtw_channel_index', '$bandwidth', '$sf',"
+        . " '$sensor_raw_payload', '$frame_counter', '$sensor_temperature', '$sensor_temperature_2', '$sensor_humidity', '$sensor_battery');
         ");
       } catch (PDOException $e) {
         writeToLogFunction::write_to_log("Error: ttnDataLoraBoatMonitor not saved.", $_SERVER["SCRIPT_FILENAME"]);
@@ -274,6 +277,7 @@ if(sizeof($ttn_post) > 0) {
           "value1" => $gtw_id,
           "value2" => $gtw_rssi,
           "value3" => $gtw_snr,
+          "value4" => $frame_counter,
           "date" => $dateNow,
           "time" => $timeNow,
           "transmissionpath" => "2"

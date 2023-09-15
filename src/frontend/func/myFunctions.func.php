@@ -193,8 +193,8 @@ class myFunctions {
   public static function getLatestSensorData($sensorId, $maxNrOfValue = 1) {
     if ($maxNrOfValue >= 1) {
       $pdo = dbConfig::getInstance();
-      $mysensors = $pdo->prepare("SELECT * FROM sensordata WHERE sensorid = ? ORDER BY id DESC LIMIT $maxNrOfValue");
-      $mysensors->execute(array($sensorId));
+      $mysensors = $pdo->prepare("SELECT * FROM sensordata WHERE sensorid IN ($sensorId) ORDER BY id DESC LIMIT $maxNrOfValue");
+      $mysensors->execute();
       $SensorData = $mysensors->fetchAll(PDO::FETCH_ASSOC);
       return $SensorData;
     }
