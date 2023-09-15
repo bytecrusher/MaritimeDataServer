@@ -185,7 +185,20 @@ setInterval(function() {
                   <div class='row d-flex justify-content-center'>
                     <div class='col-lg-12 col-xl-12' style='padding-right: 0px; padding-left: 0px;'>
                       <fieldset>
-                        <legend><?php echo $singleRowmyboard->getName() ?></legend>
+                        <legend>
+                        <?php $deviceOnline = checkDeviceIsOnline($singleRowmyboard->getId());
+                        if ($deviceOnline) {
+                          ?>
+                            <span class='badge bg-success mr-2'>Online</span>
+                          <?php
+                          } else {
+                          ?>
+                            <span class='badge bg-danger mr-2'>Offline</span>
+                          <?php
+                          }
+                        ?>
+                        <?php echo $singleRowmyboard->getName() ?>
+                        </legend>
                           <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>' style="display: flex; justify-content: center; flex-wrap: wrap;">
                 <?php
                 $boardOnlineStatus = false;

@@ -16,7 +16,12 @@ require_once(dirname(__FILE__)."/board.class.php");
 function checkDeviceIsOnline($boardid) {
     $pdo = dbConfig::getInstance();
     $boardobj = new board($boardid);
-    $maxtimeout = strtotime("-" . $boardobj->getOfflineDataTimer() . " Minutes"); // For 
+    $maxtimeout = strtotime("-" . $boardobj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+    $config = new configuration();
+
+    if ($config::$demoMode) {
+        return true;
+    }
 
     // get all sensors
     $query2 = sprintf("SELECT * FROM sensorconfig WHERE boardid = " . $boardid . " ORDER BY id");
