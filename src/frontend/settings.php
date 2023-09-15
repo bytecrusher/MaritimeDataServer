@@ -673,13 +673,16 @@ th.rotated-text > div > span {
 						<?php
 							if ($varDemoMode) {
 							?>
+								<label>
 								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>   Demo mode (tbd)</label>
 							<?php
 							} else {
 							?>
+								<label>
 								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>   <label for="demoMode">Demo mode (tbd)</label>
+								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>
+								Demo mode (tbd)</label>
 							<?php
 							}
 						?>
@@ -688,13 +691,16 @@ th.rotated-text > div > span {
 						<?php
 							if ($varShowQrCode) {
 							?>
+								<label>
 								<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='0'>
-								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='1'>   <label for="ShowQrCode">Show QR Code</label>
+								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='1'>   Show QR Code</label>
 							<?php
 							} else {
 							?>
+								<label>
 								<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='0'>
-								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='1'>   <label for="ShowQrCode">Show QR Code</label>
+								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='1'>
+								Show QR Code</label>
 							<?php
 							}
 						?>

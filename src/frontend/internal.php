@@ -220,8 +220,9 @@ setInterval(function() {
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
                         if (($mysensors != null) && ($singleRowmysensors['Value' . $i . 'onDashboard'])) {
                           //var_dump($singleRowmysensors['Value' . $i . 'onDashboard'])
+                          //var_dump($deviceOnline);
                             ?>
-                            <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light'>
+                            <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
                               <div id='div_click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
                                 <i id='click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
                                 </i>

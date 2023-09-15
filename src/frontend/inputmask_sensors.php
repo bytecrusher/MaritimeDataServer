@@ -35,10 +35,10 @@
         ?>
         <div class="alert alert-danger">
           <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
-        <?php echo $error_msg; ?>
-      </div>
-      <?php
-      die();
+          <?php echo $error_msg; ?>
+        </div>
+        <?php
+        die();
 			}
     } else {
       try {
@@ -50,11 +50,11 @@
 				$error_msg = "Error while saving changes to sensors.";
         ?>
         <div class="alert alert-danger">
-			<a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
-			<?php echo $error_msg; ?>
-		</div>
-    <?php
-    die();
+			    <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
+			    <?php echo $error_msg; ?>
+		    </div>
+        <?php
+        die();
 			}
     }
 
@@ -169,19 +169,21 @@
 
             <div class='input-group mt-3'>
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <div class="form-control">
-                <?php
-                    if(isset($SensorConfig['Value1onDashboard']) && $SensorConfig['Value1onDashboard'] == '1') {
+              <label style="width: 50%;">
+                <div class="form-control">
+                  <?php
+                      if(isset($SensorConfig['Value1onDashboard']) && $SensorConfig['Value1onDashboard'] == '1') {
+                        ?>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value1onDashboard' name='Value1onDashboard' value='1' checked='1'>
+                      <?php
+                    } else {
                       ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value1onDashboard' name='Value1onDashboard' value='1' checked='1'>
-                    <?php
-                  } else {
-                    ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value1onDashboard' name='Value1onDashboard' value='1'>
-                    <?php
-                  }
-                ?>
-              </div>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value1onDashboard' name='Value1onDashboard' value='1'>
+                      <?php
+                    }
+                  ?>
+                </div>
+              </label>
             </div>
           </fieldset>
 
@@ -194,19 +196,21 @@
 
             <div class='input-group mt-3'>
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <div class="form-control">
-                <?php
-                    if(isset($SensorConfig['Value2onDashboard']) && $SensorConfig['Value2onDashboard'] == '1') {
+              <label style="width: 50%;">
+                <div class="form-control">
+                  <?php
+                      if(isset($SensorConfig['Value2onDashboard']) && $SensorConfig['Value2onDashboard'] == '1') {
+                        ?>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value2onDashboard' name='Value2onDashboard' value='1' checked='1'>
+                      <?php
+                    } else {
                       ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value2onDashboard' name='Value2onDashboard' value='1' checked='1'>
-                    <?php
-                  } else {
-                    ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value2onDashboard' name='Value2onDashboard' value='1'>
-                    <?php
-                  }
-                ?>
-              </div>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value2onDashboard' name='Value2onDashboard' value='1'>
+                      <?php
+                    }
+                  ?>
+                </div>
+              </label>
             </div>
           </fieldset>
 
@@ -219,19 +223,21 @@
 
             <div class='input-group mt-3'>
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <div class="form-control">
-                <?php
-                    if(isset($SensorConfig['Value3onDashboard']) && $SensorConfig['Value3onDashboard'] == '1') {
+              <label style="width: 50%;">
+                <div class="form-control">
+                  <?php
+                      if(isset($SensorConfig['Value3onDashboard']) && $SensorConfig['Value3onDashboard'] == '1') {
+                        ?>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value3onDashboard' name='Value3onDashboard' value='1' checked='1'>
+                      <?php
+                    } else {
                       ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value3onDashboard' name='Value3onDashboard' value='1' checked='1'>
-                    <?php
-                  } else {
-                    ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value3onDashboard' name='Value3onDashboard' value='1'>
-                    <?php
-                  }
-                ?>
-              </div>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value3onDashboard' name='Value3onDashboard' value='1'>
+                      <?php
+                    }
+                  ?>
+                </div>
+              </label>
             </div>
           </fieldset>
 
@@ -244,19 +250,21 @@
 
             <div class='input-group mt-3'>
               <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <div class="form-control">
-                <?php
-                  if(isset($SensorConfig['Value4onDashboard']) && $SensorConfig['Value4onDashboard'] == '1') {
-                  ?>
-                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1' checked='1'>
+              <label style="width: 50%;">
+                <div class="form-control">
                   <?php
-                  } else {
+                    if(isset($SensorConfig['Value4onDashboard']) && $SensorConfig['Value4onDashboard'] == '1') {
+                    ?>
+                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1' checked='1'>
+                    <?php
+                    } else {
+                    ?>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1'>
+                    <?php
+                    }
                   ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1'>
-                  <?php
-                  }
-                ?>
-              </div>
+                </div>
+              </label>
             </div>
           </fieldset>
                   
@@ -324,19 +332,21 @@
 
           <div class='input-group mt-3 mb-3'>
             <span class='input-group-text' style='width: 50%'>show on Dashboard</span>
-            <div class="form-control">
-              <?php
-                if(isset($SensorConfig['Value' . $_GET['channel'] . 'onDashboard']) && $SensorConfig['Value' . $_GET['channel'] . 'onDashboard'] == '1') {
-                ?>
-                  <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1' checked='1'>
+            <label style="width: 50%;">
+              <div class="form-control">
                 <?php
-                } else {
+                  if(isset($SensorConfig['Value' . $_GET['channel'] . 'onDashboard']) && $SensorConfig['Value' . $_GET['channel'] . 'onDashboard'] == '1') {
+                  ?>
+                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1' checked='1'>
+                  <?php
+                  } else {
+                  ?>
+                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1'>
+                  <?php
+                  }
                 ?>
-                  <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1'>
-                <?php
-                }
-              ?>
-            </div>
+              </div>
+            </label>
           </div>
 
           <div class='input-group mt-3 mb-3'>
@@ -350,22 +360,24 @@
           ?>
           <div class="input-group mb-3">
             <span class="input-group-text" style="width: 50%">on Dashboard</span>
-            <div class='form-control'>
-            <?php
-              if(isset($SensorConfig['onDashboard']) && $SensorConfig['onDashboard'] == '1')
-              {
-              ?>
-                <input type='checkbox' id='onDashboard' name='onDashboard' value=<?php echo $SensorConfig['onDashboard'] ?> checked=<?php echo $SensorConfig['onDashboard'] ?>>
+            <label style="width: 50%;">
+              <div class='form-control'>
               <?php
-              }
-              else
-              {
+                if(isset($SensorConfig['onDashboard']) && $SensorConfig['onDashboard'] == '1')
+                {
+                ?>
+                  <input type='checkbox' id='onDashboard' name='onDashboard' value=<?php echo $SensorConfig['onDashboard'] ?> checked=<?php echo $SensorConfig['onDashboard'] ?>>
+                <?php
+                }
+                else
+                {
+                ?>
+                  <input type='checkbox' id='onDashboard' name='onDashboard' value='1'>
+                <?php
+                }
               ?>
-                <input type='checkbox' id='onDashboard' name='onDashboard' value='1'>
-              <?php
-              }
-            ?>
-            </div>
+              </div>
+            </label>
           </div>
           <?php
           }

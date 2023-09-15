@@ -108,19 +108,22 @@
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">Alarm on unavailable</span>
 
-          <div class="form-control">
-            <?php
-              if(isset($row['alarmOnUnavailable']) && $row['alarmOnUnavailable'] == '1') {
-                echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value=" . $row['alarmOnUnavailable'] . " checked=" . $row['alarmOnUnavailable'] . ">";
-              } else {
-                echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value='1'>";
-              }
-            ?>
-          </div>
+          <label style="width: 70%;">
+            <div class="form-control">
+              <?php
+                if(isset($row['alarmOnUnavailable']) && $row['alarmOnUnavailable'] == '1') {
+                  echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value=" . $row['alarmOnUnavailable'] . " checked=" . $row['alarmOnUnavailable'] . ">";
+                } else {
+                  echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value='1'>";
+                }
+              ?>
+            </div>
+          </label>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%;">On Dashboard?</span>
+          <label style="width: 70%;">
             <div class="form-control">
             <?php
               if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
@@ -130,6 +133,7 @@
               }
             ?>
             </div>
+            </label>
         </div>
 
         <div class="input-group mb-3">
