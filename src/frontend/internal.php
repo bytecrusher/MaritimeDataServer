@@ -185,8 +185,21 @@ setInterval(function() {
                   <div class='row d-flex justify-content-center'>
                     <div class='col-lg-12 col-xl-12' style='padding-right: 0px; padding-left: 0px;'>
                       <fieldset>
-                        <legend><?php echo $singleRowmyboard->getName() ?></legend>
-                          <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>'>
+                        <legend>
+                        <?php $deviceOnline = checkDeviceIsOnline($singleRowmyboard->getId());
+                        if ($deviceOnline) {
+                          ?>
+                            <span class='badge bg-success mr-2'>Online</span>
+                          <?php
+                          } else {
+                          ?>
+                            <span class='badge bg-danger mr-2'>Offline</span>
+                          <?php
+                          }
+                        ?>
+                        <?php echo $singleRowmyboard->getName() ?>
+                        </legend>
+                          <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>' style="display: flex; justify-content: center; flex-wrap: wrap;">
                 <?php
                 $boardOnlineStatus = false;
                 $mysensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
@@ -207,8 +220,9 @@ setInterval(function() {
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
                         if (($mysensors != null) && ($singleRowmysensors['Value' . $i . 'onDashboard'])) {
                           //var_dump($singleRowmysensors['Value' . $i . 'onDashboard'])
+                          //var_dump($deviceOnline);
                             ?>
-                            <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light'>
+                            <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
                               <div id='div_click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
                                 <i id='click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
                                 </i>
@@ -295,32 +309,37 @@ setInterval(function() {
       <!-- Show Board overview -->
       <div class="container tab-pane fade pl-0 pr-0" id="boards">
         <div class="row mt-2">
-          <?php
-          // Show Online / Offline
-          // TODO if demo mode == true, then no limit.
-          if ($varDemoMode) {
-            $maxtimeout = strtotime("-10 Years");
-          } else {
-            $maxtimeout = strtotime("-15 Minutes"); // For show Online / Offline
-          }
-          
+          <?php          
           foreach($boardObjsArray as $singleBoardObj) {
             $transmissionpath = 0;
-            //$mysensors2 = myFunctions::getAllSensorsOfBoardold($singleBoardObj->getId());
             $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
             $boardOnlineStatus = false;
+            $mysensorIdlist = null;
             foreach($mysensors2 as $singleRowmysensors) {
-              //var_dump($singleRowmysensors);
-              $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);
-              foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-                $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
-                $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
-                if ($dbtimestamp > $maxtimeout) {
-                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
-                  $boardOnlineStatus = true;
-                } else {
-                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
-                }
+              if ($mysensorIdlist == null) {
+                $mysensorIdlist = $singleRowmysensors['id'];
+              } else {
+                $mysensorIdlist = $mysensorIdlist . ", " . $singleRowmysensors['id'];
+              }
+            }
+            $mysensors = myFunctions::getLatestSensorData($mysensorIdlist);
+            foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
+              $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
+              $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
+
+              // Show Online / Offline
+              // TODO if demo mode == true, then no limit.
+              if ($varDemoMode) {
+                $maxtimeout = strtotime("-10 Years");
+              } else {
+                $maxtimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+              }
+
+              if ($dbtimestamp > $maxtimeout) {
+                $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
+                $boardOnlineStatus = true;
+              } else {
+                $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
               }
             }
           ?>
@@ -334,11 +353,11 @@ setInterval(function() {
                   ?>
                     <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
                   <?php
-                  } elseif ($transmissionpath == 2) {
+                } elseif ($transmissionpath == 2) {
                   ?>
                     <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
                   <?php
-                  } else {
+                } else {
                     ?>
                     <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
                   <?php
@@ -360,12 +379,12 @@ setInterval(function() {
 
       <!-- Show temperatures as table, only for admin -->
       <div class="container tab-pane fade pl-0 pr-0" id="debug">
-        <div id="chart-container">
-          All Sensor Values as a table
-          <?php
+        <div class="p-2" id="chart-container">
+          All Sensor Values as a table from ttnDataLoraBoatMonitor:
+        </div>
+        <?php
             include("./../receiver/ttndata/index.php");
           ?>
-        </div>
       </div>
 
       <!-- Show map -->
@@ -404,7 +423,6 @@ setInterval(function() {
           $('.multi-collapse').toggle();
           $('.gauge-container').css("cursor", "auto");
           $(".card-block").sortable("disable");
-          //console.log("locked");
 
           wrapper = $('.card-block');
           onceSensorOrderFail = false;
@@ -425,7 +443,6 @@ setInterval(function() {
               })
                 .done(function( response ) {
                   if (!onceSensorOrderDone) {
-                    //console.log("done");
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");
@@ -441,7 +458,6 @@ setInterval(function() {
                 })
                 .fail(function( response ) {
                   if (!onceSensorOrderFail) {
-                    //console.log("fail");
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");

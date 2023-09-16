@@ -39,6 +39,7 @@ CREATE TABLE `boardconfig` (
   `alarmOnUnavailable` tinyint DEFAULT '0',
   `updateDataTimer` int DEFAULT NULL,
   `boardtypeid` int DEFAULT NULL,
+  `offlineDataTimer` int DEFAULT '15',
   `ttn_app_id` text NOT NULL,
   `ttn_dev_id` text CHARACTER SET utf16 COLLATE utf16_general_ci NOT NULL,
   `onDashboard` tinyint NOT NULL DEFAULT '0'
@@ -179,7 +180,7 @@ INSERT INTO `sensortypes` (`id`, `name`, `siUnitVal1`, `siUnitVal2`, `siUnitVal3
 (4, 'Digital', '1/0', '1/0', '1/0', '1/0', '', 'input from Digital', 4, 0),
 (5, 'BME280', '&deg;C', '%', 'mbar', '&deg;C', '', 'Temp, Hum, Pres, Dew', 4, 0),
 (6, 'GPS', 'Lat', 'Lon', 'Alt', 'Spd', '', 'Coorinates', 4, 0),
-(7, 'Lora', 'Gtw', 'db', '', '', '', 'TTN data', 3, 0);
+(7, 'Lora', 'Gtw', 'db', 'snr', 'counter', '', 'TTN data', 4, 0);
 
 -- --------------------------------------------------------
 
@@ -196,7 +197,11 @@ CREATE TABLE `ttnDataLoraBoatMonitor` (
   `gtw_id` text NOT NULL,
   `gtw_rssi` float NOT NULL,
   `gtw_snr` float NOT NULL,
+  `gtw_channel_index` int NOT NULL,
+  `gtw_bandwidth` float NOT NULL,
+  `gtw_sf` float NOT NULL,
   `dev_raw_payload` text NOT NULL,
+  `dev_counter` int NOT NULL,
   `dev_value_1` float NOT NULL,
   `dev_value_2` float NOT NULL,
   `dev_value_3` float NOT NULL,

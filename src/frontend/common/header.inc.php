@@ -9,9 +9,7 @@
       include(__DIR__ . "/includes.php");
     ?>
     <style>
-      
       .filter-green {
-        /*filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%);*/
         filter: invert(66%) sepia(16%) saturate(1367%) hue-rotate(71deg) brightness(93%) contrast(89%);
       }
       </style>
@@ -22,7 +20,6 @@
   <div class="container-fluid">
     <a class="navbar-brand" href="index.php">
       <img src="./img/MDS_Logo_black.png" class="filter-green me-2" height="40px" />
-      <!--i class="bi bi-speedometer logo"> </i-->
       Mausel Industries
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,27 +58,21 @@
           <li class="nav-item"><a class="nav-link" href="settings.php">Settings</a></li>
           <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
           <li class="nav-item container" style="max-width: 10%; position: absolute; right: 20px; background-color: var(--bs-body-color)">
-            <!--div class="container" style="max-width: 10%;"-->
-            <!--div class="col-md-4 px-0"-->
+            <?php
+              if ($config::$ShowQrCode == "1") {
+            ?>
                 <figure class="mb-0" >
                   <img src="./img/qr-code.png" class="img-fluid" alt="derguntmar.de">
                   <figcaption style="color: white; font-size: 0.8rem">derguntmar.de</figcaption>
                 </figure>
-            <!--/div-->
-            <!--/div-->
+            <?php
+            }
+            ?>
           </li>
         </ul>
       </div>
     <?php endif; ?>
   </div>
-  <!--div class="container" style="max-width: 30%;">
-    <div class="col-md-4 px-0">
-        <figure style="margin-bottom: 0rem;">
-          <img src="./img/qr-code.png" class="img-fluid" alt="derguntmar.de">
-          <figcaption style="color: white;">derguntmar.de</figcaption>
-        </figure>
-    </div>
-</div-->
   </nav>
 
 

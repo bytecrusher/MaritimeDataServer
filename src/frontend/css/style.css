@@ -222,7 +222,7 @@ body {
 #ttnvalues {
   font-family: Arial, Helvetica, sans-serif;
   border-collapse: collapse;
-  width: 200px;
+  /*width: 200px;*/
   text-align: center;
 }
 
@@ -292,4 +292,8 @@ body {
 .mysensorsfieldsetlegend {
   font-size: 18px;
   margin-bottom: 0px;
+}
+
+.disabled {
+  filter: grayscale(1);
 }

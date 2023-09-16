@@ -6,22 +6,18 @@ if (isset($_POST["action"])) {
   $var_dbname = $_POST["dbname"];
   $var_dbusername = $_POST["dbusername"];
   $var_dbpassword = $_POST["dbpassword"];
+  $pdo = null;
   
   if ($_POST["action"] == "savedb") {
-    // if test true:
-    if (testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_dbpassword)) {
-      // Name of the file
+    $pdo = testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_dbpassword);
+    if ($pdo != false) {
       $filename = 'database.sql';
 
       // Temporary variable, used to store current query
       $templine = '';
-      // Read in entire file
       $lines = file($filename);
-      // Loop through each line
       foreach ($lines as $line_num => $line) {
-        // Only continue if it's not a comment
         if (substr($line, 0, 2) != '--' && $line != '') {
-          // Add this line to the current segment
           $templine .= $line;
           // If it has a semicolon at the end, it's the end of the query
           if (substr(trim($line), -1, 1) == ';') {
@@ -43,7 +39,6 @@ if (isset($_POST["action"])) {
               $rtn = array("error"=>"true", "error_text"=>$error_msg);
               break;
             }
-            // Reset temp variable to empty
             $templine = '';
           }
         }
@@ -71,7 +66,6 @@ if (isset($_POST["action"])) {
     } else {
       $rtn = array("error"=>"true", "error_text"=>$error_msg);
     }
-
   } else if ($_POST["action"] == "createadmin") {
 
   }
@@ -98,7 +92,7 @@ function testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_db
       }
       return false;
     }
-    return true;
+    return $pdo;
 } 
 
 ?>

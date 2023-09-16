@@ -1,5 +1,4 @@
 <?php
-
 require_once("../frontend/func/myFunctions.func.php");
 require_once("../frontend/func/dbUpdateData.php");
 
@@ -22,27 +21,23 @@ if (isset($_POST["action"])) {
   $var_password2 = $_POST["password2"];
   $var_apikey = trim($_POST["apikey"]);
   $var_md5secretstring = trim($_POST["md5secretstring"]);
-  $var_baseurl = trim($_POST["baseurl"]);
+  //$var_baseurl = trim($_POST["baseurl"]);
   
   if ($_POST["action"] == "createadmin") {
     if(empty($var_firstname) || empty($var_lastname) || empty($var_email)) {
-      //echo '<div class="alert alert-danger" role="alert">Please enter all fields.</div>';
       $rtn = array("error"=>"true", "error_text"=>"Please enter all fields.");
       $error = true;
     }
   
     if(!filter_var($var_email, FILTER_VALIDATE_EMAIL)) {
-      //echo '<div class="alert alert-danger" role="alert">Please enter a valid email adress.</div>';
       $rtn = array("error"=>"true", "error_text"=>"Please enter a valid email adress.");
       $error = true;
     }
     if(strlen($var_password) == 0) {
-      //echo '<div class="alert alert-danger" role="alert">Password necessary.</div>';
       $rtn = array("error"=>"true", "error_text"=>"Password necessary.");
       $error = true;
     }
     if($var_password != $var_password2) {
-      //echo '<div class="alert alert-danger" role="alert">Both passwords must be the same.</div>';
       $rtn = array("error"=>"true", "error_text"=>"Both passwords must be the same.");
       $error = true;
     }
@@ -55,24 +50,22 @@ if (isset($_POST["action"])) {
         $error = false;
         if(!$error) {
           if(myFunctions::isUserRegistred($var_email)) {
-            //echo '<div class="alert alert-danger" role="alert">The entered email adress already exist.</div>';
             $error = true;
             $rtn = array("error"=>"true", "error_text"=>"Email already exist in db.");
           } else {
             $password_hash = password_hash($var_password, PASSWORD_DEFAULT);
-            $result = dbUpdateData::insertAdmin($var_email, $password_hash, $var_firstname, $var_lastname);
+            try {
+              $result = dbUpdateData::insertAdmin($var_email, $password_hash, $var_firstname, $var_lastname);
+            } catch (Exception $e) {
+              $error_msg = "Admin not inserted successfully.";
+              $rtn = array("error"=>"true", "error_text"=>"An error occurs while saving.");
+            }
             if($result) {
-              //echo "<div class='alert alert-success' role='alert'>Registration successful.<br>
-              //The Admin now needs to activate your account.</div>
-              //<a href='login.php' class='btn btn-primary'>Login</a>";
               $rtn = array("error"=>"false", "success_text"=>"Registration successful. User created.");
               $showFormular = false;
             } else {
-              //echo 'An error occurs while saving.<br>';
               $rtn = array("error"=>"true", "error_text"=>"An error occurs while saving.");
             }
-
-            
           }
         }
       } else {
@@ -81,10 +74,8 @@ if (isset($_POST["action"])) {
 
       $jsonData['api_key'] = $var_apikey;
       $jsonData['md5secretstring'] = $var_md5secretstring;
-      $jsonData['baseurl'] = $var_baseurl;
-      //$jsonData['db_name'] = $var_dbname;
-      //$jsonData['db_user'] = $var_dbusername;
-      //$jsonData['db_password'] = $var_dbpassword;
+      //$jsonData['baseurl'] = $var_baseurl;
+      $jsonData['install_finished'] = true;
       $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
       // Write in the file
       $fp = fopen($path, 'w');

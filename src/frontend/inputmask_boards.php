@@ -13,11 +13,9 @@
     die();
   }
 
-  $user = user::check_user();
   $pdo = dbConfig::getInstance();
   $varId = $_GET['id'];
   $singleRowBoardId = myFunctions::getBoardById($varId);
-
 ?>
 
 <!--div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;"-->
@@ -81,12 +79,12 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN app id</span>
-          <input type="text" class="form-control" id='ttn_app_id' name='ttn_app_id' value='<?=$row['ttn_app_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
+          <input type="text" class="form-control" id='ttn_app_id' name='ttn_app_id' value='<?=$row['ttn_app_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN dev id</span>
-          <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$row['ttn_dev_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen.">
+          <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$row['ttn_dev_id'];?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <!--div class="input-group mb-3">
@@ -104,25 +102,28 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Firmware version</span>
-          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$row['firmwareversion'];?>'>
+          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$row['firmwareversion'];?>' style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">Alarm on unavailable</span>
 
-          <div class="form-control">
-            <?php
-              if(isset($row['alarmOnUnavailable']) && $row['alarmOnUnavailable'] == '1') {
-                echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value=" . $row['alarmOnUnavailable'] . " checked=" . $row['alarmOnUnavailable'] . ">";
-              } else {
-                echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value='1'>";
-              }
-            ?>
-          </div>
+          <label style="width: 70%;">
+            <div class="form-control">
+              <?php
+                if(isset($row['alarmOnUnavailable']) && $row['alarmOnUnavailable'] == '1') {
+                  echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value=" . $row['alarmOnUnavailable'] . " checked=" . $row['alarmOnUnavailable'] . ">";
+                } else {
+                  echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value='1'>";
+                }
+              ?>
+            </div>
+          </label>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%;">On Dashboard?</span>
+          <label style="width: 70%;">
             <div class="form-control">
             <?php
               if(isset($row['onDashboard']) && $row['onDashboard'] == '1') {
@@ -132,17 +133,22 @@
               }
             ?>
             </div>
+            </label>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">Update interval (Minutes)</span>
-          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$row['updateDataTimer'];?>' required>
+          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$row['updateDataTimer'];?>' style="background:#e9ecef" readonly>
+        </div>
+
+        <div class="input-group mb-3">
+          <span class="input-group-text" style="width: 30%; white-space: break-spaces">Mark as offline after (Minutes)</span>
+          <input type="text" class="form-control" id='offlineDataTimer' name='offlineDataTimer' value='<?=$row['offlineDataTimer'];?>' title="After this timer, the board displays as offline.">
         </div>
 
         <?php
 				if(($currentUser->getUserGroupAdmin() == 1) ) {
           $AllUsers =(myFunctions::getAllUsers());
-          //var_dump($row['owner_userid']);
 				?>
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">owner User</span>
@@ -170,9 +176,14 @@
           }
         ?>
         <div class='row'>
-          <div class="col-sm-offset-2 col-sm-10">
+          <div class="col-sm-offset-2 col-sm-8">
+            <input type='submit' class="btn btn-danger" id='submit_inputmask_boards_remove' name='submit_inputmask_boards_remove' value='Remove Board' onclick="clicked(event)">
+          </div>
+          <div class="col-sm-offset-2 col-sm-4">
+          <div class="float-end">
             <a class='mr-2 btn btn-primary' href='settings.php#confBoards' role='button'>Back</a>
             <input type='submit' class="btn btn-primary" id='submit_inputmask_boards' name='submit_inputmask_boards' value='Save'>
+          </div>
           </div>
         </div>
       </form>
@@ -217,6 +228,14 @@
     </div>
   </div>
 </div>
+<script>
+  function clicked(e)
+  {
+    if(!confirm('Are you sure to remove your board?')) {
+      e.preventDefault();
+    }
+  }
+</script>
 <?php
   include("common/footer.inc.php");
 ?>

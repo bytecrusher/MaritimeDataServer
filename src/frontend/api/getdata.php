@@ -1,6 +1,7 @@
 <?php
 // Get data from DB for display in JS.
 require_once("../func/myFunctions.func.php");
+require_once("../func/get_data.php");
 
 //require_once(dirname(__FILE__, 2) . '/../../configuration.php');
 $config  = new configuration();
@@ -12,12 +13,6 @@ $vardata = $_POST['data'];
 $varsensorId = $_POST['sensorId'];
 $varNrOfValues = $_POST['NrOfValues'];
 
-if ($varDemoMode == true) {
-    $maxtimeout = strtotime("-15 Years");
-} else {
-    $maxtimeout = strtotime("-15 Minutes");
-}
-
 if (isset($varIdent) && isset($varToken) && isset($vardata)) {
     if ( (!empty($varIdent)) && (!empty($varToken) ) && (!empty($vardata))) {
         // TODO check if identifier and token exist in DB.
@@ -28,7 +23,19 @@ if (isset($varIdent) && isset($varToken) && isset($vardata)) {
                 $data = array();
                 foreach ($mysensors as &$mysensorSingle) {
                     $dbtimestamp = strtotime($mysensorSingle['reading_time']);
-                    if ($dbtimestamp > $maxtimeout) {
+
+                    if ($varDemoMode == true) {
+                        $maxtimeout = strtotime("-15 Years");
+                        $deviceOnline = true;
+                    } else {
+                        $boardid = myFunctions::getBoardBySensorId($varsensorId);
+                        $deviceOnline = checkDeviceIsOnline($boardid["boardid"]);
+                        //$maxtimeout = strtotime("-15 Minutes");
+                        //$maxtimeout = strtotime("-" . $boardobj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+                    }
+
+                    //if ($dbtimestamp > $maxtimeout) {
+                    if ($deviceOnline) {
                         //$data[] = $mysensorSingle['value1'];
                         $data[] = $mysensorSingle['sensorid'];
                         array_push($data, $mysensorSingle['value1']);

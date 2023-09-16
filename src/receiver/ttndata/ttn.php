@@ -40,98 +40,96 @@ $config = new configuration();
 
 $ttn_post = file('php://input');
 $data = null;
-//writeToLogFunction::write_to_log($ttn_post, $_SERVER["SCRIPT_FILENAME"]);
 
 if(sizeof($ttn_post) > 0) {
-    $data = json_decode($ttn_post[0]);
-    //$data = json_decode($ttn_post);
-    //writeToLogFunction::write_to_log($data, $_SERVER["SCRIPT_FILENAME"]);
+  $data = json_decode($ttn_post[0]);
+  //$data = json_decode($ttn_post);
 
-    $sensor_raw_payload = null;
-    if(($data != null) && ($data->uplink_message->decoded_payload != null)) {
-        //$payloadversion = $data->uplink_message->decoded_payload->payloadversion;
-        $sensor_temperature = $sensor_humidity = $sensor_battery = 0;       // define Variables
+  $sensor_raw_payload = null;
+  if(($data != null) && ($data->uplink_message->decoded_payload != null)) {
+    $sensor_temperature = $sensor_humidity = $sensor_battery = 0;       // define Variables
 
-        // Sensor Data
-        $sensor_alarm1 = $data->uplink_message->decoded_payload->alarm1;
-        $sensor_altitude = $data->uplink_message->decoded_payload->altitude;
-        if (isset($data->uplink_message->decoded_payload->counter)) {
-          $frame_counter = $data->uplink_message->decoded_payload->counter;
-        } else {
-          $frame_counter = 0;
-        }
-        
-        $sensor_dewpoint = $data->uplink_message->decoded_payload->dewpoint;
-        $sensor_humidity = $data->uplink_message->decoded_payload->humidity;
-        if(isset($data->uplink_message->decoded_payload->Hum_SHT)) {
-          $sensor_humidity = $data->uplink_message->decoded_payload->Hum_SHT;
-        } else {
-          //$sensor_humidity = 0;
-        }
-
-        $sensor_latitude = $data->uplink_message->decoded_payload->latitude;
-        if(isset($data->uplink_message->decoded_payload->level1)) {
-          $sensor_level1 = $data->uplink_message->decoded_payload->level1;
-        } else {
-          $sensor_level1 = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->level2)) {
-          $sensor_level2 = $data->uplink_message->decoded_payload->level2;
-        } else {
-          $sensor_level2 = 0;
-        }
-        $sensor_longitude = $data->uplink_message->decoded_payload->longitude;
-        $position_lat = $data->uplink_message->decoded_payload->position->context->lat;
-        $position_lng = $data->uplink_message->decoded_payload->position->context->lng;
-        $sensor_pressure = $data->uplink_message->decoded_payload->pressure;
-        if(isset($data->uplink_message->decoded_payload->relay)) {
-          $sensor_relay = $data->uplink_message->decoded_payload->relay;
-        } else {
-          $sensor_relay = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->tempbattery)) {
-          $sensor_temperature_2 = $data->uplink_message->decoded_payload->tempbattery;
-        } else {
-          $sensor_temperature_2 = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->BatV)) {
-            $sensor_battery = $data->uplink_message->decoded_payload->BatV;
-        } else {
-          $sensor_battery = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->temperature)) {
-          $sensor_temperature = $data->uplink_message->decoded_payload->temperature;
-        }
-        if(isset($data->uplink_message->decoded_payload->TempC_SHT)) {
-          $sensor_temperature = $data->uplink_message->decoded_payload->TempC_SHT;
-        }
-        if(isset($data->uplink_message->decoded_payload->voltage)) {
-          $sensor_battery = $data->uplink_message->decoded_payload->voltage;
-        } else {
-          $sensor_battery = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->voltage2)) {
-          $sensor_battery2 = $data->uplink_message->decoded_payload->voltage2;
-        } else {
-          $sensor_battery2 = 0;
-        }
-
-        $sensor_raw_payload = $data->uplink_message->frm_payload;
-
-        // TTN Data
-        $gtw_id = $data->uplink_message->rx_metadata[0]->gateway_ids->gateway_id;
-        $gtw_rssi = $data->uplink_message->rx_metadata[0]->rssi;
-        $gtw_snr = $data->uplink_message->rx_metadata[0]->snr;
-
-        $ttn_app_id = $data->end_device_ids->application_ids->application_id;
-        $ttn_dev_id = $data->end_device_ids->dev_eui;
-        $ttn_time = $data->received_at;
+    // Sensor Data
+    $sensor_alarm1 = $data->uplink_message->decoded_payload->alarm1;
+    $sensor_altitude = $data->uplink_message->decoded_payload->altitude;
+    if (isset($data->uplink_message->decoded_payload->counter)) {
+      $frame_counter = $data->uplink_message->decoded_payload->counter;
+    } else {
+      $frame_counter = 0;
     }
+        
+    $sensor_dewpoint = $data->uplink_message->decoded_payload->dewpoint;
+    $sensor_humidity = $data->uplink_message->decoded_payload->humidity;
+    if(isset($data->uplink_message->decoded_payload->Hum_SHT)) {
+      $sensor_humidity = $data->uplink_message->decoded_payload->Hum_SHT;
+    }
+
+    $sensor_latitude = $data->uplink_message->decoded_payload->latitude;
+    if(isset($data->uplink_message->decoded_payload->level1)) {
+      $sensor_level1 = $data->uplink_message->decoded_payload->level1;
+    } else {
+      $sensor_level1 = 0;
+    }
+
+    if(isset($data->uplink_message->decoded_payload->level2)) {
+      $sensor_level2 = $data->uplink_message->decoded_payload->level2;
+    } else {
+      $sensor_level2 = 0;
+    }
+    $sensor_longitude = $data->uplink_message->decoded_payload->longitude;
+    $position_lat = $data->uplink_message->decoded_payload->position->context->lat;
+    $position_lng = $data->uplink_message->decoded_payload->position->context->lng;
+    $sensor_pressure = $data->uplink_message->decoded_payload->pressure;
+    if(isset($data->uplink_message->decoded_payload->relay)) {
+      $sensor_relay = $data->uplink_message->decoded_payload->relay;
+    } else {
+      $sensor_relay = 0;
+    }
+
+    if(isset($data->uplink_message->decoded_payload->tempbattery)) {
+      $sensor_temperature_2 = $data->uplink_message->decoded_payload->tempbattery;
+    } else {
+      $sensor_temperature_2 = 0;
+    }
+
+    if(isset($data->uplink_message->decoded_payload->BatV)) {
+      $sensor_battery = $data->uplink_message->decoded_payload->BatV;
+    } else {
+      $sensor_battery = 0;
+    }
+
+    if(isset($data->uplink_message->decoded_payload->temperature)) {
+      $sensor_temperature = $data->uplink_message->decoded_payload->temperature;
+    }
+    if(isset($data->uplink_message->decoded_payload->TempC_SHT)) {
+      $sensor_temperature = $data->uplink_message->decoded_payload->TempC_SHT;
+    }
+    if(isset($data->uplink_message->decoded_payload->voltage)) {
+      $sensor_battery = $data->uplink_message->decoded_payload->voltage;
+    } else {
+      $sensor_battery = 0;
+    }
+
+    if(isset($data->uplink_message->decoded_payload->voltage2)) {
+      $sensor_battery2 = $data->uplink_message->decoded_payload->voltage2;
+    } else {
+      $sensor_battery2 = 0;
+    }
+
+    $sensor_raw_payload = $data->uplink_message->frm_payload;
+
+    // TTN Data
+    $gtw_id = $data->uplink_message->rx_metadata[0]->gateway_ids->gateway_id;
+    $gtw_rssi = $data->uplink_message->rx_metadata[0]->rssi;
+    $gtw_snr = $data->uplink_message->rx_metadata[0]->snr;
+    $gtw_channel_index = $data->uplink_message->rx_metadata[0]->channel_index;
+    $bandwidth = $data->uplink_message->settings->data_rate->lora->bandwidth;
+    $sf = $data->uplink_message->settings->data_rate->lora->spreading_factor;
+
+    $ttn_app_id = $data->end_device_ids->application_ids->application_id;
+    $ttn_dev_id = $data->end_device_ids->dev_eui;
+    $ttn_time = $data->received_at;
+  }
 
     $DATABASE_HOST = $config::$db_host;
     $DATABASE_USERNAME = $config::$db_user;
@@ -144,11 +142,17 @@ if(sizeof($ttn_post) > 0) {
     $server_datetime = date("Y-m-d H:i:s");
 
     if ($sensor_raw_payload != null) {
-    mysqli_query($db_connect, "INSERT INTO `ttnDataLoraBoatMonitor` (`id`, `datetime`, `app_id`, `dev_id`, `ttn_timestamp`, `gtw_id`, `gtw_rssi`,"
-            . " `gtw_snr`, `dev_raw_payload`, `dev_value_1`, `dev_value_2`, `dev_value_3`, `dev_value_4`) "
-            . "VALUES (NULL, '$server_datetime', '$ttn_app_id', '$ttn_dev_id', '$ttn_time', '$gtw_id', '$gtw_rssi', '$gtw_snr',"
-            . " '$sensor_raw_payload', '$sensor_temperature', '$sensor_temperature_2', '$sensor_humidity', '$sensor_battery');
-    ");
+      try {
+        mysqli_query($db_connect, "INSERT INTO `ttnDataLoraBoatMonitor` (`id`, `datetime`, `app_id`, `dev_id`, `ttn_timestamp`, `gtw_id`, `gtw_rssi`,"
+        . " `gtw_snr`, `gtw_channel_index`, `gtw_bandwidth`, `gtw_sf`, `dev_raw_payload`, `dev_counter`, `dev_value_1`, `dev_value_2`, `dev_value_3`, `dev_value_4`) "
+        . "VALUES (NULL, '$server_datetime', '$ttn_app_id', '$ttn_dev_id', '$ttn_time', '$gtw_id', '$gtw_rssi', '$gtw_snr', '$gtw_channel_index', '$bandwidth', '$sf',"
+        . " '$sensor_raw_payload', '$frame_counter', '$sensor_temperature', '$sensor_temperature_2', '$sensor_humidity', '$sensor_battery');
+        ");
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: ttnDataLoraBoatMonitor not saved.", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('ttnDataLoraBoatMonitor not saved.');
+      }
     }
 
     // TODO: insert data into 'sensordata' (first get Board-ID by TTN Appid and Devid)
@@ -197,21 +201,13 @@ if(sizeof($ttn_post) > 0) {
       writeToLogFunction::write_to_log('Sensor Digital does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
     }
-
-    $url = $config::$baseurl . '/receiver/receivejson.php';
-    //$url = 'http://172.26.0.5/maritimedataserver/src/receiver/receivejson.php';
-
+    $url = $config::$baseurl . 'receiver/receivejson.php';
     // create a new cURL resource
     $ch = curl_init();
 
     // set URL and other appropriate options
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_HEADER, 0);
-
-    //$ch = curl_init($url);
-    writeToLogFunction::write_to_log("debug: " . $url, $_SERVER["SCRIPT_FILENAME"]);
-    //writeToLogFunction::write_to_log("debug ch: ", $_SERVER["SCRIPT_FILENAME"]);
-    //writeToLogFunction::write_to_log($ch, $_SERVER["SCRIPT_FILENAME"]);
 
     $boardInfos = array(
         "api_key" => $config::$api_key,
@@ -228,68 +224,77 @@ if(sizeof($ttn_post) > 0) {
 
     foreach($allSensorsOfBoard AS $eachsensor) {
       $sensor1 = null;
-      //writeToLogFunction::write_to_log("Sensor: " . $eachsensor['boardid'], $_SERVER["SCRIPT_FILENAME"]);
-      //if ($eachsensor['ttn_payload_id'] != null) {
-        // TODO check, if boardid is the right var. I think it should be typid.
-        if ($eachsensor['boardid'] == "DS18B20") {
-          $sensor1 = array(
-            "typid" => $eachsensor['typid'],
-            "sensorId" => $eachsensor['id'],
-            "value1" => $sensor_temperature_2,
-            "date" => $dateNow,
-            "time" => $timeNow,
-            "transmissionpath" => "2"
-          );
-        } elseif ($eachsensor['boardid'] == "ADC") {
-          $sensor1 = array(
-            "typid" => $eachsensor['typid'],
-            "sensorId" => $eachsensor['id'],
-            "value1" => $sensor_battery,
-            "value2" => $sensor_battery2,
-            "value3" => $sensor_level1,
-            "value4" => $sensor_level2,
-            "date" => $dateNow,
-            "time" => $timeNow,
-            "transmissionpath" => "2"
-          );
-        } elseif ($eachsensor['boardid'] == "BME280") {
-          $sensor1 = array(
-            "typid" => $eachsensor['typid'],
-            "sensorId" => $eachsensor['id'],
-            "value1" => $sensor_temperature,
-            "value2" => $sensor_humidity,
-            "value3" => $sensor_pressure,
-            "value4" => $sensor_dewpoint,
-            "date" => $dateNow,
-            "time" => $timeNow,
-            "transmissionpath" => "2"
-          );
-        } elseif ($eachsensor['boardid'] == "GPS") {
-          $sensor1 = array(
-            "typid" => $eachsensor['typid'],
-            "sensorId" => $eachsensor['id'],
-            "value1" => $sensor_latitude,
-            "value2" => $sensor_longitude,
-            "value3" => $position_lat,
-            "value4" => $position_lng,
-            "date" => $dateNow,
-            "time" => $timeNow,
-            "transmissionpath" => "2"
-          );
-        } elseif ($eachsensor['boardid'] == "Lora") {
-          $sensor1 = array(
-            "typid" => $eachsensor['typid'],
-            "sensorId" => $eachsensor['id'],
-            "value1" => $gtw_id,
-            "value2" => $gtw_rssi,
-            "value3" => $gtw_snr,
-            "date" => $dateNow,
-            "time" => $timeNow,
-            "transmissionpath" => "2"
-          );
-        }
-        array_push($sensors, $sensor1);
-      //}   
+      // TODO check, if boardid is the right var. I think it should be typid.
+      if ($eachsensor['boardid'] == "DS18B20") {
+        $sensor1 = array(
+          "typid" => $eachsensor['typid'],
+          "sensorId" => $eachsensor['id'],
+          "value1" => $sensor_temperature_2,
+          "date" => $dateNow,
+          "time" => $timeNow,
+          "transmissionpath" => "2"
+        );
+      } elseif ($eachsensor['boardid'] == "ADC") {
+        $sensor1 = array(
+          "typid" => $eachsensor['typid'],
+          "sensorId" => $eachsensor['id'],
+          "value1" => $sensor_battery,
+          "value2" => $sensor_battery2,
+          "value3" => $sensor_level1,
+          "value4" => $sensor_level2,
+          "date" => $dateNow,
+          "time" => $timeNow,
+          "transmissionpath" => "2"
+        );
+      } elseif ($eachsensor['boardid'] == "BME280") {
+        $sensor1 = array(
+          "typid" => $eachsensor['typid'],
+          "sensorId" => $eachsensor['id'],
+          "value1" => $sensor_temperature,
+          "value2" => $sensor_humidity,
+          "value3" => $sensor_pressure,
+          "value4" => $sensor_dewpoint,
+          "date" => $dateNow,
+          "time" => $timeNow,
+          "transmissionpath" => "2"
+        );
+      } elseif ($eachsensor['boardid'] == "GPS") {
+        $sensor1 = array(
+          "typid" => $eachsensor['typid'],
+          "sensorId" => $eachsensor['id'],
+          "value1" => $sensor_latitude,
+          "value2" => $sensor_longitude,
+          "value3" => $position_lat,
+          "value4" => $position_lng,
+          "date" => $dateNow,
+          "time" => $timeNow,
+          "transmissionpath" => "2"
+        );
+      } elseif ($eachsensor['boardid'] == "Lora") {
+        $sensor1 = array(
+          "typid" => $eachsensor['typid'],
+          "sensorId" => $eachsensor['id'],
+          "value1" => $gtw_id,
+          "value2" => $gtw_rssi,
+          "value3" => $gtw_snr,
+          "value4" => $frame_counter,
+          "date" => $dateNow,
+          "time" => $timeNow,
+          "transmissionpath" => "2"
+        );
+      } elseif ($eachsensor['boardid'] == "Digital") {
+        $sensor1 = array(
+          "typid" => $eachsensor['typid'],
+          "sensorId" => $eachsensor['id'],
+          "value1" => $sensor_alarm1,
+          //"value2" => $gtw_rssi,
+          //"value3" => $gtw_snr,
+          "date" => $dateNow,
+          "time" => $timeNow,
+          "transmissionpath" => "2"
+        );
+      }
+      array_push($sensors, $sensor1);
     }
     $payload = json_encode(array(
       "board" => $boardInfos,
@@ -315,7 +320,7 @@ if(sizeof($ttn_post) > 0) {
     }
     else
     {
-        writeToLogFunction::write_to_log('Operation completed without any errors', $_SERVER["SCRIPT_FILENAME"]);
+        //writeToLogFunction::write_to_log('Operation completed without any errors', $_SERVER["SCRIPT_FILENAME"]);
     }
 
     // Close cURL resource

@@ -35,7 +35,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $macaddress = test_input($boardData['macaddress']);
                 $macaddressid = check_macadresse($macaddress, $pdo2);
                 foreach ($sensors as $key => &$sensor) {
-                    //writeToLogFunction::write_to_log($sensor['sensorId'], $_SERVER["SCRIPT_FILENAME"]);
                     $sensorid = null;
                     if ($sensor != null) {
                         $mysensorid = $owsensorAddress = null;
@@ -95,7 +94,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $transmissionpath = 1;
                         }
 
-                        // TODO Change to pdo
                         $sql = "INSERT INTO sensordata (sensorid, value1, value2, value3, value4, val_date, val_time, transmissionpath)
                         VALUES ('" . $sensorid . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '"  . $value4 . "', '" . $date . "', '" . $time . "', '" . $transmissionpath . "')";
                         try {

@@ -4,10 +4,9 @@
     "db_user": "dbuser",
     "db_password": "dbpassword",
     "api_key": "my_api_key",
-    "baseurl": "http://localhost",
-    "subdir": "/maritimedataserver",
     "demoMode": "false",
     "md5secretstring": "your_secret_string",
-    "install_finished": true,
-    "admin_email_adress": "info@yourdomain.de"
+    "install_finished": "false",
+    "admin_email_adress": "info@yourdomain.de",
+    "ShowQrCode": "0"
 }
