@@ -61,6 +61,7 @@ class configuration {
             $jsonData = json_decode($jsonString, true);
             $jsonData['demoMode'] = $post['demoMode'];
             $jsonData['ShowQrCode'] = $post['ShowQrCode'];
+            $jsonData['api_key'] = $post['apikey'];
             $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
             // Write in the file
             $fp = fopen($path, 'w');

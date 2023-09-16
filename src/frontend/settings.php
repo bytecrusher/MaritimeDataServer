@@ -131,6 +131,7 @@ if(isset($_GET['save'])) {
 		try {
 			$config->setDemoMode($_POST);
 			$varDemoMode = $config::$demoMode;
+			//$apikey
 			$success_msg = "DemoMode saved.";
 		} catch (Exception $e) {
 			//$error_msg = "Error on add new board.";
@@ -668,8 +669,7 @@ th.rotated-text > div > span {
 			<!-- Modification of Server Setting -->
 			<div role="tabpanel" class="tab-pane" id="serverSetting">
 				<form action="?save=serverSetting" method="post" class="form-horizontal">
-					<div class="panel panel-default p-2">Some server settings.</div>
-					<div class="panel panel-default p-2">
+					<div class="panel panel-default pt-2 pb-2">
 						<?php
 							if ($varDemoMode) {
 							?>
@@ -687,7 +687,7 @@ th.rotated-text > div > span {
 							}
 						?>
 					</div>
-					<div class="panel panel-default p-2">
+					<div class="panel panel-default pt-2">
 						<?php
 							if ($varShowQrCode) {
 							?>
@@ -705,6 +705,18 @@ th.rotated-text > div > span {
 							}
 						?>
 					</div>
+
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
+								<label for="apiKeyFirstname" class="col-sm-2 control-label">API Key:</label>
+								<div class="col-sm-4">
+									<input class="form-control" id="apiKeyFirstname" name="apikey" type="text" value="<?php echo $config::$api_key; ?>" required>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<div class="form-group">
 						<div class="col-sm-offset-2 col-sm-10">
 							<button type="submit" class="btn btn-primary">Save</button>
