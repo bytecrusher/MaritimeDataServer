@@ -21,11 +21,14 @@ class configuration {
     static $install_finished = null;
     static $admin_email_adress = null;
     static $ShowQrCode = null;
-
+    
     function __construct() {
         self::$subdir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
-        //$domain = $_SERVER['SERVER_ADDR'];
-        $domain= $_SERVER['HTTP_HOST'];
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $domain = $_SERVER['HTTP_HOST'];
+        } else {
+            $domain = "/";
+        }
         if (isset($_SERVER['HTTPS']) &&
             ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
             isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&

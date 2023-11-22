@@ -22,7 +22,7 @@ class myFunctions {
 
 	/**
 	 * Check if user is checked in.
-   * @return void true when user is checked in, false when not.
+   * @return bool true when user is checked in, false when not.
 	 */
 	public static function is_checked_in() {
 		return isset($_SESSION['userid']);
@@ -31,7 +31,7 @@ class myFunctions {
 	/**
 	 * Returns a random string.
 	 *
-	 * @return void
+	 * @return string
 	 */
 	public static function random_string() {
 		if(function_exists('openssl_random_pseudo_bytes')) {
@@ -56,7 +56,7 @@ class myFunctions {
 
   /**
   * Get all of my Board by user id.
-  * @return void Boards from Userid.
+  * @return array|null Boards from Userid.
   * @throws Exception — Return Exception message on error.
   */
   public static function getMyBoards($userid) {
@@ -72,11 +72,12 @@ class myFunctions {
         throw new Exception('Unable to getmyboards.');
       }
     }
+    return null;
   }
 
   /**
   * Get Board by Board id. Only one dataset will return.
-  * @return void Board of given id.
+  * @return $Board of given id.
   * @throws Exception — Return Exception message on error.
   */
   public static function getBoardById($boardId) {
@@ -92,11 +93,12 @@ class myFunctions {
         throw new Exception('Unable to getBoardById.');
       }
     }
+    return;
   }
 
   /**
   * Get Board by Board id. Only one dataset will return.
-  * @return void Board of given Sensor id.
+  * @return array|null Board of given Sensor id.
   * @throws Exception — Return Exception message on error.
   */
   public static function getBoardBySensorId($sensorId) {
@@ -112,6 +114,7 @@ class myFunctions {
         throw new Exception('Unable to getBoardById.');
       }
     }
+    return null;
   }
 
   /*
@@ -635,6 +638,16 @@ class myFunctions {
   /*
   * Get all Users from db.
   */
+  public static function getAllUsersWithReceiveNotifications() {
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare("SELECT * FROM users WHERE receive_notifications = 1 ORDER BY id");
+    $result = $statement->execute();
+    return $statement->fetchAll();
+  }
+
+  /*
+  * Get all Users from db.
+  */
   public static function isUserRegistred($email) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("SELECT * FROM users WHERE email = ? ORDER BY id LIMIT 1");
@@ -655,6 +668,19 @@ class myFunctions {
   */
   public static function getAllUniqueBoardIdsFromSensorconfig() {
     //SELECT DISTINCT `boardid` FROM `sensorconfig` WHERE 1; 
+  }
+
+    /*
+  * Get all offline Boards, that needs to notify the owner.
+  */
+  public static function getAllOfflineBoardsToNofiy() {
+    // SELECT `boardconfig`.*, `users`.`email` FROM `boardconfig`, `users` WHERE `offlineDataTimer` != 0 && `alreadyNotified` = 0 && `owner_userid` = `users`.`id`
+    $pdo = dbConfig::getInstance();
+    //$sensortyps = $pdo->prepare("SELECT * FROM sensortypes ORDER BY id");
+    $sensortyps = $pdo->prepare("SELECT boardconfig.*, users.email FROM boardconfig, users WHERE offlineDataTimer != 0 && alreadyNotified = 0 && owner_userid = users.id");
+    $sensortyps->execute();
+    $SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
+    return $SensorData2;
   }
 
 	/**

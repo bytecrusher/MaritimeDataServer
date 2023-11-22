@@ -301,80 +301,82 @@ setInterval(function() {
       <!-- Show temperatures as chart -->
       <!-- TODO: for every board its own canvas. -->
       <div class="container tab-pane fade pl-0 pr-0" id="temperatures">
-        <div id="chart-container">
-          <canvas id="mycanvas"></canvas>
-        </div>
+        <fieldset>
+          <div id="chart-container">
+            <canvas id="mycanvas"></canvas>
+          </div>
+        </fieldset>
       </div>
 
       <!-- Show Board overview -->
       <div class="container tab-pane fade pl-0 pr-0" id="boards">
-        <div class="row mt-2">
-          <?php          
-          foreach($boardObjsArray as $singleBoardObj) {
-            $transmissionpath = 0;
-            $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
-            $boardOnlineStatus = false;
-            $mysensorIdlist = null;
-            foreach($mysensors2 as $singleRowmysensors) {
-              if ($mysensorIdlist == null) {
-                $mysensorIdlist = $singleRowmysensors['id'];
-              } else {
-                $mysensorIdlist = $mysensorIdlist . ", " . $singleRowmysensors['id'];
-              }
-            }
-            $mysensors = myFunctions::getLatestSensorData($mysensorIdlist);
-            foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-              $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
-              $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
-
-              // Show Online / Offline
-              // TODO if demo mode == true, then no limit.
-              if ($varDemoMode) {
-                $maxtimeout = strtotime("-10 Years");
-              } else {
-                $maxtimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
-              }
-
-              if ($dbtimestamp > $maxtimeout) {
-                $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
-                $boardOnlineStatus = true;
-              } else {
-                $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
-              }
-            }
-          ?>
-            <div class='container'>
-              <?php
-              if ($boardOnlineStatus) {
-              ?>
-                <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
-              <?php
-                if ($transmissionpath == 1) {
-                  ?>
-                    <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
-                  <?php
-                } elseif ($transmissionpath == 2) {
-                  ?>
-                    <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
-                  <?php
+        <fieldset>
+            <?php          
+            foreach($boardObjsArray as $singleBoardObj) {
+              $transmissionpath = 0;
+              $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
+              $boardOnlineStatus = false;
+              $mysensorIdlist = null;
+              foreach($mysensors2 as $singleRowmysensors) {
+                if ($mysensorIdlist == null) {
+                  $mysensorIdlist = $singleRowmysensors['id'];
                 } else {
-                    ?>
-                    <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
-                  <?php
+                  $mysensorIdlist = $mysensorIdlist . ", " . $singleRowmysensors['id'];
                 }
-              } else {
-              ?>
-                <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
-              <?php
               }
-              ?>
+              $mysensors = myFunctions::getLatestSensorData($mysensorIdlist);
+              foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
+                $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
+                $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
 
-                <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacaddress()) ?>)</label>
-            </div>
-          <?php
-          }
-          ?>
-        </div>
+                // Show Online / Offline
+                // TODO if demo mode == true, then no limit.
+                if ($varDemoMode) {
+                  $maxtimeout = strtotime("-10 Years");
+                } else {
+                  $maxtimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+                }
+
+                if ($dbtimestamp > $maxtimeout) {
+                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
+                  $boardOnlineStatus = true;
+                } else {
+                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
+                }
+              }
+            ?>
+              <div class='container mt-2'>
+                <?php
+                if ($boardOnlineStatus) {
+                ?>
+                  <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
+                <?php
+                  if ($transmissionpath == 1) {
+                    ?>
+                      <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
+                    <?php
+                  } elseif ($transmissionpath == 2) {
+                    ?>
+                      <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
+                    <?php
+                  } else {
+                      ?>
+                      <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
+                    <?php
+                  }
+                } else {
+                ?>
+                  <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
+                <?php
+                }
+                ?>
+
+                  <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacaddress()) ?>)</label>
+              </div>
+            <?php
+            }
+            ?>
+        </fieldset>
       </div>
 
       <!-- Show temperatures as table, only for admin -->

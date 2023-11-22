@@ -122,7 +122,14 @@ if(sizeof($ttn_post) > 0) {
     $gtw_id = $data->uplink_message->rx_metadata[0]->gateway_ids->gateway_id;
     $gtw_rssi = $data->uplink_message->rx_metadata[0]->rssi;
     $gtw_snr = $data->uplink_message->rx_metadata[0]->snr;
-    $gtw_channel_index = $data->uplink_message->rx_metadata[0]->channel_index;
+
+    if (isset($data->uplink_message->rx_metadata[0]->channel_index)) {
+      $gtw_channel_index = $data->uplink_message->rx_metadata[0]->channel_index;
+    } else {
+      $gtw_channel_index = -1;
+    }
+    
+
     $bandwidth = $data->uplink_message->settings->data_rate->lora->bandwidth;
     $sf = $data->uplink_message->settings->data_rate->lora->spreading_factor;
 

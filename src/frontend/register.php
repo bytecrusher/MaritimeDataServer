@@ -1,4 +1,11 @@
 <?php
+
+require_once(__DIR__ . "/func/myFunctions.func.php");
+require_once("func/dbUpdateData.php");
+
+$config = new configuration();
+$varadmin_email_adress = $config::$admin_email_adress;
+
 if (count($_POST) > 0) {
     /* Form Required Field Validation */
     foreach ($_POST as $key => $value) {
@@ -31,35 +38,22 @@ if (count($_POST) > 0) {
     }
 
     if (! isset($message)) {
-        require_once __DIR__ . '/register/DataSource.php';
-        $database = new DataSource();
-        $query = "SELECT * FROM users where email = ?";
-        $paramType = 's';
-        $paramValue = array(
-            $_POST["userEmail"]
-        );
-        $count = $database->getRecordCount($query, $paramType, $paramValue);
+        $dbdata = myFunctions::isUserRegistred($_POST["userEmail"]);
 
-        if ($count == 0) {
+        if (!$dbdata) {
             $hashedpassword = password_hash(($_POST["password"]), PASSWORD_DEFAULT);
-            $query = "INSERT INTO users (email, password, firstname, lastname) VALUES (?, ?, ?, ?)";
-            $paramType = 'ssss';
-            $paramValue = array(
-                $_POST["userEmail"],
-                $hashedpassword,
-                $_POST["firstName"],
-                $_POST["lastName"]
-            );
-            $current_id = $database->insert($query, $paramType, $paramValue);
+
+            $current_id = dbUpdateData::insertUser($_POST["userEmail"], $hashedpassword, $_POST["firstName"], $_POST["lastName"]);
+
             if (! empty($current_id)) {
                 $actual_link = "http://$_SERVER[HTTP_HOST]" . "/frontend/activate.php?id=" . $current_id;
                 $toEmail = $_POST["userEmail"];
                 $subject = "User Registration Activation Email";
                 $content = "Hi " . $_POST["firstName"] . " click this link to activate your account. <a href='" . $actual_link . "'>" . $actual_link . "</a><br>Your MDS Team.";
-                // TODO: replace "from" into variable namfrom config.
-                $mailHeaders = "From: MDS User Registration <info@derguntmar.de>\r\n";
-                $mailHeaders .= "Reply-To: info@derguntmar.de\r\n";
-                $mailHeaders .= "Content-Type: text/html\r\n";
+                $mailHeaders = "From: MDS User Registration <" . $varadmin_email_adress . ">\r\n";
+                $mailHeaders .= "Reply-To: " . $varadmin_email_adress . "\r\n";
+                $mailHeaders .= "Content-Type: text/html\r\n";                
+
                 if (mail($toEmail, $subject, $content, $mailHeaders)) {
                     $message = "You have registered and the activation mail is sent to your email. Click the activation link to activate you account.";
                     $type = "success";
@@ -79,10 +73,8 @@ if (count($_POST) > 0) {
 <head>
 <?php
 	session_start();
-	//require_once("func/dbConfig.func.php");
 	require_once(__DIR__ . "/func/myFunctions.func.php");
 	require_once(__DIR__ . "/func/user.class.php");
-	//require_once("func/dbUpdateData.php");
 	include(__DIR__ . "/common/header.inc.php");
 ?>
 <title>User Registration</title>
@@ -109,7 +101,6 @@ if (count($_POST) > 0) {
             echo $error_msg;
         }
     ?>
-    <!--div class="phppot-container"-->
     <div class="container main-container registration-form">
     <?php if(isset($message)) { 
             $success_msg = $message;
@@ -158,7 +149,6 @@ if (count($_POST) > 0) {
         document.getElementById("loader-icon").style.display = 'block';
         document.getElementById("btn-submit").style.display = 'none';
     }
-    //}
     </script>
 <?php
     include("./common/footer.inc.php")

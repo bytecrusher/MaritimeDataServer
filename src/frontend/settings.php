@@ -16,6 +16,7 @@ $config  = new configuration();
 $varDemoMode = $config::$demoMode;
 $varShowQrCode = $config::$ShowQrCode;
 
+
 //Check that the user is logged in
 if (isset($_SESSION['userobj'])) {
 	$userobj = unserialize($_SESSION['userobj']);
@@ -42,6 +43,11 @@ if(isset($_GET['save'])) {
 		}
 		try {
 			$userobj->setUserTimeZone($_POST);
+		} catch (Exception $e) {
+			$error_msg = $e->getMessage();
+		}
+		try {
+			$userobj->setReceiveNotifications($_POST);
 		} catch (Exception $e) {
 			$error_msg = $e->getMessage();
 		}
@@ -261,7 +267,7 @@ th.rotated-text > div > span {
 					?>
 					<div class="form-group">
 						<div class="row">
-							<label for="inputLastname" class="col-sm-2 control-label">Timezone</label>
+							<label for="inputTimezone" class="col-sm-2 control-label">Timezone</label>
 							<?php $userTimezone = htmlentities($userobj->getTimezone()); ?>
 							<div class="col-sm-4">
 							<select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
@@ -279,6 +285,30 @@ th.rotated-text > div > span {
 								<?php } ?>
 							</select>
 							</div>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<div class="row">
+							<?php
+								if ($userobj->getReceiveNotifications()) {
+								?>
+									<div class="col col-sm-2">Receive notifications?</div>
+									<label class="col col-sm-4">
+											<input type='hidden' class='form-check-input' id='receiveNotifications' name='receiveNotifications' value='0'>
+											<input type='checkbox' class='form-check-input' id='receiveNotifications' name='receiveNotifications' checked=true value='1'>
+									</label>
+								<?php
+								} else {
+								?>
+									<div class="col col-sm-2">Receive notifications?</div>
+									<label class="col col-sm-4">
+											<input type='hidden' class='form-check-input' id='receiveNotifications' name='receiveNotifications' checked=true value='0'>
+											<input type='checkbox' class='form-check-input' id='receiveNotifications' name='receiveNotifications' value='1'>
+									</label>
+								<?php
+								}
+							?>
 						</div>
 					</div>
 
@@ -480,7 +510,6 @@ th.rotated-text > div > span {
 			</div>
 
 			<!-- Configure the user's dashboard -->
-			<!-- TODO add function, for adding a board (with MAC or TTN ID to the user) -->
 			<div role="tabpanel" class="tab-pane" id="confDashboard">
 				<div class="panel panel-default">
 					<form action="?save=dashboard_data" method="post" class="form-horizontal">
@@ -669,48 +698,68 @@ th.rotated-text > div > span {
 			<!-- Modification of Server Setting -->
 			<div role="tabpanel" class="tab-pane" id="serverSetting">
 				<form action="?save=serverSetting" method="post" class="form-horizontal">
-					<div class="panel panel-default pt-2 pb-2">
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
 						<?php
 							if ($varDemoMode) {
 							?>
-								<label>
-								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>   Demo mode (tbd)</label>
+								<div class="col col-sm-2">
+									Demo mode</div>
+								<label class="col col-sm-4">
+										<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
+										<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>
+								</label>
 							<?php
 							} else {
 							?>
-								<label>
-								<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
-								<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>
-								Demo mode (tbd)</label>
+								<div class="col col-sm-2">
+									Demo mode</div>
+								<label class="col col-sm-4">
+										<input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
+										<input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>
+								</label>
 							<?php
 							}
 						?>
+						</div>
+						</div>
 					</div>
-					<div class="panel panel-default pt-2">
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
 						<?php
 							if ($varShowQrCode) {
 							?>
-								<label>
-								<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='0'>
-								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='1'>   Show QR Code</label>
+								<div class="col col-sm-2">
+									Show QR Code
+								</div>
+								<label class="col col-sm-4">
+										<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='0'>
+										<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='1'>
+								</label>
 							<?php
 							} else {
 							?>
-								<label>
-								<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='0'>
-								<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='1'>
-								Show QR Code</label>
+								<div class="col col-sm-2">
+									Show QR Code
+								</div>
+								<label class="col col-sm-4">
+										<input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='0'>
+										<input type='checkbox' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='1'>
+								</label>
 							<?php
 							}
 						?>
+						</div>
+						</div>
 					</div>
 
 					<div class="panel panel-default">
 						<div class="form-group">
 							<div class="row">
-								<label for="apiKeyFirstname" class="col-sm-2 control-label">API Key:</label>
-								<div class="col-sm-4">
+								<label for="apiKeyFirstname" class="col col-sm-2 control-label">API Key:</label>
+								<div class="col col-sm-4">
 									<input class="form-control" id="apiKeyFirstname" name="apikey" type="text" value="<?php echo $config::$api_key; ?>" required>
 								</div>
 							</div>
@@ -718,7 +767,7 @@ th.rotated-text > div > span {
 					</div>
 
 					<div class="form-group">
-						<div class="col-sm-offset-2 col-sm-10">
+						<div class="col col-sm-offset-2 col-sm-10">
 							<button type="submit" class="btn btn-primary">Save</button>
 						</div>
 					</div>

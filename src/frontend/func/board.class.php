@@ -14,12 +14,13 @@ class board //implements JsonSerializable
     
     /**
     * Method for construct the class.
-    * @param boardid id of the baord
+    * @param $boardid id of the baord
     */
     public function __construct($boardId)
     {
         $pdo = dbConfig::getInstance();
-        $statement = $pdo->prepare("SELECT * FROM boardconfig WHERE id = ?");
+        //$statement = $pdo->prepare("SELECT * FROM boardconfig WHERE id = ?");
+        $statement = $pdo->prepare("SELECT boardconfig.*, boardtype.name as boardtypename FROM boardconfig LEFT JOIN boardtype ON boardtype.id = boardconfig.boardtypeid  WHERE boardconfig.id =?");
         $result = $statement->execute(array($boardId));
         $this->boardobj = $statement->fetch(PDO::FETCH_OBJ);
         //var_dump(gettype($this->boardobj));
@@ -28,7 +29,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board id
      * 
-     * @return id
+     * @return $id
      */
     public function getId() {
         return $this->boardobj->id;
@@ -37,7 +38,7 @@ class board //implements JsonSerializable
     /**
      * Returns the boardobj
      * 
-     * @return boardobj
+     * @return $boardobj
      */
     public function boardobj() {
         return $this->boardobj;
@@ -46,7 +47,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board name
      * 
-     * @return name of the board
+     * @return $name of the board
      */
     public function getName() {
         return $this->boardobj->name;
@@ -55,7 +56,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board macaddress
      * 
-     * @return macaddress of the board
+     * @return $macaddress of the board
      */
     public function getMacaddress() {
         return $this->boardobj->macaddress;
@@ -64,7 +65,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board location
      * 
-     * @return location of the board
+     * @return $location of the board
      */
     public function getLocation() {
         return $this->boardobj->location;
@@ -73,7 +74,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board description
      * 
-     * @return description of the board
+     * @return $description of the board
      */
     public function getDescription() {
         return $this->boardobj->description;
@@ -82,7 +83,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board performupdate
      * 
-     * @return performupdate of the board
+     * @return bool $performupdate of the board
      */
     public function getPerformUpdate() {
         return $this->boardobj->performupdate;
@@ -91,7 +92,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board firmwareversion
      * 
-     * @return firmwareversion of the board
+     * @return $firmwareversion of the board
      */
     public function getFirmwareversion() {
         return $this->boardobj->firmwareversion;
@@ -100,7 +101,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board alarmOnUnavailable
      * 
-     * @return alarmOnUnavailable of the board
+     * @return $alarmOnUnavailable of the board
      */
     public function getAlarmOnUnavailable() {
         return $this->boardobj->alarmOnUnavailable;
@@ -109,16 +110,25 @@ class board //implements JsonSerializable
     /**
      * Returns the board updateDataTimer
      * 
-     * @return updateDataTimer of the board
+     * @return $updateDataTimer of the board
      */
     public function getUpdateDataTimer() {
         return $this->boardobj->updateDataTimer;
     }
 
     /**
+     * Returns the board owner_userid
+     * 
+     * @return $owner_userid of the board
+     */
+    public function getOwnerUserid() {
+        return $this->boardobj->owner_userid;
+    }
+
+    /**
      * Returns the board offlineDataTimer
      * 
-     * @return offlineDataTimer of the board
+     * @return $offlineDataTimer of the board
      */
     public function getOfflineDataTimer() {
         return $this->boardobj->offlineDataTimer;
@@ -127,17 +137,25 @@ class board //implements JsonSerializable
     /**
      * Returns the board boardtypeid
      * 
-     * @return boardtypeid of the board
+     * @return $boardtypeid of the board
      */
-    // TODO extend to return the boardtypename
     public function getBoardtypeId() {
         return $this->boardobj->boardtypeid;
     }
 
     /**
+     * Returns the board boardtypename
+     * 
+     * @return $boardtypename of the board
+     */
+    public function getBoardtypeName() {
+        return $this->boardobj->boardtypename;
+    }
+
+    /**
      * Returns the board ttn_app_id
      * 
-     * @return ttn_app_id of the board
+     * @return $ttn_app_id of the board
      */
     public function getTtnAppId() {
         return $this->boardobj->ttn_app_id;
@@ -146,7 +164,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board ttn_dev_id
      * 
-     * @return ttn_dev_id of the board
+     * @return $ttn_dev_id of the board
      */
     public function getTtnDevId() {
         return $this->boardobj->ttn_dev_id;
@@ -155,7 +173,7 @@ class board //implements JsonSerializable
     /**
      * Returns the board onDashboard
      * 
-     * @return onDashboard of the board
+     * @return $onDashboard of the board
      */
     public function isOnDashboard() {
         return $this->boardobj->onDashboard;
