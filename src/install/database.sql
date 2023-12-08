@@ -228,8 +228,8 @@ CREATE TABLE `users` (
   `passwordcode` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `passwordcode_time` date DEFAULT NULL,
   `dashboardUpdateInterval` int NOT NULL DEFAULT '15',
-  `Timezone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
-  `receive_notifications` tinyint NOT NULL DEFAULT '0',
+  `Timezone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `receive_notifications` tinyint NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

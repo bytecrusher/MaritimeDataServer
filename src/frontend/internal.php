@@ -167,7 +167,7 @@ setInterval(function() {
 			?>
     </ul>
 
-    <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px;">
+    <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px; background: white">
 
       <!-- Show dashboard -->
       <div class="container tab-pane active position-relative" id="dashboard" style="padding-left: 10px; padding-right: 10px;">
@@ -197,7 +197,7 @@ setInterval(function() {
                           <?php
                           }
                         ?>
-                        <?php echo $singleRowmyboard->getName() ?>
+                        <div style="float: right; margin-top: 3px; margin-left: 10px"><?php echo $singleRowmyboard->getName() ?></div>
                         </legend>
                           <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>' style="display: flex; justify-content: center; flex-wrap: wrap;">
                 <?php

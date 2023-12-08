@@ -21,6 +21,7 @@ class configuration {
     static $install_finished = null;
     static $admin_email_adress = null;
     static $ShowQrCode = null;
+    static $send_emails = null;
     
     function __construct() {
         self::$subdir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
@@ -53,18 +54,22 @@ class configuration {
         self::$install_finished = $jsonData['install_finished'];
         self::$admin_email_adress = $jsonData['admin_email_adress'];
         self::$ShowQrCode = $jsonData['ShowQrCode'];
+        self::$send_emails = $jsonData['send_emails'];
     }
 
-    function setDemoMode($post) {
+    function saveServerSettings($post) {
         try {
             self::$demoMode = $post['demoMode'];
             self::$ShowQrCode = $post['ShowQrCode'];
+            self::$api_key = $post['apikey'];
+            self::$send_emails = $post['send_emails'];
             $path = __DIR__ . '/config.json';
             $jsonString = file_get_contents($path);
             $jsonData = json_decode($jsonString, true);
             $jsonData['demoMode'] = $post['demoMode'];
             $jsonData['ShowQrCode'] = $post['ShowQrCode'];
             $jsonData['api_key'] = $post['apikey'];
+            $jsonData['send_emails'] = $post['send_emails'];
             $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
             // Write in the file
             $fp = fopen($path, 'w');

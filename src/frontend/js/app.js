@@ -20,6 +20,7 @@ $(document).ready(async function(){
     var borderColor = null;
     var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
     var hoverBorderColor = 'rgba(0, 100, 0, 1)';
+    var varsensorId = null;
     //var hoverBorderColor = Math.floor(Math.random()*16777215).toString(16);
 
     InitialSetupChart();

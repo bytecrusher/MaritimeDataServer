@@ -15,6 +15,7 @@ require_once("func/writeToLogFunction.func.php");
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;
 $varShowQrCode = $config::$ShowQrCode;
+$varSend_emails = $config::$send_emails;
 
 
 //Check that the user is logged in
@@ -135,7 +136,7 @@ if(isset($_GET['save'])) {
 	}
 	else if($save == 'serverSetting') {
 		try {
-			$config->setDemoMode($_POST);
+			$config->saveServerSettings($_POST);
 			$varDemoMode = $config::$demoMode;
 			//$apikey
 			$success_msg = "DemoMode saved.";
@@ -232,7 +233,7 @@ th.rotated-text > div > span {
 		</ul>
 
 		<!-- Personal data -->
-		<div class="tab-content">
+		<div class="tab-content" style="background: white">
 			<div role="tabpanel" class="tab-pane active" id="data">
 				<form action="?save=personal_data" method="post" class="form-horizontal">
 					<div class="form-group">
@@ -268,7 +269,7 @@ th.rotated-text > div > span {
 					<div class="form-group">
 						<div class="row">
 							<label for="inputTimezone" class="col-sm-2 control-label">Timezone</label>
-							<?php $userTimezone = htmlentities($userobj->getTimezone()); ?>
+							<?php $userTimezone = htmlentities($userobj->getTimezone() ?? ""); ?>
 							<div class="col-sm-4">
 							<select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
 								<option value="0">Please, select your timezone</option>
@@ -758,11 +759,42 @@ th.rotated-text > div > span {
 					<div class="panel panel-default">
 						<div class="form-group">
 							<div class="row">
-								<label for="apiKeyFirstname" class="col col-sm-2 control-label">API Key:</label>
+								<label for="apiKey" class="col col-sm-2 control-label">API Key:</label>
 								<div class="col col-sm-4">
-									<input class="form-control" id="apiKeyFirstname" name="apikey" type="text" value="<?php echo $config::$api_key; ?>" required>
+									<input class="form-control" id="apiKey" name="apikey" type="text" value="<?php echo $config::$api_key; ?>" required>
 								</div>
 							</div>
+						</div>
+					</div>
+
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
+
+							<?php
+							if ($varSend_emails) {
+							?>
+								<div class="col col-sm-2">
+								Send emails:
+								</div>
+								<label class="col col-sm-4">
+										<input type='hidden' class='form-check-input' id='send_emails' name='send_emails' value='0'>
+										<input type='checkbox' class='form-check-input' id='send_emails' name='send_emails' checked=true value='1'>
+								</label>
+							<?php
+							} else {
+							?>
+								<div class="col col-sm-2">
+								Send emails:
+								</div>
+								<label class="col col-sm-4">
+										<input type='hidden' class='form-check-input' id='send_emails' name='send_emails' checked=true value='0'>
+										<input type='checkbox' class='form-check-input' id='send_emails' name='send_emails' value='1'>
+								</label>
+							<?php
+							}
+						?>
+						</div>
 						</div>
 					</div>
 
