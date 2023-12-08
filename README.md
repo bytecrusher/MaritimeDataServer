@@ -1,36 +1,36 @@
 # Intro
-**Maritime Data Server** is the central data (cloud) server for Maritime Data. 
-It stores the Data that come from, for exmaple **MDC** (Maritime Data Collector or LoRa-Bootsmonitor or any other device), into a database and gives the user a GUI to show the data and do some configurations.
+**Maritime Data Server** is the central Data (cloud) server for Maritime Data. 
+It stores the Data that come from, for exmaple **MDC** (Maritime Data Collector or LoRa-Bootsmonitor or any other device), into a database and gives the user a GUI to show the Data and do some configurations.
 
 The initial idea was, to have the possibility to be able to see some Maritime Data (temperature, battery voltages, bilge alarm) while you are not on the boat.  
 
-The **MDC** it a small board with an ESP32 and a few sensors, that collects the sensor data and transfer these data to the MDS.
+The **MDC** it a small board with an ESP32 and a few sensors, that collects the sensor Data and transfer these Data to the MDS.
 You will find the **MDC** documentation under **https://github.com/bytecrusher/MaritimeDataCollectorSmall**
 
 ## **MDS** (Maritime Data Server)
 
-The **Maritime Data Server** is a web application to store data and display data for the user.
-It requres a mySQL Database for storing the data and a webserver with php support to display the informations with data.
-The **MDS** can display the data from sensors in graph/gauges or charts.
+The **Maritime Data Server** is a web application to store Data and display Data for the user.
+It requres a mySQL Database for storing the Data and a webserver with php support to display the informations with Data.
+The **MDS** can display the Data from sensors in graph/gauges or charts.
 Also it is possible to configure your boards and sensors.
 
 ## Description
-The server is organized in a Backend (API for receiving data from collector and ttn, send emails) and a Frontend for displaying data in the users Browser.  
-The Backend stores the data into the DB. It also checks if data are valid and board and sensors are existing in the DB, otherwise new DB records will be create.  
-For the Frontend the user needs to login. Now the user is able to do some configurations or display some data.
+The server is organized in a Backend (API for receiving Data from collector and TTN, send emails) and a Frontend for displaying Data in the users Browser.  
+The Backend stores the Data into the DB. It also checks if Data are valid and board and sensors are existing in the DB, otherwise new DB records will be create.  
+For the Frontend the user needs to login. Now the user is able to do some configurations or display some Data.
 
 #### Functions / ToDos Status / Bugs
 - [x] MDS with Web interface
 - [x] Alert via email an Telegram (need more configuration)
-- [x] Chart view of data
+- [x] Chart view of Data
 - [x] configure boards and sensors in web interface
 - [x] change client communication to JSON.
-- [x] get data from TTN
+- [x] get Data from TTN
 - [ ] Change static email addresses (sender) into variables. These will be defined in the install script.
 
 ## Folder description
 
-- **docu_donotdeploy** folder contains data and Images for documentation.
+- **docu_donotdeploy** folder contains Data and Images for documentation.
 - **src**
      - **frontend** the frontend files for this web project
           - **api** api files for requests from JS.
@@ -44,12 +44,12 @@ For the Frontend the user needs to login. Now the user is able to do some config
      - **logs** log files for debugging.
      - **node_modules** (maybe not exist right now, because it will be created after running npm)
      - **otafirmware** contains OTA files for update ESP.
-     - **receiver** functions for receiving data from MDCs.
+     - **receiver** functions for receiving Data from MDCs.
 
 
 #### Installation
 Copy all **MDS** files from the "src" folder into your htdocs dir.
-Create a new Database (with phpmyadmin) and create a new User with write privileges to this database.
+Create a new Database (with phpmyadmin) and create a new User with write privileges to this Database.
 Open **http://yourdomain/maritimedataserver/install/index.php** in your Browser and step through the instalation steps.
 After install is finished, remove the dir named "install" (for security reasons).
 
@@ -97,7 +97,7 @@ In Safari i use "XDebugToggleExtension 1.2".
 For Debug you have to go to "Ausführen" - "Debugger starte" and the green play button (F5).
 
 ## Sensor Schemas
-Due different types of sensors and try to reduce the amount of data transferred via wifi (and later lora) it is a good idea to have a schema for sensors to transfer the data.
+Due different types of sensors and try to reduce the amount of Data transferred via wifi (and later lora) it is a good idea to have a schema for sensors to transfer the Data.
 Also there is no need to deliver the name of the value.  
 If all values deliver in the correct order, it is clear which value is wich.
 
