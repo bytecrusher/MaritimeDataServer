@@ -1,8 +1,8 @@
 # Intro
-**Maritime Data Server** is the central data (cloud) server for maritime data. 
-It stores the data that come from, for exmaple **MDC** (Maritime Data Collector or LoRa-Bootsmonitor or any other device), into a database and gives the user a GUI to show the data and do some configurations.
+**Maritime Data Server** is the central data (cloud) server for Maritime Data. 
+It stores the Data that come from, for exmaple **MDC** (Maritime Data Collector or LoRa-Bootsmonitor or any other device), into a database and gives the user a GUI to show the data and do some configurations.
 
-The initial idea was, to have the possibility to be able to see some maritime data (temperature, battery voltages, bilge alarm) while you are not on the boat.  
+The initial idea was, to have the possibility to be able to see some Maritime Data (temperature, battery voltages, bilge alarm) while you are not on the boat.  
 
 The **MDC** it a small board with an ESP32 and a few sensors, that collects the sensor data and transfer these data to the MDS.
 You will find the **MDC** documentation under **https://github.com/bytecrusher/MaritimeDataCollectorSmall**
