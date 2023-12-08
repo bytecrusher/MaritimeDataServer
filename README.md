@@ -1,23 +1,23 @@
 # Intro
-**Maritime Data Server** is the central data (cloud) server for Maritime Data. 
-It stores the data that come from **MDC** (Maritime Data Collector) (for example LoRa-Bootsmonitor or any other device) in a database and gives the user a GUI to show the data and do some configurations.
+**Maritime Data Server** is the central data (cloud) server for maritime data. 
+It stores the data that come from, for exmaple **MDC** (Maritime Data Collector or LoRa-Bootsmonitor or any other device), into a database and gives the user a GUI to show the data and do some configurations.
 
-The initial idea was, to have a possibility to be able to see some Maritime data (temperature, battery voltages, bilge alarm) while you are not on the boat.  
+The initial idea was, to have the possibility to be able to see some maritime data (temperature, battery voltages, bilge alarm) while you are not on the boat.  
 
-The **MDC** it a small board with an ESP32 and a few sensors, that collects the sensor data and transfer it to the server.
+The **MDC** it a small board with an ESP32 and a few sensors, that collects the sensor data and transfer these data to the MDS.
 You will find the **MDC** documentation under **https://github.com/bytecrusher/MaritimeDataCollectorSmall**
 
 ## **MDS** (Maritime Data Server)
 
-The **Maritime Data Server** is a application to store data and display data for the user.
-It requres a SQL Database for storing the data and a webserver to display the pages with data.
-With **MDS** you can view data from sensor in graph or charts.
+The **Maritime Data Server** is a web application to store data and display data for the user.
+It requres a mySQL Database for storing the data and a webserver with php support to display the informations with data.
+The **MDS** can display the data from sensors in graph/gauges or charts.
 Also it is possible to configure your boards and sensors.
 
 ## Description
-The server is organized in a Backend (API for receiving data from collector) and a Frontend for displaying data in a Browser for the user.  
-The Backend stores the data in a DB. It also checks if data are valid and board and sensors are existing in the DB, otherwise new DB records will be create.  
-For the Frontend the user needs to login. Now the user is able to do some configurations or show some data.
+The server is organized in a Backend (API for receiving data from collector and ttn, send emails) and a Frontend for displaying data in the users Browser.  
+The Backend stores the data into the DB. It also checks if data are valid and board and sensors are existing in the DB, otherwise new DB records will be create.  
+For the Frontend the user needs to login. Now the user is able to do some configurations or display some data.
 
 #### Functions / ToDos Status / Bugs
 - [x] MDS with Web interface
@@ -30,19 +30,19 @@ For the Frontend the user needs to login. Now the user is able to do some config
 
 ## Folder description
 
-- **docu_donotdeploy** folder contains data for documentation.
-     - **images** Images for documentation.
+- **docu_donotdeploy** folder contains data and Images for documentation.
 - **src**
      - **frontend** the frontend files for this web project
-          - **api** api files for request from JS.
+          - **api** api files for requests from JS.
           - **common** common files like "header" and "footer".
           - **css** stylesheets
-          - **func** php functions for internal use (DB connection, user, boards...).
+          - **func** php functions for internal use (DB connection, users, boards...).
           - **img** images for pages, i.e. board images.
           - **js** javascript files.
           - **register** Files for new user registering.
      - **install** scripts to install and prepare sql DB, create the tables and the admin user.
      - **logs** log files for debugging.
+     - **node_modules** (maybe not exist right now, because it will be created after running npm)
      - **otafirmware** contains OTA files for update ESP.
      - **receiver** functions for receiving data from MDCs.
 
@@ -64,7 +64,7 @@ For running the **MDS** you need a (Apache) Webserver with PHP support and a MyS
 If you run **MDC**s outside our local network, your **MDS** needs to be public (TTN should be able to reach this server).
 
 ###### Development
-For development is differen solutions.
+For development i use different solutions.
 First is local Docker container that runs on my coding computer.
 Second i have on my webhosting a subdomain, that pulls my "developtment" branch from guthub there.
 
@@ -80,13 +80,7 @@ I configured my VSC to be able work direct in the htdocs folder if apache.
 So there is no manual synch of files needed.
 
 Second wave:
-in my webhosting subdomain, i setup my respository, so i am able to run a pull request from the plesk panel and have tha latest development branch there.
-
-######## My Old way (currently unsused):
-For development i use a Bitnami image for XAMPP Stack 8.1.1-2 under MacOS.  
-In **Applications/XAMPP/xamppfiles/htdocs** i put the project from git.
-
-Now the page is available at **http://yourdomain/maritimedataserver**
+in my webhosting subdomain, i setup my respository, so i am able to run a pull request from the plesk panel and have tha latest development branch on the webspace.
 
 ###### Debugging with xDebug
 for php debugging i use xdebug.
