@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MDS - Maritime Data Server</title>
     <?php
+      $config = new configuration();
       include(__DIR__ . "/includes.php");
     ?>
     <style>

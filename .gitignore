@@ -18,5 +18,4 @@ otafirmware/*
 myREADME.md
 config.json
 src/config.json
-src/node_modules/*
 simulator/mdsSimulatorConfig.php

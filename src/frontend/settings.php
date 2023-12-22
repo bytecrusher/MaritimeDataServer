@@ -186,8 +186,11 @@ th.rotated-text > div > span {
 }
 </style>
 
-<link href="../node_modules/bootstrap5-toggle/css/bootstrap5-toggle.min.css" rel="stylesheet">
-<script src="../node_modules/bootstrap5-toggle/js/bootstrap5-toggle.min.js"></script>
+<!--link href="../node_modules/bootstrap5-toggle/css/bootstrap5-toggle.min.css" rel="stylesheet"-->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css" rel="stylesheet">
+
+<!--script src="../node_modules/bootstrap5-toggle/js/bootstrap5-toggle.min.js"></script-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/js/bootstrap5-toggle.jquery.min.js"></script>
 
 <div class="jumbotron" style="padding: 1rem 1rem;">
 	<div class="container">
@@ -836,9 +839,6 @@ th.rotated-text > div > span {
 		</div>
 	</div>
 </div>
-<?php
-include("common/footer.inc.php");
-?>
 <script>
 	$(function() {
 		var hash = document.location.hash;
@@ -861,3 +861,7 @@ $(function() {
   })
 
 </script>
+
+<?php
+include("common/footer.inc.php");
+?>

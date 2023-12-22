@@ -1,6 +1,8 @@
-<link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css" crossorigin=""/>
+<!--link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css" crossorigin=""/-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.css" crossorigin=""/>
 
-<script src="../node_modules/leaflet/dist/leaflet.js" crossorigin=""></script>
+<!--script src="../node_modules/leaflet/dist/leaflet.js" crossorigin=""></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.js" crossorigin=""></script>
 
 <div id="map"></div>
 
@@ -27,8 +29,9 @@ $('#hrefmap').click( function (e) {
     myboardidMarkerGroup = new Array ();
           
     var greenIcon = new L.Icon({
-      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-green.png',
-      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
+      //iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-green.png',
+      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-green.png',
+      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],
@@ -36,8 +39,10 @@ $('#hrefmap').click( function (e) {
     });
 
     var blueIcon = new L.Icon({
-      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-blue.png',
-      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
+      //iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-blue.png',
+      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-blue.png',
+
+      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],
@@ -45,8 +50,8 @@ $('#hrefmap').click( function (e) {
     });
 
     var orangeIcon = new L.Icon({
-      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-orange.png',
-      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
+      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-orange.png',
+      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],
@@ -54,8 +59,8 @@ $('#hrefmap').click( function (e) {
     });
 
     var redIcon = new L.Icon({
-      iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-red.png',
-      shadowUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-shadow.png',
+      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-red.png',
+      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],

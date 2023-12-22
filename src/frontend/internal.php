@@ -28,21 +28,34 @@
   $varDemoMode = $config::$demoMode;
 
 ?>
-<link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
+<!--link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css" -->
+<link rel="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
 
-<link href="../node_modules/fontawesome-free/css/fontawesome.css" rel="stylesheet">
-<link href="../node_modules/fontawesome-free/css/fontawesome.min.css" rel="stylesheet">
-<link href="../node_modules/fontawesome-free/css/brands.css" rel="stylesheet">
-<link href="../node_modules/fontawesome-free/css/solid.css" rel="stylesheet">
+<!--link href="../node_modules/fontawesome-free/css/fontawesome.css" rel="stylesheet"-->
+<!--link href="../node_modules/fontawesome-free/css/fontawesome.min.css" rel="stylesheet"-->
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/fontawesome.min.css">
 
-<script defer src="../node_modules/fontawesome-free/js/brands.js"></script>
-<script defer src="../node_modules/fontawesome-free/js/solid.js"></script>
-<script defer src="../node_modules/fontawesome-free/js/fontawesome.js"></script>
+<!--link href="../node_modules/fontawesome-free/css/brands.css" rel="stylesheet"-->
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/brands.css" rel="stylesheet">
+
+<!--link href="../node_modules/fontawesome-free/css/solid.css" rel="stylesheet"-->
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/solid.css" rel="stylesheet">
+
+<!--script defer src="../node_modules/fontawesome-free/js/brands.js"></script-->
+<script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/brands.js"></script>
+
+<!--script defer src="../node_modules/fontawesome-free/js/solid.js"></script-->
+<script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/solid.js"></script>
+<!--script defer src="../node_modules/fontawesome-free/js/fontawesome.js"></script-->
+<script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/fontawesome.min.js"></script>
 
 <script src="../node_modules/chart.js/dist/chart.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.js"><script-->
+
 <script src="./js/app.js"></script>
 <script src="./js/gauge.js"></script>
-<script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script>
+<!--script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
 
 <?php
   if ($currentUser != false) {
@@ -411,7 +424,6 @@ setInterval(function() {
   </div>
 
 </div>
-
     <script>
       $('#click_lockUnlock').click(function() {
         $("i", this).toggleClass("bi bi-lock-fill bi bi-unlock-fill");

@@ -6,10 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Install script</title>
 
-  <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
-  <link href="../frontend/css/style.css" rel="stylesheet">
-  <link rel="stylesheet" href="../node_modules/bootstrap-icons/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
+  <?php include(__DIR__ . "/../frontend/common/includes.php"); ?>
+
   <style>
     #pageMessages {
     position: fixed;
@@ -226,16 +224,6 @@
     </div>
   </div>
 
-  <div class="container mt-3">
-    <hr style="color: lightgrey; opacity: 100">
-    <footer>
-      <p>Powered by <a href="http://www.derguntmar.de" target="_blank">derguntmar.de</a></p>
-    </footer>
-  </div>
-  <script src="../node_modules/jquery/dist/jquery.js"></script>
-  <script src="../node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
-  <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-  <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   $('.btnNext').click(function() {
   const currentTab = $('.nav-tabs .active').attr('id');
@@ -430,5 +418,8 @@ function createAlert(summary, details, severity, dismissible, autoDismiss, appen
   }
 }
 </script>
+
+<?php include(__DIR__ . "/../frontend/common/footer.inc.php"); ?>
+
 </body>
 </html>
