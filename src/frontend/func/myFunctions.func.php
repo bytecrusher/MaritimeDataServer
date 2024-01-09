@@ -22,7 +22,7 @@ class myFunctions {
 
 	/**
 	 * Check if user is checked in.
-   * @return void true when user is checked in, false when not.
+   * @return bool true when user is checked in, false when not.
 	 */
 	public static function is_checked_in() {
 		return isset($_SESSION['userid']);
@@ -31,7 +31,7 @@ class myFunctions {
 	/**
 	 * Returns a random string.
 	 *
-	 * @return void
+	 * @return string
 	 */
 	public static function random_string() {
 		if(function_exists('openssl_random_pseudo_bytes')) {
@@ -56,7 +56,7 @@ class myFunctions {
 
   /**
   * Get all of my Board by user id.
-  * @return void Boards from Userid.
+  * @return array|null Boards from Userid.
   * @throws Exception — Return Exception message on error.
   */
   public static function getMyBoards($userid) {
@@ -72,11 +72,12 @@ class myFunctions {
         throw new Exception('Unable to getmyboards.');
       }
     }
+    return null;
   }
 
   /**
   * Get Board by Board id. Only one dataset will return.
-  * @return void Board of given id.
+  * @return $Board of given id.
   * @throws Exception — Return Exception message on error.
   */
   public static function getBoardById($boardId) {
@@ -92,11 +93,12 @@ class myFunctions {
         throw new Exception('Unable to getBoardById.');
       }
     }
+    return;
   }
 
   /**
   * Get Board by Board id. Only one dataset will return.
-  * @return void Board of given Sensor id.
+  * @return array|null Board of given Sensor id.
   * @throws Exception — Return Exception message on error.
   */
   public static function getBoardBySensorId($sensorId) {
@@ -112,12 +114,13 @@ class myFunctions {
         throw new Exception('Unable to getBoardById.');
       }
     }
+    return null;
   }
 
   /*
   * Get Board by Board macaddress. Only one dataset will return.
   */
-  public static function getBoardByMac($boardMac) {
+  /*public static function getBoardByMac($boardMac) {
     if (!$boardMac == null) {
       $pdo = dbConfig::getInstance();
       $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE macaddress = '" . $boardMac . "' ORDER BY id LIMIT 1");
@@ -125,7 +128,7 @@ class myFunctions {
       $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
       return $myboards2;
     }
-  }
+  }*/
 
 /*
   * Get Board by Board TTN appid and devid. Only one dataset will return.
@@ -177,24 +180,24 @@ class myFunctions {
   /*
   * Get all sensors of a given board id with dashboard and sensor typ 1 (temp).
   */
-  public static function getAllSensorsOfBoardWithDashboardAndTemp($id) {
+  /*public static function getAllSensorsOfBoardWithDashboardAndTemp($id) {
     $pdo = dbConfig::getInstance();
     $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? AND onDashboard = 1	AND typid = 1 ORDER BY id");
     $mysensors2->execute(array($id));
     $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
-  }
+  }*/
 
 /*
   * Get all sensors of a given board id with dashboard.
   */
-  public static function getAllSensorsOfBoardWithDashboard($id) {
+  /*public static function getAllSensorsOfBoardWithDashboard($id) {
     $pdo = dbConfig::getInstance();
     $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? AND onDashboard = 1 ORDER BY id");
     $mysensors2->execute(array($id));
     $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
-  }
+  }*/
 
   /*
   * Get all sensors of a given board id with dashboard.
@@ -635,6 +638,74 @@ class myFunctions {
   /*
   * Get all Users from db.
   */
+  public static function getAllUsersWithReceiveNotifications() {
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare("SELECT * FROM users WHERE receive_notifications = 1 ORDER BY id");
+    $result = $statement->execute();
+    return $statement->fetchAll();
+  }
+
+  /**
+   * get if User is Already notified
+   * 
+   */
+  public static function getAlreadyNotified($boardId) {
+    $pdo = dbConfig::getInstance();
+    $result = null;
+    $statement = $pdo->prepare("SELECT alreadyNotified FROM boardconfig WHERE id =?");
+    $pdoresult = $statement->execute(array($boardId));
+    return $pdoresult;
+  }
+
+  /**
+   * set if User is Already notified
+   * 
+   */
+  public static function setAlreadyNotified($boardId) {
+    $pdo = dbConfig::getInstance();
+    $result = null;
+    try {
+      $statement = $pdo->prepare("UPDATE boardconfig SET alreadyNotified = 1 WHERE id =?");
+      $pdoresult = $statement->execute(array($boardId));
+      $changedrows = $statement->rowCount();
+      if($changedrows == 1 ) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Board notified Status in DB not successfully updated for boardId: " . $boardId, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Board notifed Status in DB not successfully updated.');
+    }
+  }
+
+  /**
+   * unset if User is Already notified
+   * 
+   */
+  public static function unsetAlreadyNotified($boardId) {
+    $pdo = dbConfig::getInstance();
+    $result = null;
+    try {
+      $statement = $pdo->prepare("UPDATE boardconfig SET alreadyNotified = 0 WHERE id =?");
+      $pdoresult = $statement->execute(array($boardId));
+      $changedrows = $statement->rowCount();
+      if($changedrows == 1 ) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Board notified Status in DB not successfully updated for boardId: " . $boardId, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Board notifed Status in DB not successfully updated.');
+    }
+  }
+
+  /*
+  * Get all Users from db.
+  */
   public static function isUserRegistred($email) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("SELECT * FROM users WHERE email = ? ORDER BY id LIMIT 1");
@@ -645,16 +716,18 @@ class myFunctions {
     } else {
       $result = false;
     }
-    //$result = $statement->execute();
-    //return $statement->fetchAll();
     return $result;
   }
 
   /*
-  * Get all unique Board Ids from Sensorconfig from db.
-  */
-  public static function getAllUniqueBoardIdsFromSensorconfig() {
-    //SELECT DISTINCT `boardid` FROM `sensorconfig` WHERE 1; 
+   * Get all offline Boards, that needs to notify the owner.
+   */
+  public static function getAllOfflineBoardsToNotify() {
+    $pdo = dbConfig::getInstance();
+    $sensortyps = $pdo->prepare("SELECT boardconfig.*, users.email FROM boardconfig, users WHERE offlineDataTimer != 0 && alreadyNotified = 0 && owner_userid = users.id");
+    $sensortyps->execute();
+    $SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
+    return $SensorData2;
   }
 
 	/**

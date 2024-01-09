@@ -12,7 +12,7 @@ require_once("writeToLogFunction.func.php");
 
 class user implements JsonSerializable
 {
-  private $user = null;
+  //private $user = null;
   private $userobj = null;
   private $object;
   private static $pdo;
@@ -20,7 +20,7 @@ class user implements JsonSerializable
 
   /**
   * Method for construct the class.
-  * @param email adress of the user
+  * @param $email adress of the user
   */
   public function __construct($email)
   {
@@ -38,9 +38,8 @@ class user implements JsonSerializable
 
   /**
    * @deprecated Checks that the user is logged in.
-   * @return Returns the row of the logged in user
    *
-   * @return void $user or False if user is not logged in
+   * @return $user|null or False if user is not logged in
    * @throws Exception Return Exception message on error.
    * 
    */
@@ -76,14 +75,12 @@ class user implements JsonSerializable
     if (!isset($_SESSION['userid'])) {
       return false;
     }
-    // TODO change, to object oriented.
-    $user = dbGetData::getUserById($_SESSION['userid']);
-    return $user;
+    return dbGetData::getUserById($_SESSION['userid']);
   }
 
 /**
   * Returns true, if user is exist.
-  * @return active as bool
+  * @return bool as active
   */
   public function userExist()
   {
@@ -96,7 +93,7 @@ class user implements JsonSerializable
 
 /**
   * Returns true, if user is active.
-  * @return active as bool
+  * @return bool as active
   */
   public function isActive()
   {
@@ -109,7 +106,7 @@ class user implements JsonSerializable
 
   /**
   * @deprecated Returns the user of the emailadress.
-  * @param email adress of the user.
+  * @param $email adress of the user.
   * @return user as object
   */
   public function getUser($email)
@@ -123,7 +120,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the Id of the current User.
-  * @return id of the user
+  * @return $id of the user
   */
   public function getId()
   {
@@ -132,7 +129,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the Email of the current User.
-  * @return email of the user
+  * @return $email of the user
   */
   public function getEmail()
   {
@@ -141,7 +138,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the Firstname of the current User.
-  * @return firstname of the user
+  * @return $firstname of the user
   */
   public function getFirstname()
   {
@@ -150,7 +147,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the password of the current User.
-  * @return password of the user
+  * @return $password of the user
   */
   public function getPassword()
   {
@@ -159,7 +156,7 @@ class user implements JsonSerializable
 
   /**
   * Set the Firstname and the Lastname of the current User.
-  * @return firstname and Lastname of the user
+  * @return $firstname and Lastname of the user
   */
   public function setName($post)
   {
@@ -175,7 +172,7 @@ class user implements JsonSerializable
 
   /**
   * Set the setUserTimeZone of the current User.
-  * @return Timezone of the user
+  * @return $Timezone of the user
   */
   public function setUserTimeZone($post)
   {
@@ -190,7 +187,7 @@ class user implements JsonSerializable
 
   /**
   * Set the Password of the current User.
-  * @return Password of the user
+  * @return $Password of the user
   */
   public function setUserPassword($password_hash)
   {
@@ -205,7 +202,7 @@ class user implements JsonSerializable
 
   /**
   * Set the Email of the current User.
-  * @return firstname and Lastname of the user
+  * @return $firstname and Lastname of the user
   */
   public function setEmail($post)
   {
@@ -220,7 +217,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the Lastname of the current User.
-  * @return lastname of the user
+  * @return $lastname of the user
   */
   public function getLastname()
   {
@@ -229,7 +226,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the Lastname of the current User.
-  * @return lastname of the user
+  * @return $lastname of the user
   */
   public function getTimezone()
   {
@@ -238,7 +235,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the UserGroupAdmin as Boolean of the User.
-  * @return usergroup_admin of the user
+  * @return $usergroup_admin of the user
   */
   public function getUserGroupAdmin()
   {
@@ -247,7 +244,7 @@ class user implements JsonSerializable
 
   /**
   * Returns the Error.
-  * @return Error
+  * @return $Error
   */
   public function getError()
   {
@@ -257,7 +254,7 @@ class user implements JsonSerializable
   /*
   * Get all of my Board by user id.
   */
-  public function getMyBoardsId() {
+  /*public function getMyBoardsId() {
     if (!$this->userobj->id == null) {
       $pdo = dbConfig::getInstance();
       $myboards = $pdo->prepare("SELECT id FROM boardconfig WHERE owner_userid = " . $this->userobj->id . " ORDER BY id");
@@ -265,7 +262,7 @@ class user implements JsonSerializable
       $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
       return $myboards2;
     }
-  }
+  }*/
 
   /*
   * Get all of my Board by user id.
@@ -317,5 +314,19 @@ class user implements JsonSerializable
     } catch (Exception $e) {
       throw new Exception('Dashboard Update Interval not saved.');
     }
+  }
+
+  public function getReceiveNotifications() {
+    return $this->userobj->receive_notifications;
+  }
+
+  public function setReceiveNotifications($post) {
+    try {
+      $updateUserReturn = dbUpdateData::updateUserReceiveNotifications($post, $this->userobj->id);
+      $this->userobj->receive_notifications = $post['receiveNotifications'];
+    } catch (Exception $e) {
+      throw new Exception('Dashboard Update receiveNotifications not saved.');
+    }
+    //return $this->userobj->receive_notifications;
   }
 }

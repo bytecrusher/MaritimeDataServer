@@ -18,12 +18,16 @@ $userobj = unserialize($_SESSION['userobj']);
   $sensorId = $_GET['sensorId'];
 
   // TODO change to pdo
-  $query = sprintf("SELECT * FROM (SELECT id, sensorid, value1, value2, val_date, val_time, reading_time FROM sensordata WHERE sensorid = " . $sensorId . " ORDER BY id DESC LIMIT " . $maxValues . ") sensordata ORDER BY id ASC");
-  $result = $pdo->query($query);
-
-  $data = array();
-  foreach ($result as $row) {
-    $data[] = $row;
-  }
-  echo json_encode($data);
+  if (!$sensorId == null) {
+    $query = sprintf("SELECT * FROM (SELECT id, sensorid, value1, value2, val_date, val_time, reading_time FROM sensordata WHERE sensorid = " . $sensorId . " ORDER BY id DESC LIMIT " . $maxValues . ") sensordata ORDER BY id ASC");
+    $result = $pdo->query($query);
+  
+    $data = array();
+    foreach ($result as $row) {
+      $data[] = $row;
+    }
+    echo json_encode($data);
+  } //else {
+    //echo "";
+  //}
 ?>

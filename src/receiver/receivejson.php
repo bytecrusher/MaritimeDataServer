@@ -9,6 +9,9 @@
 require_once(dirname(__FILE__, 2) . "/frontend/func/dbConfig.func.php");
 require_once(dirname(__FILE__, 2) . '/configuration.php');
 require_once(dirname(__FILE__, 2) . "/frontend/func/writeToLogFunction.func.php");
+require_once(dirname(__FILE__, 2) . "/frontend/func/myFunctions.func.php");
+require_once(dirname(__FILE__, 2) . "/frontend/func/board.class.php");
+
 $config  = new configuration();
 
 $api_key_value = $config::$api_key;
@@ -34,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($boardData['protocollversion'] == "1") {
                 $macaddress = test_input($boardData['macaddress']);
                 $macaddressid = check_macadresse($macaddress, $pdo2);
+                $boardobj = new board($macaddress);
                 foreach ($sensors as $key => &$sensor) {
                     $sensorid = null;
                     if ($sensor != null) {
@@ -102,6 +106,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             echo "An Error has occurred while run query.";
                             writeToLogFunction::write_to_log("An Error has occurred while run query.", $_SERVER["SCRIPT_FILENAME"]);
                             writeToLogFunction::write_to_log($ex, $_SERVER["SCRIPT_FILENAME"]);
+                        }
+                        if (myFunctions::getAlreadyNotified($macaddressid) == 1) {
+                            myFunctions::unsetAlreadyNotified($macaddressid);
+                            //todo: send mail: device is online.
                         }
                     }
                 }

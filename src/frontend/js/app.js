@@ -20,6 +20,7 @@ $(document).ready(async function(){
     var borderColor = null;
     var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
     var hoverBorderColor = 'rgba(0, 100, 0, 1)';
+    var varsensorId = null;
     //var hoverBorderColor = Math.floor(Math.random()*16777215).toString(16);
 
     InitialSetupChart();
@@ -44,50 +45,54 @@ $(document).ready(async function(){
 //});
 
 function addDataToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor, sensorname) {
-  $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
-    var id = [];
-    var value1 = [];
-    for(var i in data) {
-      id.push("id " + data[i].id);
-      value1.push(data[i].value1);
-      //console.log(data);
-    }
+  if (varsensorId != null) {
+    $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
+      var id = [];
+      var value1 = [];
+      for(var i in data) {
+        id.push("id " + data[i].id);
+        value1.push(data[i].value1);
+        //console.log(data);
+      }
 
-    const data1 = window.myChart.data;
-    const dsColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-    const newDataset = {
-      label: sensorname,
-      backgroundColor: dsColor,
-      borderColor: dsColor,
-      data: value1,
-    };
-    window.myChart.data.datasets.push(newDataset);
-    window.myChart.update();
-  })
-  .done(function () {
-    //alert('Request done!');
-  })
-  .fail(function (jqxhr,settings,ex) {
-    //alert('failed (addDataToChart), ' + varsensorId + ", " + ex);
-    console.log('failed (addDataToChart), ' + varsensorId + ", for: " + varLabel + ", " + ex);
-    //console.log(data);
-  });
+      const data1 = window.myChart.data;
+      const dsColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+      const newDataset = {
+        label: sensorname,
+        backgroundColor: dsColor,
+        borderColor: dsColor,
+        data: value1,
+      };
+      window.myChart.data.datasets.push(newDataset);
+      window.myChart.update();
+    })
+    .done(function () {
+      //alert('Request done!');
+    })
+    .fail(function (jqxhr,settings,ex) {
+      //alert('failed (addDataToChart), ' + varsensorId + ", " + ex);
+      console.log('failed (addDataToChart), ' + varsensorId + ", for: " + varLabel + ", " + ex);
+      //console.log(data);
+    });
+  }
 }
 
 function addLabelsToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
-  $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
-    var val_time = [];
-    for(var i in data) {
-      val_time.push(data[i].val_time);
-    }
-    window.myChart.data.labels = val_time;
-    window.myChart.update();
-  })
-  .done(function () {
-  })
-  .fail(function (jqxhr,settings,ex) {
-    alert('failed (addLabelsToChart), '+ ex);
-  });
+  if (varsensorId != null) {
+    $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
+      var val_time = [];
+      for(var i in data) {
+        val_time.push(data[i].val_time);
+      }
+      window.myChart.data.labels = val_time;
+      window.myChart.update();
+    })
+    .done(function () {
+    })
+    .fail(function (jqxhr,settings,ex) {
+      alert('failed (addLabelsToChart), '+ ex);
+    });
+  }
 }
 
 

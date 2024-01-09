@@ -125,12 +125,40 @@ class dbUpdateData {
       try {
         $statement = $pdo->prepare("UPDATE users SET active =?, usergroup_admin=? WHERE id =?");
         $statement->execute(array($post['active'][$i], $post['usergroup_admin'][$i], $i ));
+        return true;
       } catch (PDOException $e) {
         writeToLogFunction::write_to_log("Error: User Status in DB not successfully updated for userid: " . $post['active'][$i], $_SERVER["SCRIPT_FILENAME"]);
         writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
         throw new Exception('User Status in DB not successfully updated.');
       }
 		}
+    return false;
+  }
+
+  /**
+  * Activate User Status.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
+  public static function activateUserStatus($userId) {
+    $pdo = dbConfig::getInstance();
+    $result = null;
+    try {
+      $statement = $pdo->prepare("UPDATE users SET active =1 WHERE id =?");
+      $pdoresult = $statement->execute(array($userId));
+      $changedrows = $statement->rowCount();
+      if($changedrows == 1 ) {
+        return true;
+      } else {
+        return false;
+      }
+        
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User Status in DB not successfully updated for userid: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User Status in DB not successfully updated.');
+    }
+    return false;
   }
 
   /**
@@ -152,6 +180,24 @@ class dbUpdateData {
   }
 
   /**
+  * Update User Dashboard updateUserReceiveNotifications.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
+  public static function updateUserReceiveNotifications($post, $userid) {
+    $pdo = dbConfig::getInstance();
+    $varReceiveNotifications = ($post['receiveNotifications']);
+    try {
+      $statement = $pdo->prepare("UPDATE users SET receive_notifications = :receive_notifications WHERE id = :userid");
+      return $statement->execute(array('receive_notifications' => $varReceiveNotifications, 'userid' => $userid ));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User  ReceiveNotifications in DB not successfully updated for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User ReceiveNotifications in DB not successfully updated.');
+    }
+  }
+
+  /**
   * Insert User.
   * @return bool — TRUE on success or FALSE on failure.
   * @throws Exception — Return Exception message on error.
@@ -160,7 +206,9 @@ class dbUpdateData {
     $pdo = dbConfig::getInstance();
     try {
       $statement = $pdo->prepare("INSERT INTO users (email, password, firstname, lastname) VALUES (:email, :password, :firstname, :lastname)");
-      return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname));
+      //return $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname));
+      $statement->execute(array('email' => $email, 'password' => $password_hash, 'firstname' => $vorname, 'lastname' => $nachname));
+      return $pdo->lastInsertId();
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: User not inserted successfully for email: " . $email, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);

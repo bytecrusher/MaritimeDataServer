@@ -28,25 +28,39 @@
   $varDemoMode = $config::$demoMode;
 
 ?>
-<link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css">
+<!--link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css" -->
+<link rel="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
 
-<link href="../node_modules/fontawesome-free/css/fontawesome.css" rel="stylesheet">
-<link href="../node_modules/fontawesome-free/css/fontawesome.min.css" rel="stylesheet">
-<link href="../node_modules/fontawesome-free/css/brands.css" rel="stylesheet">
-<link href="../node_modules/fontawesome-free/css/solid.css" rel="stylesheet">
+<!--link href="../node_modules/fontawesome-free/css/fontawesome.css" rel="stylesheet"-->
+<!--link href="../node_modules/fontawesome-free/css/fontawesome.min.css" rel="stylesheet"-->
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/fontawesome.min.css">
 
-<script defer src="../node_modules/fontawesome-free/js/brands.js"></script>
-<script defer src="../node_modules/fontawesome-free/js/solid.js"></script>
-<script defer src="../node_modules/fontawesome-free/js/fontawesome.js"></script>
+<!--link href="../node_modules/fontawesome-free/css/brands.css" rel="stylesheet"-->
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/brands.css" rel="stylesheet">
+
+<!--link href="../node_modules/fontawesome-free/css/solid.css" rel="stylesheet"-->
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/solid.css" rel="stylesheet">
+
+<!--script defer src="../node_modules/fontawesome-free/js/brands.js"></script-->
+<script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/brands.js"></script>
+
+<!--script defer src="../node_modules/fontawesome-free/js/solid.js"></script-->
+<script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/solid.js"></script>
+<!--script defer src="../node_modules/fontawesome-free/js/fontawesome.js"></script-->
+<script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/fontawesome.min.js"></script>
 
 <script src="../node_modules/chart.js/dist/chart.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.js"><script-->
+
 <script src="./js/app.js"></script>
 <script src="./js/gauge.js"></script>
-<script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script>
+<!--script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
 
 <?php
   if ($currentUser != false) {
-    $myboardsIdList = $currentUser->getMyBoardsId();
+    //$myboardsIdList = $currentUser->getMyBoardsId();
+    $myboardsIdList = $currentUser->getMyBoardsAll();
   }
   $boardObjsArray = array();
   foreach ($myboardsIdList as $key => $value) {
@@ -141,6 +155,10 @@ setInterval(function() {
             echo "<div class='alert alert-danger alert-dismissible' role='alert'>Please remember to remove \"install\" dir. <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
           }
 				}
+
+        if ($currentUser->getMyBoardsAll() == null) {
+          echo "<div class='alert alert-danger' role='alert'>No Board added. Please add a board first.</div>";
+        }
         ?>
     </div>
 
@@ -167,7 +185,7 @@ setInterval(function() {
 			?>
     </ul>
 
-    <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px;">
+    <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px; background: white">
 
       <!-- Show dashboard -->
       <div class="container tab-pane active position-relative" id="dashboard" style="padding-left: 10px; padding-right: 10px;">
@@ -197,7 +215,7 @@ setInterval(function() {
                           <?php
                           }
                         ?>
-                        <?php echo $singleRowmyboard->getName() ?>
+                        <div style="float: right; margin-top: 3px; margin-left: 10px"><?php echo $singleRowmyboard->getName() ?></div>
                         </legend>
                           <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>' style="display: flex; justify-content: center; flex-wrap: wrap;">
                 <?php
@@ -301,80 +319,82 @@ setInterval(function() {
       <!-- Show temperatures as chart -->
       <!-- TODO: for every board its own canvas. -->
       <div class="container tab-pane fade pl-0 pr-0" id="temperatures">
-        <div id="chart-container">
-          <canvas id="mycanvas"></canvas>
-        </div>
+        <fieldset>
+          <div id="chart-container">
+            <canvas id="mycanvas"></canvas>
+          </div>
+        </fieldset>
       </div>
 
       <!-- Show Board overview -->
       <div class="container tab-pane fade pl-0 pr-0" id="boards">
-        <div class="row mt-2">
-          <?php          
-          foreach($boardObjsArray as $singleBoardObj) {
-            $transmissionpath = 0;
-            $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
-            $boardOnlineStatus = false;
-            $mysensorIdlist = null;
-            foreach($mysensors2 as $singleRowmysensors) {
-              if ($mysensorIdlist == null) {
-                $mysensorIdlist = $singleRowmysensors['id'];
-              } else {
-                $mysensorIdlist = $mysensorIdlist . ", " . $singleRowmysensors['id'];
-              }
-            }
-            $mysensors = myFunctions::getLatestSensorData($mysensorIdlist);
-            foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-              $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
-              $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
-
-              // Show Online / Offline
-              // TODO if demo mode == true, then no limit.
-              if ($varDemoMode) {
-                $maxtimeout = strtotime("-10 Years");
-              } else {
-                $maxtimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
-              }
-
-              if ($dbtimestamp > $maxtimeout) {
-                $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
-                $boardOnlineStatus = true;
-              } else {
-                $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
-              }
-            }
-          ?>
-            <div class='container'>
-              <?php
-              if ($boardOnlineStatus) {
-              ?>
-                <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
-              <?php
-                if ($transmissionpath == 1) {
-                  ?>
-                    <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
-                  <?php
-                } elseif ($transmissionpath == 2) {
-                  ?>
-                    <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
-                  <?php
+        <fieldset>
+            <?php          
+            foreach($boardObjsArray as $singleBoardObj) {
+              $transmissionpath = 0;
+              $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
+              $boardOnlineStatus = false;
+              $mysensorIdlist = null;
+              foreach($mysensors2 as $singleRowmysensors) {
+                if ($mysensorIdlist == null) {
+                  $mysensorIdlist = $singleRowmysensors['id'];
                 } else {
-                    ?>
-                    <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
-                  <?php
+                  $mysensorIdlist = $mysensorIdlist . ", " . $singleRowmysensors['id'];
                 }
-              } else {
-              ?>
-                <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
-              <?php
               }
-              ?>
+              $mysensors = myFunctions::getLatestSensorData($mysensorIdlist);
+              foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
+                $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
+                $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
 
-                <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacaddress()) ?>)</label>
-            </div>
-          <?php
-          }
-          ?>
-        </div>
+                // Show Online / Offline
+                // TODO if demo mode == true, then no limit.
+                if ($varDemoMode) {
+                  $maxtimeout = strtotime("-10 Years");
+                } else {
+                  $maxtimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+                }
+
+                if ($dbtimestamp > $maxtimeout) {
+                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
+                  $boardOnlineStatus = true;
+                } else {
+                  $deviceIsOnline[$singleBoardObj->getId()] = (bool)false;
+                }
+              }
+            ?>
+              <div class='container mt-2'>
+                <?php
+                if ($boardOnlineStatus) {
+                ?>
+                  <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
+                <?php
+                  if ($transmissionpath == 1) {
+                    ?>
+                      <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
+                    <?php
+                  } elseif ($transmissionpath == 2) {
+                    ?>
+                      <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
+                    <?php
+                  } else {
+                      ?>
+                      <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
+                    <?php
+                  }
+                } else {
+                ?>
+                  <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
+                <?php
+                }
+                ?>
+
+                  <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacaddress()) ?>)</label>
+              </div>
+            <?php
+            }
+            ?>
+        </fieldset>
       </div>
 
       <!-- Show temperatures as table, only for admin -->
@@ -409,7 +429,6 @@ setInterval(function() {
   </div>
 
 </div>
-
     <script>
       $('#click_lockUnlock').click(function() {
         $("i", this).toggleClass("bi bi-lock-fill bi bi-unlock-fill");

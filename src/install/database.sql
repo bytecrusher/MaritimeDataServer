@@ -40,6 +40,7 @@ CREATE TABLE `boardconfig` (
   `updateDataTimer` int DEFAULT NULL,
   `boardtypeid` int DEFAULT NULL,
   `offlineDataTimer` int DEFAULT '15',
+  `alreadyNotified` tinyint NOT NULL DEFAULT '0',
   `ttn_app_id` text NOT NULL,
   `ttn_dev_id` text CHARACTER SET utf16 COLLATE utf16_general_ci NOT NULL,
   `onDashboard` tinyint NOT NULL DEFAULT '0'
@@ -180,7 +181,7 @@ INSERT INTO `sensortypes` (`id`, `name`, `siUnitVal1`, `siUnitVal2`, `siUnitVal3
 (4, 'Digital', '1/0', '1/0', '1/0', '1/0', '', 'input from Digital', 4, 0),
 (5, 'BME280', '&deg;C', '%', 'mbar', '&deg;C', '', 'Temp, Hum, Pres, Dew', 4, 0),
 (6, 'GPS', 'Lat', 'Lon', 'Alt', 'Spd', '', 'Coorinates', 4, 0),
-(7, 'Lora', 'Gtw', 'db', 'snr', 'counter', '', 'TTN data', 4, 0);
+(7, 'Lora', 'Gtw', 'db', 'snr', '#', '', 'TTN data', 4, 0);
 
 -- --------------------------------------------------------
 
@@ -227,7 +228,8 @@ CREATE TABLE `users` (
   `passwordcode` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `passwordcode_time` date DEFAULT NULL,
   `dashboardUpdateInterval` int NOT NULL DEFAULT '15',
-  `Timezone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `Timezone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT 'Europe/Berlin',
+  `receive_notifications` tinyint NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

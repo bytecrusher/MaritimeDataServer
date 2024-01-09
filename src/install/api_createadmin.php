@@ -20,6 +20,7 @@ if (isset($_POST["action"])) {
   $var_password = $_POST["password"];
   $var_password2 = $_POST["password2"];
   $var_apikey = trim($_POST["apikey"]);
+  $var_demoMode = trim($_POST["demoMode"]);
   $var_md5secretstring = trim($_POST["md5secretstring"]);
   //$var_baseurl = trim($_POST["baseurl"]);
   
@@ -75,6 +76,7 @@ if (isset($_POST["action"])) {
       $jsonData['api_key'] = $var_apikey;
       $jsonData['md5secretstring'] = $var_md5secretstring;
       //$jsonData['baseurl'] = $var_baseurl;
+      $jsonData['demoMode'] = $var_demoMode;
       $jsonData['install_finished'] = true;
       $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
       // Write in the file

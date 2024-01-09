@@ -43,8 +43,12 @@ if (isset($_POST["action"])) {
           }
         }
       }
-
+      
+      if (!file_exists(__DIR__ . '/../config.json')) {
+        touch(__DIR__ . '/../config.json');
+      }
       $path = __DIR__ . '/../config.json';
+
       $jsonString = file_get_contents($path);
       $jsonData = json_decode($jsonString, true);
       $jsonData['db_host'] = $var_dbhostname;
