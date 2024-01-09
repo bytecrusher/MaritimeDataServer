@@ -59,7 +59,8 @@
 
 <?php
   if ($currentUser != false) {
-    $myboardsIdList = $currentUser->getMyBoardsId();
+    //$myboardsIdList = $currentUser->getMyBoardsId();
+    $myboardsIdList = $currentUser->getMyBoardsAll();
   }
   $boardObjsArray = array();
   foreach ($myboardsIdList as $key => $value) {
@@ -154,6 +155,10 @@ setInterval(function() {
             echo "<div class='alert alert-danger alert-dismissible' role='alert'>Please remember to remove \"install\" dir. <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
           }
 				}
+
+        if ($currentUser->getMyBoardsAll() == null) {
+          echo "<div class='alert alert-danger' role='alert'>No Board added. Please add a board first.</div>";
+        }
         ?>
     </div>
 

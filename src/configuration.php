@@ -9,6 +9,7 @@
 require_once(dirname(__FILE__) . "/frontend/func/writeToLogFunction.func.php");
 
 class configuration {
+    static $config_exist = null;
     static $db_host = null;
     static $db_name = null;
     static $db_user = null;
@@ -41,20 +42,55 @@ class configuration {
         }
         self::$baseurl = $prefix . $domain . self::$subdir;
 
-        $path = __DIR__ . '/config.json';
-        $jsonString = file_get_contents($path);
-        $jsonData = json_decode($jsonString, true);
-        self::$db_host = $jsonData['db_host'];
-        self::$db_name = $jsonData['db_name'];
-        self::$db_user = $jsonData['db_user'];
-        self::$db_password = $jsonData['db_password'];
-        self::$api_key = $jsonData['api_key'];
-        self::$demoMode = $jsonData['demoMode'];
-        self::$md5secretstring = $jsonData['md5secretstring'];
-        self::$install_finished = $jsonData['install_finished'];
-        self::$admin_email_adress = $jsonData['admin_email_adress'];
-        self::$ShowQrCode = $jsonData['ShowQrCode'];
-        self::$send_emails = $jsonData['send_emails'];
+        $path = "";
+        if (file_exists(__DIR__ . '/config.json')) {
+            $path = __DIR__ . '/config.json';
+            $jsonString = file_get_contents($path);
+            $jsonData = json_decode($jsonString, true);
+            self::$db_host = $jsonData['db_host'];
+            self::$db_name = $jsonData['db_name'];
+            self::$db_user = $jsonData['db_user'];
+            self::$db_password = $jsonData['db_password'];
+            self::$api_key = "";
+            if (array_key_exists('api_key', $jsonData)) {
+                self::$api_key = $jsonData['api_key'];
+            }
+
+            self::$demoMode = "";
+            if (array_key_exists('demoMode', $jsonData)) {
+                self::$demoMode = $jsonData['demoMode'];
+            }
+
+            self::$md5secretstring = "";
+            if (array_key_exists('md5secretstring', $jsonData)) {
+                self::$md5secretstring = $jsonData['md5secretstring'];
+            }
+
+            self::$install_finished = "";
+            if (array_key_exists('install_finished', $jsonData)) {
+                self::$install_finished = $jsonData['install_finished'];
+            }
+
+            self::$admin_email_adress = "";
+            if (array_key_exists('admin_email_adress', $jsonData)) {
+                self::$admin_email_adress = $jsonData['admin_email_adress'];
+            }
+
+            self::$ShowQrCode = "";
+            if (array_key_exists('ShowQrCode', $jsonData)) {
+                self::$ShowQrCode = $jsonData['ShowQrCode'];
+            }
+
+            self::$send_emails = "";
+            if (array_key_exists('send_emails', $jsonData)) {
+                self::$send_emails = $jsonData['send_emails'];
+            }
+
+            self::$config_exist = true;
+        } else {
+            $path = false;
+            self::$config_exist = false;
+        }
     }
 
     function saveServerSettings($post) {

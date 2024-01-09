@@ -254,7 +254,7 @@ class user implements JsonSerializable
   /*
   * Get all of my Board by user id.
   */
-  public function getMyBoardsId() {
+  /*public function getMyBoardsId() {
     if (!$this->userobj->id == null) {
       $pdo = dbConfig::getInstance();
       $myboards = $pdo->prepare("SELECT id FROM boardconfig WHERE owner_userid = " . $this->userobj->id . " ORDER BY id");
@@ -262,7 +262,7 @@ class user implements JsonSerializable
       $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
       return $myboards2;
     }
-  }
+  }*/
 
   /*
   * Get all of my Board by user id.

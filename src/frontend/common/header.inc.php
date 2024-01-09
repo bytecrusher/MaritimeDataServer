@@ -8,6 +8,10 @@
     <?php
       $config = new configuration();
       include(__DIR__ . "/includes.php");
+      if (!$config::$config_exist) {
+        header("Location: /../../install/index.php");
+        exit();
+      }
     ?>
     <style>
       .filter-green {

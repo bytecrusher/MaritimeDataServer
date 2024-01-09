@@ -111,7 +111,7 @@
     <div class="tab-content">
       <div class="tab-pane container active" id="Intro">
         <div class="mb-2 mt-2">
-          This Script will help you to install MDS on your Server.<br>
+          This Script will help you to install and configure MDS on your Server.<br>
           Please follow the next steps and remove the "install" dir after finishing all steps.
         </div>
         <div class="form-group row justify-content-evenly">
@@ -121,18 +121,18 @@
       </div>
       <div class="tab-pane container fade" id="Database">
         <div class="mb-2 mt-2">
-          With this installer the DB will be prepared for operating on the server.<br>
-          First create a database and a user with write privileges on this db.
+          In this step the DB will be prepared for operating on the server.<br>
+          First create a database and a user with write privileges in your DB admin panel.
           <div>
             <form class="navbar-form navbar-right" action="install_db.php" method="post">
               <div class="form-group row">
-                <label for="dbhostname" class="col-sm-4 col-form-label">DB Hostname</label>
+                <label for="dbhostname" class="col-sm-4 col-form-label">Database Hostname</label>
                 <div class="col-sm-4">
                   <input type="text" class="form-control" id="dbhostname" name="dbhostname" value="<?php echo $var_dbhostname;?>"  required>
                 </div>
               </div>
               <div class="form-group row">
-                <label for="dbname" class="col-sm-4 col-form-label">Database name</label>
+                <label for="dbname" class="col-sm-4 col-form-label">Database Name</label>
                 <div class="col-sm-4">
                   <input type="text" class="form-control" id="dbname" name="dbname" value="<?php echo $var_dbname;?>" required>
                 </div>
@@ -144,7 +144,7 @@
                 </div>
               </div>
               <div class="form-group row">
-                <label for="dbpassword" class="col-sm-4 col-form-label">mysql password</label>
+                <label for="dbpassword" class="col-sm-4 col-form-label">Database Password</label>
                 <div class="col-sm-4">
                   <input type="password" class="form-control" id="dbpassword" name="dbpassword" required>
                 </div>
@@ -199,6 +199,7 @@
           <div class="col-sm-4">
             <input type="text" class="form-control" id="apikey" name="apikey" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_apikey;?>" required>
           </div>
+          <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('apikey').value = makeid(32);">generate</button>
         </div>
 
         <div class="form-group row">
@@ -206,6 +207,7 @@
           <div class="col-sm-4">
             <input type="text" class="form-control" id="md5secretstring" name="md5secretstring" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_md5secretstring;?>" required>
           </div>
+          <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('md5secretstring').value = makeid(32);">generate</button>
         </div>
 
         <div class="form-group row justify-content-evenly">
@@ -229,12 +231,9 @@
   const currentTab = $('.nav-tabs .active').attr('id');
   if (currentTab === "database") {
     returnval = write_db();
-    if (returnval) {
-      const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
-      const nextTab = new bootstrap.Tab(nextTabLinkEl);
-      nextTab.show();
-    }
-    
+    const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
+    const nextTab = new bootstrap.Tab(nextTabLinkEl);
+    nextTab.show();    
   } else if (currentTab === "adminuser") {
     returnval = api_post_createadmin();
     if (returnval) {
@@ -329,7 +328,7 @@ function api_post_createadmin() {
       method: "POST",
       async: false,
       url: "api_createadmin.php",
-      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring }
+      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring, demoMode: false }
     })
     .done(function( response ) {
       text = response;
@@ -340,9 +339,10 @@ function api_post_createadmin() {
       } else if (obj["error"] === "false"){
         createAlert('Nice Work!',obj["success_text"],'success',true,true,'pageMessages');
         myreturnval = true;
+      } else {
+        createAlert('Great.','Great.','success',true,true,'pageMessages');
       }
     });
-    createAlert('Great.','Great.','success',true,true,'pageMessages');
   } else {
     createAlert('At least one input missing.','Please fill out all necessary fields.','danger',true,true,'pageMessages');
     myreturnval = false;
@@ -416,6 +416,18 @@ function createAlert(summary, details, severity, dismissible, autoDismiss, appen
       },1000);
     }, 5000);
   }
+}
+
+function makeid(length) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
 }
 </script>
 
