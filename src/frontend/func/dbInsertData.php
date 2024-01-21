@@ -10,4 +10,3 @@ include_once("func/dbConfig.func.php");
 class dbInsertData {
 
 }
-?>

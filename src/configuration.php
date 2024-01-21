@@ -20,7 +20,7 @@ class configuration {
     static $demoMode = null;
     static $md5secretstring = null;
     static $install_finished = null;
-    static $admin_email_adress = null;
+    static $admin_email_address = null;
     static $ShowQrCode = null;
     static $send_emails = null;
     
@@ -71,9 +71,9 @@ class configuration {
                 self::$install_finished = $jsonData['install_finished'];
             }
 
-            self::$admin_email_adress = "";
-            if (array_key_exists('admin_email_adress', $jsonData)) {
-                self::$admin_email_adress = $jsonData['admin_email_adress'];
+            self::$admin_email_address = "";
+            if (array_key_exists('admin_email_address', $jsonData)) {
+                self::$admin_email_address = $jsonData['admin_email_address'];
             }
 
             self::$ShowQrCode = "";

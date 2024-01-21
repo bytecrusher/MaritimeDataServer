@@ -27,7 +27,7 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
 		
 					//Does the user want to stay logged in?
 					if(isset($_POST['angemeldet_bleiben'])) {
-						dbUpdateData::insertSecuritytoken($userobj->getId());
+						dbUpdateData::insertSecurityToken($userobj->getId());
 					}
 					header("location: internal.php");
 					exit;

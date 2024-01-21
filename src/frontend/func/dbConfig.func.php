@@ -11,7 +11,7 @@ require_once(dirname(__FILE__) . "/writeToLogFunction.func.php");
 
 class dbConfig {
   private static $pdo = null;
-  private static $objekt;
+  private static $object;
 
   private function __construct ()
   {
@@ -32,7 +32,7 @@ class dbConfig {
   public static function getInstance ()
   {
       if(self::$pdo === null)
-        self::$objekt = new dbConfig;
+        self::$object = new dbConfig;
       return self::$pdo;
   }
 }

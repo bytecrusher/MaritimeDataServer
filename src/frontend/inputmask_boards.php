@@ -50,12 +50,12 @@
 
         <div class="input-group mb-3">
         <span class="input-group-text" style="width: 30%">Macaddress</span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id='macaddress' name='macaddress' value='<?=$boardobj->getMacaddress();?>'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id='macaddress' name='macaddress' value='<?=$boardobj->getMacAddress();?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Board Type</span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardtype' name='boardtype' value='<?=$boardobj->getBoardtypeName();?>'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardtype' name='boardtype' value='<?=$boardobj->getBoardTypeName();?>'>
         </div>
 
         <div class="input-group mb-3">
@@ -99,7 +99,7 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Firmware version</span>
-          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$boardobj->getFirmwareversion();?>' style="background:#e9ecef" readonly>
+          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$boardobj->getFirmwareVersion();?>' style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
@@ -151,13 +151,13 @@
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">owner User</span>
           <select class='col col-sm-4 form-select' aria-label='Default select example' name='ownerid'>
 							<?php
-              if ($boardobj->getOwnerUserid() == null) {
+              if ($boardobj->getOwnerUserId() == null) {
                 echo "<option selected value=''></option>";
               } else {
                 echo "<option value=''></option>";
               }
 							foreach ($AllUsers as $singleRowUser) {
-								if ($boardobj->getOwnerUserid() == $singleRowUser['id']) {
+								if ($boardobj->getOwnerUserId() == $singleRowUser['id']) {
 									echo "<option selected value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
 								} else {
 									echo "<option value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";

@@ -15,7 +15,7 @@ require_once(dirname(__FILE__, 2) . "/frontend/func/board.class.php");
 $config  = new configuration();
 
 $api_key_value = $config::$api_key;
-$api_key = $protocollversion = $macaddress = $sensor = $sensorid = $location = $value1 = $value2 = $value3 = $value4 = $date = $time = $transmissionpath = "";
+$api_key = $protocollversion = $macAddress = $sensor = $sensorid = $location = $value1 = $value2 = $value3 = $value4 = $date = $time = $transmissionpath = "";
 
 $pdo2 = dbConfig::getInstance();
 
@@ -35,9 +35,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($api_key == $api_key_value) {
         if ((isset($boardData['protocollversion'])) && ($boardData['protocollversion'] != null)) {
             if ($boardData['protocollversion'] == "1") {
-                $macaddress = test_input($boardData['macaddress']);
-                $macaddressid = check_macadresse($macaddress, $pdo2);
-                $boardobj = new board($macaddress);
+                $macAddress = test_input($boardData['macAddress']);
+                $macaddressid = check_macAddresse($macAddress, $pdo2);
+                $boardobj = new board($macAddress);
                 foreach ($sensors as $key => &$sensor) {
                     $sensorid = null;
                     if ($sensor != null) {
@@ -136,20 +136,20 @@ function test_input($data)
     return $data;
 }
 
-function check_macadresse($macaddress, $pdo2)
+function check_macAddresse($macAddress, $pdo2)
 {
-    $sql = "SELECT id FROM boardconfig WHERE macaddress = '" . $macaddress . "' LIMIT 1";
+    $sql = "SELECT id FROM boardConfig WHERE macAddress = '" . $macAddress . "' LIMIT 1";
     try {
         $idmacaddress_temp = $pdo2->query($sql); //Invalid query
         $idmacaddress = $idmacaddress_temp->fetch();
     } catch (PDOException $ex) {
-        echo "An Error has occurred while check macadress";
-        writeToLogFunction::write_to_log("An Error has occurred while check macadress", $_SERVER["SCRIPT_FILENAME"]);
+        echo "An Error has occurred while check macAddress";
+        writeToLogFunction::write_to_log("An Error has occurred while check macAddress", $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if ( (!isset($idmacaddress['id']) ) || ($idmacaddress['id'] == null) ) {
-        $statement = $pdo2->prepare("INSERT INTO boardconfig (macaddress, owner_userid, name) VALUES (?, ?, ?)");
-        $statement->execute(array($macaddress, 1, "- new imported -"));     // Default Owner User
+        $statement = $pdo2->prepare("INSERT INTO boardConfig (macAddress, ownerUserId, name) VALUES (?, ?, ?)");
+        $statement->execute(array($macAddress, 1, "- new imported -"));     // Default Owner User
         $neue_id = $pdo2->lastInsertId();
         writeToLogFunction::write_to_log("New Board with id $neue_id created", $_SERVER["SCRIPT_FILENAME"]);
 

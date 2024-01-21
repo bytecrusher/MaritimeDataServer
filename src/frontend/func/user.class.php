@@ -257,7 +257,7 @@ class user implements JsonSerializable
   /*public function getMyBoardsId() {
     if (!$this->userobj->id == null) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT id FROM boardconfig WHERE owner_userid = " . $this->userobj->id . " ORDER BY id");
+      $myboards = $pdo->prepare("SELECT id FROM boardConfig WHERE ownerUserId = " . $this->userobj->id . " ORDER BY id");
       $result = $myboards->execute();
       $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
       return $myboards2;
@@ -270,7 +270,7 @@ class user implements JsonSerializable
   public function getMyBoardsAll() {
     if (!$this->userobj->id == null) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $this->userobj->id . " ORDER BY id");
+      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = " . $this->userobj->id . " ORDER BY id");
       $result = $myboards->execute();
       $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
       return $myboards2;
@@ -284,7 +284,7 @@ class user implements JsonSerializable
     //if (!$this->userobj->id == null) {
     if(($this->userobj->usergroup_admin == 1) ) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE 1 ORDER BY id");
+      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE 1 ORDER BY id");
       $result = $myboards->execute();
       $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
       return $myboards2;
@@ -309,7 +309,7 @@ class user implements JsonSerializable
 
   public function setDashboardUpdateInterval($post) {
     try {
-      $updateUserReturn = dbUpdateData::updateUserDashboardupdateInterval($post, $this->userobj->id);
+      $updateUserReturn = dbUpdateData::updateUserDashboardUpdateInterval($post, $this->userobj->id);
       $this->userobj->dashboardUpdateInterval = $post['updateInterval'];
     } catch (Exception $e) {
       throw new Exception('Dashboard Update Interval not saved.');

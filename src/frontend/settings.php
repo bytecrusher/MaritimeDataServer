@@ -459,7 +459,7 @@ th.rotated-text > div > span {
 					?>
 						<tr>
 						<td class='toggleDisplayid'> <?php echo $singleRowMyboard['id'] ?></td>
-						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macaddress'] ?></td>
+						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macAddress'] ?></td>
 						<td><?php echo $singleRowMyboard['name'] ?></td>
 						<td class='toggleDisplayLocation'><?php echo $singleRowMyboard['location'] ?></td>
 						<td><?php echo $singleRowMyboard['description'] ?></td>
@@ -593,8 +593,8 @@ th.rotated-text > div > span {
 					?>
 						<tr>
 						<td class='toggleDisplayid'> <?php echo $singleRowMyboard['id'] ?></td>
-						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macaddress'] ?></td>
-						<td><?php echo $singleRowMyboard['owner_userid'] ?></td>
+						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macAddress'] ?></td>
+						<td><?php echo $singleRowMyboard['ownerUserId'] ?></td>
 
 						<td><?php echo $singleRowMyboard['name'] ?></td>
 						<td class='toggleDisplayLocation'><?php echo $singleRowMyboard['location'] ?></td>

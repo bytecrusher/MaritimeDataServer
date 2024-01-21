@@ -7,7 +7,7 @@
     "demoMode": "false",
     "md5secretstring": "your_secret_string",
     "install_finished": "false",
-    "admin_email_adress": "info@yourdomain.de",
+    "admin_email_address": "info@yourdomain.de",
     "ShowQrCode": "0",
     "send_emails": "0"
 }

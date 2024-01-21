@@ -63,7 +63,7 @@ class myFunctions {
     if (!$userid == null) {
       $pdo = dbConfig::getInstance();
       try {
-        $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE owner_userid = " . $userid . " ORDER BY id");
+        $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = " . $userid . " ORDER BY id");
         $result = $myboards->execute();
         return $myboards->fetchAll(PDO::FETCH_ASSOC);
       } catch (PDOException $e) {
@@ -84,7 +84,7 @@ class myFunctions {
     if (!$boardId == null) {
       $pdo = dbConfig::getInstance();
       try {
-        $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE id = " . $boardId . " ORDER BY id LIMIT 1");
+        $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE id = " . $boardId . " ORDER BY id LIMIT 1");
         $result = $myboards->execute();
         return $myboards->fetch(PDO::FETCH_ASSOC);
       } catch (PDOException $e) {
@@ -118,12 +118,12 @@ class myFunctions {
   }
 
   /*
-  * Get Board by Board macaddress. Only one dataset will return.
+  * Get Board by Board macAddress. Only one dataset will return.
   */
   /*public static function getBoardByMac($boardMac) {
     if (!$boardMac == null) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE macaddress = '" . $boardMac . "' ORDER BY id LIMIT 1");
+      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE macAddress = '" . $boardMac . "' ORDER BY id LIMIT 1");
       $result = $myboards->execute();
       $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
       return $myboards2;
@@ -136,7 +136,7 @@ class myFunctions {
   public static function getBoardByTTN($ttn_app_id, $ttn_dev_id) {
     if ((!$ttn_app_id == null) && (!$ttn_dev_id == null)) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardconfig WHERE ttn_app_id = '$ttn_app_id' AND ttn_dev_id = '$ttn_dev_id' ORDER BY id LIMIT 1");
+      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE ttn_app_id = '$ttn_app_id' AND ttn_dev_id = '$ttn_dev_id' ORDER BY id LIMIT 1");
       //var_dump($myboards);
       $result = $myboards->execute();
       $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
@@ -149,7 +149,7 @@ class myFunctions {
   */
   public static function addBoardByTTN($ttn_app_id, $ttn_dev_id) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("INSERT INTO boardconfig (macaddress, name, ttn_app_id, ttn_dev_id, onDashboard, updateDataTimer  ) VALUES (?, ?, ?, ?, ?, ?)");
+    $statement = $pdo->prepare("INSERT INTO boardConfig (macAddress, name, ttn_app_id, ttn_dev_id, onDashboard, updateDataTimer  ) VALUES (?, ?, ?, ?, ?, ?)");
     $statement->execute(array("fakeMacAddress" . $ttn_dev_id, "- new imported -", $ttn_app_id, $ttn_dev_id, 1, 15));
     $neue_id = $pdo->lastInsertId();
     return $neue_id;
@@ -652,7 +652,7 @@ class myFunctions {
   public static function getAlreadyNotified($boardId) {
     $pdo = dbConfig::getInstance();
     $result = null;
-    $statement = $pdo->prepare("SELECT alreadyNotified FROM boardconfig WHERE id =?");
+    $statement = $pdo->prepare("SELECT alreadyNotified FROM boardConfig WHERE id =?");
     $pdoresult = $statement->execute(array($boardId));
     return $pdoresult;
   }
@@ -665,7 +665,7 @@ class myFunctions {
     $pdo = dbConfig::getInstance();
     $result = null;
     try {
-      $statement = $pdo->prepare("UPDATE boardconfig SET alreadyNotified = 1 WHERE id =?");
+      $statement = $pdo->prepare("UPDATE boardConfig SET alreadyNotified = 1 WHERE id =?");
       $pdoresult = $statement->execute(array($boardId));
       $changedrows = $statement->rowCount();
       if($changedrows == 1 ) {
@@ -688,7 +688,7 @@ class myFunctions {
     $pdo = dbConfig::getInstance();
     $result = null;
     try {
-      $statement = $pdo->prepare("UPDATE boardconfig SET alreadyNotified = 0 WHERE id =?");
+      $statement = $pdo->prepare("UPDATE boardConfig SET alreadyNotified = 0 WHERE id =?");
       $pdoresult = $statement->execute(array($boardId));
       $changedrows = $statement->rowCount();
       if($changedrows == 1 ) {
@@ -724,7 +724,7 @@ class myFunctions {
    */
   public static function getAllOfflineBoardsToNotify() {
     $pdo = dbConfig::getInstance();
-    $sensortyps = $pdo->prepare("SELECT boardconfig.*, users.email FROM boardconfig, users WHERE offlineDataTimer != 0 && alreadyNotified = 0 && owner_userid = users.id");
+    $sensortyps = $pdo->prepare("SELECT boardConfig.*, users.email FROM boardConfig, users WHERE offlineDataTimer != 0 && alreadyNotified = 0 && ownerUserId = users.id");
     $sensortyps->execute();
     $SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
     return $SensorData2;

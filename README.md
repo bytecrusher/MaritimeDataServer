@@ -1,23 +1,27 @@
 # Intro
-**Maritime Data Server** is the central Data (cloud) server for Maritime Data. 
-It stores the Data that come from, for exmaple **MDC** (Maritime Data Collector or LoRa-Bootsmonitor or any other device), into a database and gives the user a GUI to show the Data and do some configurations.
+**Maritime Data Server** is the central data (cloud) server for maritime data. 
+It stores data that come from (IOT) devices, for example **MDC** (Maritime Data Collector or LoRa-Bootsmonitor or any other supported device), into a database and gives the user a GUI to show the data and do some configurations.
+Also it is possible to receive notifications about configured sensor data.
 
-The initial idea was, to have the possibility to be able to see some Maritime Data (temperature, battery voltages, bilge alarm) while you are not on the boat.  
+The initial idea was, to be able to see how healthy my boat is.
+This means for example see some temperatures, battery voltages, bilge alarms... while i am not on the boat.
 
-The **MDC** it a small board with an ESP32 and a few sensors, that collects the sensor Data and transfer these Data to the MDS.
+The **MDC** it a small board with an ESP32 and a few sensors, that collects the sensor data and transfer these data to the MDS.
 You will find the **MDC** documentation under **https://github.com/bytecrusher/MaritimeDataCollectorSmall**
 
 ## **MDS** (Maritime Data Server)
 
-The **Maritime Data Server** is a web application to store Data and display Data for the user.
-It requres a mySQL Database for storing the Data and a webserver with php support to display the informations with Data.
-The **MDS** can display the Data from sensors in graph/gauges or charts.
-Also it is possible to configure your boards and sensors.
+The **Maritime Data Server** is a web application that stores data and display it to the user.
+It requires a MySQL database for storing the data and a web server with PHP support. To display the data some HTML, CSS and JS is used.
+The **MDS** can display the data (that come from sensors) in graph/gauges or charts.
+Also it is possible to configure boards and sensors, or add new boards to a user account.
 
 ## Description
-The server is organized in a Backend (API for receiving Data from collector and TTN, send emails) and a Frontend for displaying Data in the users Browser.  
-The Backend stores the Data into the DB. It also checks if Data are valid and board and sensors are existing in the DB, otherwise new DB records will be create.  
-For the Frontend the user needs to login. Now the user is able to do some configurations or display some Data.
+The server is organized in a
+     - backend (API for receiving data from MDC (collector) and TTN, send emails) and a
+     - frontend for displaying data in the users browser.  
+The backend stores the data into the DB. It also checks if Data are valid and boards and sensors are existing in the DB, otherwise new DB records will be create.  
+For the frontend the user needs to login. Now the user is able to do some configurations or display some data.
 
 #### Functions / ToDos Status / Bugs
 - [x] MDS with Web interface
@@ -30,7 +34,7 @@ For the Frontend the user needs to login. Now the user is able to do some config
 
 ## Folder description
 
-- **docu_donotdeploy** folder contains Data and Images for documentation.
+- **docu_donotdeploy** folder contains data and images for documentation.
 - **src**
      - **frontend** the frontend files for this web project
           - **api** api files for requests from JS.
@@ -49,8 +53,8 @@ For the Frontend the user needs to login. Now the user is able to do some config
 
 #### Installation
 Copy all **MDS** files from the "src" folder into your htdocs dir.
-Create a new Database (with phpmyadmin) and create a new User with write privileges to this Database.
-Open **http://yourdomain/maritimedataserver/install/index.php** in your Browser and step through the instalation steps.
+Create a new database (with phpmyadmin) and create a new user with write privileges to this database.
+Open **http://yourdomain/maritimedataserver/install/index.php** in your browser and step through the installation steps.
 After install is finished, remove the dir named "install" (for security reasons).
 
 Now the **MDS** is available under **http://yourdomain/maritimedataserver**
@@ -60,27 +64,28 @@ Now the **MDS** is available under **http://yourdomain/maritimedataserver**
 ![MDS Map](docu_donotdeploy/images/MDS_Map.png)
 
 #### MDS Requirements
-For running the **MDS** you need a (Apache) Webserver with PHP support and a MySQL DB.  
-If you run **MDC**s outside our local network, your **MDS** needs to be public (TTN should be able to reach this server).
+For running the **MDS** you need a web server (in my case Apache) with PHP (version 8.0) support and a MySQL DB.  
+If you run **MDC**s inside our local network, your **MDS** needs to be public (TTN should be able to reach your server).
 
 ###### Development
-For development i use different solutions.
+For development i use two different solutions.
 First is local Docker container that runs on my coding computer.
-Second i have on my webhosting a subdomain, that pulls my "developtment" branch from guthub there.
+Second i have on my web hosting a subdomain, that pulls my "development" branch from github direct over there.
 
 ######## My current way
-First wave:
+First solution:
 I setup 4 containers (one for each service):
 - Apache
 - PHP
 - PHPmyAdmin
 - MySQL
 
-I configured my VSC to be able work direct in the htdocs folder if apache.
-So there is no manual synch of files needed.
+I configured my VSC to be able to work direct in the htdocs folder of the apache container.
+So there is no manual synch of files needed, after i made some changes in the code.
 
-Second wave:
-in my webhosting subdomain, i setup my respository, so i am able to run a pull request from the plesk panel and have tha latest development branch on the webspace.
+Second solution:
+In my web hosting subdomain, i setup my repository under dev tools, so i am able to run a pull request from the plesk panel and have the latest development branch on the web space.
+This makes it very easy to deploy me new branch to my subdomain an test it this environment.
 
 ###### Debugging with xDebug
 for php debugging i use xdebug.
@@ -99,11 +104,11 @@ For Debug you have to go to "Ausführen" - "Debugger starte" and the green play 
 ## Sensor Schemas
 Due different types of sensors and try to reduce the amount of Data transferred via wifi (and later lora) it is a good idea to have a schema for sensors to transfer the Data.
 Also there is no need to deliver the name of the value.  
-If all values deliver in the correct order, it is clear which value is wich.
+If all values deliver in the correct order, it is clear which value is which.
 
 Schema #: 1  
 Name: DS18b20  
-Deschription: Tempsensor  
+Description: Tempsensor  
 Nr of sensor (that are connected): 1  
 Count of Values: 1  
 Name of Values: #1 Temperature  
@@ -111,7 +116,7 @@ Type of value: #1 uint8 (?)
 
 Schema #: 2  
 Name: DS2438  
-Deschription: Batteriemonitor  
+Description: Batteriemonitor  
 Nr of sensor (that are connected): 1  
 Count of Values: 4  
 Name of Values: #1 CH1 Voltage, 2# CH1 Current, #3 CH2 voltage, #4 CH2 current  
@@ -119,7 +124,7 @@ Type of value: #1 uint8 (?), #2 uint8 (?), #3 uint8 (?), #4 uint8 (?)
 
 Schema #: 3  
 Name: DHT11  
-Deschription: Tempsensor & Humidity  
+Description: Tempsensor & Humidity  
 Nr of sensor (that are connected): 1  
 Count of Values: 2  
 Name of Values: #1 Temperature, #2 Humidity  
@@ -127,7 +132,7 @@ Type of value: #1 uint8 (?), #2 uint8 (?)
 
 Schema #: 4  
 Name: Digital Input  
-Deschription: Digital Input  
+Description: Digital Input  
 Nr of sensor (that are connected): 1  
 Count of Values: 1  
 Name of Values: #1 Digital input  
@@ -135,7 +140,7 @@ Type of value: #1 Bool (?)
 
 Schema #: 5  
 Name: GPS  
-Deschription: Data from GPS Receiver  
+Description: Data from GPS Receiver  
 Nr of sensor (that are connected): 1  
 Count of Values: 4  
 Name of Values: #1 Latitude, #2 Longitude, #3 Course, #4 Speed  

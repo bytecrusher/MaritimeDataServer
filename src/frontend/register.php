@@ -4,7 +4,7 @@ require_once(__DIR__ . "/func/myFunctions.func.php");
 require_once("func/dbUpdateData.php");
 
 $config = new configuration();
-$varadmin_email_adress = $config::$admin_email_adress;
+$varadmin_email_address = $config::$admin_email_address;
 
 if (count($_POST) > 0) {
     /* Form Required Field Validation */
@@ -50,8 +50,8 @@ if (count($_POST) > 0) {
                 $toEmail = $_POST["userEmail"];
                 $subject = "User Registration Activation Email";
                 $content = "Hi " . $_POST["firstName"] . " click this link to activate your account. <a href='" . $actual_link . "'>" . $actual_link . "</a><br>Your MDS Team.";
-                $mailHeaders = "From: MDS User Registration <" . $varadmin_email_adress . ">\r\n";
-                $mailHeaders .= "Reply-To: " . $varadmin_email_adress . "\r\n";
+                $mailHeaders = "From: MDS User Registration <" . $varadmin_email_address . ">\r\n";
+                $mailHeaders .= "Reply-To: " . $varadmin_email_address . "\r\n";
                 $mailHeaders .= "Content-Type: text/html\r\n";                
 
                 if (mail($toEmail, $subject, $content, $mailHeaders)) {

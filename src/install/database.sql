@@ -24,18 +24,18 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Tabellenstruktur für Tabelle `boardconfig`
+-- Tabellenstruktur für Tabelle `boardConfig`
 --
 
-CREATE TABLE `boardconfig` (
+CREATE TABLE `boardConfig` (
   `id` int NOT NULL,
-  `owner_userid` int DEFAULT NULL,
-  `macaddress` varchar(30) NOT NULL,
+  `ownerUserId` int DEFAULT NULL,
+  `macAddress` varchar(30) NOT NULL,
   `name` varchar(30) DEFAULT NULL,
   `location` varchar(20) DEFAULT NULL,
   `description` varchar(50) DEFAULT NULL,
-  `performupdate` tinyint DEFAULT '0',
-  `firmwareversion` varchar(10) DEFAULT NULL,
+  `performUpdate` tinyint DEFAULT '0',
+  `firmwareVersion` varchar(10) DEFAULT NULL,
   `alarmOnUnavailable` tinyint DEFAULT '0',
   `updateDataTimer` int DEFAULT NULL,
   `boardtypeid` int DEFAULT NULL,
@@ -237,13 +237,13 @@ CREATE TABLE `users` (
 --
 
 --
--- Indizes für die Tabelle `boardconfig`
+-- Indizes für die Tabelle `boardConfig`
 --
-ALTER TABLE `boardconfig`
+ALTER TABLE `boardConfig`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `macaddress` (`macaddress`),
-  ADD KEY `owner_userid` (`owner_userid`),
-  ADD KEY `boardconfig_ibfk_2_idx` (`boardtypeid`);
+  ADD UNIQUE KEY `macAddress` (`macAddress`),
+  ADD KEY `ownerUserId` (`ownerUserId`),
+  ADD KEY `boardConfig_ibfk_2_idx` (`boardtypeid`);
 
 --
 -- Indizes für die Tabelle `boardtype`
@@ -297,9 +297,9 @@ ALTER TABLE `users`
 --
 
 --
--- AUTO_INCREMENT für Tabelle `boardconfig`
+-- AUTO_INCREMENT für Tabelle `boardConfig`
 --
-ALTER TABLE `boardconfig`
+ALTER TABLE `boardConfig`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
@@ -349,18 +349,18 @@ ALTER TABLE `users`
 --
 
 --
--- Constraints der Tabelle `boardconfig`
+-- Constraints der Tabelle `boardConfig`
 --
-ALTER TABLE `boardconfig`
-  ADD CONSTRAINT `boardconfig_ibfk_1` FOREIGN KEY (`owner_userid`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `boardconfig_ibfk_2` FOREIGN KEY (`boardtypeid`) REFERENCES `boardtype` (`id`);
+ALTER TABLE `boardConfig`
+  ADD CONSTRAINT `boardConfig_ibfk_1` FOREIGN KEY (`ownerUserId`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `boardConfig_ibfk_2` FOREIGN KEY (`boardtypeid`) REFERENCES `boardtype` (`id`);
 
 --
 -- Constraints der Tabelle `sensorconfig`
 --
 ALTER TABLE `sensorconfig`
   ADD CONSTRAINT `sensorconfig_ibfk_2` FOREIGN KEY (`typid`) REFERENCES `sensortypes` (`id`),
-  ADD CONSTRAINT `sensorconfig_ibfk_4` FOREIGN KEY (`boardid`) REFERENCES `boardconfig` (`id`);
+  ADD CONSTRAINT `sensorconfig_ibfk_4` FOREIGN KEY (`boardid`) REFERENCES `boardConfig` (`id`);
 
 --
 -- Constraints der Tabelle `sensordata`

@@ -219,7 +219,7 @@ if(sizeof($ttn_post) > 0) {
     $boardInfos = array(
         "api_key" => $config::$api_key,
         // TODO: Anhand der Dev_IDE die Mac ermitteln
-        "macaddress" => $singleRowBoardIdbyTTN['macaddress'],   // fake mac address for debug.
+        "macAddress" => $singleRowBoardIdbyTTN['macAddress'],   // fake mac address for debug.
         "protocollversion" => "1"   // Version of the used protocoll.
     );
 
