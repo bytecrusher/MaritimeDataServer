@@ -434,7 +434,7 @@ setInterval(function() {
               $.ajax({
                 method: "POST",
                 url: "api/updateData.php",
-                data: { update: "sensorOrdnerNumber",
+                data: { update: "sensorOrderNumber",
                     channel: SensorIdChannel[1],
                     orderNumber: $( this ).attr("data-id"),
                     id: SensorIdChannel[0] }
