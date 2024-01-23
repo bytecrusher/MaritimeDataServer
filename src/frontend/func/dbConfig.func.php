@@ -18,7 +18,7 @@ class dbConfig {
     $config  = new configuration();
 
     try {
-      self::$pdo = new PDO("mysql:host=" . $config::$db_host . ";dbname=" . $config::$db_name, $config::$db_user, $config::$db_password);
+      self::$pdo = new PDO("mysql:host=" . $config::$dbHost . ";dbname=" . $config::$dbName, $config::$dbUser, $config::$dbPassword);
     }
     catch(PDOException $e)
     {

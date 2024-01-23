@@ -4,11 +4,11 @@
   require_once("func/user.class.php");
   require_once("func/dbUpdateData.php");
 
-  if (isset($_SESSION['userobj'])) {
-    $currentUser = unserialize($_SESSION['userobj']);
+  if (isset($_SESSION['userObj'])) {
+    $currentUser = unserialize($_SESSION['userObj']);
   } else {
     $currentUser = false;
-    header("Location: ./index.php");    // if user not loged in
+    header("Location: ./index.php");    // if user not logged in
     die();
   }
 
@@ -22,12 +22,12 @@
   <?php
   }
 
-  if (isset($_POST['submit_inputmask_sensors'])) {
+  if (isset($_POST['submit_formSensors'])) {
     if (!isset($_POST['modal'])) {
       try {
         $updateSensorReturn = dbUpdateData::updateSensor($_POST);
         $success_msg = "Board changes saved.";
-        $newURL = "inputmask_boards.php?id=" . $_POST['macaddress'];
+        $newURL = "formBoards.php?id=" . $_POST['macAddress'];
         header('Location: '.$newURL);
         // ToDo: send error or success mgs to header.
       } catch (Exception $e) {
@@ -73,13 +73,13 @@
 ?>
 </div>
 
-<form method='post' action='inputmask_sensors.php#confSensors' class='form-horizontal mt-3'>
+<form method='post' action='formSensors.php#confSensors' class='form-horizontal mt-3'>
 <div class="container main-container">
 <div class="modal-body">
   
     <?php
       $SensorConfig=(myFunctions::getSensorConfig($_GET['id']));
-      $SensorType = myFunctions::getSensorType($SensorConfig['typid']);
+      $SensorType = myFunctions::getSensorType($SensorConfig['typId']);
 
       // Get sensor type data
       $AllSensorTypes =(myFunctions::getAllSensorType());
@@ -101,8 +101,8 @@
           ?>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">ID Macaddress</span>
-            <input type='text' class='col col-sm-4 form-control' style="background:#e9ecef" id='macaddress' name='macaddress' value='<?=$SensorConfig['boardid'];?>'>
+            <span class="input-group-text" style="width: 50%">ID Mac Address</span>
+            <input type='text' class='col col-sm-4 form-control' style="background:#e9ecef" id='macAddress' name='macAddress' value='<?=$SensorConfig['boardId'];?>'>
           </div>
 
           <?php
@@ -110,7 +110,7 @@
               ?>
               <div class='input-group mb-3'>
                 <span class='input-group-text' style='width: 50%'>Sensor Address (I2C)</span>
-                <input type='text' class='col col-sm-4 form-control' id='sensorid' name='sensorid' value='<?php echo( $SensorConfig['sensorAddress']) ?>'>
+                <input type='text' class='col col-sm-4 form-control' id='sensorId' name='sensorId' value='<?php echo( $SensorConfig['sensorAddress']) ?>'>
               </div>
 
             <?php
@@ -129,16 +129,16 @@
 
           <div class="input-group mb-3">
             <span class="input-group-text" style="width: 50%">Typ</span>
-            <select class='col col-sm-4 form-select' aria-label='Default select example' name='typid' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
+            <select class='col col-sm-4 form-select' aria-label='Default select example' name='typId' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
           </div>
 
           <div class="input-group mb-3">
             <?php
-            foreach ($AllSensorTypes as $singleRowsensortyps) {
-              if ($SensorConfig['typid'] == $singleRowsensortyps['id']) {
-                echo "<option selected value='" . $singleRowsensortyps['id'] . "'>" . $singleRowsensortyps['name'] . "</option>";
+            foreach ($AllSensorTypes as $singleRowSensorTyps) {
+              if ($SensorConfig['typId'] == $singleRowSensorTyps['id']) {
+                echo "<option selected value='" . $singleRowSensorTyps['id'] . "'>" . $singleRowSensorTyps['name'] . "</option>";
               } else {
-                echo "<option value='" . $singleRowsensortyps['id'] . "'>" . $singleRowsensortyps['name'] . "</option>";
+                echo "<option value='" . $singleRowSensorTyps['id'] . "'>" . $singleRowSensorTyps['name'] . "</option>";
               }
             }
             ?>
@@ -150,8 +150,8 @@
             <input type='text' class='col col-sm-4 form-control' id='locationOfMeasurement' name='locationOfMeasurement' value='<?=$SensorConfig['locationOfMeasurement'];?>'>
           </div>
 
-          <fieldset class="border p-2 mb-3 mysensorsfieldset">
-            <legend  class="float-none w-auto mysensorsfieldsetlegend">Value / Channel <?php 
+          <fieldset class="border p-2 mb-3 mySensorsFieldset">
+            <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel <?php 
             if (isset($_GET['channel'])) {
               echo $_GET['channel'];
             } else {
@@ -187,8 +187,8 @@
             </div>
           </fieldset>
 
-          <fieldset class="border p-2 mb-3 mysensorsfieldset">
-          <legend  class="float-none w-auto mysensorsfieldsetlegend">Value / Channel 2</legend>
+          <fieldset class="border p-2 mb-3 mySensorsFieldset">
+          <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel 2</legend>
             <div class='input-group mb-3'>
               <span class='input-group-text' style='width: 50%'>Name</span>
               <input type='text' class='col col-sm-4 form-control' id='nameValue2' name='nameValue2' value='<?php echo $SensorConfig['nameValue2'] ?>'>
@@ -214,8 +214,8 @@
             </div>
           </fieldset>
 
-          <fieldset class="border p-2 mb-3 mysensorsfieldset">
-          <legend  class="float-none w-auto mysensorsfieldsetlegend">Value / Channel 3</legend>
+          <fieldset class="border p-2 mb-3 mySensorsFieldset">
+          <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel 3</legend>
             <div class='input-group mb-3'>
               <span class='input-group-text' style='width: 50%'>Name</span>
               <input type='text' class='col col-sm-4 form-control' id='nameValue3' name='nameValue3' value='<?php echo $SensorConfig['nameValue3'] ?>'>
@@ -241,8 +241,8 @@
             </div>
           </fieldset>
 
-          <fieldset class="border p-2 mb-3 mysensorsfieldset">
-          <legend  class="float-none w-auto mysensorsfieldsetlegend">Value / Channel 4</legend>
+          <fieldset class="border p-2 mb-3 mySensorsFieldset">
+          <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel 4</legend>
             <div class='input-group mb-3'>
               <span class='input-group-text' style='width: 50%'>Name</span>
               <input type='text' class='col col-sm-4 form-control' id='nameValue4' name='nameValue4' value='<?php echo $SensorConfig['nameValue4'] ?>'>
@@ -286,8 +286,8 @@
             <input type='text' class='col col-sm-4 form-control' id='nameValue<?php echo $_GET['channel'] ?>' name='nameValue<?php echo $_GET['channel'] ?>' value='<?php echo $SensorConfig['nameValue' . $_GET['channel'] ] ?>'>
           </div>
 
-          <fieldset class="border p-2 mysensorsfieldset">
-            <legend  class="float-none w-auto mysensorsfieldsetlegend">Gauge</legend>
+          <fieldset class="border p-2 mySensorsFieldset">
+            <legend  class="float-none w-auto mySensorsFieldsetLegend">Gauge</legend>
             <div class='input-group mb-3'>
               <span class='input-group-text' style='width: 50%'>MinValue</span>
               <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeMinValue' name='Value<?php echo $_GET['channel'] ?>GaugeMinValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeMinValue'] ?>'>
@@ -299,7 +299,7 @@
             </div>
 
             <fieldset class="border p-2">
-              <legend  class="float-none w-auto mysensorsfieldsetlegend">Red Area Low</legend>
+              <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area Low</legend>
               <div class='input-group mb-3'>
                 <span class='input-group-text' style='width: 50%'>Value</span>
                 <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaLowValue'] ?>'>
@@ -312,7 +312,7 @@
             </fieldset>
 
             <fieldset class="border p-2">
-              <legend  class="float-none w-auto mysensorsfieldsetlegend">Red Area High</legend>
+              <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area High</legend>
               <div class='input-group mb-3'>
                 <span class='input-group-text' style='width: 50%'>Value</span>
                 <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaHighValue'] ?>'>
@@ -350,8 +350,8 @@
           </div>
 
           <div class='input-group mt-3 mb-3'>
-            <span class='input-group-text' style='width: 50%'>DashboardOrdnerNr</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>DashboardOrdnerNr' name='Value<?php echo $_GET['channel'] ?>DashboardOrdnerNr' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'DashboardOrdnerNr'] ?>' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
+            <span class='input-group-text' style='width: 50%'>DashboardOrderNr</span>
+            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>DashboardOrderNr' name='Value<?php echo $_GET['channel'] ?>DashboardOrderNr' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'DashboardOrderNr'] ?>' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
           </div>
                   
           <?php 
@@ -387,7 +387,7 @@
   <?php
     if (!isset($_GET['modal'])) {
     ?>
-      <a class='col col-sm-2 m-1 btn btn-primary' href='inputmask_boards.php?id=<?php echo $_GET['boardid'] ?>' role='button'>Back</a>
+      <a class='col col-sm-2 m-1 btn btn-primary' href='formBoards.php?id=<?php echo $_GET['boardId'] ?>' role='button'>Back</a>
     <?php
     } else {
     ?>
@@ -395,7 +395,7 @@
     <?php
     }
   ?>
-  <input type='submit' class='btn btn-primary' id='submit_inputmask_sensors' name='submit_inputmask_sensors' value='Save' >
+  <input type='submit' class='btn btn-primary' id='submit_formSensors' name='submit_formSensors' value='Save' >
 </div>
 </div>
 </form>

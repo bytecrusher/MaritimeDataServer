@@ -8,46 +8,46 @@ $config  = new configuration();
 $varDemoMode = $config::$demoMode;
 
 $varIdent = $_POST['identifier'];
-$varToken = $_POST['securitytoken'];
-$vardata = $_POST['data'];
-$varsensorId = $_POST['sensorId'];
+$varToken = $_POST['securityToken'];
+$varData = $_POST['data'];
+$varSensorId = $_POST['sensorId'];
 $varNrOfValues = $_POST['NrOfValues'];
 
-if (isset($varIdent) && isset($varToken) && isset($vardata)) {
-    if ( (!empty($varIdent)) && (!empty($varToken) ) && (!empty($vardata))) {
+if (isset($varIdent) && isset($varToken) && isset($varData)) {
+    if ( (!empty($varIdent)) && (!empty($varToken) ) && (!empty($varData))) {
         // TODO check if identifier and token exist in DB.
-        if (($vardata == "sensor") && isset($varsensorId) ) {
-            $SensorType = (myFunctions::getSensorConfig($varsensorId));
-            $mysensors = myFunctions::getLatestSensorData($varsensorId, $varNrOfValues);
-            if (isset($mysensors)) {
+        if (($varData == "sensor") && isset($varSensorId) ) {
+            $SensorType = (myFunctions::getSensorConfig($varSensorId));
+            $mySensors = myFunctions::getLatestSensorData($varSensorId, $varNrOfValues);
+            if (isset($mySensors)) {
                 $data = array();
-                foreach ($mysensors as &$mysensorSingle) {
-                    $dbtimestamp = strtotime($mysensorSingle['reading_time']);
+                foreach ($mySensors as &$mySensorSingle) {
+                    $dbTimestamp = strtotime($mySensorSingle['reading_time']);
 
                     if ($varDemoMode == true) {
-                        $maxtimeout = strtotime("-15 Years");
+                        $maxTimeout = strtotime("-15 Years");
                         $deviceOnline = true;
                     } else {
-                        $boardid = myFunctions::getBoardBySensorId($varsensorId);
-                        $deviceOnline = checkDeviceIsOnline($boardid["boardid"]);
-                        //$maxtimeout = strtotime("-15 Minutes");
-                        //$maxtimeout = strtotime("-" . $boardobj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+                        $boardId = myFunctions::getBoardBySensorId($varSensorId);
+                        $deviceOnline = checkDeviceIsOnline($boardId["boardId"]);
+                        //$maxTimeout = strtotime("-15 Minutes");
+                        //$maxTimeout = strtotime("-" . $boardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
                     }
 
-                    //if ($dbtimestamp > $maxtimeout) {
+                    //if ($dbTimestamp > $maxTimeout) {
                     if ($deviceOnline) {
-                        //$data[] = $mysensorSingle['value1'];
-                        $data[] = $mysensorSingle['sensorid'];
-                        array_push($data, $mysensorSingle['value1']);
+                        //$data[] = $mySensorSingle['value1'];
+                        $data[] = $mySensorSingle['sensorId'];
+                        array_push($data, $mySensorSingle['value1']);
 
                         if ($SensorType['NrOfUsedSensors'] >= 2) {
-                            array_push($data, $mysensorSingle['value2']);
+                            array_push($data, $mySensorSingle['value2']);
                         }
                         if ($SensorType['NrOfUsedSensors'] >= 3) {
-                            array_push($data, $mysensorSingle['value3']);
+                            array_push($data, $mySensorSingle['value3']);
                         }
                         if ($SensorType['NrOfUsedSensors'] >= 4) {
-                            array_push($data, $mysensorSingle['value4']);
+                            array_push($data, $mySensorSingle['value4']);
                         }
                       } else {
                         $data[] = '.';
@@ -58,5 +58,3 @@ if (isset($varIdent) && isset($varToken) && isset($vardata)) {
         }
     }
 }
-
-?>

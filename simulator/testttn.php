@@ -147,4 +147,3 @@ try {
         curl_close($cURL);
     }
 }
-?>

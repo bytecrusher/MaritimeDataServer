@@ -13,14 +13,14 @@ require_once("writeToLogFunction.func.php");
 class user implements JsonSerializable
 {
   //private $user = null;
-  private $userobj = null;
+  private $userObj = null;
   private $object;
   private static $pdo;
   private $error;
 
   /**
   * Method for construct the class.
-  * @param $email adress of the user
+  * @param $email address of the user
   */
   public function __construct($email)
   {
@@ -28,10 +28,10 @@ class user implements JsonSerializable
       self::$pdo = dbConfig::getInstance();
       $statement = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
       $result = $statement->execute(array('email' => $email));
-      $this->userobj = $statement->fetch(PDO::FETCH_OBJ);
+      $this->userObj = $statement->fetch(PDO::FETCH_OBJ);
     } catch (PDOException $err) {
       //Handling query/error
-      writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("error code: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
       $this->error = $err->getCode();
     }
   }
@@ -46,36 +46,36 @@ class user implements JsonSerializable
   public static function check_user()
   {
     trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
-    if (!isset($_SESSION['userid']) && isset($_COOKIE['identifier']) && isset($_COOKIE['securitytoken'])) {
+    if (!isset($_SESSION['userId']) && isset($_COOKIE['identifier']) && isset($_COOKIE['securityToken'])) {
       $identifier = $_COOKIE['identifier'];
-      $securitytoken = $_COOKIE['securitytoken'];
+      $securityToken = $_COOKIE[''];
       try {
-        $statement = self::$pdo->prepare("SELECT * FROM securitytokens WHERE identifier = ?");
+        $statement = self::$pdo->prepare("SELECT * FROM securityTokens WHERE identifier = ?");
         $result = $statement->execute(array($identifier));
-        $securitytoken_row = $statement->fetch();
+        $securityToken_row = $statement->fetch();
 
-        if (sha1($securitytoken) !== $securitytoken_row['securitytoken']) {
+        if (sha1($securityToken) !== $securityToken_row['securityToken']) {
           //The security token was probably stolen
           //If necessary, display a warning or similar here
         } else { //Token was correct
           //Set new token
-          $neuer_securitytoken = myFunctions::random_string();
-          $insert = self::$pdo->prepare("UPDATE securitytokens SET securitytoken = :securitytoken WHERE identifier = :identifier");
-          $insert->execute(array('securitytoken' => sha1($neuer_securitytoken), 'identifier' => $identifier));
+          $neuer_securityToken = myFunctions::random_string();
+          $insert = self::$pdo->prepare("UPDATE securityTokens SET securityToken = :securityToken WHERE identifier = :identifier");
+          $insert->execute(array('securityToken' => sha1($neuer_securityToken), 'identifier' => $identifier));
           setcookie("identifier", $identifier, time() + (3600 * 24 * 365));
-          setcookie("securitytoken", $neuer_securitytoken, time() + (3600 * 24 * 365));
+          setcookie("securityToken", $neuer_securityToken, time() + (3600 * 24 * 365));
           //Log in the user
-          $_SESSION['userid'] = $securitytoken_row['user_id'];
+          $_SESSION['userId'] = $securityToken_row['userId'];
         }
       } catch (PDOException $err) {
-        writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("error code: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
         //$this->error = $err->getCode();
       }
     }
-    if (!isset($_SESSION['userid'])) {
+    if (!isset($_SESSION['userId'])) {
       return false;
     }
-    return dbGetData::getUserById($_SESSION['userid']);
+    return dbGetData::getUserById($_SESSION['userId']);
   }
 
 /**
@@ -84,7 +84,7 @@ class user implements JsonSerializable
   */
   public function userExist()
   {
-    if ($this->userobj == false) {
+    if ($this->userObj == false) {
       return false;
     } else {
       return true;
@@ -97,25 +97,25 @@ class user implements JsonSerializable
   */
   public function isActive()
   {
-    if ($this->userobj == false) {
+    if ($this->userObj == false) {
       return false;
     } else {
-      return $this->userobj->active;
+      return $this->userObj->active;
     }
   }
 
   /**
-  * @deprecated Returns the user of the emailadress.
-  * @param $email adress of the user.
+  * @deprecated Returns the user of the email address.
+  * @param $email address of the user.
   * @return user as object
   */
   public function getUser($email)
   {
     trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
-    if ($this->userobj === null) {
+    if ($this->userObj === null) {
       $this->object = new self($email);
     }
-    return $this->userobj;
+    return $this->userObj;
   }
 
   /**
@@ -124,7 +124,7 @@ class user implements JsonSerializable
   */
   public function getId()
   {
-    return $this->userobj->id;
+    return $this->userObj->id;
   }
 
   /**
@@ -133,16 +133,16 @@ class user implements JsonSerializable
   */
   public function getEmail()
   {
-    return $this->userobj->email;
+    return $this->userObj->email;
   }
 
   /**
-  * Returns the Firstname of the current User.
-  * @return $firstname of the user
+  * Returns the first name of the current User.
+  * @return $firstName of the user
   */
-  public function getFirstname()
+  public function getFirstName()
   {
-    return $this->userobj->firstname;
+    return $this->userObj->firstName;
   }
 
   /**
@@ -151,19 +151,19 @@ class user implements JsonSerializable
   */
   public function getPassword()
   {
-    return $this->userobj->password;
+    return $this->userObj->password;
   }
 
   /**
-  * Set the Firstname and the Lastname of the current User.
-  * @return $firstname and Lastname of the user
+  * Set the first name and the last name of the current User.
+  * @return $firstName and $lastName of the user
   */
   public function setName($post)
   {
     try {
-      $updateUserDataStatus = dbUpdateData::updateUserData($post, $this->userobj->id);
-      $this->userobj->firstname = trim($post['firstname']);
-      $this->userobj->lastname = trim($post['lastname']);
+      $updateUserDataStatus = dbUpdateData::updateUserData($post, $this->userObj->id);
+      $this->userObj->firstName = trim($post['firstName']);
+      $this->userObj->lastName = trim($post['lastName']);
       return $updateUserDataStatus;
     } catch (Exception $e) {
       throw new Exception('User Data not saved.');
@@ -177,8 +177,8 @@ class user implements JsonSerializable
   public function setUserTimeZone($post)
   {
     try {
-      $updateUserReturn = dbUpdateData::updateUserTimeZoneData($post, $this->userobj->id);
-      $this->userobj->Timezone = $post['Timezone'];
+      $updateUserReturn = dbUpdateData::updateUserTimeZoneData($post, $this->userObj->id);
+      $this->userObj->Timezone = $post['Timezone'];
       return $updateUserReturn;
     } catch (Exception $e) {
       throw new Exception('Timezone not saved.');
@@ -192,8 +192,8 @@ class user implements JsonSerializable
   public function setUserPassword($password_hash)
   {
     try {
-      $updateUserReturn = dbUpdateData::updateUserPassword($password_hash, $this->userobj->id);
-      $this->userobj->password = $password_hash;
+      $updateUserReturn = dbUpdateData::updateUserPassword($password_hash, $this->userObj->id);
+      $this->userObj->password = $password_hash;
       return $updateUserReturn;
     } catch (Exception $e) {
       throw new Exception('Password not saved.');
@@ -202,13 +202,13 @@ class user implements JsonSerializable
 
   /**
   * Set the Email of the current User.
-  * @return $firstname and Lastname of the user
+  * @return $updateUserEmailReturn
   */
   public function setEmail($post)
   {
     try {
-      $updateUserEmailReturn = dbUpdateData::updateUserMail($post, $this->userobj->id);
-      $this->userobj->email = trim($post['email']);
+      $updateUserEmailReturn = dbUpdateData::updateUserMail($post, $this->userObj->id);
+      $this->userObj->email = trim($post['email']);
       return $updateUserEmailReturn;
     } catch (Exception $e) {
       throw new Exception('Email not saved.');
@@ -216,30 +216,30 @@ class user implements JsonSerializable
   }
 
   /**
-  * Returns the Lastname of the current User.
-  * @return $lastname of the user
+  * Returns the last name of the current User.
+  * @return $lastName of the user
   */
-  public function getLastname()
+  public function getLastName()
   {
-    return $this->userobj->lastname;
+    return $this->userObj->lastName;
   }
 
   /**
-  * Returns the Lastname of the current User.
-  * @return $lastname of the user
+  * Returns the timezone of the current User.
+  * @return $timezone of the user
   */
   public function getTimezone()
   {
-    return $this->userobj->Timezone;
+    return $this->userObj->Timezone;
   }
 
   /**
   * Returns the UserGroupAdmin as Boolean of the User.
-  * @return $usergroup_admin of the user
+  * @return $userGroupAdmin of the user
   */
   public function getUserGroupAdmin()
   {
-    return $this->userobj->usergroup_admin;
+    return $this->userObj->userGroupAdmin;
   }
 
   /**
@@ -254,26 +254,13 @@ class user implements JsonSerializable
   /*
   * Get all of my Board by user id.
   */
-  /*public function getMyBoardsId() {
-    if (!$this->userobj->id == null) {
-      $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT id FROM boardConfig WHERE ownerUserId = " . $this->userobj->id . " ORDER BY id");
-      $result = $myboards->execute();
-      $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
-      return $myboards2;
-    }
-  }*/
-
-  /*
-  * Get all of my Board by user id.
-  */
   public function getMyBoardsAll() {
-    if (!$this->userobj->id == null) {
+    if (!$this->userObj->id == null) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = " . $this->userobj->id . " ORDER BY id");
-      $result = $myboards->execute();
-      $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
-      return $myboards2;
+      $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = " . $this->userObj->id . " ORDER BY id");
+      $result = $myBoards->execute();
+      $myBoards2 = $myBoards->fetchAll(PDO::FETCH_ASSOC);
+      return $myBoards2;
     }
   }
 
@@ -281,13 +268,13 @@ class user implements JsonSerializable
   * Get all Board (only for admin).
   */
   public function getAllBoardsAdmin() {
-    //if (!$this->userobj->id == null) {
-    if(($this->userobj->usergroup_admin == 1) ) {
+    //if (!$this->userObj->id == null) {
+    if(($this->userObj->userGroupAdmin == 1) ) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE 1 ORDER BY id");
-      $result = $myboards->execute();
-      $myboards2 = $myboards->fetchAll(PDO::FETCH_ASSOC);
-      return $myboards2;
+      $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE 1 ORDER BY id");
+      $result = $myBoards->execute();
+      $myBoards2 = $myBoards->fetchAll(PDO::FETCH_ASSOC);
+      return $myBoards2;
     }
   }
 
@@ -297,36 +284,36 @@ class user implements JsonSerializable
     [
       'userId'   => $this->getId(),
       'email' => $this->getEmail(),
-      'Firstname' => $this->getFirstname(),
-      'Lastname' => $this->getLastname(),
+      'FirstName' => $this->getFirstName(),
+      'LastName' => $this->getLastName(),
       'Timezone' => $this->getTimezone()
     ];
   }
 
   public function getDashboardUpdateInterval() {
-    return $this->userobj->dashboardUpdateInterval;
+    return $this->userObj->dashboardUpdateInterval;
   }
 
   public function setDashboardUpdateInterval($post) {
     try {
-      $updateUserReturn = dbUpdateData::updateUserDashboardUpdateInterval($post, $this->userobj->id);
-      $this->userobj->dashboardUpdateInterval = $post['updateInterval'];
+      $updateUserReturn = dbUpdateData::updateUserDashboardUpdateInterval($post, $this->userObj->id);
+      $this->userObj->dashboardUpdateInterval = $post['updateInterval'];
     } catch (Exception $e) {
       throw new Exception('Dashboard Update Interval not saved.');
     }
   }
 
   public function getReceiveNotifications() {
-    return $this->userobj->receive_notifications;
+    return $this->userObj->receive_notifications;
   }
 
   public function setReceiveNotifications($post) {
     try {
-      $updateUserReturn = dbUpdateData::updateUserReceiveNotifications($post, $this->userobj->id);
-      $this->userobj->receive_notifications = $post['receiveNotifications'];
+      $updateUserReturn = dbUpdateData::updateUserReceiveNotifications($post, $this->userObj->id);
+      $this->userObj->receive_notifications = $post['receiveNotifications'];
     } catch (Exception $e) {
       throw new Exception('Dashboard Update receiveNotifications not saved.');
     }
-    //return $this->userobj->receive_notifications;
+    //return $this->userObj->receive_notifications;
   }
 }

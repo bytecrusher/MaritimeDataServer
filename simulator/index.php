@@ -21,10 +21,10 @@
 <fieldset> 
 <legend><h2>MDS - TTN Simulator</h2></legend>
 <fieldset >
-	<legend class="float-none mysensorsfieldsetlegend">Destination server</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Destination server</legend>
     <?php
-    $subdir = str_replace($_SERVER['PWD'],"",__DIR__);
-    $subdir = str_replace("/simulator","/src",$subdir);
+    $subDir = str_replace($_SERVER['PWD'],"",__DIR__);
+    $subDir = str_replace("/simulator","/src",$subDir);
 
     $domain = $_SERVER['SERVER_ADDR'];
     if (isset($_SERVER['HTTPS']) &&
@@ -36,7 +36,7 @@
     else {
         $prefix = 'http://';
     }
-    $baseurl = $prefix . $domain . $subdir . "/receiver/ttndata/ttn.php";
+    $baseurl = $prefix . $domain . $subDir . "/receiver/ttndata/ttn.php";
     ?>
     <div class="input-group mb-3">
         <div class="input-group-text">
@@ -60,7 +60,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">Temp Battery Data Settings</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Temp Battery Data Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text">
             <input class="form-check-input mt-0" type="radio" name="checkTempBatData" value="tempBat_random" id="checkTempBatData1" onclick="$('#inputTempBat').prop('disabled', true);" checked>
@@ -75,7 +75,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">BME250 Data Settings</legend>
+	<legend class="float-none mySensorsFieldsetLegend">BME250 Data Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text col-2">
             Pressure
@@ -138,7 +138,7 @@
 </fieldset>
 
 <fieldset>
-    <legend class="float-none mysensorsfieldsetlegend">ADC Settings</legend>
+    <legend class="float-none mySensorsFieldsetLegend">ADC Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text col-2">
             Channel 1
@@ -201,7 +201,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">Send ttn data to server</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Send ttn data to server</legend>
     <button class="btn btn-primary" onclick="sendttn()">Single package</button>
     <div style="float:inline-end">
     <button class="btn btn-primary" onclick="sendttninterval()" id="btnsendttninterval">Start interval</button>
@@ -212,7 +212,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">Log</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Log</legend>
     <div id="txtLog">
     </div>
 </fieldset>

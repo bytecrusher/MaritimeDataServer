@@ -4,12 +4,10 @@ require_once("../func/myFunctions.func.php");
 
 session_start();
 
-if (isset($_SESSION['userobj'])) {
-    $currentUser = unserialize($_SESSION['userobj']);
+if (isset($_SESSION['userObj'])) {
+    $currentUser = unserialize($_SESSION['userObj']);
     echo json_encode(true);
 } else {
     $currentUser = false;
     echo json_encode(false);
 }
-
-?>

@@ -3,7 +3,7 @@
 * File for Display Data for the user
 *
 */
-// TODO add the Option to define Virtual Sensor group, to group them visualy.
+// TODO add the Option to define Virtual Sensor group, to group them visual.
 
   session_start();
   require_once("func/dbConfig.func.php");
@@ -13,11 +13,11 @@
   require_once("func/writeToLogFunction.func.php");
   //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
-  if (isset($_SESSION['userobj'])) {
-    $currentUser = unserialize($_SESSION['userobj']);
+  if (isset($_SESSION['userObj'])) {
+    $currentUser = unserialize($_SESSION['userObj']);
   } else {
     $currentUser = false;
-    header("Location: ./index.php");    // if user not loged in
+    header("Location: ./index.php");    // if user not logged in
     die();
   }
 
@@ -28,44 +28,26 @@
   $varDemoMode = $config::$demoMode;
 
 ?>
-<!--link rel="stylesheet" href="../node_modules/jquery-ui/dist/themes/base/jquery-ui.css" -->
 <link rel="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
-
-<!--link href="../node_modules/fontawesome-free/css/fontawesome.css" rel="stylesheet"-->
-<!--link href="../node_modules/fontawesome-free/css/fontawesome.min.css" rel="stylesheet"-->
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/fontawesome.min.css">
-
-<!--link href="../node_modules/fontawesome-free/css/brands.css" rel="stylesheet"-->
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/brands.css" rel="stylesheet">
-
-<!--link href="../node_modules/fontawesome-free/css/solid.css" rel="stylesheet"-->
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/solid.css" rel="stylesheet">
-
-<!--script defer src="../node_modules/fontawesome-free/js/brands.js"></script-->
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/brands.js"></script>
-
-<!--script defer src="../node_modules/fontawesome-free/js/solid.js"></script-->
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/solid.js"></script>
-<!--script defer src="../node_modules/fontawesome-free/js/fontawesome.js"></script-->
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/fontawesome.min.js"></script>
-
 <script src="../node_modules/chart.js/dist/chart.js"></script>
-<!--script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.js"><script-->
-
 <script src="./js/app.js"></script>
 <script src="./js/gauge.js"></script>
-<!--script src="../node_modules/jquery-ui/dist/jquery-ui.js"></script-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
 
 <?php
   if ($currentUser != false) {
-    //$myboardsIdList = $currentUser->getMyBoardsId();
-    $myboardsIdList = $currentUser->getMyBoardsAll();
+    $myBoardsIdList = $currentUser->getMyBoardsAll();
   }
   $boardObjsArray = array();
-  foreach ($myboardsIdList as $key => $value) {
-    $boardobj = new board($value['id']);
-    array_push($boardObjsArray, $boardobj);
+  foreach ($myBoardsIdList as $key => $value) {
+    $boardObj = new board($value['id']);
+    array_push($boardObjsArray, $boardObj);
   }
 ?>
 
@@ -76,10 +58,9 @@
   let gaugesArrayHelper = new Array();
   var SensorArrayHelper = new Array();
   var gaugesMap = new Map();
-  var gaugesArrayHelperbig = new Array();
+  var gaugesArrayHelperBig = new Array();
 
-  function mychecksession() { 
-    //console.log("sessionCheck");
+  function checkSession() { 
     $.ajax({
       method: "POST",
       url: "api/checkSession.php",
@@ -88,32 +69,30 @@
     .done(function( response ) {
       text = response;
       if (text == "false") {
-        //console.log("sessionCheck = false");
         window.location.href = "./index.php";
       }
     });
-    //console.log("sessionCheck = true");
   }
 
   function updateGauges() { 
-    mychecksession();
+    checkSession();
     var varIdent = getCookie("identifier");
-    var varToken = getCookie("securitytoken");
-    var varboardId = null;
-    var varsensorId = null;
-    var vardata = "sensor";
+    var varToken = getCookie("securityToken");
+    //var varBoardId = null;
+    var varSensorId = null;
+    var varData = "sensor";
     var varNrOfValues = "1";
     let text;
     var obj;
 
     for (let i in gaugesArrayHelper) {
-      varsensorId = gaugesArrayHelper[i];
-      varsensorId = varsensorId.slice(0, -2); 
+      varSensorId = gaugesArrayHelper[i];
+      varSensorId = varSensorId.slice(0, -2); 
 
       $.ajax({
         method: "POST",
         url: "api/getdata.php",
-        data: { identifier: varIdent, securitytoken: varToken, data: vardata, sensorId: varsensorId,    NrOfValues: varNrOfValues }
+        data: { identifier: varIdent, securityToken: varToken, data: varData, sensorId: varSensorId,    NrOfValues: varNrOfValues }
       })
       .done(function( response ) {
         text = response;
@@ -141,7 +120,7 @@ setInterval(function() {
 
 <div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
     <div class="container">
-      <h1>Welcome <?php echo htmlentities($currentUser->getFirstname()); ?></h1>
+      <h1>Welcome <?php echo htmlentities($currentUser->getFirstName()); ?></h1>
     </div>
   </div>
 
@@ -220,8 +199,8 @@ setInterval(function() {
                           <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>' style="display: flex; justify-content: center; flex-wrap: wrap;">
                 <?php
                 $boardOnlineStatus = false;
-                $mysensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
-                if ($mysensors2 == null) {
+                $mySensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
+                if ($mySensors2 == null) {
                   ?>
                     <div class='col m-b-20'>no Sensors</div>
                   <?php
@@ -229,29 +208,29 @@ setInterval(function() {
                 ?>
                 
                 <?php
-                if ($mysensors2 != null) {
-                  foreach($mysensors2 as $singleRowmysensors) {
-                    $mysensors = myFunctions::getLatestSensorData($singleRowmysensors['id']);                    
-                    foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-                      $sensortype = myFunctions::getSensorType($singleRowmysensors['typid']);
-                      $sensConfig = myFunctions::getSensorConfig($singleRowmysensors['id']);
+                if ($mySensors2 != null) {
+                  foreach($mySensors2 as $singleRowMySensors) {
+                    $mySensors = myFunctions::getLatestSensorData($singleRowMySensors['id']);                    
+                    foreach($mySensors as $singleRowMySensorsLastTimeSeen) {
+                      $sensortype = myFunctions::getSensorType($singleRowMySensors['typId']);
+                      $sensConfig = myFunctions::getSensorConfig($singleRowMySensors['id']);
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
-                        if (($mysensors != null) && ($singleRowmysensors['Value' . $i . 'onDashboard'])) {
-                          //var_dump($singleRowmysensors['Value' . $i . 'onDashboard'])
+                        if (($mySensors != null) && ($singleRowMySensors['Value' . $i . 'onDashboard'])) {
+                          //var_dump($singleRowMySensors['Value' . $i . 'onDashboard'])
                           //var_dump($deviceOnline);
                             ?>
-                            <li id='gauge<?php echo $singleRowmysensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowmysensors['Value' . $i . 'DashboardOrdnerNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
-                              <div id='div_click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
-                                <i id='click_settings<?php echo $singleRowmysensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
+                            <li id='gauge<?php echo $singleRowMySensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowMySensors['Value' . $i . 'DashboardOrderNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
+                              <div id='div_click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
+                                <i id='click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
                                 </i>
                               </div>
-                              <div style='height:30px;'><?php echo $singleRowmysensors['nameValue' . $i]; ?> (<?php echo $sensortype['siUnitVal' . $i]; ?>)
+                              <div style='height:30px;'><?php echo $singleRowMySensors['nameValue' . $i]; ?> (<?php echo $sensortype['siUnitVal' . $i]; ?>)
                               </div>
                             </li>
                             <script>
-                              if (<?php echo sizeof($mysensors); ?> != null) {
+                              if (<?php echo sizeof($mySensors); ?> != null) {
 
-                              var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowmysensors['id'] . "." . $i; ?>"),
+                              var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowMySensors['id'] . "." . $i; ?>"),
                                 {
                                   min: <?php echo $sensConfig['Value' . $i . 'GaugeMinValue'] ?>,
                                   max: <?php echo $sensConfig['Value' . $i . 'GaugeMaxValue'] ?>,
@@ -259,7 +238,7 @@ setInterval(function() {
                                   dialEndAngle: 0,
                                   value: '.', // so that "NaN" is displayed as the default value
                                   viewBox: "0 0 100 57",
-                                  id: "<?php echo $singleRowmysensors['id'] . "." . $i; ?>",
+                                  id: "<?php echo $singleRowMySensors['id'] . "." . $i; ?>",
                                   color: function(value) {
                                     if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowValue'] ?>) {
                                       return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowColor'] ?>';
@@ -271,8 +250,8 @@ setInterval(function() {
                                   },
                                 }
                               );
-                              gaugesArrayHelper.push("<?php echo $singleRowmysensors['id'] . "." . $i; ?>");
-                              gaugesMap.set("<?php echo $singleRowmysensors['id'] . "." . $i; ?>", gauge_temp);
+                              gaugesArrayHelper.push("<?php echo $singleRowMySensors['id'] . "." . $i; ?>");
+                              gaugesMap.set("<?php echo $singleRowMySensors['id'] . "." . $i; ?>", gauge_temp);
                             }
                             </script>
                             <?php
@@ -280,13 +259,13 @@ setInterval(function() {
                     }
                     ?>
                     <script>
-                      SensorArrayHelper.push(<?php echo $singleRowmysensors['id']; ?>);
-                      var valuetopush = {};
-                      valuetopush["sensorId"] = "<?php echo $singleRowmysensors['id']; ?>";
-                      valuetopush["typid"] = "<?php echo $singleRowmysensors['typid']; ?>";
-                      valuetopush["NrOfSensors"] = "<?php echo $singleRowmysensors['typid']; ?>";
-                      valuetopush["NameOfSensors"] = "<?php echo $singleRowmysensors['nameValue1']; ?>";
-                      gaugesArrayHelperbig.push(valuetopush);
+                      SensorArrayHelper.push(<?php echo $singleRowMySensors['id']; ?>);
+                      var valueToPush = {};
+                      valueToPush["sensorId"] = "<?php echo $singleRowMySensors['id']; ?>";
+                      valueToPush["typId"] = "<?php echo $singleRowMySensors['typId']; ?>";
+                      valueToPush["NrOfSensors"] = "<?php echo $singleRowMySensors['typId']; ?>";
+                      valueToPush["NameOfSensors"] = "<?php echo $singleRowMySensors['nameValue1']; ?>";
+                      gaugesArrayHelperBig.push(valueToPush);
                     </script>
                       <?php
                     }
@@ -299,7 +278,7 @@ setInterval(function() {
                     <i id='click_settings' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
                      </i>
                   </div>
-                  <div style='height:30px;'>Bilgen Alarm</div>
+                  <div style='height:30px;'>Bilge Alarm</div>
                   <div class="text-center">
                     <i class="bi bi-water"></i>
                   </div>
@@ -331,31 +310,31 @@ setInterval(function() {
         <fieldset>
             <?php          
             foreach($boardObjsArray as $singleBoardObj) {
-              $transmissionpath = 0;
-              $mysensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
+              $transmissionPath = 0;
+              $mySensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
               $boardOnlineStatus = false;
-              $mysensorIdlist = null;
-              foreach($mysensors2 as $singleRowmysensors) {
-                if ($mysensorIdlist == null) {
-                  $mysensorIdlist = $singleRowmysensors['id'];
+              $mySensorIdList = null;
+              foreach($mySensors2 as $singleRowMySensors) {
+                if ($mySensorIdList == null) {
+                  $mySensorIdList = $singleRowMySensors['id'];
                 } else {
-                  $mysensorIdlist = $mysensorIdlist . ", " . $singleRowmysensors['id'];
+                  $mySensorIdList = $mySensorIdList . ", " . $singleRowMySensors['id'];
                 }
               }
-              $mysensors = myFunctions::getLatestSensorData($mysensorIdlist);
-              foreach($mysensors as $singleRowmysensorsLastTimeSeen) {
-                $transmissionpath = $singleRowmysensorsLastTimeSeen['transmissionpath'];
-                $dbtimestamp = strtotime($singleRowmysensorsLastTimeSeen['reading_time']);
+              $mySensors = myFunctions::getLatestSensorData($mySensorIdList);
+              foreach($mySensors as $singleRowMySensorsLastTimeSeen) {
+                $transmissionPath = $singleRowMySensorsLastTimeSeen['transmissionPath'];
+                $dbTimestamp = strtotime($singleRowMySensorsLastTimeSeen['reading_time']);
 
                 // Show Online / Offline
                 // TODO if demo mode == true, then no limit.
                 if ($varDemoMode) {
-                  $maxtimeout = strtotime("-10 Years");
+                  $maxTimeout = strtotime("-10 Years");
                 } else {
-                  $maxtimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+                  $maxTimeout = strtotime("-" . $singleBoardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
                 }
 
-                if ($dbtimestamp > $maxtimeout) {
+                if ($dbTimestamp > $maxTimeout) {
                   $deviceIsOnline[$singleBoardObj->getId()] = (bool)true;
                   $boardOnlineStatus = true;
                 } else {
@@ -369,11 +348,11 @@ setInterval(function() {
                 ?>
                   <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
                 <?php
-                  if ($transmissionpath == 1) {
+                  if ($transmissionPath == 1) {
                     ?>
                       <span class='badge bg-success mr-2' style='width: 55px;'>WiFi</span>
                     <?php
-                  } elseif ($transmissionpath == 2) {
+                  } elseif ($transmissionPath == 2) {
                     ?>
                       <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
                     <?php
@@ -389,7 +368,7 @@ setInterval(function() {
                 }
                 ?>
 
-                  <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacaddress()) ?>)</label>
+                  <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacAddress()) ?>)</label>
               </div>
             <?php
             }
@@ -423,7 +402,7 @@ setInterval(function() {
   <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" role="dialog"  aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
-        <!-- definition in "inputmask_sensors.php"-->
+        <!-- definition in "formSensors.php"-->
       </div>
     </div>
   </div>
@@ -448,16 +427,16 @@ setInterval(function() {
           onceSensorOrderDone = false;
           for (let i=0; i<wrapper.length; i++) {
             $("#" + wrapper[i].id + " .gauge-container").each(function(index) {
-              //console.log("new order nr: " + index + ", old ordner nr: " + $( this ).attr("data-id"));
+              //console.log("new order nr: " + index + ", old order nr: " + $( this ).attr("data-id"));
               $( this ).attr("data-id", index);
-              var tempnumber = $( this ).attr("id").replace('gauge', '');
-              var SensorIdChannel = tempnumber.split('.');
+              var tempNumber = $( this ).attr("id").replace('gauge', '');
+              var SensorIdChannel = tempNumber.split('.');
               $.ajax({
                 method: "POST",
                 url: "api/updateData.php",
                 data: { update: "sensorOrdnerNumber",
                     channel: SensorIdChannel[1],
-                    ordnernumber: $( this ).attr("data-id"),
+                    orderNumber: $( this ).attr("data-id"),
                     id: SensorIdChannel[0] }
               })
                 .done(function( response ) {
@@ -514,7 +493,7 @@ setInterval(function() {
         let newStr = str.replace('click_settings', '');
         const myArray = newStr.split(".");
         $.ajax({
-          url: 'inputmask_sensors.php?id=' + myArray[0] + '&channel=' + myArray[1] + '&modal=true'
+          url: 'formSensors.php?id=' + myArray[0] + '&channel=' + myArray[1] + '&modal=true'
         }).done(function(response) {
           $('.modal-content').html(response);
         });

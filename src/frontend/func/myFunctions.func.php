@@ -25,7 +25,7 @@ class myFunctions {
    * @return bool true when user is checked in, false when not.
 	 */
 	public static function is_checked_in() {
-		return isset($_SESSION['userid']);
+		return isset($_SESSION['userId']);
 	}
 
 	/**
@@ -41,7 +41,7 @@ class myFunctions {
 			$bytes = mcrypt_create_iv(16, MCRYPT_DEV_URANDOM);
 			$str = bin2hex($bytes);
 		} else {
-			$str = md5(uniqid(configuration::$md5secretstring, true));
+			$str = md5(uniqid(configuration::$md5secretString, true));
 		}
 		return $str;
 	}
@@ -56,20 +56,20 @@ class myFunctions {
 
   /**
   * Get all of my Board by user id.
-  * @return array|null Boards from Userid.
+  * @return array|null Boards from UserId.
   * @throws Exception — Return Exception message on error.
   */
-  public static function getMyBoards($userid) {
-    if (!$userid == null) {
+  public static function getMyBoards($userId) {
+    if (!$userId == null) {
       $pdo = dbConfig::getInstance();
       try {
-        $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = " . $userid . " ORDER BY id");
-        $result = $myboards->execute();
-        return $myboards->fetchAll(PDO::FETCH_ASSOC);
+        $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = " . $userId . " ORDER BY id");
+        $result = $myBoards->execute();
+        return $myBoards->fetchAll(PDO::FETCH_ASSOC);
       } catch (PDOException $e) {
-        writeToLogFunction::write_to_log("Error: Unable to getmyboards for userid: " . $userid, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: Unable to get myBoards for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
         writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-        throw new Exception('Unable to getmyboards.');
+        throw new Exception('Unable to get myBoards.');
       }
     }
     return null;
@@ -84,9 +84,9 @@ class myFunctions {
     if (!$boardId == null) {
       $pdo = dbConfig::getInstance();
       try {
-        $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE id = " . $boardId . " ORDER BY id LIMIT 1");
-        $result = $myboards->execute();
-        return $myboards->fetch(PDO::FETCH_ASSOC);
+        $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE id = " . $boardId . " ORDER BY id LIMIT 1");
+        $result = $myBoards->execute();
+        return $myBoards->fetch(PDO::FETCH_ASSOC);
       } catch (PDOException $e) {
         writeToLogFunction::write_to_log("Error: Unable to getBoardById for boardId: " . $boardId, $_SERVER["SCRIPT_FILENAME"]);
         writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
@@ -105,11 +105,11 @@ class myFunctions {
     if (!$sensorId == null) {
       $pdo = dbConfig::getInstance();
       try {
-        $myboards = $pdo->prepare("SELECT boardid FROM sensorconfig WHERE id = " . $sensorId . " ORDER BY id LIMIT 1");
-        $result = $myboards->execute();
-        return $myboards->fetch(PDO::FETCH_ASSOC);
+        $myBoards = $pdo->prepare("SELECT boardId FROM sensorConfig WHERE id = " . $sensorId . " ORDER BY id LIMIT 1");
+        $result = $myBoards->execute();
+        return $myBoards->fetch(PDO::FETCH_ASSOC);
       } catch (PDOException $e) {
-        writeToLogFunction::write_to_log("Error: Unable to getBoardById for sensorId: " . $sensorId, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: Unable to getBoardById for sensor id: " . $sensorId, $_SERVER["SCRIPT_FILENAME"]);
         writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
         throw new Exception('Unable to getBoardById.');
       }
@@ -117,40 +117,26 @@ class myFunctions {
     return null;
   }
 
-  /*
-  * Get Board by Board macAddress. Only one dataset will return.
-  */
-  /*public static function getBoardByMac($boardMac) {
-    if (!$boardMac == null) {
-      $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE macAddress = '" . $boardMac . "' ORDER BY id LIMIT 1");
-      $result = $myboards->execute();
-      $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
-      return $myboards2;
-    }
-  }*/
-
 /*
-  * Get Board by Board TTN appid and devid. Only one dataset will return.
+  * Get Board by Board TTN appid and dev id. Only one dataset will return.
   */
-  public static function getBoardByTTN($ttn_app_id, $ttn_dev_id) {
-    if ((!$ttn_app_id == null) && (!$ttn_dev_id == null)) {
+  public static function getBoardByTTN($ttnAppId, $ttnDevId) {
+    if ((!$ttnAppId == null) && (!$ttnDevId == null)) {
       $pdo = dbConfig::getInstance();
-      $myboards = $pdo->prepare("SELECT * FROM boardConfig WHERE ttn_app_id = '$ttn_app_id' AND ttn_dev_id = '$ttn_dev_id' ORDER BY id LIMIT 1");
-      //var_dump($myboards);
-      $result = $myboards->execute();
-      $myboards2 = $myboards->fetch(PDO::FETCH_ASSOC);
-      return $myboards2;
+      $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE ttnAppId = '$ttnAppId' AND ttnDevId = '$ttnDevId' ORDER BY id LIMIT 1");
+      $result = $myBoards->execute();
+      $myBoards2 = $myBoards->fetch(PDO::FETCH_ASSOC);
+      return $myBoards2;
     }
   }
 
   /*
-  * Add Board by Board TTN appid and devid. Only one dataset will return.
+  * Add Board by Board TTN appid and dev id. Only one dataset will return.
   */
-  public static function addBoardByTTN($ttn_app_id, $ttn_dev_id) {
+  public static function addBoardByTTN($ttnAppId, $ttnDevId) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("INSERT INTO boardConfig (macAddress, name, ttn_app_id, ttn_dev_id, onDashboard, updateDataTimer  ) VALUES (?, ?, ?, ?, ?, ?)");
-    $statement->execute(array("fakeMacAddress" . $ttn_dev_id, "- new imported -", $ttn_app_id, $ttn_dev_id, 1, 15));
+    $statement = $pdo->prepare("INSERT INTO boardConfig (macAddress, name, ttnAppId, ttnDevId, onDashboard, updateDataTimer  ) VALUES (?, ?, ?, ?, ?, ?)");
+    $statement->execute(array("fakeMacAddress" . $ttnDevId, "- new imported -", $ttnAppId, $ttnDevId, 1, 15));
     $neue_id = $pdo->lastInsertId();
     return $neue_id;
   }
@@ -160,53 +146,31 @@ class myFunctions {
   */
   public static function getAllSensorsOfBoard($id) {
     $pdo = dbConfig::getInstance();
-    $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as boardid FROM sensorconfig, sensortypes WHERE (boardid = ?) and (typid = sensortypes.id) ORDER BY sensorconfig.id; ");
-    $mysensors2->execute(array($id));
-    $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
+    $mySensors2 = $pdo->prepare("SELECT sensorConfig.*, sensorTypes.name as boardId FROM sensorConfig, sensorTypes WHERE (boardId = ?) and (typId = sensorTypes.id) ORDER BY sensorConfig.id; ");
+    $mySensors2->execute(array($id));
+    $sensorsOfBoard = $mySensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
 
   /*
   * Get all sensors of a given board id.
   */
-  public static function getAllSensorsOfBoardold($id) {
+  public static function getAllSensorsOfBoardOld($id) {
     $pdo = dbConfig::getInstance();
-    $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? ORDER BY id");
-    $mysensors2->execute(array($id));
-    $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
+    $mySensors2 = $pdo->prepare("SELECT * FROM sensorConfig WHERE boardId = ? ORDER BY id");
+    $mySensors2->execute(array($id));
+    $sensorsOfBoard = $mySensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
-
-  /*
-  * Get all sensors of a given board id with dashboard and sensor typ 1 (temp).
-  */
-  /*public static function getAllSensorsOfBoardWithDashboardAndTemp($id) {
-    $pdo = dbConfig::getInstance();
-    $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? AND onDashboard = 1	AND typid = 1 ORDER BY id");
-    $mysensors2->execute(array($id));
-    $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
-    return $sensorsOfBoard;
-  }*/
-
-/*
-  * Get all sensors of a given board id with dashboard.
-  */
-  /*public static function getAllSensorsOfBoardWithDashboard($id) {
-    $pdo = dbConfig::getInstance();
-    $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE boardid = ? AND onDashboard = 1 ORDER BY id");
-    $mysensors2->execute(array($id));
-    $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
-    return $sensorsOfBoard;
-  }*/
 
   /*
   * Get all sensors of a given board id with dashboard.
   */
   public static function getAllSensorsOfBoardWithDashboardWithTypeName($id) {
     $pdo = dbConfig::getInstance();
-    $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND onDashboard = 1 ORDER BY id");
-    $mysensors2->execute(array($id));
-    $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
+    $mySensors2 = $pdo->prepare("SELECT sensorConfig.*, sensorTypes.name as typename FROM sensorConfig, sensorTypes WHERE boardId = ? AND typId = sensorTypes.id AND onDashboard = 1 ORDER BY id");
+    $mySensors2->execute(array($id));
+    $sensorsOfBoard = $mySensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
 
@@ -216,9 +180,9 @@ class myFunctions {
   public static function getLatestSensorData($sensorId, $maxNrOfValue = 1) {
     if ($maxNrOfValue >= 1) {
       $pdo = dbConfig::getInstance();
-      $mysensors = $pdo->prepare("SELECT * FROM sensordata WHERE sensorid IN ($sensorId) ORDER BY id DESC LIMIT $maxNrOfValue");
-      $mysensors->execute();
-      $SensorData = $mysensors->fetchAll(PDO::FETCH_ASSOC);
+      $mySensors = $pdo->prepare("SELECT * FROM sensorData WHERE sensorId IN ($sensorId) ORDER BY id DESC LIMIT $maxNrOfValue");
+      $mySensors->execute();
+      $SensorData = $mySensors->fetchAll(PDO::FETCH_ASSOC);
       return $SensorData;
     }
   }
@@ -226,14 +190,14 @@ class myFunctions {
   /*
   * Get all GPS data of a given (sensor id).
   */
-  public static function getAllGpsData($boardid, $maxNrOfValue = 1) {
+  public static function getAllGpsData($boardId, $maxNrOfValue = 1) {
     if ($maxNrOfValue >= 1) {
       $pdo = dbConfig::getInstance();
-      $mysensors = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM `sensorconfig`, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND sensortypes.name = 'GPS'");
-      $mysensors->execute(array($boardid));
-      $SensorData = $mysensors->fetch(PDO::FETCH_ASSOC);
+      $mySensors = $pdo->prepare("SELECT sensorConfig.*, sensorTypes.name as typename FROM `sensorConfig`, sensorTypes WHERE boardId = ? AND typId = sensorTypes.id AND sensorTypes.name = 'GPS'");
+      $mySensors->execute(array($boardId));
+      $SensorData = $mySensors->fetch(PDO::FETCH_ASSOC);
       if ($SensorData != false) {
-        $myGps = $pdo->prepare("SELECT * FROM `sensordata` WHERE sensorid = ?");
+        $myGps = $pdo->prepare("SELECT * FROM `sensorData` WHERE sensorId = ?");
         $myGps->execute(array($SensorData["id"]));
         $myGpsData = $myGps->fetchAll(PDO::FETCH_ASSOC);
         return $myGpsData;
@@ -244,23 +208,23 @@ class myFunctions {
   }
 
   /*
-  * Get Config Object if a given sensorconfig id
+  * Get Config Object if a given sensorConfig id
   */
   public static function getSensorConfig($id) {
     $pdo = dbConfig::getInstance();
-    $mysensors2 = $pdo->prepare("SELECT * FROM sensorconfig WHERE id = ? ORDER BY id LIMIT 1");
-    $mysensors2->execute(array($id));
-    $sensorsOfBoard = $mysensors2->fetch(PDO::FETCH_ASSOC);
+    $mySensors2 = $pdo->prepare("SELECT * FROM sensorConfig WHERE id = ? ORDER BY id LIMIT 1");
+    $mySensors2->execute(array($id));
+    $sensorsOfBoard = $mySensors2->fetch(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
 
   /*
   * Add SensorConfig Object if a given board id
   */
-  public function addSensorConfig($boardid, $typIdName, $sensorName) {
+  public function addSensorConfig($boardId, $typIdName, $sensorName) {
     $pdo = dbConfig::getInstance();
     $valuesDefined = false;
-    $mysensorTypId = $pdo->query('SELECT id, name FROM sensortypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
+    $mySensorTypId = $pdo->query('SELECT id, name FROM sensorTypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
 
     $defaultValues['Value1onDashboard'] = $defaultValues['Value2onDashboard'] = $defaultValues['Value3onDashboard'] = $defaultValues['Value4onDashboard'] = 1;
 
@@ -306,7 +270,7 @@ class myFunctions {
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
       $defaultValues['Value4onDashboard'] = 0;
 
-      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
@@ -351,7 +315,7 @@ class myFunctions {
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
       $defaultValues['Value4onDashboard'] = 0;
 
-      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
 
@@ -396,7 +360,7 @@ class myFunctions {
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
       $defaultValues['Value4onDashboard'] = 0;
 
-      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 3;
       $valuesDefined = true;
 
@@ -441,7 +405,7 @@ class myFunctions {
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
       $defaultValues['Value4onDashboard'] = 0;
 
-      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
 
@@ -486,7 +450,7 @@ class myFunctions {
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
       $defaultValues['Value4onDashboard'] = 1;
 
-      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
@@ -531,7 +495,7 @@ class myFunctions {
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
       $defaultValues['Value4onDashboard'] = 0;
 
-      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
       
@@ -576,19 +540,19 @@ class myFunctions {
       $defaultValues['Value4GaugeNormalAreaColor'] = "green";
       $defaultValues['Value4onDashboard'] = 0;
 
-      $defaultValues['ttn_payload_id'] = null;
+      $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
     }
 
     if ($valuesDefined == true) {
-      $statement = $pdo->prepare("INSERT INTO sensorconfig (boardid, typid, name," .
+      $statement = $pdo->prepare("INSERT INTO sensorConfig (boardId, typId, name," .
       "nameValue1, Value1GaugeMinValue, Value1GaugeMaxValue, Value1GaugeRedAreaLowValue, Value1GaugeRedAreaLowColor, Value1GaugeRedAreaHighValue, Value1GaugeRedAreaHighColor, Value1GaugeNormalAreaColor, Value1onDashboard," .
       "nameValue2, Value2GaugeMinValue, Value2GaugeMaxValue, Value2GaugeRedAreaLowValue, Value2GaugeRedAreaLowColor, Value2GaugeRedAreaHighValue, Value2GaugeRedAreaHighColor, Value2GaugeNormalAreaColor, Value2onDashboard," .
       "nameValue3, Value3GaugeMinValue, Value3GaugeMaxValue, Value3GaugeRedAreaLowValue, Value3GaugeRedAreaLowColor, Value3GaugeRedAreaHighValue, Value3GaugeRedAreaHighColor, Value3GaugeNormalAreaColor, Value3onDashboard," .
       "nameValue4, Value4GaugeMinValue, Value4GaugeMaxValue, Value4GaugeRedAreaLowValue, Value4GaugeRedAreaLowColor, Value4GaugeRedAreaHighValue, Value4GaugeRedAreaHighColor, Value4GaugeNormalAreaColor, Value4onDashboard," .
-      "ttn_payload_id, NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-      $statement->execute(array($boardid, $mysensorTypId->id, $sensorName,
+      "ttnPayloadId, NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      $statement->execute(array($boardId, $mySensorTypId->id, $sensorName,
         $defaultValues['nameValue1'], $defaultValues['Value1GaugeMinValue'], $defaultValues['Value1GaugeMaxValue'], $defaultValues['Value1GaugeRedAreaLowValue'], $defaultValues['Value1GaugeRedAreaLowColor'], $defaultValues['Value1GaugeRedAreaHighValue'], $defaultValues['Value1GaugeRedAreaHighColor'], $defaultValues['Value1GaugeNormalAreaColor'],
         $defaultValues['Value1onDashboard'],
         $defaultValues['nameValue2'], $defaultValues['Value2GaugeMinValue'], $defaultValues['Value2GaugeMaxValue'], $defaultValues['Value2GaugeRedAreaLowValue'], $defaultValues['Value2GaugeRedAreaLowColor'], $defaultValues['Value2GaugeRedAreaHighValue'], $defaultValues['Value2GaugeRedAreaHighColor'], $defaultValues['Value2GaugeNormalAreaColor'], 
@@ -597,7 +561,7 @@ class myFunctions {
         $defaultValues['Value3onDashboard'],
         $defaultValues['nameValue4'], $defaultValues['Value4GaugeMinValue'], $defaultValues['Value4GaugeMaxValue'], $defaultValues['Value4GaugeRedAreaLowValue'], $defaultValues['Value4GaugeRedAreaLowColor'], $defaultValues['Value4GaugeRedAreaHighValue'], $defaultValues['Value4GaugeRedAreaHighColor'], $defaultValues['Value4GaugeNormalAreaColor'], 
         $defaultValues['Value4onDashboard'],
-        $defaultValues['ttn_payload_id'], $defaultValues['NrOfUsedSensors'], 1));
+        $defaultValues['ttnPayloadId'], $defaultValues['NrOfUsedSensors'], 1));
       $neue_id = $pdo->lastInsertId();
       return $neue_id;
     }
@@ -608,7 +572,7 @@ class myFunctions {
   */
   public static function getSensorType($sensorTypId) {
     $pdo = dbConfig::getInstance();
-    $sensortyps = $pdo->prepare("SELECT * FROM sensortypes WHERE id = ? ORDER BY id LIMIT 1");
+    $sensortyps = $pdo->prepare("SELECT * FROM sensorTypes WHERE id = ? ORDER BY id LIMIT 1");
     $sensortyps->execute(array($sensorTypId));
     $SensorData2 = $sensortyps->fetch(PDO::FETCH_ASSOC);
     return $SensorData2;
@@ -619,7 +583,7 @@ class myFunctions {
   */
   public static function getAllSensorType() {
     $pdo = dbConfig::getInstance();
-    $sensortyps = $pdo->prepare("SELECT * FROM sensortypes ORDER BY id");
+    $sensortyps = $pdo->prepare("SELECT * FROM sensorTypes ORDER BY id");
     $sensortyps->execute();
     $SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
     return $SensorData2;
@@ -653,8 +617,8 @@ class myFunctions {
     $pdo = dbConfig::getInstance();
     $result = null;
     $statement = $pdo->prepare("SELECT alreadyNotified FROM boardConfig WHERE id =?");
-    $pdoresult = $statement->execute(array($boardId));
-    return $pdoresult;
+    $pdoResult = $statement->execute(array($boardId));
+    return $pdoResult;
   }
 
   /**
@@ -666,9 +630,9 @@ class myFunctions {
     $result = null;
     try {
       $statement = $pdo->prepare("UPDATE boardConfig SET alreadyNotified = 1 WHERE id =?");
-      $pdoresult = $statement->execute(array($boardId));
-      $changedrows = $statement->rowCount();
-      if($changedrows == 1 ) {
+      $pdoResult = $statement->execute(array($boardId));
+      $changedRows = $statement->rowCount();
+      if($changedRows == 1 ) {
         return true;
       } else {
         return false;
@@ -676,7 +640,7 @@ class myFunctions {
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: Board notified Status in DB not successfully updated for boardId: " . $boardId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-      throw new Exception('Board notifed Status in DB not successfully updated.');
+      throw new Exception('Board notified Status in DB not successfully updated.');
     }
   }
 
@@ -689,9 +653,9 @@ class myFunctions {
     $result = null;
     try {
       $statement = $pdo->prepare("UPDATE boardConfig SET alreadyNotified = 0 WHERE id =?");
-      $pdoresult = $statement->execute(array($boardId));
-      $changedrows = $statement->rowCount();
-      if($changedrows == 1 ) {
+      $pdoResult = $statement->execute(array($boardId));
+      $changedRows = $statement->rowCount();
+      if($changedRows == 1 ) {
         return true;
       } else {
         return false;
@@ -699,14 +663,14 @@ class myFunctions {
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: Board notified Status in DB not successfully updated for boardId: " . $boardId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-      throw new Exception('Board notifed Status in DB not successfully updated.');
+      throw new Exception('Board notified Status in DB not successfully updated.');
     }
   }
 
   /*
   * Get all Users from db.
   */
-  public static function isUserRegistred($email) {
+  public static function isUserRegistered($email) {
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare("SELECT * FROM users WHERE email = ? ORDER BY id LIMIT 1");
     $statement->execute(array($email));
@@ -731,7 +695,7 @@ class myFunctions {
   }
 
 	/**
-	 * Outputs an error message and stops the further exectution of the script.
+	 * Outputs an error message and stops the further execution of the script.
 	 */
 	public function error($error_msg) {
 		include("common/header.inc.php");

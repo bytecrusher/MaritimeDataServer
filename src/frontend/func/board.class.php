@@ -19,7 +19,7 @@ class board //implements JsonSerializable
     public function __construct($boardId)
     {
         $pdo = dbConfig::getInstance();
-        $statement = $pdo->prepare("SELECT boardConfig.*, boardtype.name as boardTypeName FROM boardConfig LEFT JOIN boardtype ON boardtype.id = boardConfig.boardtypeid  WHERE boardConfig.id =?");
+        $statement = $pdo->prepare("SELECT boardConfig.*, boardType.name as boardTypeName FROM boardConfig LEFT JOIN boardType ON boardType.id = boardConfig.boardTypeId  WHERE boardConfig.id =?");
         $result = $statement->execute(array($boardId));
         $this->boardObj = $statement->fetch(PDO::FETCH_OBJ);
     }
@@ -151,21 +151,21 @@ class board //implements JsonSerializable
     }
 
     /**
-     * Returns the board ttn_app_id
+     * Returns the board ttnAppId
      * 
-     * @return $ttn_app_id of the board
+     * @return $ttnAppId of the board
      */
     public function getTtnAppId() {
-        return $this->boardObj->ttn_app_id;
+        return $this->boardObj->ttnAppId;
     }
 
     /**
-     * Returns the board ttn_dev_id
+     * Returns the board ttnDevId
      * 
-     * @return $ttn_dev_id of the board
+     * @return $ttnDevId of the board
      */
     public function getTtnDevId() {
-        return $this->boardObj->ttn_dev_id;
+        return $this->boardObj->ttnDevId;
     }
 
     /**
@@ -182,9 +182,9 @@ class board //implements JsonSerializable
     */
     public function getAllSensorsOfBoardWithDashboardWithTypeName() {
         $pdo = dbConfig::getInstance();
-        $mysensors2 = $pdo->prepare("SELECT sensorconfig.*, sensortypes.name as typename FROM sensorconfig, sensortypes WHERE boardid = ? AND typid = sensortypes.id AND onDashboard = 1 ORDER BY id");
-        $mysensors2->execute(array($this->boardObj->id));
-        $sensorsOfBoard = $mysensors2->fetchAll(PDO::FETCH_ASSOC);
+        $mySensors2 = $pdo->prepare("SELECT sensorConfig.*, sensorTypes.name as typename FROM sensorConfig, sensorTypes WHERE boardId = ? AND typId = sensorTypes.id AND onDashboard = 1 ORDER BY id");
+        $mySensors2->execute(array($this->boardObj->id));
+        $sensorsOfBoard = $mySensors2->fetchAll(PDO::FETCH_ASSOC);
         return $sensorsOfBoard;
     }
 }

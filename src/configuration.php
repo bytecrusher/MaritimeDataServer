@@ -10,22 +10,22 @@ require_once(dirname(__FILE__) . "/frontend/func/writeToLogFunction.func.php");
 
 class configuration {
     static $config_exist = null;
-    static $db_host = null;
-    static $db_name = null;
-    static $db_user = null;
-    static $db_password = null;
-    static $api_key = null;
+    static $dbHost = null;
+    static $dbName = null;
+    static $dbUser = null;
+    static $dbPassword = null;
+    static $apiKey = null;
     static $baseurl = null;
-    static $subdir = null;
+    static $subDir = null;
     static $demoMode = null;
-    static $md5secretstring = null;
-    static $install_finished = null;
-    static $admin_email_address = null;
+    static $md5secretString = null;
+    static $installFinished = null;
+    static $adminEmailAddress = null;
     static $ShowQrCode = null;
-    static $send_emails = null;
+    static $sendEmails = null;
     
     function __construct() {
-        self::$subdir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
+        self::$subDir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
         if (isset($_SERVER['HTTP_HOST'])) {
             $domain = $_SERVER['HTTP_HOST'];
         } else {
@@ -40,20 +40,20 @@ class configuration {
         else {
             $prefix = 'http://';
         }
-        self::$baseurl = $prefix . $domain . self::$subdir;
+        self::$baseurl = $prefix . $domain . self::$subDir;
 
         $path = "";
         if (file_exists(__DIR__ . '/config.json')) {
             $path = __DIR__ . '/config.json';
             $jsonString = file_get_contents($path);
             $jsonData = json_decode($jsonString, true);
-            self::$db_host = $jsonData['db_host'];
-            self::$db_name = $jsonData['db_name'];
-            self::$db_user = $jsonData['db_user'];
-            self::$db_password = $jsonData['db_password'];
-            self::$api_key = "";
-            if (array_key_exists('api_key', $jsonData)) {
-                self::$api_key = $jsonData['api_key'];
+            self::$dbHost = $jsonData['dbHost'];
+            self::$dbName = $jsonData['dbName'];
+            self::$dbUser = $jsonData['dbUser'];
+            self::$dbPassword = $jsonData['dbPassword'];
+            self::$apiKey = "";
+            if (array_key_exists('apiKey', $jsonData)) {
+                self::$apiKey = $jsonData['apiKey'];
             }
 
             self::$demoMode = "";
@@ -61,19 +61,19 @@ class configuration {
                 self::$demoMode = $jsonData['demoMode'];
             }
 
-            self::$md5secretstring = "";
-            if (array_key_exists('md5secretstring', $jsonData)) {
-                self::$md5secretstring = $jsonData['md5secretstring'];
+            self::$md5secretString = "";
+            if (array_key_exists('md5secretString', $jsonData)) {
+                self::$md5secretString = $jsonData['md5secretString'];
             }
 
-            self::$install_finished = "";
-            if (array_key_exists('install_finished', $jsonData)) {
-                self::$install_finished = $jsonData['install_finished'];
+            self::$installFinished = "";
+            if (array_key_exists('installFinished', $jsonData)) {
+                self::$installFinished = $jsonData['installFinished'];
             }
 
-            self::$admin_email_address = "";
-            if (array_key_exists('admin_email_address', $jsonData)) {
-                self::$admin_email_address = $jsonData['admin_email_address'];
+            self::$adminEmailAddress = "";
+            if (array_key_exists('adminEmailAddress', $jsonData)) {
+                self::$adminEmailAddress = $jsonData['adminEmailAddress'];
             }
 
             self::$ShowQrCode = "";
@@ -81,9 +81,9 @@ class configuration {
                 self::$ShowQrCode = $jsonData['ShowQrCode'];
             }
 
-            self::$send_emails = "";
-            if (array_key_exists('send_emails', $jsonData)) {
-                self::$send_emails = $jsonData['send_emails'];
+            self::$sendEmails = "";
+            if (array_key_exists('sendEmails', $jsonData)) {
+                self::$sendEmails = $jsonData['sendEmails'];
             }
 
             self::$config_exist = true;
@@ -97,23 +97,22 @@ class configuration {
         try {
             self::$demoMode = $post['demoMode'];
             self::$ShowQrCode = $post['ShowQrCode'];
-            self::$api_key = $post['apikey'];
-            self::$send_emails = $post['send_emails'];
+            self::$apiKey = $post['apiKey'];
+            self::$sendEmails = $post['sendEmails'];
             $path = __DIR__ . '/config.json';
             $jsonString = file_get_contents($path);
             $jsonData = json_decode($jsonString, true);
             $jsonData['demoMode'] = $post['demoMode'];
             $jsonData['ShowQrCode'] = $post['ShowQrCode'];
-            $jsonData['api_key'] = $post['apikey'];
-            $jsonData['send_emails'] = $post['send_emails'];
+            $jsonData['apiKey'] = $post['apiKey'];
+            $jsonData['sendEmails'] = $post['sendEmails'];
             $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
             // Write in the file
             $fp = fopen($path, 'w');
             fwrite($fp, $jsonString);
             fclose($fp);
         } catch (PDOException $err) {
-            writeToLogFunction::write_to_log("errorcode: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
+            writeToLogFunction::write_to_log("error code: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
         }
     }
 }
-?>

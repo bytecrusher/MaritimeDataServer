@@ -5,10 +5,10 @@
   require_once("func/user.class.php");
   include("common/header.inc.php");
 
-  if (isset($_SESSION['userobj'])) {
-    $userobj = unserialize($_SESSION['userobj']);
+  if (isset($_SESSION['userObj'])) {
+    $userObj = unserialize($_SESSION['userObj']);
   } else {
-    $userobj = false;
+    $userObj = false;
   }
 
 ?>
@@ -22,9 +22,9 @@
       <div class="row">
         <div class="col-md-6">
           <h2>About</h2>
-          <p>MDS (Maritime Data Server) is used to store and visualize sensor data (temperature, voltage,...) that was send from a smal devices.</p>
+          <p>MDS (Maritime Data Server) is used to store and visualize sensor data (temperature, voltage,...) that was send from a small devices.</p>
           <p>My first data collector is an ESP32 with several sensors (DS18B20).</p>
-          <p>The ESP32 sends the data via Wifi and/or LoRa to the MDS.</p>
+          <p>The ESP32 sends the data via WiFi and/or LoRa to the MDS.</p>
           <ul>
           	<li>Accessing to personal dashboard after registration.</li>
           	<li>Graphical representation of your sensor data.</li>

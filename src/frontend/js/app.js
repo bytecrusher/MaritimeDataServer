@@ -20,33 +20,33 @@ $(document).ready(async function(){
     var borderColor = null;
     var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
     var hoverBorderColor = 'rgba(0, 100, 0, 1)';
-    var varsensorId = null;
+    var varSensorId = null;
     //var hoverBorderColor = Math.floor(Math.random()*16777215).toString(16);
 
     InitialSetupChart();
 
     // TODO: check if every channel will be displayed. I think only the first one will display in the chart.
 
-    for (let i in gaugesArrayHelperbig) {
-      varsensorId = gaugesArrayHelperbig[i]["sensorId"];
-      typid = gaugesArrayHelperbig[i]["typid"];
-      sensorname = gaugesArrayHelperbig[i]["NameOfSensors"];
+    for (let i in gaugesArrayHelperBig) {
+      varSensorId = gaugesArrayHelperBig[i]["sensorId"];
+      typId = gaugesArrayHelperBig[i]["typId"];
+      sensorname = gaugesArrayHelperBig[i]["NameOfSensors"];
 
       var randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
       var backgroundColor = randomColor;
       var borderColor = randomColor;
 
-      //if (typid == 1) {   // If data are Temp ?
-        addDataToChart(varsensorId, 200, varsensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname);
+      //if (typId == 1) {   // If data are Temp ?
+        addDataToChart(varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname);
       //}
     }
-    addLabelsToChart(varsensorId, 200, varsensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+    addLabelsToChart(varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
   });
 //});
 
-function addDataToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor, sensorname) {
-  if (varsensorId != null) {
-    $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
+function addDataToChart(varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor, sensorname) {
+  if (varSensorId != null) {
+    $.getJSON('api/getSensorDataSet.php', { sensorId:varSensorId, maxValues:varMaxValues}, async function(data, textStatus, jqXHR){
       var id = [];
       var value1 = [];
       for(var i in data) {
@@ -70,16 +70,16 @@ function addDataToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor,
       //alert('Request done!');
     })
     .fail(function (jqxhr,settings,ex) {
-      //alert('failed (addDataToChart), ' + varsensorId + ", " + ex);
-      console.log('failed (addDataToChart), ' + varsensorId + ", for: " + varLabel + ", " + ex);
+      //alert('failed (addDataToChart), ' + varSensorId + ", " + ex);
+      console.log('failed (addDataToChart), ' + varSensorId + ", for: " + varLabel + ", " + ex);
       //console.log(data);
     });
   }
 }
 
-function addLabelsToChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
-  if (varsensorId != null) {
-    $.getJSON('api/getSensorDataSet.php', { sensorId:varsensorId, maxValues:varmaxValues}, async function(data, textStatus, jqXHR){
+function addLabelsToChart(varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor) {
+  if (varSensorId != null) {
+    $.getJSON('api/getSensorDataSet.php', { sensorId:varSensorId, maxValues:varMaxValues}, async function(data, textStatus, jqXHR){
       var val_time = [];
       for(var i in data) {
         val_time.push(data[i].val_time);
@@ -96,7 +96,7 @@ function addLabelsToChart(varsensorId, varmaxValues, varLabel, varbackgroundColo
 }
 
 
-function InitialSetupChart(varsensorId, varmaxValues, varLabel, varbackgroundColor, varborderColor, varhoverBackgroundColor, varhoverBorderColor) {
+function InitialSetupChart(varSensorId, varmaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor) {
   const ctx = document.getElementById('mycanvas');
   window.myChart = new Chart(ctx, {
     type: 'line',
