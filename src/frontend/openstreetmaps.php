@@ -1,14 +1,10 @@
-<!--link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css" crossorigin=""/-->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.css" crossorigin=""/>
-
-<!--script src="../node_modules/leaflet/dist/leaflet.js" crossorigin=""></script-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.js" crossorigin=""></script>
-
 <div id="map"></div>
 
 <script>
 var map = null;
-var myboardidMarkerGroup = null;
+var myBoardIdMarkerGroup = null;
 
 $('#hrefmap').click( function (e) {
   $( document ).ready( function() {
@@ -25,8 +21,8 @@ $('#hrefmap').click( function (e) {
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    //myboardidMarkerGroup[4] = new L.LayerGroup().addTo(map);
-    myboardidMarkerGroup = new Array ();
+    //myBoardIdMarkerGroup[4] = new L.LayerGroup().addTo(map);
+    myBoardIdMarkerGroup = new Array ();
           
     var greenIcon = new L.Icon({
       //iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-green.png',
@@ -69,19 +65,19 @@ $('#hrefmap').click( function (e) {
 
     var myIcons = new Array (greenIcon, blueIcon, orangeIcon, redIcon)
 
-    let myobjnames = null;
+    let myObjNames = null;
 
-    // function for getting all Boardnames.
+    // function for getting all Board names.
     jQuery.ajax({
       type: "POST",
-      url: 'api/getBoardname.php',
+      url: 'api/getBoardName.php',
       dataType: 'json',
-      data: {functionname: 'get', userid: <?php echo($currentUser->getId()); ?>},
+      data: {functionName: 'get', userId: <?php echo($currentUser->getId()); ?>},
       async: false,
       success: function (obj, textstatus) {
         if( !('error' in obj) ) {
-          var iconcounter = 0;
-          myobjnames = obj;
+          //var iconCounter = 0;
+          myObjNames = obj;
         }
         else {
           console.log(obj.error);
@@ -94,26 +90,26 @@ $('#hrefmap').click( function (e) {
       type: "POST",
       url: 'api/getGpsData.php',
       dataType: 'json',
-      data: {functionname: 'get', userid: <?php echo($currentUser->getId()); ?>},
+      data: {functionName: 'get', userId: <?php echo($currentUser->getId()); ?>},
 
       success: function (obj, textstatus) {
         if( !('error' in obj) ) {
-          var iconcounter = 0;
+          var iconCounter = 0;
           Object.keys(obj).forEach(key => {
-            myboardidMarkerGroup[key] = new L.LayerGroup().addTo(map);
+            myBoardIdMarkerGroup[key] = new L.LayerGroup().addTo(map);
             yourVariable = obj[key];
             yourVariable.forEach(
               function(element) { 
                 // TODO extend to loop for boards of the user, and adapt to the color for each group / board
-                myboardidMarkerGroup[key].addLayer(L.marker([element["value1"], element["value2"]], {icon: myIcons[iconcounter]}).bindPopup("<b>" + myobjnames[key] + "</b><br>Timestamp: " + element["reading_time"])).addTo(map);
+                myBoardIdMarkerGroup[key].addLayer(L.marker([element["value1"], element["value2"]], {icon: myIcons[iconCounter]}).bindPopup("<b>" + myObjNames[key] + "</b><br>Timestamp: " + element["reading_time"])).addTo(map);
               }
             );
 
             if(layerControl === false) {  // var layerControl set to false in init phase; 
               layerControl = L.control.layers().addTo(map);
             }
-            layerControl.addOverlay(myboardidMarkerGroup[key] , "Board: " + myobjnames[key]);
-            iconcounter++;
+            layerControl.addOverlay(myBoardIdMarkerGroup[key] , "Board: " + myObjNames[key]);
+            iconCounter++;
           });
         }
         else {

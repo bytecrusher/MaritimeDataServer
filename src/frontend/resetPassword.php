@@ -19,7 +19,7 @@ require_once("func/writeToLogFunction.func.php");
 	$showForm = true;
 	if (isset($_GET['send'])) {
 		if (!isset($_POST['email']) || empty($_POST['email'])) {
-			$error = "<b>Please enter mailaddress</b>";
+			$error = "<b>Please enter mail address</b>";
 		} else {
 			$user = new user($_POST['email']);
 			if ($user === false) {
@@ -28,27 +28,27 @@ require_once("func/writeToLogFunction.func.php");
 				echo '<div class="alert alert-danger" role="alert">Your Account is not active.</div>';
 				$showForm = false;
 			} else {
-				$passwordcode = myFunctions::random_string();
+				$passwordCode = myFunctions::random_string();
 				try {
-					$result = dbUpdateData::updateUserPasswordcode($passwordcode, $user->getId());
+					$result = dbUpdateData::updateUserPasswordCode($passwordCode, $user->getId());
 				} catch (Exception $e) {
 					$error_msg = $e->getMessage();
 				}
 				
-				$empfaenger = strval($user->getEmail()); //['email'];
-				$betreff = "New password for your account on " . myFunctions::getSiteURL();
+				$mailTo = strval($user->getEmail()); //['email'];
+				$reference = "New password for your account on " . myFunctions::getSiteURL();
 				$from = "From: Guntmar <info@derguntmar.de>"; // TODO: Ersetzt hier euren Name und E-Mail-Adresse
-				$url_passwordcode = myFunctions::getSiteURL() . 'resetPassword.php?userid=' . $user->getId() /*['id']*/ . '&code=' . $passwordcode;
-				$text = 'Hi ' . $user->getFirstname() /*['firstname']*/ . ',
+				$url_passwordCode = myFunctions::getSiteURL() . 'resetPassword.php?userId=' . $user->getId() /*['id']*/ . '&code=' . $passwordCode;
+				$text = 'Hi ' . $user->getFirstName() /*['firstName']*/ . ',
 					for your account on ' . myFunctions::getSiteURL() . ' a new password was requested. To enter a new password open the following link:
-					' . $url_passwordcode . '
-					You can ignore this mail, if remeber your password again, or didnt requested a new password.
+					' . $url_passwordCode . '
+					You can ignore this mail, if remember your password again, or didnt requested a new password.
 					best regards,
 					your derguntmar.de-Team';
-				if (mail($empfaenger, $betreff, $text, $from)) {
+				if (mail($mailTo, $reference, $text, $from)) {
 					echo "A link to reset your password was send.";
 				} else {
-					writeToLogFunction::write_to_log("Error: Unable to send email to: " . $empfaenger, $_SERVER["SCRIPT_FILENAME"]);
+					writeToLogFunction::write_to_log("Error: Unable to send email to: " . $mailTo, $_SERVER["SCRIPT_FILENAME"]);
 					echo "Error: Unable to send email.";
 				}
 				$showForm = false;

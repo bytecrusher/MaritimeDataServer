@@ -38,21 +38,21 @@ CREATE TABLE `boardConfig` (
   `firmwareVersion` varchar(10) DEFAULT NULL,
   `alarmOnUnavailable` tinyint DEFAULT '0',
   `updateDataTimer` int DEFAULT NULL,
-  `boardtypeid` int DEFAULT NULL,
+  `boardTypeId` int DEFAULT NULL,
   `offlineDataTimer` int DEFAULT '15',
   `alreadyNotified` tinyint NOT NULL DEFAULT '0',
-  `ttn_app_id` text NOT NULL,
-  `ttn_dev_id` text CHARACTER SET utf16 COLLATE utf16_general_ci NOT NULL,
+  `ttnAppId` text NOT NULL,
+  `ttnDevId` text CHARACTER SET utf16 COLLATE utf16_general_ci NOT NULL,
   `onDashboard` tinyint NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
 --
--- Tabellenstruktur für Tabelle `boardtype`
+-- Tabellenstruktur für Tabelle `boardType`
 --
 
-CREATE TABLE `boardtype` (
+CREATE TABLE `boardType` (
   `id` int NOT NULL,
   `name` varchar(20) NOT NULL,
   `description` varchar(30) NOT NULL,
@@ -62,30 +62,30 @@ CREATE TABLE `boardtype` (
 -- --------------------------------------------------------
 
 --
--- Tabellenstruktur für Tabelle `securitytokens`
+-- Tabellenstruktur für Tabelle `securityTokens`
 --
 
-CREATE TABLE `securitytokens` (
+CREATE TABLE `securityTokens` (
   `id` int UNSIGNED NOT NULL,
-  `user_id` int NOT NULL,
+  `userId` int NOT NULL,
   `identifier` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `securitytoken` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  `securityToken` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Tabellenstruktur für Tabelle `sensorconfig`
+-- Tabellenstruktur für Tabelle `sensorConfig`
 --
 
-CREATE TABLE `sensorconfig` (
+CREATE TABLE `sensorConfig` (
   `id` int NOT NULL,
-  `boardid` int DEFAULT NULL,
+  `boardId` int DEFAULT NULL,
   `sensorAddress` varchar(20) DEFAULT NULL,
   `name` varchar(20) DEFAULT NULL,
   `description` varchar(30) DEFAULT NULL,
-  `typid` int DEFAULT NULL,
+  `typId` int DEFAULT NULL,
   `locationOfMeasurement` varchar(20) DEFAULT NULL,
   `nameValue1` varchar(10) DEFAULT NULL,
   `Value1GaugeMinValue` int NOT NULL DEFAULT '0',
@@ -95,7 +95,7 @@ CREATE TABLE `sensorconfig` (
   `Value1GaugeRedAreaHighValue` int NOT NULL,
   `Value1GaugeRedAreaHighColor` text NOT NULL,
   `Value1GaugeNormalAreaColor` text NOT NULL,
-  `Value1DashboardOrdnerNr` int DEFAULT '1',
+  `Value1DashboardOrderNr` int DEFAULT '1',
   `Value1onDashboard` tinyint(1) NOT NULL,
   `nameValue2` varchar(10) DEFAULT NULL,
   `Value2GaugeMinValue` int NOT NULL DEFAULT '0',
@@ -105,7 +105,7 @@ CREATE TABLE `sensorconfig` (
   `Value2GaugeRedAreaHighValue` int NOT NULL,
   `Value2GaugeRedAreaHighColor` text NOT NULL,
   `Value2GaugeNormalAreaColor` text NOT NULL,
-  `Value2DashboardOrdnerNr` int DEFAULT '1',
+  `Value2DashboardOrderNr` int DEFAULT '1',
   `Value2onDashboard` tinyint(1) NOT NULL,
   `nameValue3` varchar(10) DEFAULT NULL,
   `Value3GaugeMinValue` int NOT NULL DEFAULT '0',
@@ -115,7 +115,7 @@ CREATE TABLE `sensorconfig` (
   `Value3GaugeRedAreaHighValue` int NOT NULL,
   `Value3GaugeRedAreaHighColor` text NOT NULL,
   `Value3GaugeNormalAreaColor` text NOT NULL,
-  `Value3DashboardOrdnerNr` int DEFAULT '1',
+  `Value3DashboardOrderNr` int DEFAULT '1',
   `Value3onDashboard` tinyint(1) NOT NULL,
   `nameValue4` varchar(10) DEFAULT NULL,
   `Value4GaugeMinValue` int NOT NULL DEFAULT '0',
@@ -125,22 +125,22 @@ CREATE TABLE `sensorconfig` (
   `Value4GaugeRedAreaHighValue` int NOT NULL,
   `Value4GaugeRedAreaHighColor` text NOT NULL,
   `Value4GaugeNormalAreaColor` text NOT NULL,
-  `Value4DashboardOrdnerNr` int DEFAULT '1',
+  `Value4DashboardOrderNr` int DEFAULT '1',
   `Value4onDashboard` tinyint(1) NOT NULL,
   `onDashboard` tinyint DEFAULT '0',
-  `ttn_payload_id` int DEFAULT NULL COMMENT 'Position in der TTN Payload.',
+  `ttnPayloadId` int DEFAULT NULL COMMENT 'Position in der TTN Payload.',
   `NrOfUsedSensors` int NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
 --
--- Tabellenstruktur für Tabelle `sensordata`
+-- Tabellenstruktur für Tabelle `sensorData`
 --
 
-CREATE TABLE `sensordata` (
+CREATE TABLE `sensorData` (
   `id` int UNSIGNED NOT NULL,
-  `sensorid` int NOT NULL,
+  `sensorId` int NOT NULL,
   `value1` varchar(20) NOT NULL,
   `value2` varchar(20) DEFAULT NULL,
   `value3` varchar(10) DEFAULT NULL,
@@ -148,16 +148,16 @@ CREATE TABLE `sensordata` (
   `val_date` varchar(10) NOT NULL COMMENT 'When was record added.',
   `val_time` varchar(10) NOT NULL COMMENT 'When was record added.',
   `reading_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `transmissionpath` int DEFAULT NULL
+  `transmissionPath` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
 --
--- Tabellenstruktur für Tabelle `sensortypes`
+-- Tabellenstruktur für Tabelle `sensorTypes`
 --
 
-CREATE TABLE `sensortypes` (
+CREATE TABLE `sensorTypes` (
   `id` int NOT NULL,
   `name` varchar(10) NOT NULL,
   `siUnitVal1` varchar(10) NOT NULL,
@@ -171,10 +171,10 @@ CREATE TABLE `sensortypes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Daten für Tabelle `sensortypes`
+-- Daten für Tabelle `sensorTypes`
 --
 
-INSERT INTO `sensortypes` (`id`, `name`, `siUnitVal1`, `siUnitVal2`, `siUnitVal3`, `siUnitVal4`, `oneWireFamilyCode`, `description`, `MaxNrOfValues`, `hasAddress`) VALUES
+INSERT INTO `sensorTypes` (`id`, `name`, `siUnitVal1`, `siUnitVal2`, `siUnitVal3`, `siUnitVal4`, `oneWireFamilyCode`, `description`, `MaxNrOfValues`, `hasAddress`) VALUES
 (1, 'DS18B20', '&deg;C', '', '', '', '28', 'Temperature', 1, 1),
 (2, 'DS2438', '&deg;C', 'V', 'A', '', '26', 'Battery monitor', 3, 1),
 (3, 'ADC', 'V', 'V', 'V', 'V', '', 'input from ADC', 4, 0),
@@ -219,14 +219,14 @@ CREATE TABLE `users` (
   `id` int NOT NULL,
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `firstname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `lastname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `firstName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `lastName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `active` tinyint NOT NULL DEFAULT '0',
-  `usergroup_admin` tinyint NOT NULL DEFAULT '0',
-  `passwordcode` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `passwordcode_time` date DEFAULT NULL,
+  `userGroupAdmin` tinyint NOT NULL DEFAULT '0',
+  `passwordCode` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `passwordCodeTime` date DEFAULT NULL,
   `dashboardUpdateInterval` int NOT NULL DEFAULT '15',
   `Timezone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT 'Europe/Berlin',
   `receive_notifications` tinyint NOT NULL DEFAULT '0'
@@ -243,40 +243,40 @@ ALTER TABLE `boardConfig`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `macAddress` (`macAddress`),
   ADD KEY `ownerUserId` (`ownerUserId`),
-  ADD KEY `boardConfig_ibfk_2_idx` (`boardtypeid`);
+  ADD KEY `boardConfig_ibfk_2_idx` (`boardTypeId`);
 
 --
--- Indizes für die Tabelle `boardtype`
+-- Indizes für die Tabelle `boardType`
 --
-ALTER TABLE `boardtype`
+ALTER TABLE `boardType`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indizes für die Tabelle `securitytokens`
+-- Indizes für die Tabelle `securityTokens`
 --
-ALTER TABLE `securitytokens`
+ALTER TABLE `securityTokens`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indizes für die Tabelle `sensorconfig`
+-- Indizes für die Tabelle `sensorConfig`
 --
-ALTER TABLE `sensorconfig`
+ALTER TABLE `sensorConfig`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `sensorid` (`sensorAddress`),
-  ADD KEY `typid` (`typid`),
-  ADD KEY `boardid` (`boardid`);
+  ADD UNIQUE KEY `sensorId` (`sensorAddress`),
+  ADD KEY `typId` (`typId`),
+  ADD KEY `boardId` (`boardId`);
 
 --
--- Indizes für die Tabelle `sensordata`
+-- Indizes für die Tabelle `sensorData`
 --
-ALTER TABLE `sensordata`
+ALTER TABLE `sensorData`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `sensorid` (`sensorid`);
+  ADD KEY `sensorId` (`sensorId`);
 
 --
--- Indizes für die Tabelle `sensortypes`
+-- Indizes für die Tabelle `sensorTypes`
 --
-ALTER TABLE `sensortypes`
+ALTER TABLE `sensorTypes`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -303,33 +303,33 @@ ALTER TABLE `boardConfig`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT für Tabelle `boardtype`
+-- AUTO_INCREMENT für Tabelle `boardType`
 --
-ALTER TABLE `boardtype`
+ALTER TABLE `boardType`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT für Tabelle `securitytokens`
+-- AUTO_INCREMENT für Tabelle `securityTokens`
 --
-ALTER TABLE `securitytokens`
+ALTER TABLE `securityTokens`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT für Tabelle `sensorconfig`
+-- AUTO_INCREMENT für Tabelle `sensorConfig`
 --
-ALTER TABLE `sensorconfig`
+ALTER TABLE `sensorConfig`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT für Tabelle `sensordata`
+-- AUTO_INCREMENT für Tabelle `sensorData`
 --
-ALTER TABLE `sensordata`
+ALTER TABLE `sensorData`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT für Tabelle `sensortypes`
+-- AUTO_INCREMENT für Tabelle `sensorTypes`
 --
-ALTER TABLE `sensortypes`
+ALTER TABLE `sensorTypes`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
@@ -353,20 +353,20 @@ ALTER TABLE `users`
 --
 ALTER TABLE `boardConfig`
   ADD CONSTRAINT `boardConfig_ibfk_1` FOREIGN KEY (`ownerUserId`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `boardConfig_ibfk_2` FOREIGN KEY (`boardtypeid`) REFERENCES `boardtype` (`id`);
+  ADD CONSTRAINT `boardConfig_ibfk_2` FOREIGN KEY (`boardTypeId`) REFERENCES `boardType` (`id`);
 
 --
--- Constraints der Tabelle `sensorconfig`
+-- Constraints der Tabelle `sensorConfig`
 --
-ALTER TABLE `sensorconfig`
-  ADD CONSTRAINT `sensorconfig_ibfk_2` FOREIGN KEY (`typid`) REFERENCES `sensortypes` (`id`),
-  ADD CONSTRAINT `sensorconfig_ibfk_4` FOREIGN KEY (`boardid`) REFERENCES `boardConfig` (`id`);
+ALTER TABLE `sensorConfig`
+  ADD CONSTRAINT `sensorConfig_ibfk_2` FOREIGN KEY (`typId`) REFERENCES `sensorTypes` (`id`),
+  ADD CONSTRAINT `sensorConfig_ibfk_4` FOREIGN KEY (`boardId`) REFERENCES `boardConfig` (`id`);
 
 --
--- Constraints der Tabelle `sensordata`
+-- Constraints der Tabelle `sensorData`
 --
-ALTER TABLE `sensordata`
-  ADD CONSTRAINT `sensorData_ibfk_2` FOREIGN KEY (`sensorid`) REFERENCES `sensorconfig` (`id`);
+ALTER TABLE `sensorData`
+  ADD CONSTRAINT `sensorData_ibfk_2` FOREIGN KEY (`sensorId`) REFERENCES `sensorConfig` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -11,23 +11,23 @@ $error_msg = "";
 if(isset($_POST['email']) && isset($_POST['password'])) {
 	$email = $_POST['email'];
 	$password = $_POST['password'];
-	$userobj = new user($email);
-	$myerror = $userobj->getError();
-	if ($myerror == "42S02") {
+	$userObj = new user($email);
+	$myError = $userObj->getError();
+	if ($myError == "42S02") {
 		$error_msg =  "<div class='alert alert-danger' role='alert'>Tables does not exist. Please run install. 
 		<a href='./../install/index.php'>Install</a></div>";
 	} else {
-		//var_dump($myerror);
-		if ($userobj->userExist() != false) {
-			$_SESSION['userobj'] = serialize($userobj);
-			if ($userobj->isActive() == true) {
+		//var_dump($myError);
+		if ($userObj->userExist() != false) {
+			$_SESSION['userObj'] = serialize($userObj);
+			if ($userObj->isActive() == true) {
 				//Check Password
-				if ($userobj !== false && password_verify($password, $userobj->getPassword()) && $userobj->isActive() != false) {
-					$_SESSION['userid'] = $userobj->getId();
+				if ($userObj !== false && password_verify($password, $userObj->getPassword()) && $userObj->isActive() != false) {
+					$_SESSION['userId'] = $userObj->getId();
 		
 					//Does the user want to stay logged in?
 					if(isset($_POST['angemeldet_bleiben'])) {
-						dbUpdateData::insertSecurityToken($userobj->getId());
+						dbUpdateData::insertSecurityToken($userObj->getId());
 					}
 					header("location: internal.php");
 					exit;

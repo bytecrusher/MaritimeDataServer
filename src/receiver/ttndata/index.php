@@ -11,10 +11,10 @@
 require_once(dirname(__FILE__, 3).'/configuration.php');
 $config  = new configuration();
 
-$DATABASE_HOST = $config::$db_host;
-$DATABASE_USERNAME = $config::$db_user;
-$DATABASE_PASSWORD = $config::$db_password;
-$DATABASE_NAME = $config::$db_name;
+$DATABASE_HOST = $config::$dbHost;
+$DATABASE_USERNAME = $config::$dbUser;
+$DATABASE_PASSWORD = $config::$dbPassword;
+$DATABASE_NAME = $config::$dbName;
 
 $db_connect = mysqli_connect($DATABASE_HOST, $DATABASE_USERNAME, $DATABASE_PASSWORD, $DATABASE_NAME);
 $sel_data = mysqli_query($db_connect, "SELECT * FROM `ttnDataLoraBoatMonitor` ORDER BY `id` DESC");

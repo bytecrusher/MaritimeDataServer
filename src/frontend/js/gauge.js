@@ -272,7 +272,7 @@
 
       //function updateGauge(theValue, frame) {
       function updateGauge(theValue) {
-        //console.log("thevalue: " + theValue);
+        //console.log("the value: " + theValue);
         var theValue2 = 0;
         if (theValue.toString() === "NaN") {
           theValue2 = 0;
