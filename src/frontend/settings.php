@@ -15,6 +15,7 @@ require_once("func/writeToLogFunction.func.php");
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;
 $varShowQrCode = $config::$ShowQrCode;
+$var_apiKey = $config::$apiKey;
 $varSend_emails = $config::$sendEmails;
 
 
@@ -25,7 +26,6 @@ if (isset($_SESSION['userObj'])) {
 	$userObj = false;
 	header("Location: ./index.php");
 }
-include("common/header.inc.php");
 
 function fixObject (&$object)
 {
@@ -41,16 +41,22 @@ if(isset($_GET['save'])) {
 			$userObj->setName($_POST);
 		} catch (Exception $e) {
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log("setName not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 		try {
 			$userObj->setUserTimeZone($_POST);
 		} catch (Exception $e) {
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log("setUserTimeZone not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 		try {
 			$userObj->setReceiveNotifications($_POST);
 		} catch (Exception $e) {
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log("setReceiveNotifications not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 		$_SESSION['userObj'] = serialize($userObj);
 		if (!isset($error_msg)) {
@@ -73,6 +79,8 @@ if(isset($_GET['save'])) {
 			} catch (Exception $e) {
 				//$error_msg = $e->getMessage();
 				$error_msg = "Email address not successfully saved.";
+				writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+				writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 			}
 			$_SESSION['userObj'] = serialize($userObj);
 			if (!isset($error_msg)) {
@@ -96,6 +104,8 @@ if(isset($_GET['save'])) {
 				$userObj->setUserPassword($password_hash);
 			} catch (Exception $e) {
 				$error_msg = "Password reset not successfully.";
+				writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+				writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 			}
 			$_SESSION['userObj'] = serialize($userObj);
 			if (!isset($error_msg)) {
@@ -107,6 +117,8 @@ if(isset($_GET['save'])) {
 			$updateUserReturn = $userObj->setDashboardUpdateInterval($_POST);
 		} catch (Exception $e) {
 			$error_msg = "Dashboard Update Interval not saved.";
+			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 		$_SESSION['userObj'] = serialize($userObj);
 		if (!isset($error_msg)) {
@@ -120,6 +132,8 @@ if(isset($_GET['save'])) {
 			$success_msg = "User Status updated.";
 		} catch (Exception $e) {
 			$error_msg = "Error on update User Status.";
+			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 	} else if($save == 'addNewUserToBoard') {
 		try {
@@ -127,44 +141,53 @@ if(isset($_GET['save'])) {
 			if ($addNewBoardToUserReturn) {
 				$success_msg = "Board added successfully.<br>Wait for the next Lora update.";
 			} else {
+				writeToLogFunction::write_to_log("Board not added.", $_SERVER["SCRIPT_FILENAME"]);
+				//writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 				$error_msg = "Board not added.";
 			}
 		} catch (Exception $e) {
-			//$error_msg = "Error on add new board.";
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 	}
 	else if($save == 'serverSetting') {
 		try {
 			$config->saveServerSettings($_POST);
 			$varDemoMode = $config::$demoMode;
-			//$apiKey
-			$success_msg = "DemoMode saved.";
+			$varShowQrCode = $config::$ShowQrCode;
+			$var_apiKey = $config::$apiKey;
+			$varSend_emails = $config::$sendEmails;
+			$success_msg = "Server settings saved.";
+			//header("Refresh:0; url=settings.php");
 		} catch (Exception $e) {
-			//$error_msg = "Error on add new board.";
+			writeToLogFunction::write_to_log("Server settings not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 			$error_msg = $e->getMessage();
 		}
 	}
 }
 
 // write passed data back to the database
- if (isset($_POST['submit_formBoards']))	// Submit-Button of the input mask was pressed
- {
+if (isset($_POST['submit_formBoards']))	// Submit-Button of the input mask was pressed
+{
 	try {
 		$updateBoardReturn = dbUpdateData::updateBoard($_POST);
 		$success_msg = "Board successfully updated.";
 	} catch (Exception $e) {
 		$error_msg = "Error while saving board changes.";
 	}
- } elseif (isset($_POST['submit_formBoards_remove']))	// remove-Button of the input mask was pressed
- {
+} elseif (isset($_POST['submit_formBoards_remove']))	// remove-Button of the input mask was pressed
+{
 	try {
 		$updateBoardReturn = dbUpdateData::removeBoardOwner($_POST);
 		$success_msg = "Board successfully removed.";
 	} catch (Exception $e) {
 		$error_msg = "Error while removing board.";
 	}
- }
+}
+
+include("common/header.inc.php");
 ?>
 
 <style>
@@ -186,10 +209,8 @@ th.rotated-text > div > span {
 }
 </style>
 
-<!--link href="../node_modules/bootstrap5-toggle/css/bootstrap5-toggle.min.css" rel="stylesheet"-->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css" rel="stylesheet">
 
-<!--script src="../node_modules/bootstrap5-toggle/js/bootstrap5-toggle.min.js"></script-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/js/bootstrap5-toggle.jquery.min.js"></script>
 
 <div class="jumbotron" style="padding: 1rem 1rem;">
@@ -198,22 +219,44 @@ th.rotated-text > div > span {
 	</div>
 </div>
 <div class="container-xl main-container">
+	<div id="alert-container"></div>
 	<?php
 	if(isset($success_msg) && !empty($success_msg)):
-	?>
-		<div class="alert alert-success">
-			<a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
-			<?php echo $success_msg; ?>
-		</div>
+	?>	<script>
+			window.onload = function () {
+				//on success
+				g = document.createElement('div');
+                g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+                g.setAttribute("role", "alert");
+                g.innerHTML = "<?php echo $success_msg; ?><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                const bsAlert = new bootstrap.Alert(g);
+                // Dismiss time out
+                setTimeout(() => {
+            	    bsAlert.close();
+                }, 5000);
+                $("#alert-container").append(g);
+			}
+		</script>
 	<?php endif; ?>
 
 	<?php
 	if(isset($error_msg) && !empty($error_msg)):
 	?>
-		<div class="alert alert-danger">
-			<a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
-			<?php echo $error_msg; ?>
-		</div>
+		<script>
+			window.onload = function () {
+				//on error
+				g = document.createElement('div');
+				g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+				g.setAttribute("role", "alert");
+				g.innerHTML = "<?php echo $error_msg; ?><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+				const bsAlert = new bootstrap.Alert(g);
+				// Dismiss time out
+				setTimeout(() => {
+					bsAlert.close();
+				}, 5000);
+				$("#alert-container").append(g);
+			}
+		</script>
 	<?php endif; ?>
 	<div>
 		<!-- Nav tabs -->
@@ -615,7 +658,7 @@ th.rotated-text > div > span {
 						<?php
 						}
 						?>
-							<td><a href="inputMaskBoards.php?id=<?php echo $singleRowMyBoard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
+							<td><a href="formBoards.php?id=<?php echo $singleRowMyBoard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
 						</tr>
 						<?php
 					}
@@ -826,12 +869,12 @@ th.rotated-text > div > span {
 						if (file_exists($filename)) {
 							$data = file_get_contents($filename);
 							if ($data != false) {
-								echo '<textarea style="height: 400px; width: 100%;" readonly>' . htmlspecialchars($data). '</textarea>';
+								echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>' . htmlspecialchars($data). '</textarea>';
 							} else {
-								echo '<textarea style="height: 400px; width: 100%;" readonly>Error while opening Log file.</textarea>';
+								echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>Error while opening Log file.</textarea>';
 							}
 						} else {
-							echo '<textarea style="height: 400px; width: 100%;" readonly>Log file not found.</textarea>';
+							echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>Log file not found.</textarea>';
 						}
 					?>
 				</div>

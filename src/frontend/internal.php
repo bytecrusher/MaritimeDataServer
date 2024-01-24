@@ -120,7 +120,12 @@ setInterval(function() {
 
 <div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
     <div class="container">
-      <h1>Welcome <?php echo htmlentities($currentUser->getFirstName()); ?></h1>
+      <h1>Welcome <?php echo htmlentities($currentUser->getFirstName()); ?>
+      <?php 
+      if (configuration::$demoMode) {
+        echo htmlentities("  (Demo mode)");
+      }
+      ?></h1>
     </div>
   </div>
 

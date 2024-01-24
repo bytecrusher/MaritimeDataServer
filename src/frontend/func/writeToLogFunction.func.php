@@ -6,7 +6,7 @@
  * @license: TBD
  */
 
-require_once(__DIR__ . '/../../configuration.php');
+require_once(dirname(__FILE__) . "/../../configuration.php");
 
 class writeToLogFunction {
   public static function write_to_log($text, $source)
@@ -18,7 +18,7 @@ class writeToLogFunction {
     $month = date("n");
     $year = date("Y");
     $filename = dirname(__FILE__) . "/../../logs/log_" . $months[$month] . "_$year.$format";
-    $header = "Date                File     Log Info";
+    $header = "Date       Time     File           Log Info";
     $write_header = !file_exists($filename);
     if ($write_header) {
       error_log( print_r($header . "\r\n", true), 3, $filename );

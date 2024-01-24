@@ -171,12 +171,12 @@
 
         <div class='row'>
           <div class="col-sm-offset-2 col-sm-8">
-            <input type='submit' class="btn btn-danger" id='submit_inputmaskBoards_remove' name='submit_inputmaskBoards_remove' value='Remove Board' onclick="clicked(event)">
+            <input type='submit' class="btn btn-danger" id='submit_formBoards_remove' name='submit_formBoards_remove' value='Remove Board' onclick="clicked(event)">
           </div>
           <div class="col-sm-offset-2 col-sm-4">
           <div class="float-end">
             <a class='mr-2 btn btn-primary' href='settings.php#confBoards' role='button'>Back</a>
-            <input type='submit' class="btn btn-primary" id='submit_inputmaskBoards' name='submit_inputmaskBoards' value='Save'>
+            <input type='submit' class="btn btn-primary" id='submit_formBoards' name='submit_formBoards' value='Save'>
           </div>
           </div>
         </div>
@@ -225,7 +225,7 @@
 <script>
   function clicked(e)
   {
-    if(!confirm('Are you sure to remove your board?')) {
+    if(!confirm('Are you sure to remove your board with ID:' + <?=$boardObj->getId();?> + '?')) {
       e.preventDefault();
     }
   }
