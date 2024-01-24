@@ -1,6 +1,8 @@
 <?php
 require_once("../frontend/func/myFunctions.func.php");
 require_once("../frontend/func/dbUpdateData.php");
+require_once("../frontend/func/writeToLogFunction.func.php");
+
 
 $path = __DIR__ . '/../config.json';
 $jsonString = file_get_contents($path);
@@ -60,6 +62,8 @@ if (isset($_POST["action"])) {
             } catch (Exception $e) {
               $error_msg = "Admin not inserted successfully.";
               $rtn = array("error"=>"true", "error_text"=>"An error occurs while saving.");
+              writeToLogFunction::write_to_log("Admin not inserted successfully.", $_SERVER["SCRIPT_FILENAME"]);
+              writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
             }
             if($result) {
               $rtn = array("error"=>"false", "success_text"=>"Registration successful. User created.");
@@ -106,6 +110,8 @@ function testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_db
       } else if ($e->getCode() == 1045) {
         $error_msg = "Access denied for user. Correct Username and Password?<br/>";
       }
+      writeToLogFunction::write_to_log("Admin not inserted successfully.", $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
       //return false;
       return $error_msg;
     }
