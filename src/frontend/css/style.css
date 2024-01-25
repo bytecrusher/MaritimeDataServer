@@ -248,9 +248,6 @@ body {
   height: 128px;
  }
 
- /* TODO rename #gaugescontainer24 into wildcard name! */
-
-
  /* Animation for the water icon of bilge alarm */
 .bi-water {
   animation: none;

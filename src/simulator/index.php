@@ -5,7 +5,7 @@
 <title>MSD Simulator</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 
-<link rel="stylesheet" href="./../src/frontend/css/style.css">
+<link rel="stylesheet" href="./../frontend/css/style.css">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
@@ -23,8 +23,19 @@
 <fieldset >
 	<legend class="float-none mySensorsFieldsetLegend">Destination server</legend>
     <?php
-    $subDir = str_replace($_SERVER['PWD'],"",__DIR__);
-    $subDir = str_replace("/simulator","/src",$subDir);
+    //$subDir = str_replace($_SERVER['PWD'],"",__DIR__);
+    //echo($subDir);
+    //echo(getcwd());
+    //echo("<br>");
+    //$subDir = str_replace(getcwd(),"",__DIR__);
+    $subDir = getcwd();
+    //echo(__DIR__);
+    //echo("<br>");
+    echo($subDir);
+    echo("<br>");
+    //$subDir = str_replace("/simulator","/src",$subDir);
+    $subDir = str_replace("/simulator","",$subDir);
+    echo($subDir);
 
     $domain = $_SERVER['SERVER_ADDR'];
     if (isset($_SERVER['HTTPS']) &&
@@ -56,7 +67,7 @@
     <?php
     }
     ?>
-    </div>
+    <!--/div-->
 </fieldset>
 
 <fieldset>
@@ -217,6 +228,7 @@
     </div>
 </fieldset>
 </div>
+
 
 <script>
     ttncounter = 0;

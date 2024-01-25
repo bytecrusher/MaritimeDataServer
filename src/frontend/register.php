@@ -91,7 +91,7 @@ if (count($_POST) > 0) {
 </head>
 <body>
     <?php
-        $userObj = new user("test@test.de");
+        $userObj = new user("test@test.de"); // TODO check if this is correct
         $myError = $userObj->getError();
         if ($myError == "42S02") {
             $error_msg =  "<div class='alert alert-danger' role='alert'>Tables does not exist. Please run install. 

@@ -157,6 +157,9 @@
       </div>
 
       <div class="tab-pane container fade" id="Config">
+        <div class="mb-2 mt-2">
+          Enter Admin User information.<br>
+        </div>
         <div class="form-group row">
           <label for="firstName" class="col-sm-4 col-form-label">First name</label>
           <div class="col-sm-4">
@@ -321,7 +324,6 @@ function apiPostCreateAdmin() {
     password2 = $("#password2").val();
     apiKey = $("#apiKey").val();
     md5secretString = $("#md5secretString").val();
-    // TODO add user to DB
     $.ajax({
       method: "POST",
       async: false,

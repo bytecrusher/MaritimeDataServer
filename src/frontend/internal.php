@@ -332,7 +332,7 @@ setInterval(function() {
                 $dbTimestamp = strtotime($singleRowMySensorsLastTimeSeen['reading_time']);
 
                 // Show Online / Offline
-                // TODO if demo mode == true, then no limit.
+                // if demoMode == true, then no limit.
                 if ($varDemoMode) {
                   $maxTimeout = strtotime("-10 Years");
                 } else {

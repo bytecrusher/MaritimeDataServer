@@ -844,6 +844,28 @@ th.rotated-text > div > span {
 						</div>
 					</div>
 
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
+								<label for="systemEmailAddress" class="col col-sm-2 control-label">System Email Address (sender):</label>
+								<div class="col col-sm-4">
+									<input class="form-control" id="systemEmailAddress" name="systemEmailAddress" type="text" value="<?php echo $config::$systemEmailAddress; ?>" required>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
+								<label for="applicationName" class="col col-sm-2 control-label">Application Name:</label>
+								<div class="col col-sm-4">
+									<input class="form-control" id="applicationName" name="applicationName" type="text" value="<?php echo $config::$applicationName; ?>" required>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<div class="form-group">
 						<div class="col col-sm-offset-2 col-sm-10">
 							<button type="submit" class="btn btn-primary">Save</button>

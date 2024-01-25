@@ -29,6 +29,10 @@ class user implements JsonSerializable
       $statement = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
       $result = $statement->execute(array('email' => $email));
       $this->userObj = $statement->fetch(PDO::FETCH_OBJ);
+      if ($this->userObj == false) {
+        writeToLogFunction::write_to_log("email not found.", $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('email not found');
+      }
     } catch (PDOException $err) {
       //Handling query/error
       writeToLogFunction::write_to_log("error code: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);

@@ -102,13 +102,39 @@ class dbUpdateData {
   */
   public static function updateUserPasswordCode($passwordCode, $userId) {
     $pdo = dbConfig::getInstance();
+    $expFormat = mktime(date("H"), date("i"), date("s"), date("m") ,date("d")+1, date("Y"));
+		$myDate = date("Y-m-d H:i:s",$expFormat);
     try {
-      $statement = $pdo->prepare("UPDATE users SET passwordCode = :passwordCode, passwordCodeTime = NOW() WHERE id = :userId");
-      return $statement->execute(array('passwordCode' => sha1($passwordCode), 'userId' => $userId));
+      // TODO rename passwordCodeTime into passwordCodeExpireTime
+      $statement = $pdo->prepare("UPDATE users SET passwordCode = :passwordCode, passwordCodeTime = :myDate WHERE id = :userId");
+      return $statement->execute(array('passwordCode' => $passwordCode, 'myDate' => $myDate, 'userId' => $userId));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: User Password reset not successfully saved for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
       throw new Exception('User Password reset update in DB not successfully saved.');
+    }
+  }
+
+  /**
+  * read User Password code (for password reset).
+  * @ return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
+  public static function readUserPasswordCode($passwordCode, $userId) {
+    $pdo = dbConfig::getInstance();
+    try {
+      $statement = $pdo->prepare("SELECT * FROM users WHERE id = :userId && passwordCode = :passwordCode");
+      //$sensortyps = $pdo->prepare("SELECT boardConfig.*, users.email FROM boardConfig, users WHERE offlineDataTimer != 0 && alreadyNotified = 0 && ownerUserId = users.id");
+      //return $statement->execute(array('passwordCode' => sha1($passwordCode), 'userId' => $userId));
+      //return $statement->execute(array('passwordCode' => $passwordCode, 'userId' => $userId));
+      $statement->execute(array('passwordCode' => $passwordCode, 'userId' => $userId));
+      //$sensortyps->execute();
+      //$SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
+      return $statement->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User Password reset not successfully read for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User Password reset read in DB not successfully.');
     }
   }
 
@@ -234,7 +260,8 @@ class dbUpdateData {
 
   /**
   * Insert Security token.
-  * @return bool — TRUE on success or FALSE on failure.
+  * @return $securityToken
+  * bool — TRUE on success or FALSE on failure.
   * @throws Exception — Return Exception message on error.
   */
   public static function insertSecurityToken($userId) {
@@ -251,7 +278,8 @@ class dbUpdateData {
     }
     setcookie("identifier",$identifier,time()+(3600*24*365)); //Valid for 1 year
     setcookie("securityToken",$securityToken,time()+(3600*24*365)); //Valid for 1 year
-    return true;
+    //return true;
+    return $securityToken;
   }
 
   /**

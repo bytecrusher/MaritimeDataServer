@@ -24,12 +24,6 @@ The backend stores the data into the DB. It also checks if Data are valid and bo
 For the frontend the user needs to login. Now the user is able to do some configurations or display some data.
 
 #### Functions / ToDos Status / Bugs
-- [x] MDS with Web interface
-- [x] Alert via email an Telegram (need more configuration)
-- [x] Chart view of Data
-- [x] configure boards and sensors in web interface
-- [x] change client communication to JSON.
-- [x] get Data from TTN
 - [ ] Change static email addresses (sender) into variables. These will be defined in the install script.
 
 ## Folder description
