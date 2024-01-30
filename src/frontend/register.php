@@ -1,7 +1,7 @@
 <?php
-
 require_once(__DIR__ . "/func/myFunctions.func.php");
 require_once("func/dbUpdateData.php");
+//require_once(__DIR__ . "/../../configuration.php");
 
 $config = new configuration();
 $var_AdminEmailAddress = $config::$adminEmailAddress;
@@ -73,7 +73,7 @@ if (count($_POST) > 0) {
 <head>
 <?php
 	session_start();
-	require_once(__DIR__ . "/func/myFunctions.func.php");
+	//require_once(__DIR__ . "/func/myFunctions.func.php");
 	require_once(__DIR__ . "/func/user.class.php");
 	include(__DIR__ . "/common/header.inc.php");
 ?>
@@ -91,15 +91,11 @@ if (count($_POST) > 0) {
 </head>
 <body>
     <?php
-        $userObj = new user("test@test.de"); // TODO check if this is correct
-        $myError = $userObj->getError();
-        if ($myError == "42S02") {
-            $error_msg =  "<div class='alert alert-danger' role='alert'>Tables does not exist. Please run install. 
-            <a href='./../install/index.php'>Install</a></div>";
-        } 
-        if(isset($error_msg) && !empty($error_msg)) {
-            echo $error_msg;
-        }
+    $path = $actual_link = "https://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]/";
+    $path = str_replace( "/frontend/register.php", "", $path );
+    if(isset($error_msg) && !empty($error_msg)) {
+        echo $error_msg;
+    }
     ?>
     <div class="container main-container registration-form">
     <?php if(isset($message)) { 
