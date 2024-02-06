@@ -349,10 +349,7 @@ class dbUpdateData {
       $post['ownerId'] = null;
     }
     try {
-      //$statement2 = $pdo->prepare("UPDATE boardConfig SET name=?, location=?, ownerUserId=?, description=?, ttnAppId=?, ttnDevId=?, performUpdate=?, alarmOnUnavailable=?, onDashboard=?, updateDataTimer=? WHERE id=?");
-
       $statement2 = $pdo->prepare("UPDATE boardConfig SET ownerUserId=NULL WHERE id=?");
-
       return $statement2->execute(array($post['id']));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: Board not updated successfully for user id: " . $post['ownerId'], $_SERVER["SCRIPT_FILENAME"]);
@@ -371,23 +368,48 @@ class dbUpdateData {
     if (!isset($post['onDashboard'])) {
       $post['onDashboard'] = 0;
     }
-    $Value1onDashboardVar = $Value2onDashboardVar = $Value3onDashboardVar = $Value4onDashboardVar = 0;
-    if (isset($post['Value1onDashboard'])) {
-      $Value1onDashboardVar = $post['Value1onDashboard'];
-    }
-    if (isset($post['Value2onDashboard'])) {
-      $Value2onDashboardVar = $post['Value2onDashboard'];
-    }
-    if (isset($post['Value3onDashboard'])) {
-      $Value3onDashboardVar = $post['Value3onDashboard'];
-    }
-    if (isset($post['Value4onDashboard'])) {
-      $Value4onDashboardVar = $post['Value4onDashboard'];
-    }
-
     try {
-      $statement2 = $pdo->prepare("UPDATE sensorConfig SET name=?, description=?, typId=?, locationOfMeasurement=?, nameValue1=?, Value1onDashboard=?, nameValue2=?, Value2onDashboard=?, nameValue3=?, Value3onDashboard=?, nameValue4=?, Value4onDashboard=?, NrOfUsedSensors=?, onDashboard=? WHERE id=?");
-      return $statement2->execute(array($post['name'], $post['description'], $post['typId'], $post['locationOfMeasurement'], $post['nameValue1'], $Value1onDashboardVar, $post['nameValue2'], $Value2onDashboardVar, $post['nameValue3'], $Value3onDashboardVar, $post['nameValue4'], $Value4onDashboardVar, $post['NrOfUsedSensors'], $post['onDashboard'], $post['id']));
+      $statement2 = $pdo->prepare("UPDATE sensorConfig SET name=?, description=?, typId=?, locationOfMeasurement=?, NrOfUsedSensors=?, onDashboard=? WHERE id=?");
+      $returnStatement = $statement2->execute(array($post['name'], $post['description'], $post['typId'], $post['locationOfMeasurement'], $post['NrOfUsedSensors'], $post['onDashboard'], $post['id']));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Sensor not updated successfully.');
+    }
+    for ($i = 1; $i <= $post['NrOfUsedSensors']; $i++) {
+      if (!isset($post['Value' . $i . 'onDashboard'])) {
+        $myVar['onDashboard'] = 0;
+      } else {
+        $myVar['onDashboard'] = 1;
+      }
+      $myVar['id'] = $post['id'];
+      $myVar['name'] = $post['nameValue' . $i];
+      try {
+        writeToLogFunction::write_to_log("Channel nr: " . $i, $_SERVER["SCRIPT_FILENAME"]);
+        $statement2 = $pdo->prepare("UPDATE sensorChannelConfig  SET onDashboard=? ,name=? WHERE sensorConfigId=? AND channelNr=?");
+        $statement2->execute(array($myVar['onDashboard'], $myVar['name'], $myVar['id'], $i));
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('Sensor not updated successfully.');
+      }
+    }
+    return $returnStatement;
+  }
+
+    /**
+  * Update Sensor channels.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
+  public static function updateSensorChannels($post) {
+    $pdo = dbConfig::getInstance();
+    if (!isset($post['onDashboard'])) {
+      $post['onDashboard'] = 0;
+    }
+    try { // todo check channelNr and sensorConfigId
+      $statement2 = $pdo->prepare("UPDATE sensorChannelConfig  SET sensorConfigId=?, name=?, channelNr=?, locationOfMeasurement=?, onDashboard=? WHERE id=?");
+      return $statement2->execute(array($post['id'], $post['name'], $post['sensorConfigId'], $post['locationOfMeasurement'], $post['onDashboard'], $post['id']));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
@@ -404,8 +426,8 @@ class dbUpdateData {
     $pdo = dbConfig::getInstance();
     if (json_encode($post['channel']) != null) {
       try {
-        $statement2 = $pdo->prepare("UPDATE sensorConfig SET Value" . $post['channel'] . "DashboardOrderNr=? WHERE id=?");
-  	    return $statement2->execute(array($post['orderNumber'], $post['id']));
+        $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET DashboardOrderNr=? WHERE sensorConfigId=? AND channelNr=?");
+  	    return $statement2->execute(array($post['orderNumber'], $post['id'], $post['channel']));
       } catch (PDOException $e) {
         writeToLogFunction::write_to_log("Error: Sensor order number not saved.", $_SERVER["SCRIPT_FILENAME"]);
         writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
@@ -451,6 +473,29 @@ class dbUpdateData {
         $statement2 = $pdo->prepare("UPDATE sensorConfig SET name=?, description=?, locationOfMeasurement=?, nameValue4=?, Value4GaugeMinValue=?, Value4GaugeMaxValue=?, Value4GaugeRedAreaLowValue=?, Value4GaugeRedAreaLowColor=?, Value4GaugeRedAreaHighValue=?, Value4GaugeRedAreaHighColor=?,Value4GaugeNormalAreaColor=?, Value4onDashboard=?, onDashboard=? WHERE id=?");
         return $statement2->execute(array($post['name'], $post['description'], $post['locationOfMeasurement'], $post['nameValue4'], $post['Value4GaugeMinValue'], $post['Value4GaugeMaxValue'], $post['Value4GaugeRedAreaLowValue'], $post['Value4GaugeRedAreaLowColor'], $post['Value4GaugeRedAreaHighValue'], $post['Value4GaugeRedAreaHighColor'], $post['Value4GaugeNormalAreaColor'], $Value4onDashboardVar, $onDashboardVar, $post['id']));
       } 
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Sensor not updated successfully.');
+    }
+    return true;
+  }
+
+    /**
+  * Update Sensor Channel modal.
+  * @return bool — TRUE on success or FALSE on failure.
+  * @throws Exception — Return Exception message on error.
+  */
+  public static function updateSensorChannelModal($post) {
+    $pdo = dbConfig::getInstance();
+
+    $onDashboardVar = 1;
+    if (!isset($post['onDashboard'])) {
+      $onDashboardVar = 0;
+    }
+    try {
+      $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET name=?, GaugeMinValue=?, GaugeMaxValue=?, GaugeRedAreaLowValue=?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?,  GaugeNormalAreaColor =?, onDashboard=?, ChartColor=? WHERE sensorConfigId=? AND channelNr=?");
+      return $statement2->execute(array($post['nameValue'], $post['GaugeMinValue'], $post['GaugeMaxValue'], $post['GaugeRedAreaLowValue'], $post['GaugeRedAreaLowColor'], $post['GaugeRedAreaHighValue'], $post['GaugeRedAreaHighColor'], $post['GaugeNormalAreaColor'], $onDashboardVar, $post['ChartColor'], $post['id'], $post['channel']));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);

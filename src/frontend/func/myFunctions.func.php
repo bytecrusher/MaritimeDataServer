@@ -10,6 +10,8 @@ include_once("password.func.php");
 include_once("dbConfig.func.php");
 require_once(dirname(__FILE__).'/../../configuration.php');
 require_once("writeToLogFunction.func.php");
+include 'RandomColor.php';
+use \Colors\RandomColor;
 //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
 class sensorTyp
@@ -219,6 +221,29 @@ class myFunctions {
   }
 
   /*
+  * Get Config Object if a given sensorConfig id
+  */
+  public static function getSensorChannelsConfig($id) {
+    $pdo = dbConfig::getInstance();
+    $mySensorsChannels = $pdo->prepare("SELECT * FROM sensorChannelConfig WHERE sensorConfigId = ? ORDER BY id ");
+    $mySensorsChannels->execute(array($id));
+    $mySensorsChannelsOfBoard = $mySensorsChannels->fetchAll(PDO::FETCH_ASSOC);
+    return $mySensorsChannelsOfBoard;
+  }
+
+  /*
+  * Get Config Object if a given sensorConfig id
+  */
+  public static function getSensorChannelConfig($id, $channelNr) {
+    $pdo = dbConfig::getInstance();
+    $mySensorsChannels = $pdo->prepare("SELECT * FROM sensorChannelConfig WHERE sensorConfigId = ? AND channelNr = ? ORDER BY id ");
+    $mySensorsChannels->execute(array($id, $channelNr));
+    //$mySensorsChannelsOfBoard = $mySensorsChannels->fetchAll(PDO::FETCH_ASSOC);
+    $mySensorsChannelsOfBoard = $mySensorsChannels->fetch(PDO::FETCH_ASSOC);
+    return $mySensorsChannelsOfBoard;
+  }
+
+  /*
   * Add SensorConfig Object if a given board id
   */
   public function addSensorConfig($boardId, $typIdName, $sensorName) {
@@ -228,317 +253,461 @@ class myFunctions {
 
     $defaultValues['Value1onDashboard'] = $defaultValues['Value2onDashboard'] = $defaultValues['Value3onDashboard'] = $defaultValues['Value4onDashboard'] = 1;
 
+    $defaultValuesPerChannelArray = array();
+    $red = "#ff0000";
+    $green = "#00ff00";
+
     // Define Default values (for lora boot monitor):
     if ($sensorName == "GPS") {
-      $defaultValues['nameValue1'] = "Lat";
-      $defaultValues['Value1GaugeMinValue'] = 0;
-      $defaultValues['Value1GaugeMaxValue'] = 20;
-      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value1onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Lat";
+      $defaultValuesPerChannel['description'] = "Latitude";
+      $defaultValuesPerChannel['channelNr'] = 1;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = -90;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 90;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = -85;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 85;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 0;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue2'] = "Lon";
-      $defaultValues['Value2GaugeMinValue'] = 0;
-      $defaultValues['Value2GaugeMaxValue'] = 20;
-      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value2onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Lon";
+      $defaultValuesPerChannel['description'] = "Longitude";
+      $defaultValuesPerChannel['channelNr'] = 2;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = -180;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 180;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = -175;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 175;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 0;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue3'] = "Alt";
-      $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 20;
-      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value3onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Alt";
+      $defaultValuesPerChannel['description'] = "Altitude";
+      $defaultValuesPerChannel['channelNr'] = 3;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = -50;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 15;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 0;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue4'] = "Spd";
-      $defaultValues['Value4GaugeMinValue'] = 0;
-      $defaultValues['Value4GaugeMaxValue'] = 20;
-      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value4onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Spd";
+      $defaultValuesPerChannel['description'] = "Speed";
+      $defaultValuesPerChannel['channelNr'] = 4;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 100;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 60;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
     } elseif ($sensorName == "Lora") {
-      $defaultValues['nameValue1'] = "Gateway";
-      $defaultValues['Value1GaugeMinValue'] = 0;
-      $defaultValues['Value1GaugeMaxValue'] = 20;
-      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value1onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Gateway";
+      $defaultValuesPerChannel['description'] = "Gateway";
+      $defaultValuesPerChannel['channelNr'] = 1;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 0;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue2'] = "RSSI";
-      $defaultValues['Value2GaugeMinValue'] = -130;
-      $defaultValues['Value2GaugeMaxValue'] = 10;
-      $defaultValues['Value2GaugeRedAreaLowValue'] = -120;
-      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value2onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "RSSI";
+      $defaultValuesPerChannel['description'] = "RSSI";
+      $defaultValuesPerChannel['channelNr'] = 2;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "Received Signal Strength Indicator";
+      $defaultValuesPerChannel['GaugeMinValue'] = -130;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 10;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = -120;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue3'] = null;
-      $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 20;
-      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value3onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "SNR";
+      $defaultValuesPerChannel['description'] = "Signal-to-Noise Ratio";
+      $defaultValuesPerChannel['channelNr'] = 3;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = -130;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 10;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = -120;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue4'] = null;
-      $defaultValues['Value4GaugeMinValue'] = 0;
-      $defaultValues['Value4GaugeMaxValue'] = 20;
-      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value4onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Counter";
+      $defaultValuesPerChannel['description'] = "Paket counter";
+      $defaultValuesPerChannel['channelNr'] = 4;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 2000;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 1900;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValues['ttnPayloadId'] = null;
-      $defaultValues['NrOfUsedSensors'] = 2;
+      $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
     } elseif ($sensorName == "ADC") {
-      $defaultValues['nameValue1'] = "ADC1";
-      $defaultValues['Value1GaugeMinValue'] = 0;
-      $defaultValues['Value1GaugeMaxValue'] = 20;
-      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value1GaugeRedAreaHighValue'] = 16;
-      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value1onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "ADC1";
+      $defaultValuesPerChannel['description'] = "ADC1";
+      $defaultValuesPerChannel['channelNr'] = 1;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 8;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue2'] = "level1";
-      $defaultValues['Value2GaugeMinValue'] = 0;
-      $defaultValues['Value2GaugeMaxValue'] = 20;
-      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value2GaugeRedAreaHighValue'] = 16;
-      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value2onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "ADC2";
+      $defaultValuesPerChannel['description'] = "ADC2";
+      $defaultValuesPerChannel['channelNr'] = 2;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 8;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue3'] = "level2";
-      $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 20;
-      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value3onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "level1";
+      $defaultValuesPerChannel['description'] = "level1";
+      $defaultValuesPerChannel['channelNr'] = 3;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 8;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue4'] = null;
-      $defaultValues['Value4GaugeMinValue'] = 0;
-      $defaultValues['Value4GaugeMaxValue'] = 20;
-      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value4onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "level2";
+      $defaultValuesPerChannel['description'] = "level2";
+      $defaultValuesPerChannel['channelNr'] = 4;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 8;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValues['ttnPayloadId'] = null;
-      $defaultValues['NrOfUsedSensors'] = 3;
+      $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
     } elseif ($sensorName == "DS18B20") {
-      $defaultValues['nameValue1'] = "Ch1";
-      $defaultValues['Value1GaugeMinValue'] = 0;
-      $defaultValues['Value1GaugeMaxValue'] = 80;
-      $defaultValues['Value1GaugeRedAreaLowValue'] = 10;
-      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value1GaugeRedAreaHighValue'] = 70;
-      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value1onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "Ch1";
+      $defaultValuesPerChannel['description'] = "Ch1";
+      $defaultValuesPerChannel['channelNr'] = 1;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 80;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 10;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 70;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue2'] = "Ch2";
-      $defaultValues['Value2GaugeMinValue'] = 0;
-      $defaultValues['Value2GaugeMaxValue'] = 80;
-      $defaultValues['Value2GaugeRedAreaLowValue'] = 10;
-      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value2GaugeRedAreaHighValue'] = 70;
-      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value2onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "Ch2";
+      $defaultValuesPerChannel['description'] = "Ch2";
+      $defaultValuesPerChannel['channelNr'] = 2;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 80;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 10;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 70;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue3'] = "Ch3";
-      $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 80;
-      $defaultValues['Value3GaugeRedAreaLowValue'] = 10;
-      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value3GaugeRedAreaHighValue'] = 70;
-      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value3onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Ch3";
+      $defaultValuesPerChannel['description'] = "Ch3";
+      $defaultValuesPerChannel['channelNr'] = 3;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 80;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 10;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 70;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue4'] = "Ch4";
-      $defaultValues['Value4GaugeMinValue'] = 0;
-      $defaultValues['Value4GaugeMaxValue'] = 80;
-      $defaultValues['Value4GaugeRedAreaLowValue'] = 10;
-      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value4GaugeRedAreaHighValue'] = 70;
-      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value4onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Ch4";
+      $defaultValuesPerChannel['description'] = "Ch4";
+      $defaultValuesPerChannel['channelNr'] = 4;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 80;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 10;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 70;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValues['ttnPayloadId'] = null;
-      $defaultValues['NrOfUsedSensors'] = 2;
+      $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
     } elseif ($sensorName == "BME280") {
-      $defaultValues['nameValue1'] = "Temp";
-      $defaultValues['Value1GaugeMinValue'] = 0;
-      $defaultValues['Value1GaugeMaxValue'] = 40;
-      $defaultValues['Value1GaugeRedAreaLowValue'] = 10;
-      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value1GaugeRedAreaHighValue'] = 26;
-      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value1onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "Temp";
+      $defaultValuesPerChannel['description'] = "Temp";
+      $defaultValuesPerChannel['channelNr'] = 1;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 40;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 10;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 26;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue2'] = "Hum";
-      $defaultValues['Value2GaugeMinValue'] = 0;
-      $defaultValues['Value2GaugeMaxValue'] = 100;
-      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value2onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "Hum";
+      $defaultValuesPerChannel['description'] = "Hum";
+      $defaultValuesPerChannel['channelNr'] = 2;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 100;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 40;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 60;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue3'] = "Pres";
-      $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 3000;
-      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value3onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "Pres";
+      $defaultValuesPerChannel['description'] = "Pres";
+      $defaultValuesPerChannel['channelNr'] = 3;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 3000;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 1000;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 1026;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue4'] = "Dew.";
-      $defaultValues['Value4GaugeMinValue'] = 0;
-      $defaultValues['Value4GaugeMaxValue'] = 20;
-      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value4onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "Dew.";
+      $defaultValuesPerChannel['description'] = "Dew.";
+      $defaultValuesPerChannel['channelNr'] = 4;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 30;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 12;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
     } elseif ($sensorName == "DS2438") {
-      $defaultValues['nameValue1'] = "V";
-      $defaultValues['Value1GaugeMinValue'] = 0;
-      $defaultValues['Value1GaugeMaxValue'] = 20;
-      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value1onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "V";
+      $defaultValuesPerChannel['description'] = "Voltage";
+      $defaultValuesPerChannel['channelNr'] = 1;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 8;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue2'] = "A";
-      $defaultValues['Value2GaugeMinValue'] = 0;
-      $defaultValues['Value2GaugeMaxValue'] = 20;
-      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value2onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "A";
+      $defaultValuesPerChannel['description'] = "Ampere";
+      $defaultValuesPerChannel['channelNr'] = 2;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue3'] = null;
-      $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 20;
-      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value3onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = null;
+      $defaultValuesPerChannel['description'] = "";
+      $defaultValuesPerChannel['channelNr'] = 3;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 0;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue4'] = null;
-      $defaultValues['Value4GaugeMinValue'] = 0;
-      $defaultValues['Value4GaugeMaxValue'] = 20;
-      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value4onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = null;
+      $defaultValuesPerChannel['description'] = "";
+      $defaultValuesPerChannel['channelNr'] = 4;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 20;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 0;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
       $valuesDefined = true;
       
     } elseif ($sensorName == "Digital") {
-      $defaultValues['nameValue1'] = "Ch1";
-      $defaultValues['Value1GaugeMinValue'] = 0;
-      $defaultValues['Value1GaugeMaxValue'] = 1;
-      $defaultValues['Value1GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value1GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value1GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value1GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value1onDashboard'] = 1;
+      $defaultValuesPerChannel['name'] = "Ch1";
+      $defaultValuesPerChannel['description'] = "Ch1";
+      $defaultValuesPerChannel['channelNr'] = 1;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 1;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 2;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue2'] = "Ch2";
-      $defaultValues['Value2GaugeMinValue'] = 0;
-      $defaultValues['Value2GaugeMaxValue'] = 1;
-      $defaultValues['Value2GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value2GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value2GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value2GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value2onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = "Ch2";
+      $defaultValuesPerChannel['description'] = "Ch2";
+      $defaultValuesPerChannel['channelNr'] = 2;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 1;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 2;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue3'] = null;
-      $defaultValues['Value3GaugeMinValue'] = 0;
-      $defaultValues['Value3GaugeMaxValue'] = 1;
-      $defaultValues['Value3GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value3GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value3GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value3GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value3onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = null;
+      $defaultValuesPerChannel['description'] = "";
+      $defaultValuesPerChannel['channelNr'] = 3;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 1;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 2;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
-      $defaultValues['nameValue4'] = null;
-      $defaultValues['Value4GaugeMinValue'] = 0;
-      $defaultValues['Value4GaugeMaxValue'] = 1;
-      $defaultValues['Value4GaugeRedAreaLowValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaLowColor'] = "red";
-      $defaultValues['Value4GaugeRedAreaHighValue'] = 0;
-      $defaultValues['Value4GaugeRedAreaHighColor'] = "red";
-      $defaultValues['Value4GaugeNormalAreaColor'] = "green";
-      $defaultValues['Value4onDashboard'] = 0;
+      $defaultValuesPerChannel['name'] = null;
+      $defaultValuesPerChannel['description'] = "";
+      $defaultValuesPerChannel['channelNr'] = 4;
+      $defaultValuesPerChannel['locationOfMeasurement'] = "";
+      $defaultValuesPerChannel['GaugeMinValue'] = 0;
+      $defaultValuesPerChannel['GaugeMaxValue'] = 1;
+      $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+      $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 2;
+      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+      $defaultValuesPerChannel['onDashboard'] = 1;
+      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+      array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
@@ -546,23 +715,27 @@ class myFunctions {
     }
 
     if ($valuesDefined == true) {
-      $statement = $pdo->prepare("INSERT INTO sensorConfig (boardId, typId, name," .
-      "nameValue1, Value1GaugeMinValue, Value1GaugeMaxValue, Value1GaugeRedAreaLowValue, Value1GaugeRedAreaLowColor, Value1GaugeRedAreaHighValue, Value1GaugeRedAreaHighColor, Value1GaugeNormalAreaColor, Value1onDashboard," .
-      "nameValue2, Value2GaugeMinValue, Value2GaugeMaxValue, Value2GaugeRedAreaLowValue, Value2GaugeRedAreaLowColor, Value2GaugeRedAreaHighValue, Value2GaugeRedAreaHighColor, Value2GaugeNormalAreaColor, Value2onDashboard," .
-      "nameValue3, Value3GaugeMinValue, Value3GaugeMaxValue, Value3GaugeRedAreaLowValue, Value3GaugeRedAreaLowColor, Value3GaugeRedAreaHighValue, Value3GaugeRedAreaHighColor, Value3GaugeNormalAreaColor, Value3onDashboard," .
-      "nameValue4, Value4GaugeMinValue, Value4GaugeMaxValue, Value4GaugeRedAreaLowValue, Value4GaugeRedAreaLowColor, Value4GaugeRedAreaHighValue, Value4GaugeRedAreaHighColor, Value4GaugeNormalAreaColor, Value4onDashboard," .
-      "ttnPayloadId, NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-      $statement->execute(array($boardId, $mySensorTypId->id, $sensorName,
-        $defaultValues['nameValue1'], $defaultValues['Value1GaugeMinValue'], $defaultValues['Value1GaugeMaxValue'], $defaultValues['Value1GaugeRedAreaLowValue'], $defaultValues['Value1GaugeRedAreaLowColor'], $defaultValues['Value1GaugeRedAreaHighValue'], $defaultValues['Value1GaugeRedAreaHighColor'], $defaultValues['Value1GaugeNormalAreaColor'],
-        $defaultValues['Value1onDashboard'],
-        $defaultValues['nameValue2'], $defaultValues['Value2GaugeMinValue'], $defaultValues['Value2GaugeMaxValue'], $defaultValues['Value2GaugeRedAreaLowValue'], $defaultValues['Value2GaugeRedAreaLowColor'], $defaultValues['Value2GaugeRedAreaHighValue'], $defaultValues['Value2GaugeRedAreaHighColor'], $defaultValues['Value2GaugeNormalAreaColor'], 
-        $defaultValues['Value2onDashboard'],
-        $defaultValues['nameValue3'], $defaultValues['Value3GaugeMinValue'], $defaultValues['Value3GaugeMaxValue'], $defaultValues['Value3GaugeRedAreaLowValue'], $defaultValues['Value3GaugeRedAreaLowColor'], $defaultValues['Value3GaugeRedAreaHighValue'], $defaultValues['Value3GaugeRedAreaHighColor'], $defaultValues['Value3GaugeNormalAreaColor'], 
-        $defaultValues['Value3onDashboard'],
-        $defaultValues['nameValue4'], $defaultValues['Value4GaugeMinValue'], $defaultValues['Value4GaugeMaxValue'], $defaultValues['Value4GaugeRedAreaLowValue'], $defaultValues['Value4GaugeRedAreaLowColor'], $defaultValues['Value4GaugeRedAreaHighValue'], $defaultValues['Value4GaugeRedAreaHighColor'], $defaultValues['Value4GaugeNormalAreaColor'], 
-        $defaultValues['Value4onDashboard'],
-        $defaultValues['ttnPayloadId'], $defaultValues['NrOfUsedSensors'], 1));
-      $neue_id = $pdo->lastInsertId();
+      try {
+        $statement = $pdo->prepare("INSERT INTO sensorConfig (boardId, typId, name," .
+        "NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?)");
+        $statement->execute(array($boardId, $mySensorTypId->id, $sensorName, $defaultValues['NrOfUsedSensors'], 1));
+        $neue_id = $pdo->lastInsertId();
+      } catch (PDOException $e) {
+        writeToLogFunction::write_to_log("Error: Sensor config not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+        throw new Exception('Sensor not updated successfully.');
+      }
+
+      foreach($defaultValuesPerChannelArray as $defaultValuesPerChannelSingle) {
+        try {
+          $statement2 = $pdo->prepare("INSERT INTO sensorChannelConfig  SET sensorConfigId=?, name=?, description=?, channelNr=?, locationOfMeasurement=?, GaugeMinValue=?, GaugeMaxValue=?,  GaugeRedAreaLowValue =?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?, GaugeNormalAreaColor=?, onDashboard=?, ChartColor=?");
+          $statement2->execute(array($neue_id, $defaultValuesPerChannelSingle['name'], $defaultValuesPerChannelSingle['description'], $defaultValuesPerChannelSingle['channelNr'], $defaultValuesPerChannelSingle['locationOfMeasurement'],  $defaultValuesPerChannelSingle['GaugeMinValue'], $defaultValuesPerChannelSingle['GaugeMaxValue'],  $defaultValuesPerChannelSingle['GaugeRedAreaLowValue'], $defaultValuesPerChannelSingle['GaugeRedAreaLowColor'], $defaultValuesPerChannelSingle['GaugeRedAreaHighValue'], $defaultValuesPerChannelSingle['GaugeRedAreaHighColor'], $defaultValuesPerChannelSingle['GaugeNormalAreaColor'], $defaultValuesPerChannelSingle['onDashboard'], $defaultValuesPerChannelSingle['ChartColor']));
+        } catch (PDOException $e) {
+          writeToLogFunction::write_to_log("Error: sensorChannelConfig not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
+          writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+          throw new Exception('sensorChannelConfig not updated successfully.');
+        }
+      }
       return $neue_id;
     }
   }

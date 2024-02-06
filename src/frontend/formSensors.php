@@ -30,6 +30,7 @@
         $newURL = "formBoards.php?id=" . $_POST['macAddress'];
         header('Location: '.$newURL);
         // ToDo: send error or success mgs to header.
+        $_GET = $_POST;
       } catch (Exception $e) {
 				$error_msg = "Error while saving changes to sensors.";
         ?>
@@ -42,9 +43,10 @@
 			}
     } else {
       try {
-        $updateSensorReturn = dbUpdateData::updateSensorModal($_POST);
+        $updateSensorReturn = dbUpdateData::updateSensorChannelModal($_POST);
         $success_msg = "Board changes saved.";
         header("Location: internal.php");
+        $_GET = $_POST;
         // ToDo: send error or success mgs to header.
       } catch (Exception $e) {
 				$error_msg = "Error while saving changes to sensors.";
@@ -70,6 +72,10 @@
       echo "Channel: " . $_GET['channel'];
     }
   }
+
+  if (isset($_GET['modal'])) {
+    $mySingleSensorChannelConfig=(myFunctions::getSensorChannelConfig($_GET['id'], $_GET['channel']));
+  }
 ?>
 </div>
 
@@ -79,8 +85,8 @@
   
     <?php
       $SensorConfig=(myFunctions::getSensorConfig($_GET['id']));
+      $SensorChannelConfig=(myFunctions::getSensorChannelsConfig($_GET['id']));
       $SensorType = myFunctions::getSensorType($SensorConfig['typId']);
-
       // Get sensor type data
       $AllSensorTypes =(myFunctions::getAllSensorType());
     ?>
@@ -150,214 +156,151 @@
             <input type='text' class='col col-sm-4 form-control' id='locationOfMeasurement' name='locationOfMeasurement' value='<?=$SensorConfig['locationOfMeasurement'];?>'>
           </div>
 
-          <fieldset class="border p-2 mb-3 mySensorsFieldset">
-            <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel <?php 
-            if (isset($_GET['channel'])) {
-              echo $_GET['channel'];
-            } else {
-              echo "1";
-            }
-            ?></legend>
-            <?php
-            if (!isset($_GET['channel'])) {
-            ?>
-
-            <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'>Name</span>
-              <input type='text' class='col col-sm-4 form-control' id='nameValue1' name='nameValue1' value='<?php echo $SensorConfig['nameValue1'] ?>'>
-            </div>
-
-            <div class='input-group mt-3'>
-              <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <label style="width: 50%;">
-                <div class="form-control">
-                  <?php
-                      if(isset($SensorConfig['Value1onDashboard']) && $SensorConfig['Value1onDashboard'] == '1') {
-                        ?>
-                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value1onDashboard' name='Value1onDashboard' value='1' checked='1'>
-                      <?php
-                    } else {
-                      ?>
-                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value1onDashboard' name='Value1onDashboard' value='1'>
-                      <?php
-                    }
-                  ?>
-                </div>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset class="border p-2 mb-3 mySensorsFieldset">
-          <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel 2</legend>
-            <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'>Name</span>
-              <input type='text' class='col col-sm-4 form-control' id='nameValue2' name='nameValue2' value='<?php echo $SensorConfig['nameValue2'] ?>'>
-            </div>
-
-            <div class='input-group mt-3'>
-              <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <label style="width: 50%;">
-                <div class="form-control">
-                  <?php
-                      if(isset($SensorConfig['Value2onDashboard']) && $SensorConfig['Value2onDashboard'] == '1') {
-                        ?>
-                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value2onDashboard' name='Value2onDashboard' value='1' checked='1'>
-                      <?php
-                    } else {
-                      ?>
-                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value2onDashboard' name='Value2onDashboard' value='1'>
-                      <?php
-                    }
-                  ?>
-                </div>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset class="border p-2 mb-3 mySensorsFieldset">
-          <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel 3</legend>
-            <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'>Name</span>
-              <input type='text' class='col col-sm-4 form-control' id='nameValue3' name='nameValue3' value='<?php echo $SensorConfig['nameValue3'] ?>'>
-            </div>
-
-            <div class='input-group mt-3'>
-              <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <label style="width: 50%;">
-                <div class="form-control">
-                  <?php
-                      if(isset($SensorConfig['Value3onDashboard']) && $SensorConfig['Value3onDashboard'] == '1') {
-                        ?>
-                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value3onDashboard' name='Value3onDashboard' value='1' checked='1'>
-                      <?php
-                    } else {
-                      ?>
-                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value3onDashboard' name='Value3onDashboard' value='1'>
-                      <?php
-                    }
-                  ?>
-                </div>
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset class="border p-2 mb-3 mySensorsFieldset">
-          <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel 4</legend>
-            <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'>Name</span>
-              <input type='text' class='col col-sm-4 form-control' id='nameValue4' name='nameValue4' value='<?php echo $SensorConfig['nameValue4'] ?>'>
-            </div>
-
-            <div class='input-group mt-3'>
-              <span class='input-group-text' style='width: 50%'>on Dashboard</span>
-              <label style="width: 50%;">
-                <div class="form-control">
-                  <?php
-                    if(isset($SensorConfig['Value4onDashboard']) && $SensorConfig['Value4onDashboard'] == '1') {
-                    ?>
-                      <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1' checked='1'>
-                    <?php
-                    } else {
-                    ?>
-                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value4onDashboard' name='Value4onDashboard' value='1'>
-                    <?php
-                    }
-                  ?>
-                </div>
-              </label>
-            </div>
-          </fieldset>
-                  
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>Nr of Used Sensors</span>
-            <input type='text' class='col col-sm-4 form-control' id='NrOfUsedSensors' name='NrOfUsedSensors' value='<?php echo $SensorConfig['NrOfUsedSensors'] ?>'>
-          </div>
           <?php
+          if (!isset($_GET['modal'])) {
+            foreach($SensorChannelConfig as $singleSensorChannelConfig) {
+              //echo ($singleSensorChannelConfig['name']);
+              ?>
+              <fieldset class="border p-2 mb-3 mySensorsFieldset">
+                <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel <?php echo $singleSensorChannelConfig['channelNr']; ?></legend>
+                <div class='input-group mb-3'>
+                  <span class='input-group-text' style='width: 50%'>Name</span>
+                  <input type='text' class='col col-sm-4 form-control' id='nameValue<?php echo $singleSensorChannelConfig['channelNr'] ?>' name='nameValue<?php echo $singleSensorChannelConfig['channelNr'] ?>' value='<?php echo $singleSensorChannelConfig['name'] ?>'>
+                </div>
+
+                <div class='input-group mt-3'>
+                  <span class='input-group-text' style='width: 50%'>on Dashboard</span>
+                  <label style="width: 50%;">
+                    <div class="form-control">
+                      <?php
+                      if(isset($singleSensorChannelConfig['onDashboard']) && $singleSensorChannelConfig['onDashboard'] == '1') {
+                      ?>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $singleSensorChannelConfig['channelNr'] ?>onDashboard' name='Value<?php echo $singleSensorChannelConfig['channelNr'] ?>onDashboard' value='1' checked='1'>
+                      <?php
+                      } else {
+                      ?>
+                        <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $singleSensorChannelConfig['channelNr'] ?>onDashboard' name='Value<?php echo $singleSensorChannelConfig['channelNr'] ?>onDashboard' value='1'>
+                      <?php
+                      }
+                      ?>
+                    </div>
+                  </label>
+                </div>
+              </fieldset>
+          <?php
+            }
           } else {
           ?>
 
+          <fieldset class="border p-2 mb-3 mySensorsFieldset" >
+            <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel <?php 
+              if (isset($_GET['channel'])) {
+                echo $_GET['channel'];
+              } else {
+                echo "1";
+              }
+              ?></legend >
             <div class='input-group mb-3'>
               <span class='input-group-text' style='width: 50%'>Channel</span>
               <input type='text' class='col col-sm-4 form-control' id='channel' name='channel' value='<?php echo $_GET['channel'] ?>'>
             </div>
 
-          <div class='input-group mb-3'>
-            <span class='input-group-text' style='width: 50%'>Name</span>
-            <input type='text' class='col col-sm-4 form-control' id='nameValue<?php echo $_GET['channel'] ?>' name='nameValue<?php echo $_GET['channel'] ?>' value='<?php echo $SensorConfig['nameValue' . $_GET['channel'] ] ?>'>
-          </div>
-
-          <fieldset class="border p-2 mySensorsFieldset">
-            <legend  class="float-none w-auto mySensorsFieldsetLegend">Gauge</legend>
             <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'>MinValue</span>
-              <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeMinValue' name='Value<?php echo $_GET['channel'] ?>GaugeMinValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeMinValue'] ?>'>
+              <span class='input-group-text' style='width: 50%'>Name</span>
+              <input type='text' class='col col-sm-4 form-control' id='nameValue' name='nameValue' value='<?php echo $mySingleSensorChannelConfig['name'] ?>'>
             </div>
 
-            <div class='input-group'>
-              <span class='input-group-text' style='width: 50%'>MaxValue</span>
-              <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeMaxValue' name='Value<?php echo $_GET['channel'] ?>GaugeMaxValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeMaxValue'] ?>'>
-            </div>
-
-            <fieldset class="border p-2">
-              <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area Low</legend>
+            <fieldset class="border p-2 mySensorsFieldset">
+              <legend  class="float-none w-auto mySensorsFieldsetLegend">Gauge</legend>
               <div class='input-group mb-3'>
-                <span class='input-group-text' style='width: 50%'>Value</span>
-                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaLowValue'] ?>'>
+                <span class='input-group-text' style='width: 50%'>MinValue</span>
+                <input type='text' class='col col-sm-4 form-control' id='GaugeMinValue' name='GaugeMinValue' value='<?php echo $mySingleSensorChannelConfig['GaugeMinValue'] ?>'>
               </div>
 
               <div class='input-group'>
-                <span class='input-group-text' style='width: 50%'>Color</span>
-                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowColor' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaLowColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaLowColor'] ?>'>
+                <span class='input-group-text' style='width: 50%'>MaxValue</span>
+                <input type='text' class='col col-sm-4 form-control' id='GaugeMaxValue' name='GaugeMaxValue' value='<?php echo $mySingleSensorChannelConfig['GaugeMaxValue'] ?>'>
+              </div>
+
+              <fieldset class="border p-2">
+                <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area Low</legend>
+                <div class='input-group mb-3'>
+                  <span class='input-group-text' style='width: 50%'>Value</span>
+                  <input type='text' class='col col-sm-4 form-control' id='GaugeRedAreaLowValue' name='GaugeRedAreaLowValue' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaLowValue'] ?>'>
+                </div>
+
+                <div class='input-group'>
+                  <span class='input-group-text' for="GaugeRedAreaLowColor" style='width: 50%'>Color</span>
+                  <input type="color" class="form-control form-control-color" id="GaugeRedAreaLowColor" name="GaugeRedAreaLowColor" value="<?php echo $mySingleSensorChannelConfig['GaugeRedAreaLowColor'] ?>" title="Choose your color">
+                </div>
+              </fieldset>
+
+              <fieldset class="border p-2">
+                <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area High</legend>
+                <div class='input-group mb-3'>
+                  <span class='input-group-text' style='width: 50%'>Value</span>
+                  <input type='text' class='col col-sm-4 form-control' id='GaugeRedAreaHighValue' name='GaugeRedAreaHighValue' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaHighValue'] ?>'>
+                </div>
+
+                <div class='input-group'>
+                  <span class='input-group-text' for="GaugeRedAreaHighColor" style='width: 50%'>Color</span>
+                  <input type="color" class="form-control form-control-color" id="GaugeRedAreaHighColor" name="GaugeRedAreaHighColor" value="<?php echo $mySingleSensorChannelConfig['GaugeRedAreaHighColor'] ?>" title="Choose your color">
+                </div>
+              </fieldset>
+
+              <div class='input-group mt-3'>
+                <span class='input-group-text' for="GaugeNormalAreaColor" style='width: 50%'>Normal Area Color</span>
+                <input type="color" class="form-control form-control-color" id="GaugeNormalAreaColor" name="GaugeNormalAreaColor" value="<?php echo $mySingleSensorChannelConfig['GaugeNormalAreaColor'] ?>" title="Choose your color">
               </div>
             </fieldset>
 
-            <fieldset class="border p-2">
-              <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area High</legend>
-              <div class='input-group mb-3'>
-                <span class='input-group-text' style='width: 50%'>Value</span>
-                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighValue' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaHighValue'] ?>'>
-              </div>
-
+            <fieldset class="border p-2 mySensorsFieldset">
+              <legend  class="float-none w-auto mySensorsFieldsetLegend">Charts</legend>
               <div class='input-group'>
-                <span class='input-group-text' style='width: 50%'>Color</span>
-                <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighColor' name='Value<?php echo $_GET['channel'] ?>GaugeRedAreaHighColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeRedAreaHighColor'] ?>'>
+                <span class='input-group-text' for="ChartColor" style='width: 50%'>Chart Color</span>
+                <input type="color" class="form-control form-control-color" id="ChartColor" name="ChartColor" value="<?php echo $mySingleSensorChannelConfig['ChartColor'] ?>" title="Choose your color">
               </div>
             </fieldset>
 
-            <div class='input-group mt-3'>
-              <span class='input-group-text' style='width: 50%'>GaugeNormalAreaColor</span>
-              <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>GaugeNormalAreaColor' name='Value<?php echo $_GET['channel'] ?>GaugeNormalAreaColor' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'GaugeNormalAreaColor'] ?>'>
+            <div class='input-group mt-3 mb-3'>
+              <span class='input-group-text' style='width: 50%'>show on Dashboard</span>
+              <label style="width: 50%;">
+                <div class="form-control">
+                  <?php
+                    if(isset($mySingleSensorChannelConfig['onDashboard']) && $mySingleSensorChannelConfig['onDashboard'] == '1') {
+                    ?>
+                      <input class='col col-sm-4 form-check-input' type='checkbox' id='onDashboard' name='onDashboard' value='1' checked='1'>
+                    <?php
+                    } else {
+                    ?>
+                      <input class='col col-sm-4 form-check-input' type='checkbox' id='onDashboard' name='onDashboard' value='1'>
+                    <?php
+                    }
+                  ?>
+                </div>
+              </label>
             </div>
-          </fieldset>
 
-          <div class='input-group mt-3 mb-3'>
-            <span class='input-group-text' style='width: 50%'>show on Dashboard</span>
+            <div class='input-group mt-3 mb-3'>
+              <span class='input-group-text' style='width: 50%'>DashboardOrderNr</span>
+              <input type='text' class='col col-sm-4 form-control' id='DashboardOrderNr' name='DashboardOrderNr' value='<?php echo $mySingleSensorChannelConfig['DashboardOrderNr'] ?>' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
+            </div>
+          </fieldset >
+
+          <?php
+          }
+          
+          if (!isset($_GET['modal'])) {
+          ?>
+          <div class="input-group mb-3">
+            <span class="input-group-text" style="width: 50%">Nr of used Sensors</span>
             <label style="width: 50%;">
-              <div class="form-control">
-                <?php
-                  if(isset($SensorConfig['Value' . $_GET['channel'] . 'onDashboard']) && $SensorConfig['Value' . $_GET['channel'] . 'onDashboard'] == '1') {
-                  ?>
-                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1' checked='1'>
-                  <?php
-                  } else {
-                  ?>
-                    <input class='col col-sm-4 form-check-input' type='checkbox' id='Value<?php echo $_GET['channel'] ?>onDashboard' name='Value<?php echo $_GET['channel'] ?>onDashboard' value='1'>
-                  <?php
-                  }
-                ?>
+              <div class='form-control'>
+                <input type='text' class='col col-sm-4 form-control' id='NrOfUsedSensors' name='NrOfUsedSensors' value='<?php echo $SensorConfig['NrOfUsedSensors'] ?>'>
               </div>
             </label>
           </div>
 
-          <div class='input-group mt-3 mb-3'>
-            <span class='input-group-text' style='width: 50%'>DashboardOrderNr</span>
-            <input type='text' class='col col-sm-4 form-control' id='Value<?php echo $_GET['channel'] ?>DashboardOrderNr' name='Value<?php echo $_GET['channel'] ?>DashboardOrderNr' value='<?php echo $SensorConfig['Value' . $_GET['channel'] . 'DashboardOrderNr'] ?>' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
-          </div>
-                  
-          <?php 
-          }
-          if (!isset($_GET['modal'])) {
-          ?>
           <div class="input-group mb-3">
             <span class="input-group-text" style="width: 50%">on Dashboard</span>
             <label style="width: 50%;">

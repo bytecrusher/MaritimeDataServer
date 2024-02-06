@@ -35,6 +35,7 @@
     echo("<br>");
     //$subDir = str_replace("/simulator","/src",$subDir);
     $subDir = str_replace("/simulator","",$subDir);
+    $subDir = str_replace("/var/www/html","",$subDir);
     echo($subDir);
 
     $domain = $_SERVER['SERVER_ADDR'];

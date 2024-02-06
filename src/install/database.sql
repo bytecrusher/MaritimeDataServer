@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql:3306
--- Erstellungszeit: 24. Dez 2022 um 13:12
+-- Erstellungszeit: 06. Feb 2024 um 21:08
 -- Server-Version: 8.0.31
 -- PHP-Version: 8.0.26
 
@@ -76,6 +76,31 @@ CREATE TABLE `securityTokens` (
 -- --------------------------------------------------------
 
 --
+-- Tabellenstruktur für Tabelle `sensorChannelConfig`
+--
+
+CREATE TABLE `sensorChannelConfig` (
+  `id` int NOT NULL,
+  `sensorConfigId` int NOT NULL,
+  `name` varchar(20) DEFAULT NULL,
+  `description` varchar(30) DEFAULT NULL,
+  `channelNr` int NOT NULL,
+  `locationOfMeasurement` varchar(20) DEFAULT NULL,
+  `GaugeMinValue` int NOT NULL DEFAULT '0',
+  `GaugeMaxValue` int NOT NULL DEFAULT '20',
+  `GaugeRedAreaLowValue` int DEFAULT '5',
+  `GaugeRedAreaLowColor` text NOT NULL,
+  `GaugeRedAreaHighValue` int NOT NULL DEFAULT '15',
+  `GaugeRedAreaHighColor` text NOT NULL,
+  `GaugeNormalAreaColor` text NOT NULL,
+  `DashboardOrderNr` int DEFAULT '1',
+  `onDashboard` tinyint NOT NULL DEFAULT '1',
+  `ChartColor` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Tabellenstruktur für Tabelle `sensorConfig`
 --
 
@@ -87,48 +112,7 @@ CREATE TABLE `sensorConfig` (
   `description` varchar(30) DEFAULT NULL,
   `typId` int DEFAULT NULL,
   `locationOfMeasurement` varchar(20) DEFAULT NULL,
-  `nameValue1` varchar(10) DEFAULT NULL,
-  `Value1GaugeMinValue` int NOT NULL DEFAULT '0',
-  `Value1GaugeMaxValue` int NOT NULL DEFAULT '20',
-  `Value1GaugeRedAreaLowValue` int NOT NULL,
-  `Value1GaugeRedAreaLowColor` text NOT NULL,
-  `Value1GaugeRedAreaHighValue` int NOT NULL,
-  `Value1GaugeRedAreaHighColor` text NOT NULL,
-  `Value1GaugeNormalAreaColor` text NOT NULL,
-  `Value1DashboardOrderNr` int DEFAULT '1',
-  `Value1onDashboard` tinyint(1) NOT NULL,
-  `nameValue2` varchar(10) DEFAULT NULL,
-  `Value2GaugeMinValue` int NOT NULL DEFAULT '0',
-  `Value2GaugeMaxValue` int NOT NULL DEFAULT '20',
-  `Value2GaugeRedAreaLowValue` int NOT NULL,
-  `Value2GaugeRedAreaLowColor` text NOT NULL,
-  `Value2GaugeRedAreaHighValue` int NOT NULL,
-  `Value2GaugeRedAreaHighColor` text NOT NULL,
-  `Value2GaugeNormalAreaColor` text NOT NULL,
-  `Value2DashboardOrderNr` int DEFAULT '1',
-  `Value2onDashboard` tinyint(1) NOT NULL,
-  `nameValue3` varchar(10) DEFAULT NULL,
-  `Value3GaugeMinValue` int NOT NULL DEFAULT '0',
-  `Value3GaugeMaxValue` int NOT NULL DEFAULT '20',
-  `Value3GaugeRedAreaLowValue` int NOT NULL,
-  `Value3GaugeRedAreaLowColor` text NOT NULL,
-  `Value3GaugeRedAreaHighValue` int NOT NULL,
-  `Value3GaugeRedAreaHighColor` text NOT NULL,
-  `Value3GaugeNormalAreaColor` text NOT NULL,
-  `Value3DashboardOrderNr` int DEFAULT '1',
-  `Value3onDashboard` tinyint(1) NOT NULL,
-  `nameValue4` varchar(10) DEFAULT NULL,
-  `Value4GaugeMinValue` int NOT NULL DEFAULT '0',
-  `Value4GaugeMaxValue` int NOT NULL DEFAULT '20',
-  `Value4GaugeRedAreaLowValue` int NOT NULL,
-  `Value4GaugeRedAreaLowColor` text NOT NULL,
-  `Value4GaugeRedAreaHighValue` int NOT NULL,
-  `Value4GaugeRedAreaHighColor` text NOT NULL,
-  `Value4GaugeNormalAreaColor` text NOT NULL,
-  `Value4DashboardOrderNr` int DEFAULT '1',
-  `Value4onDashboard` tinyint(1) NOT NULL,
   `onDashboard` tinyint DEFAULT '0',
-  `ttnPayloadId` int DEFAULT NULL COMMENT 'Position in der TTN Payload.',
   `NrOfUsedSensors` int NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -180,7 +164,7 @@ INSERT INTO `sensorTypes` (`id`, `name`, `siUnitVal1`, `siUnitVal2`, `siUnitVal3
 (3, 'ADC', 'V', 'V', 'V', 'V', '', 'input from ADC', 4, 0),
 (4, 'Digital', '1/0', '1/0', '1/0', '1/0', '', 'input from Digital', 4, 0),
 (5, 'BME280', '&deg;C', '%', 'mbar', '&deg;C', '', 'Temp, Hum, Pres, Dew', 4, 0),
-(6, 'GPS', 'Lat', 'Lon', 'Alt', 'Spd', '', 'Coorinates', 4, 0),
+(6, 'GPS', 'Lat', 'Lon', 'Alt', 'Spd', '', 'Coordinates', 4, 0),
 (7, 'Lora', 'Gtw', 'db', 'snr', '#', '', 'TTN data', 4, 0);
 
 -- --------------------------------------------------------
@@ -228,7 +212,7 @@ CREATE TABLE `users` (
   `passwordCode` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `passwordCodeTime` date DEFAULT NULL,
   `dashboardUpdateInterval` int NOT NULL DEFAULT '15',
-  `Timezone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT 'Europe/Berlin',
+  `Timezone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Europe/Berlin',
   `receive_notifications` tinyint NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -256,6 +240,13 @@ ALTER TABLE `boardType`
 --
 ALTER TABLE `securityTokens`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indizes für die Tabelle `sensorChannelConfig`
+--
+ALTER TABLE `sensorChannelConfig`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK_sensorChannelConfig_sensorID` (`sensorConfigId`);
 
 --
 -- Indizes für die Tabelle `sensorConfig`
@@ -315,6 +306,12 @@ ALTER TABLE `securityTokens`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT für Tabelle `sensorChannelConfig`
+--
+ALTER TABLE `sensorChannelConfig`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT für Tabelle `sensorConfig`
 --
 ALTER TABLE `sensorConfig`
@@ -330,7 +327,7 @@ ALTER TABLE `sensorData`
 -- AUTO_INCREMENT für Tabelle `sensorTypes`
 --
 ALTER TABLE `sensorTypes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT für Tabelle `ttnDataLoraBoatMonitor`
@@ -354,6 +351,12 @@ ALTER TABLE `users`
 ALTER TABLE `boardConfig`
   ADD CONSTRAINT `boardConfig_ibfk_1` FOREIGN KEY (`ownerUserId`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `boardConfig_ibfk_2` FOREIGN KEY (`boardTypeId`) REFERENCES `boardType` (`id`);
+
+--
+-- Constraints der Tabelle `sensorChannelConfig`
+--
+ALTER TABLE `sensorChannelConfig`
+  ADD CONSTRAINT `FK_sensorChannelConfig_sensorID` FOREIGN KEY (`sensorConfigId`) REFERENCES `sensorConfig` (`id`);
 
 --
 -- Constraints der Tabelle `sensorConfig`

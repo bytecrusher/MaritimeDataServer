@@ -24,7 +24,8 @@ The backend stores the data into the DB. It also checks if Data are valid and bo
 For the frontend the user needs to login. Now the user is able to do some configurations or display some data.
 
 #### Functions / ToDos Status / Bugs
-- [ ] Change static email addresses (sender) into variables. These will be defined in the install script.
+- [x] Change static email addresses (sender) into variables. These will be defined in the install script.
+- [ ] 
 
 ## Folder description
 
@@ -46,20 +47,21 @@ For the frontend the user needs to login. Now the user is able to do some config
 
 
 #### Installation
-Copy all **MDS** files from the "src" folder into your htdocs dir.
-Create a new database (with phpmyadmin) and create a new user with write privileges to this database.
-Open **http://yourdomain/maritimedataserver/install/index.php** in your browser and step through the installation steps.
+Copy all **MDS** files contained in the "src" folder to your htdocs dir.
+Create a new database (for example with phpmyadmin) and create a new user with write privileges to this database.
+Open **http://yourdomain/** in your browser and step through the installation steps.
+Enter all necessary informations and fill out the text boxes.
 After install is finished, remove the dir named "install" (for security reasons).
 
-Now the **MDS** is available under **http://yourdomain/maritimedataserver**
+Now the **MDS** is available under **http://yourdomain/**
 
 ![MDS Dashboard](docu_donotdeploy/images/MDS_Dashboard.png)
 ![MDS Graph](docu_donotdeploy/images/MDS_Graph.png)
 ![MDS Map](docu_donotdeploy/images/MDS_Map.png)
 
 #### MDS Requirements
-For running the **MDS** you need a web server (in my case Apache) with PHP (version 8.0) support and a MySQL DB.  
-If you run **MDC**s inside our local network, your **MDS** needs to be public (TTN should be able to reach your server).
+For running the **MDS** you need a web server (in my case Apache) with PHP (at least version 8.0) support and a MySQL DB.  
+If you run **MDC**s outside our local network, your **MDS** needs to be public (TTN should be able to reach your server).
 
 ###### Development
 For development i use two different solutions.

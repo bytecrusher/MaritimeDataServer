@@ -5,7 +5,7 @@
  *  Update 2021-OCT-11
  *  https://wwww.aeq-web.com
  * 
- * Mofified by Guntmar Hoeche
+ * Modified by Guntmar Hoeche
  */
 
 /*
@@ -43,8 +43,6 @@ $data = null;
 
 if(sizeof($ttn_post) > 0) {
   $data = json_decode($ttn_post[0]);
-  //$data = json_decode($ttn_post);
-
   $sensor_raw_payload = null;
   if(($data != null) && ($data->uplink_message->decoded_payload != null)) {
     $sensor_temperature = $sensor_humidity = $sensor_battery = 0;       // define Variables
@@ -163,50 +161,51 @@ if(sizeof($ttn_post) > 0) {
     }
 
     // TODO: insert data into 'sensorData' (first get Board-ID by TTN Appid and Devid)
-    $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttnAppId, $ttnDevId);
+    $singleRowBoardIdByTTN = myFunctions::getBoardByTTN($ttnAppId, $ttnDevId);
     $myFunctions = new myFunctions();
     
     // if board not exist, create it.
-    if (!$singleRowBoardIdbyTTN) {
+    if (!$singleRowBoardIdByTTN) {
         $newId = myFunctions::addBoardByTTN($ttnAppId, $ttnDevId);
         writeToLogFunction::write_to_log('new board created. BoardID: ' . $newId, $_SERVER["SCRIPT_FILENAME"]);
-        $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttnAppId, $ttnDevId);
+        $singleRowBoardIdByTTN = myFunctions::getBoardByTTN($ttnAppId, $ttnDevId);
     }
-    
-    $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
+
+    // TODO check not only if the sensor exist in table sensorConfig, also in sensorChannelConfig !
+    $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdByTTN['id']);
     if(array_search('GPS', array_column($allSensorsOfBoard, 'boardId')) === false) {
-      writeToLogFunction::write_to_log('Sensor GPS does not exist. Will now create for boardId: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
-      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
+      $myReturn = $myFunctions->addSensorConfig($singleRowBoardIdByTTN['id'], "GPS", "GPS");
+      writeToLogFunction::write_to_log('Sensor GPS does not exist. Will now create for boardId: ' . $singleRowBoardIdByTTN['id'] . "; new Sensor ID: " . $myReturn, $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if(array_search('Lora', array_column($allSensorsOfBoard, 'boardId')) === false) {
-      writeToLogFunction::write_to_log('Sensor Lora does not exist. Will now create for boardId: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
-      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Lora", "Lora");
+      $myReturn = $myFunctions->addSensorConfig($singleRowBoardIdByTTN['id'], "Lora", "Lora");
+      writeToLogFunction::write_to_log('Sensor Lora does not exist. Will now create for boardId: ' . $singleRowBoardIdByTTN['id'] . "; new Sensor ID: " . $myReturn, $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if(array_search('ADC', array_column($allSensorsOfBoard, 'boardId')) === false) {
-      writeToLogFunction::write_to_log('Sensor ADC does not exist. Will now create for boardId: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
-      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "ADC", "ADC");
+      $myReturn = $myFunctions->addSensorConfig($singleRowBoardIdByTTN['id'], "ADC", "ADC");
+      writeToLogFunction::write_to_log('Sensor ADC does not exist. Will now create for boardId: ' . $singleRowBoardIdByTTN['id'] . "; new Sensor ID: " . $myReturn, $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if(array_search('DS18B20', array_column($allSensorsOfBoard, 'boardId')) === false) {
-      writeToLogFunction::write_to_log('Sensor DS18B20 does not exist. Will now create for boardId: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
-      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "DS18B20", "DS18B20");
+      $myReturn = $myFunctions->addSensorConfig($singleRowBoardIdByTTN['id'], "DS18B20", "DS18B20");
+      writeToLogFunction::write_to_log('Sensor DS18B20 does not exist. Will now create for boardId: ' . $singleRowBoardIdByTTN['id'] . "; new Sensor ID: " . $myReturn, $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if(array_search('BME280', array_column($allSensorsOfBoard, 'boardId')) === false) {
-      writeToLogFunction::write_to_log('Sensor BME280 does not exist. Will now create for boardId: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
-      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "BME280", "BME280");
+      $myReturn = $myFunctions->addSensorConfig($singleRowBoardIdByTTN['id'], "BME280", "BME280");
+      writeToLogFunction::write_to_log('Sensor BME280 does not exist. Will now create for boardId: ' . $singleRowBoardIdByTTN['id'] . "; new Sensor ID: " . $myReturn, $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if(array_search('DS2438', array_column($allSensorsOfBoard, 'boardId')) === false) {
-      writeToLogFunction::write_to_log('Sensor DS2438 does not exist. Will now create for boardId: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
-      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "DS2438", "DS2438");
+      $myReturn = $myFunctions->addSensorConfig($singleRowBoardIdByTTN['id'], "DS2438", "DS2438");
+      writeToLogFunction::write_to_log('Sensor DS2438 does not exist. Will now create for boardId: ' . $singleRowBoardIdByTTN['id'] . "; new Sensor ID: " . $myReturn, $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if(array_search('Digital', array_column($allSensorsOfBoard, 'boardId')) === false) {
-      writeToLogFunction::write_to_log('Sensor Digital does not exist. Will now create for boardId: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
-      $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
+      $myReturn = $myFunctions->addSensorConfig($singleRowBoardIdByTTN['id'], "Digital", "Digital");
+      writeToLogFunction::write_to_log('Sensor Digital does not exist. Will now create for boardId: ' . $singleRowBoardIdByTTN['id'] . "; new Sensor ID: " . $myReturn, $_SERVER["SCRIPT_FILENAME"]);
     }
     $url = $config::$baseurl . '/receiver/receivejson.php';
     // create a new cURL resource
@@ -219,8 +218,8 @@ if(sizeof($ttn_post) > 0) {
     $boardInfos = array(
         "apiKey" => $config::$apiKey,
         // TODO: Anhand der Dev_IDE die Mac ermitteln
-        "macAddress" => $singleRowBoardIdbyTTN['macAddress'],   // fake mac address for debug.
-        "protocolVersion" => "1"   // Version of the used protocoll.
+        "macAddress" => $singleRowBoardIdByTTN['macAddress'],   // fake mac address for debug.
+        "protocolVersion" => "1"   // Version of the used protocol.
     );
 
     $dateNow = date("d.m.Y");
@@ -229,22 +228,22 @@ if(sizeof($ttn_post) > 0) {
     $sensor1 = $sensor2 = $sensor3 = null;
     $sensors = array();
 
-    foreach($allSensorsOfBoard AS $eachsensor) {
+    foreach($allSensorsOfBoard AS $eachSensor) {
       $sensor1 = null;
       // TODO check, if boardId is the right var. I think it should be typId.
-      if ($eachsensor['boardId'] == "DS18B20") {
+      if ($eachSensor['boardId'] == "DS18B20") {
         $sensor1 = array(
-          "typId" => $eachsensor['typId'],
-          "sensorId" => $eachsensor['id'],
+          "typId" => $eachSensor['typId'],
+          "sensorId" => $eachSensor['id'],
           "value1" => $sensor_temperature_2,
           "date" => $dateNow,
           "time" => $timeNow,
           "transmissionPath" => "2"
         );
-      } elseif ($eachsensor['boardId'] == "ADC") {
+      } elseif ($eachSensor['boardId'] == "ADC") {
         $sensor1 = array(
-          "typId" => $eachsensor['typId'],
-          "sensorId" => $eachsensor['id'],
+          "typId" => $eachSensor['typId'],
+          "sensorId" => $eachSensor['id'],
           "value1" => $sensor_battery,
           "value2" => $sensor_battery2,
           "value3" => $sensor_level1,
@@ -253,10 +252,10 @@ if(sizeof($ttn_post) > 0) {
           "time" => $timeNow,
           "transmissionPath" => "2"
         );
-      } elseif ($eachsensor['boardId'] == "BME280") {
+      } elseif ($eachSensor['boardId'] == "BME280") {
         $sensor1 = array(
-          "typId" => $eachsensor['typId'],
-          "sensorId" => $eachsensor['id'],
+          "typId" => $eachSensor['typId'],
+          "sensorId" => $eachSensor['id'],
           "value1" => $sensor_temperature,
           "value2" => $sensor_humidity,
           "value3" => $sensor_pressure,
@@ -265,10 +264,10 @@ if(sizeof($ttn_post) > 0) {
           "time" => $timeNow,
           "transmissionPath" => "2"
         );
-      } elseif ($eachsensor['boardId'] == "GPS") {
+      } elseif ($eachSensor['boardId'] == "GPS") {
         $sensor1 = array(
-          "typId" => $eachsensor['typId'],
-          "sensorId" => $eachsensor['id'],
+          "typId" => $eachSensor['typId'],
+          "sensorId" => $eachSensor['id'],
           "value1" => $sensor_latitude,
           "value2" => $sensor_longitude,
           "value3" => $position_lat,
@@ -277,10 +276,10 @@ if(sizeof($ttn_post) > 0) {
           "time" => $timeNow,
           "transmissionPath" => "2"
         );
-      } elseif ($eachsensor['boardId'] == "Lora") {
+      } elseif ($eachSensor['boardId'] == "Lora") {
         $sensor1 = array(
-          "typId" => $eachsensor['typId'],
-          "sensorId" => $eachsensor['id'],
+          "typId" => $eachSensor['typId'],
+          "sensorId" => $eachSensor['id'],
           "value1" => $gtw_id,
           "value2" => $gtw_rssi,
           "value3" => $gtw_snr,
@@ -289,10 +288,10 @@ if(sizeof($ttn_post) > 0) {
           "time" => $timeNow,
           "transmissionPath" => "2"
         );
-      } elseif ($eachsensor['boardId'] == "Digital") {
+      } elseif ($eachSensor['boardId'] == "Digital") {
         $sensor1 = array(
-          "typId" => $eachsensor['typId'],
-          "sensorId" => $eachsensor['id'],
+          "typId" => $eachSensor['typId'],
+          "sensorId" => $eachSensor['id'],
           "value1" => $sensor_alarm1,
           //"value2" => $gtw_rssi,
           //"value3" => $gtw_snr,

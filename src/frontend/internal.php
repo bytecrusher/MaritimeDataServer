@@ -1,9 +1,9 @@
 <?php
-/*
-* File for Display Data for the user
-*
-*/
-// TODO add the Option to define Virtual Sensor group, to group them visual.
+  /*
+  * File for Display Data for the user
+  *
+  */
+  // TODO add the Option to define Virtual Sensor group, to group them visual.
 
   session_start();
   require_once("func/dbConfig.func.php");
@@ -11,7 +11,6 @@
   require_once("func/user.class.php");
   require_once("func/board.class.php");
   require_once("func/writeToLogFunction.func.php");
-  //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
   if (isset($_SESSION['userObj'])) {
     $currentUser = unserialize($_SESSION['userObj']);
@@ -23,10 +22,8 @@
 
   include(__DIR__ . "/common/header.inc.php");
   include("func/get_data.php");
-
   $config = new configuration();
   $varDemoMode = $config::$demoMode;
-
 ?>
 <link rel="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/fontawesome.min.css">
@@ -111,11 +108,11 @@
     }
   }
 
-var DashboardUpdateInterval = <?php echo($currentUser->getDashboardUpdateInterval()); ?> * 10000;
-setInterval(function() { 
+  var DashboardUpdateInterval = <?php echo($currentUser->getDashboardUpdateInterval()); ?> * 10000;
+  setInterval(function() { 
     // run every 30 seconds
     updateGauges();
-}, DashboardUpdateInterval);
+  }, DashboardUpdateInterval);
 </script>
 
 <div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
@@ -211,7 +208,6 @@ setInterval(function() {
                   <?php
                 }
                 ?>
-                
                 <?php
                 if ($mySensors2 != null) {
                   foreach($mySensors2 as $singleRowMySensors) {
@@ -219,60 +215,58 @@ setInterval(function() {
                     foreach($mySensors as $singleRowMySensorsLastTimeSeen) {
                       $sensortype = myFunctions::getSensorType($singleRowMySensors['typId']);
                       $sensConfig = myFunctions::getSensorConfig($singleRowMySensors['id']);
+                      $sensChannelConfig = myFunctions::getSensorChannelsConfig($singleRowMySensors['id']);
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
-                        if (($mySensors != null) && ($singleRowMySensors['Value' . $i . 'onDashboard'])) {
-                          //var_dump($singleRowMySensors['Value' . $i . 'onDashboard'])
-                          //var_dump($deviceOnline);
-                            ?>
-                            <li id='gauge<?php echo $singleRowMySensors['id'] . "." . $i; ?>' data-id=<?php echo $singleRowMySensors['Value' . $i . 'DashboardOrderNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
-                              <div id='div_click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
-                                <i id='click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
-                                </i>
-                              </div>
-                              <div style='height:30px;'><?php echo $singleRowMySensors['nameValue' . $i]; ?> (<?php echo $sensortype['siUnitVal' . $i]; ?>)
-                              </div>
-                            </li>
+                        $SensorChannelConfigSingle = myFunctions::getSensorChannelConfig($singleRowMySensors['id'], $i);
+                        if (($mySensors != null) && (is_array($SensorChannelConfigSingle)) && ($SensorChannelConfigSingle['onDashboard'] == 1)) {
+                          ?>
+                          <li id='gauge<?php echo $singleRowMySensors['id'] . "." . $i; ?>' data-id=<?php echo $SensorChannelConfigSingle['DashboardOrderNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
+                            <div id='div_click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
+                              <i id='click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
+                              </i>
+                            </div>
+                            <div style='height:30px;'><?php echo $SensorChannelConfigSingle['name']; ?> (<?php echo $sensortype['siUnitVal' . $i]; ?>)
+                            </div>
+                          </li>
                             <script>
                               if (<?php echo sizeof($mySensors); ?> != null) {
-
-                              var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowMySensors['id'] . "." . $i; ?>"),
+                                var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowMySensors['id'] . "." . $i; ?>"),
                                 {
-                                  min: <?php echo $sensConfig['Value' . $i . 'GaugeMinValue'] ?>,
-                                  max: <?php echo $sensConfig['Value' . $i . 'GaugeMaxValue'] ?>,
+                                  min: <?php echo $SensorChannelConfigSingle['GaugeMinValue'] ?>,
+                                  max: <?php echo $SensorChannelConfigSingle['GaugeMaxValue'] ?>,
                                   dialStartAngle: 180,
                                   dialEndAngle: 0,
                                   value: '.', // so that "NaN" is displayed as the default value
                                   viewBox: "0 0 100 57",
                                   id: "<?php echo $singleRowMySensors['id'] . "." . $i; ?>",
                                   color: function(value) {
-                                    if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowValue'] ?>) {
-                                      return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaLowColor'] ?>';
-                                    }else if(value < <?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighValue'] ?>) {
-                                      return '<?php echo $sensConfig['Value' . $i . 'GaugeNormalAreaColor'] ?>';
+                                    if(value < <?php echo $SensorChannelConfigSingle['GaugeRedAreaLowValue'] ?>) {
+                                      return '<?php echo $SensorChannelConfigSingle['GaugeRedAreaLowColor'] ?>';
+                                    }else if(value < <?php echo $SensorChannelConfigSingle['GaugeRedAreaHighValue'] ?>) {
+                                      return '<?php echo $SensorChannelConfigSingle['GaugeNormalAreaColor'] ?>';
                                     }else {
-                                      return '<?php echo $sensConfig['Value' . $i . 'GaugeRedAreaHighColor'] ?>';
+                                      return '<?php echo $SensorChannelConfigSingle['GaugeRedAreaHighColor'] ?>';
                                     }
                                   },
                                 }
-                              );
-                              gaugesArrayHelper.push("<?php echo $singleRowMySensors['id'] . "." . $i; ?>");
-                              gaugesMap.set("<?php echo $singleRowMySensors['id'] . "." . $i; ?>", gauge_temp);
-                            }
+                                );
+                                gaugesArrayHelper.push("<?php echo $singleRowMySensors['id'] . "." . $i; ?>");
+                                gaugesMap.set("<?php echo $singleRowMySensors['id'] . "." . $i; ?>", gauge_temp);
+                              }
+                              SensorArrayHelper.push(<?php echo $singleRowMySensors['id']; ?>);
+                              var valueToPush = {};
+                              valueToPush["sensorId"] = "<?php echo $singleRowMySensors['id']; ?>";
+                              valueToPush["typId"] = "<?php echo $singleRowMySensors['typId']; ?>";
+                              valueToPush["NrOfSensors"] = "<?php echo $singleRowMySensors['NrOfUsedSensors']; ?>";
+                              valueToPush["channelNr"] = "<?php echo($SensorChannelConfigSingle['channelNr']); ?>";
+                              valueToPush["NameOfSensors"] = "<?php echo($singleRowMySensors['name']); ?>.<?php echo $SensorChannelConfigSingle['name']; ?>";
+                              valueToPush["ChartColor"] = "<?php echo($SensorChannelConfigSingle['ChartColor']); ?>";
+                              gaugesArrayHelperBig.push(valueToPush);
+                              // TODO currently the DS2438 is not supported
                             </script>
                             <?php
                         }
-                    }
-                    ?>
-                    <script>
-                      SensorArrayHelper.push(<?php echo $singleRowMySensors['id']; ?>);
-                      var valueToPush = {};
-                      valueToPush["sensorId"] = "<?php echo $singleRowMySensors['id']; ?>";
-                      valueToPush["typId"] = "<?php echo $singleRowMySensors['typId']; ?>";
-                      valueToPush["NrOfSensors"] = "<?php echo $singleRowMySensors['typId']; ?>";
-                      valueToPush["NameOfSensors"] = "<?php echo $singleRowMySensors['nameValue1']; ?>";
-                      gaugesArrayHelperBig.push(valueToPush);
-                    </script>
-                      <?php
+                      }
                     }
                   }
                 }
@@ -449,7 +443,7 @@ setInterval(function() {
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");
-                    g.innerHTML = "Sensor Order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                    g.innerHTML = "Sensor order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
                     const bsAlert = new bootstrap.Alert(g);
                     // Dismiss time out
                     setTimeout(() => {
@@ -464,7 +458,7 @@ setInterval(function() {
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");
-                    g.innerHTML = "Sensor Order not saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                    g.innerHTML = "Sensor order not saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
                     const bsAlert = new bootstrap.Alert(g);
                     // Dismiss time out
                     setTimeout(() => {
@@ -477,7 +471,6 @@ setInterval(function() {
             });
           }
         }
-
       });
 
       // TODO: Bug!!! on more than one board, the sensors will be added to everyone.

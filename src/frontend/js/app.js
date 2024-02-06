@@ -15,48 +15,48 @@ function sleep(ms) {
 
 // Chart view. Runs on click on "Charts" tab, and collects data to show
 $(document).ready(async function(){
-  //$('#hreftemperatures').click(async function (e) {
-    var backgroundColor = null;
-    var borderColor = null;
-    var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
-    var hoverBorderColor = 'rgba(0, 100, 0, 1)';
-    var varSensorId = null;
-    //var hoverBorderColor = Math.floor(Math.random()*16777215).toString(16);
+  var backgroundColor = null;
+  var borderColor = null;
+  var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
+  var hoverBorderColor = 'rgba(0, 100, 0, 1)';
+  var varSensorId = null;
+  InitialSetupChart();
+  // TODO: check if every channel will be displayed. I think only the first one will display in the chart.
 
-    InitialSetupChart();
+  for (let i in gaugesArrayHelperBig) {
+    varSensorId = gaugesArrayHelperBig[i]["sensorId"];
+    typId = gaugesArrayHelperBig[i]["typId"];
+    sensorname = gaugesArrayHelperBig[i]["NameOfSensors"];
+    sensorChannel = gaugesArrayHelperBig[i]["channelNr"];
+    var randomColor = gaugesArrayHelperBig[i]["ChartColor"];
+    var backgroundColor = randomColor;
+    var borderColor = randomColor;
+    addDataToChart(varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname, sensorChannel);
+  }
+  addLabelsToChart(varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+});
 
-    // TODO: check if every channel will be displayed. I think only the first one will display in the chart.
-
-    for (let i in gaugesArrayHelperBig) {
-      varSensorId = gaugesArrayHelperBig[i]["sensorId"];
-      typId = gaugesArrayHelperBig[i]["typId"];
-      sensorname = gaugesArrayHelperBig[i]["NameOfSensors"];
-
-      var randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-      var backgroundColor = randomColor;
-      var borderColor = randomColor;
-
-      //if (typId == 1) {   // If data are Temp ?
-        addDataToChart(varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname);
-      //}
-    }
-    addLabelsToChart(varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
-  });
-//});
-
-function addDataToChart(varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor, sensorname) {
+function addDataToChart(varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor, sensorname, sensorChannel) {
   if (varSensorId != null) {
+    // TODO: make more efficient: call get function with the channel name and receive only these channels
     $.getJSON('api/getSensorDataSet.php', { sensorId:varSensorId, maxValues:varMaxValues}, async function(data, textStatus, jqXHR){
       var id = [];
       var value1 = [];
       for(var i in data) {
         id.push("id " + data[i].id);
-        value1.push(data[i].value1);
-        //console.log(data);
+        if (sensorChannel == 0) {
+          value1.push(data[i].value1);
+        } else if (sensorChannel == 1) {
+          value1.push(data[i].value2);
+        } else if (sensorChannel == 2) {
+          value1.push(data[i].value3);
+        } else if (sensorChannel == 3) {
+          value1.push(data[i].value4);
+        }
       }
 
       const data1 = window.myChart.data;
-      const dsColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+      const dsColor = varBackgroundColor;
       const newDataset = {
         label: sensorname,
         backgroundColor: dsColor,

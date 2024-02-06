@@ -291,7 +291,7 @@
         gaugeValuePath.setAttribute("d", pathString(radius, startAngle, angle + startAngle, flag));
       }
 
-      function setGaugeColor(value, duration) {        
+      function setGaugeColor(value, duration) {
         var c = gaugeColor.call(opts, value), 
             dur = duration * 1000,
             pathTransition = "stroke " + dur + "ms ease";
