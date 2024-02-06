@@ -9,9 +9,7 @@ class mdsSimulatorConfig {
     static $mdsDestination;
 
     function __construct() {
-        self::$mdsDestination[] = "https://mds-messe.derguntmar.de/receiver/ttndata/ttn.php";
-        self::$mdsDestination[] = "https://mds-demo.derguntmar.de/receiver/ttndata/ttn.php";
-        self::$mdsDestination[] = "https://mds-git.derguntmar.de/receiver/ttndata/ttn.php";
-        self::$mdsDestination[] = "https://esp-data.derguntmar.de/receiver/ttndata/ttn.php";
+        self::$mdsDestination[] = "https://localhost/receiver/ttndata/ttn.php";
+        self::$mdsDestination[] = "https://localhost2/receiver/ttndata/ttn.php";
     }
 }
