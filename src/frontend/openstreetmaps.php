@@ -25,7 +25,6 @@ $('#hrefmap').click( function (e) {
     myBoardIdMarkerGroup = new Array ();
           
     var greenIcon = new L.Icon({
-      //iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-green.png',
       iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-green.png',
       shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
       iconSize: [25, 41],
@@ -35,7 +34,6 @@ $('#hrefmap').click( function (e) {
     });
 
     var blueIcon = new L.Icon({
-      //iconUrl: '../node_modules/leaflet-color-number-markers/dist/img/marker-icon-blue.png',
       iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-blue.png',
 
       shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',

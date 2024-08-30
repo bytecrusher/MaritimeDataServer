@@ -148,14 +148,14 @@ class myFunctions {
   */
   public static function getAllSensorsOfBoard($id) {
     $pdo = dbConfig::getInstance();
-    $mySensors2 = $pdo->prepare("SELECT sensorConfig.*, sensorTypes.name as boardId FROM sensorConfig, sensorTypes WHERE (boardId = ?) and (typId = sensorTypes.id) ORDER BY sensorConfig.id; ");
+    $mySensors2 = $pdo->prepare("SELECT sensorConfig.*, sensorTypes.name as sensorTypesName FROM sensorConfig, sensorTypes WHERE (boardId = ?) and (typId = sensorTypes.id) ORDER BY sensorConfig.id; ");
     $mySensors2->execute(array($id));
     $sensorsOfBoard = $mySensors2->fetchAll(PDO::FETCH_ASSOC);
     return $sensorsOfBoard;
   }
 
   /*
-  * Get all sensors of a given board id.
+  * Get all sensors of a given board id Old.
   */
   public static function getAllSensorsOfBoardOld($id) {
     $pdo = dbConfig::getInstance();

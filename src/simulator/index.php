@@ -16,6 +16,7 @@
     require_once((__DIR__) . '/mdsSimulatorConfig.php');
     $mdsConfig = new mdsSimulatorConfig();
     $mdsDestServer = $mdsConfig::$mdsDestination;
+    $mdsDestServerdescription = $mdsConfig::$mdsDestinationdescription;
     ?>
 <div class="container-xl">
 <fieldset> 
@@ -31,12 +32,13 @@
     $subDir = getcwd();
     //echo(__DIR__);
     //echo("<br>");
-    echo($subDir);
-    echo("<br>");
+    //echo($subDir);
+    //echo("<br>");
     //$subDir = str_replace("/simulator","/src",$subDir);
     $subDir = str_replace("/simulator","",$subDir);
     $subDir = str_replace("/var/www/html","",$subDir);
-    echo($subDir);
+    $subDir = str_replace("/public_html","",$subDir);
+    //echo($subDir);
 
     $domain = $_SERVER['SERVER_ADDR'];
     if (isset($_SERVER['HTTPS']) &&
@@ -62,7 +64,7 @@
     <div class="input-group mb-3">
         <div class="input-group-text">
             <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo($server); ?>" id="check<?php echo($key); ?>">
-            <label class="ms-1" for="check<?php echo($key); ?>"><?php echo($server); ?></label>
+            <label class="ms-1" for="check<?php echo($key); ?>"> <?php echo($mdsDestServerdescription[$key]); ?>: (<?php echo($server); ?>)</label>
         </div>
     </div>
     <?php

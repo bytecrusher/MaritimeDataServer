@@ -385,7 +385,7 @@ class dbUpdateData {
       $myVar['id'] = $post['id'];
       $myVar['name'] = $post['nameValue' . $i];
       try {
-        writeToLogFunction::write_to_log("Channel nr: " . $i, $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::write_to_log("updateSensor Channel nr: " . $i, $_SERVER["SCRIPT_FILENAME"]);
         $statement2 = $pdo->prepare("UPDATE sensorChannelConfig  SET onDashboard=? ,name=? WHERE sensorConfigId=? AND channelNr=?");
         $statement2->execute(array($myVar['onDashboard'], $myVar['name'], $myVar['id'], $i));
       } catch (PDOException $e) {

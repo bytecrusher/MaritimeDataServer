@@ -32,7 +32,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/brands.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/solid.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/fontawesome.min.js"></script>
-<script src="../node_modules/chart.js/dist/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="./js/app.js"></script>
 <script src="./js/gauge.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
@@ -89,7 +89,7 @@
       $.ajax({
         method: "POST",
         url: "api/getdata.php",
-        data: { identifier: varIdent, securityToken: varToken, data: varData, sensorId: varSensorId,    NrOfValues: varNrOfValues }
+        data: { identifier: varIdent, securityToken: varToken, data: varData, sensorId: varSensorId, NrOfValues: varNrOfValues }
       })
       .done(function( response ) {
         text = response;
@@ -149,7 +149,7 @@
         <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" style="padding-right: 8px;padding-left: 8px;">Dashboard</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#temperatures" id='hreftemperatures' style="padding-right: 8px;padding-left: 8px;">Charts</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#charts" id='hrefcharts' style="padding-right: 8px;padding-left: 8px;">Charts</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#boards" id='hrefboards' style="padding-right: 8px;padding-left: 8px;">Boards</a>
@@ -257,10 +257,13 @@
                               var valueToPush = {};
                               valueToPush["sensorId"] = "<?php echo $singleRowMySensors['id']; ?>";
                               valueToPush["typId"] = "<?php echo $singleRowMySensors['typId']; ?>";
+                              valueToPush["typename"] = "<?php echo $singleRowMySensors['typename']; ?>";
                               valueToPush["NrOfSensors"] = "<?php echo $singleRowMySensors['NrOfUsedSensors']; ?>";
                               valueToPush["channelNr"] = "<?php echo($SensorChannelConfigSingle['channelNr']); ?>";
                               valueToPush["NameOfSensors"] = "<?php echo($singleRowMySensors['name']); ?>.<?php echo $SensorChannelConfigSingle['name']; ?>";
                               valueToPush["ChartColor"] = "<?php echo($SensorChannelConfigSingle['ChartColor']); ?>";
+                              valueToPush["BoardName"] = "<?php echo($singleRowmyboard->getName()); ?>";
+                              valueToPush["onDashboard"] = "<?php echo($SensorChannelConfigSingle['onDashboard']); ?>";
                               gaugesArrayHelperBig.push(valueToPush);
                               // TODO currently the DS2438 is not supported
                             </script>
@@ -296,10 +299,15 @@
 
       <!-- Show temperatures as chart -->
       <!-- TODO: for every board its own canvas. -->
-      <div class="container tab-pane fade pl-0 pr-0" id="temperatures">
+      <div class="container tab-pane fade pl-0 pr-0" id="charts">
         <fieldset>
           <div id="chart-container">
+            Temperaturen
             <canvas id="mycanvas"></canvas>
+            <br>
+            ADC / Spannungen
+            <canvas id="mycanvas2"></canvas>
+            <canvas id="mycanvas3"></canvas>
           </div>
         </fieldset>
       </div>

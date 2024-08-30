@@ -24,8 +24,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $ttn_post = file_get_contents('php://input');
     $data = json_decode($ttn_post, true);
 
+    //writeToLogFunction::write_to_log($data, $_SERVER["SCRIPT_FILENAME"]);
+
     $boardData = $data['board'];    // Array of board information from "POST"
     $sensors = $data['sensors'];    // Array of Sensors from "POST"
+    //writeToLogFunction::write_to_log($boardData, $_SERVER["SCRIPT_FILENAME"]);
     if (isset($boardData['apiKey'])) {
         $apiKey = ($boardData['apiKey']);
     } else {
@@ -41,6 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 //$boardObj = new board($macAddress);
                 foreach ($sensors as $key => &$sensor) {
                     $sensorId = null;
+                    $value1 = $value2 = $value3 = $value4 = "";
                     if ($sensor != null) {
                         $mySensorId = $owSensorAddress = null;
                         if (isset($sensor["sensorId"])) {
