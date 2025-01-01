@@ -8,7 +8,7 @@
 
 include_once("password.func.php");
 include_once("dbConfig.func.php");
-require_once(dirname(__FILE__).'/../../configuration.php');
+require_once(dirname(__FILE__).'/../../config/configuration.php');
 require_once("writeToLogFunction.func.php");
 include 'RandomColor.php';
 use \Colors\RandomColor;

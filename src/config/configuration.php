@@ -6,7 +6,7 @@
  * @author: Guntmar Höche
  * @license: TBD
  */
-require_once(dirname(__FILE__) . "/frontend/func/writeToLogFunction.func.php");
+require_once(dirname(__FILE__) . "./../frontend/func/writeToLogFunction.func.php");
 
 class configuration {
     static $config_exist = null;

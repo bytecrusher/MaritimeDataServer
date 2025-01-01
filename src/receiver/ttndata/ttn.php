@@ -30,7 +30,7 @@
   */
 
 // load configuration data
-require_once(dirname(__FILE__, 3) . '/configuration.php');
+require_once(dirname(__FILE__, 3) . '/config/configuration.php');
 require_once(dirname(__FILE__, 3) . "/frontend/func/myFunctions.func.php");
 require_once(dirname(__FILE__, 3) . "/frontend/func/dbConfig.func.php");
 require_once(dirname(__FILE__, 3) . "/frontend/func/writeToLogFunction.func.php");

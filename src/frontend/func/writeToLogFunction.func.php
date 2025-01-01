@@ -6,7 +6,7 @@
  * @license: TBD
  */
 
-require_once(dirname(__FILE__) . "/../../configuration.php");
+require_once(dirname(__FILE__) . "/../../config/configuration.php");
 
 class writeToLogFunction {
   public static function write_to_log($text, $source)

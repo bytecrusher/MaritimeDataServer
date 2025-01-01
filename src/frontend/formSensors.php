@@ -214,19 +214,19 @@
               <legend  class="float-none w-auto mySensorsFieldsetLegend">Gauge</legend>
               <div class='input-group mb-3'>
                 <span class='input-group-text' style='width: 50%'>MinValue</span>
-                <input type='text' class='col col-sm-4 form-control' id='GaugeMinValue' name='GaugeMinValue' value='<?php echo $mySingleSensorChannelConfig['GaugeMinValue'] ?>'>
+                <input type='number' class='col col-sm-4 form-control' id='GaugeMinValue' name='GaugeMinValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeMinValue'] ?>'>
               </div>
 
               <div class='input-group'>
                 <span class='input-group-text' style='width: 50%'>MaxValue</span>
-                <input type='text' class='col col-sm-4 form-control' id='GaugeMaxValue' name='GaugeMaxValue' value='<?php echo $mySingleSensorChannelConfig['GaugeMaxValue'] ?>'>
+                <input type='number' class='col col-sm-4 form-control' id='GaugeMaxValue' name='GaugeMaxValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeMaxValue'] ?>'>
               </div>
 
               <fieldset class="border p-2">
                 <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area Low</legend>
                 <div class='input-group mb-3'>
                   <span class='input-group-text' style='width: 50%'>Value</span>
-                  <input type='text' class='col col-sm-4 form-control' id='GaugeRedAreaLowValue' name='GaugeRedAreaLowValue' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaLowValue'] ?>'>
+                  <input type='number' class='col col-sm-4 form-control' id='GaugeRedAreaLowValue' name='GaugeRedAreaLowValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaLowValue'] ?>'>
                 </div>
 
                 <div class='input-group'>
@@ -239,7 +239,7 @@
                 <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area High</legend>
                 <div class='input-group mb-3'>
                   <span class='input-group-text' style='width: 50%'>Value</span>
-                  <input type='text' class='col col-sm-4 form-control' id='GaugeRedAreaHighValue' name='GaugeRedAreaHighValue' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaHighValue'] ?>'>
+                  <input type='number' class='col col-sm-4 form-control' id='GaugeRedAreaHighValue' name='GaugeRedAreaHighValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaHighValue'] ?>'>
                 </div>
 
                 <div class='input-group'>

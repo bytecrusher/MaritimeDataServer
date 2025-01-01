@@ -51,7 +51,7 @@
     $var_dbName = $var_dbUserName = $var_dbPassword = $var_apiKey = $var_md5secretString = null;
     $var_dbHostName = "localhost";
 
-    require_once(__DIR__ . '/../configuration.php');
+    require_once(__DIR__ . '/../config/configuration.php');
 
     $config = new configuration();
     //$var_dbHost = $config::$dbHost;

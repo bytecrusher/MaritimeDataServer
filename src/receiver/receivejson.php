@@ -7,7 +7,7 @@
  */
 
 require_once(dirname(__FILE__, 2) . "/frontend/func/dbConfig.func.php");
-require_once(dirname(__FILE__, 2) . '/configuration.php');
+require_once(dirname(__FILE__, 2) . '/config/configuration.php');
 require_once(dirname(__FILE__, 2) . "/frontend/func/writeToLogFunction.func.php");
 require_once(dirname(__FILE__, 2) . "/frontend/func/myFunctions.func.php");
 require_once(dirname(__FILE__, 2) . "/frontend/func/board.class.php");
