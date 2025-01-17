@@ -1,6 +1,6 @@
 <?php
 /*
-*   Collects all GPS from a specific board.
+*   Collects all Board names for the given user.
 */
 header('Content-Type: application/json');
 // Get data from DB for display in JS.
@@ -15,14 +15,13 @@ if( !isset($_POST['functionName']) ) { $aResult['error'] = 'No function name!'; 
             foreach ($myBoards as $myBoard) {
                 $myGpsData = myFunctions::getAllGpsData($myBoard['id']);
                 if ($myGpsData != 0) {
-                    $aResult[$myBoard['id']] = $myGpsData;
-                    //$aResult['name'] = $myBoard['name'];
+                    $aResult[$myBoard['id']] = $myBoard['name'];
                 }
             }
-            break;
+           break;
         default:
            $aResult['error'] = 'Not found function '.$_POST['functionName'].'!';
-           break;
+            break;
     }
 }
 echo json_encode($aResult);

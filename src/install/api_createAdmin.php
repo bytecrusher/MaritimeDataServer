@@ -1,37 +1,39 @@
 <?php
 require_once("../frontend/func/myFunctions.func.php");
 require_once("../frontend/func/dbUpdateData.php");
+require_once("../frontend/func/writeToLogFunction.func.php");
+
 
 $path = __DIR__ . '/../config.json';
 $jsonString = file_get_contents($path);
 $jsonData = json_decode($jsonString, true);
 
-$var_dbhostname = $jsonData['db_host'];
-$var_dbname = $jsonData['db_name'];
-$var_dbusername = $jsonData['db_user'];
-$var_dbpassword = $jsonData['db_password'];
+$var_dbHostName = $jsonData['dbHost'];
+$var_dbName = $jsonData['dbName'];
+$var_dbUserName = $jsonData['dbUser'];
+$var_dbPassword = $jsonData['dbPassword'];
 
 $pdo = $rtn = null;
 if (isset($_POST["action"])) {
   $error = false;
-  $var_firstname = trim($_POST["firstname"]);
-  $var_lastname = trim($_POST["lastname"]);
+  $var_firstName = trim($_POST["firstName"]);
+  $var_lastName = trim($_POST["lastName"]);
   $var_email = trim($_POST["email"]);
   $var_password = $_POST["password"];
   $var_password2 = $_POST["password2"];
-  $var_apikey = trim($_POST["apikey"]);
+  $var_apiKey = trim($_POST["apiKey"]);
   $var_demoMode = trim($_POST["demoMode"]);
-  $var_md5secretstring = trim($_POST["md5secretstring"]);
+  $var_md5secretString = trim($_POST["md5secretString"]);
   //$var_baseurl = trim($_POST["baseurl"]);
   
   if ($_POST["action"] == "createadmin") {
-    if(empty($var_firstname) || empty($var_lastname) || empty($var_email)) {
+    if(empty($var_firstName) || empty($var_lastName) || empty($var_email)) {
       $rtn = array("error"=>"true", "error_text"=>"Please enter all fields.");
       $error = true;
     }
   
     if(!filter_var($var_email, FILTER_VALIDATE_EMAIL)) {
-      $rtn = array("error"=>"true", "error_text"=>"Please enter a valid email adress.");
+      $rtn = array("error"=>"true", "error_text"=>"Please enter a valid email address.");
       $error = true;
     }
     if(strlen($var_password) == 0) {
@@ -44,22 +46,24 @@ if (isset($_POST["action"])) {
     }
 
     if(!$error) {
-      $testDbConnectionreturn = testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_dbpassword);
-      if($testDbConnectionreturn) {
+      $testDbConnectionReturn = testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword);
+      if($testDbConnectionReturn) {
         $rtn = array("error"=>"false", "success_text"=>$success_msg);
         //Check that the email address has not yet been registered
         $error = false;
         if(!$error) {
-          if(myFunctions::isUserRegistred($var_email)) {
+          if(myFunctions::isUserRegistered($var_email)) {
             $error = true;
             $rtn = array("error"=>"true", "error_text"=>"Email already exist in db.");
           } else {
             $password_hash = password_hash($var_password, PASSWORD_DEFAULT);
             try {
-              $result = dbUpdateData::insertAdmin($var_email, $password_hash, $var_firstname, $var_lastname);
+              $result = dbUpdateData::insertAdmin($var_email, $password_hash, $var_firstName, $var_lastName);
             } catch (Exception $e) {
               $error_msg = "Admin not inserted successfully.";
               $rtn = array("error"=>"true", "error_text"=>"An error occurs while saving.");
+              writeToLogFunction::write_to_log("Admin not inserted successfully.", $_SERVER["SCRIPT_FILENAME"]);
+              writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
             }
             if($result) {
               $rtn = array("error"=>"false", "success_text"=>"Registration successful. User created.");
@@ -70,14 +74,14 @@ if (isset($_POST["action"])) {
           }
         }
       } else {
-        $rtn = array("error"=>"true", "error_text"=>$testDbConnectionreturn);
+        $rtn = array("error"=>"true", "error_text"=>$testDbConnectionReturn);
       }
 
-      $jsonData['api_key'] = $var_apikey;
-      $jsonData['md5secretstring'] = $var_md5secretstring;
+      $jsonData['apiKey'] = $var_apiKey;
+      $jsonData['md5secretString'] = $var_md5secretString;
       //$jsonData['baseurl'] = $var_baseurl;
       $jsonData['demoMode'] = $var_demoMode;
-      $jsonData['install_finished'] = true;
+      $jsonData['installFinished'] = true;
       $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
       // Write in the file
       $fp = fopen($path, 'w');
@@ -89,12 +93,12 @@ if (isset($_POST["action"])) {
   print json_encode($rtn);
 }
 
-function testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_dbpassword) {
+function testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword) {
     global $success_msg, $error_msg, $pdo;
     try {
-      $pdo = new PDO("mysql:host=" . $var_dbhostname . ";dbname=" . $var_dbname, $var_dbusername, $var_dbpassword);
+      $pdo = new PDO("mysql:host=" . $var_dbHostName . ";dbname=" . $var_dbName, $var_dbUserName, $var_dbPassword);
       if ($pdo != null) {
-        $success_msg = "Successfull connected to Database.";
+        $success_msg = "Successful connected to Database.";
       }
     }
     catch(PDOException $e)
@@ -102,14 +106,14 @@ function testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_db
       if ($e->getCode() == 2002) {
         $error_msg = "Database not found. Correct Hostname?<br/>";
       } else if ($e->getCode() == 1044) {
-        $error_msg = "Wrond Database name.<br/>";
+        $error_msg = "Wrong Database name.<br/>";
       } else if ($e->getCode() == 1045) {
         $error_msg = "Access denied for user. Correct Username and Password?<br/>";
       }
+      writeToLogFunction::write_to_log("Admin not inserted successfully.", $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
       //return false;
       return $error_msg;
     }
     return true;
-} 
-
-?>
+}

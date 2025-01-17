@@ -272,7 +272,7 @@
 
       //function updateGauge(theValue, frame) {
       function updateGauge(theValue) {
-        //console.log("thevalue: " + theValue);
+        //console.log("the value: " + theValue);
         var theValue2 = 0;
         if (theValue.toString() === "NaN") {
           theValue2 = 0;
@@ -291,7 +291,7 @@
         gaugeValuePath.setAttribute("d", pathString(radius, startAngle, angle + startAngle, flag));
       }
 
-      function setGaugeColor(value, duration) {        
+      function setGaugeColor(value, duration) {
         var c = gaugeColor.call(opts, value), 
             dur = duration * 1000,
             pathTransition = "stroke " + dur + "ms ease";

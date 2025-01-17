@@ -260,7 +260,7 @@ namespace PasswordCompat\binary {
          *
          * We cannot simply use strlen() for this, because it might be overwritten by the mbstring extension.
          * In this case, strlen() will count the number of *characters* based on the internal encoding. A
-         * sequence of bytes might be regarded as a single multibyte character.
+         * sequence of bytes might be regarded as a single multi byte character.
          *
          * @param string $binary_string The input string
          *

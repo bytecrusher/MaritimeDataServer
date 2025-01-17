@@ -6,13 +6,24 @@
  * @license: TBD
  */
 
+require_once(dirname(__FILE__, 3) . "/src/frontend/func/writeToLogFunction.func.php");
+
 $url = $_POST['url'];
 $dev_eui = "devEuiSimulator";
 $application_id = "ttnSimulator";
 $gateway_id = "simulatorGateway";
 
+//date_default_timezone_set('UTC');
+date_default_timezone_set('Europe/Berlin');
+//TODO: load timezone from settings.
+
+//writeToLogFunction::write_to_log(date("d.m.Y H:i:s", time()), $_SERVER["SCRIPT_FILENAME"]);
+
+$mytimestamp = time();
 $datum = date("Y-m-d");
-$zeit = date("H:i:s.");
+//$zeit = date("H:i:s.");
+$zeit = date("H:i:s.", $mytimestamp);
+//writeToLogFunction::write_to_log($zeit, $_SERVER["SCRIPT_FILENAME"]);
 $timestamp = $datum . "-T" . $zeit;
 
 try {
@@ -21,6 +32,7 @@ try {
 
     // Check if initialization had gone wrong*    
     if ($cURL === false) {
+        writeToLogFunction::write_to_log('failed to initialize', $_SERVER["SCRIPT_FILENAME"]);
         throw new Exception('failed to initialize');
     }
     $payload = json_encode(array(
@@ -124,18 +136,22 @@ try {
 
     // Check the return value of curl_exec(), too
     if ($result === false) {
+        writeToLogFunction::write_to_log('curl error', $_SERVER["SCRIPT_FILENAME"]);
         throw new Exception(curl_error($cURL), curl_errno($cURL));
     }
 
     // Check HTTP return code, too; might be something else than 200
     $httpReturnCode = curl_getinfo($cURL, CURLINFO_HTTP_CODE);
     if (!$httpReturnCode) {
+        writeToLogFunction::write_to_log("Error: " . $httpReturnCode, $_SERVER["SCRIPT_FILENAME"]);
         echo("Error: " . $httpReturnCode);
     } else {
         echo("Data send");
     }
 
 } catch(Exception $e) {
+    writeToLogFunction::write_to_log('Curl failed with error: ' . 
+        $e->getCode() . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
     trigger_error(sprintf(
         'Curl failed with error #%d: %s',
         $e->getCode(), $e->getMessage()),
@@ -147,4 +163,3 @@ try {
         curl_close($cURL);
     }
 }
-?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * class for get a user with a given email or id (depreachted?)
+ * class for get a user with a given email or id (deprecated?)
  * 
  * @author: Guntmar Hoeche
  * @license: TBD
@@ -15,4 +15,3 @@ class dbGetData {
     return $statement->fetch();
   }
 }
-?>

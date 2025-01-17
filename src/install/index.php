@@ -42,27 +42,25 @@
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="../index.php"><i class="bi bi-speedometer logo"> </i> Mausel Industries</a>
-
       <div id="navbar" class="navbar-collapse collapse">
-
       </div>
     </div>
   </nav>
 
   <?php
-    $var_dbname = $var_dbusername = $var_dbpassword = $var_apikey = $var_md5secretstring = null;
-    $var_dbhostname = "localhost";
+    $var_dbName = $var_dbUserName = $var_dbPassword = $var_apiKey = $var_md5secretString = null;
+    $var_dbHostName = "localhost";
 
-    require_once(__DIR__ . '/../configuration.php');
+    require_once(__DIR__ . '/../config/configuration.php');
 
     $config = new configuration();
-    $vardb_host = $config::$db_host;
-    $var_dbhostname = $config::$db_host;
-    $var_dbname = $config::$db_name;
-    $var_dbusername = $config::$db_user;
-    $var_dbpassword = $config::$db_password;
-    $var_apikey = $config::$api_key;
-    $var_md5secretstring = $config::$md5secretstring;
+    //$var_dbHost = $config::$dbHost;
+    $var_dbHostName = $config::$dbHost;
+    $var_dbName = $config::$dbName;
+    $var_dbUserName = $config::$dbUser;
+    $var_dbPassword = $config::$dbPassword;
+    $var_apiKey = $config::$apiKey;
+    $var_md5secretString = $config::$md5secretString;
   ?>
 
   <div class="container mt-3">
@@ -100,7 +98,7 @@
         <div class="nav-link" data-bs-toggle="tab" href="#Database" disabled style="color:black" id="database">Database</div>
       </li>
       <li class="nav-item">
-        <div class="nav-link" data-bs-toggle="tab" href="#Config" disabled style="color:black" id="adminuser">Config</div>
+        <div class="nav-link" data-bs-toggle="tab" href="#Config" disabled style="color:black" id="adminUser">Config</div>
       </li>
       <li class="nav-item">
         <div class="nav-link" data-bs-toggle="tab" href="#Done" disabled style="color:black" id="done">Done</div>
@@ -126,27 +124,27 @@
           <div>
             <form class="navbar-form navbar-right" action="install_db.php" method="post">
               <div class="form-group row">
-                <label for="dbhostname" class="col-sm-4 col-form-label">Database Hostname</label>
+                <label for="dbHostName" class="col-sm-4 col-form-label">Database Hostname</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" id="dbhostname" name="dbhostname" value="<?php echo $var_dbhostname;?>"  required>
+                  <input type="text" class="form-control" id="dbHostName" name="dbHostName" value="<?php echo $var_dbHostName;?>"  required>
                 </div>
               </div>
               <div class="form-group row">
-                <label for="dbname" class="col-sm-4 col-form-label">Database Name</label>
+                <label for="dbName" class="col-sm-4 col-form-label">Database Name</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" id="dbname" name="dbname" value="<?php echo $var_dbname;?>" required>
+                  <input type="text" class="form-control" id="dbName" name="dbName" value="<?php echo $var_dbName;?>" required>
                 </div>
               </div>
               <div class="form-group row">
-                <label for="dbusername" class="col-sm-4 col-form-label">Database Username</label>
+                <label for="dbUserName" class="col-sm-4 col-form-label">Database Username</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" id="dbusername" name="dbusername" value="<?php echo $var_dbusername;?>" required>
+                  <input type="text" class="form-control" id="dbUserName" name="dbUserName" value="<?php echo $var_dbUserName;?>" required>
                 </div>
               </div>
               <div class="form-group row">
-                <label for="dbpassword" class="col-sm-4 col-form-label">Database Password</label>
+                <label for="dbPassword" class="col-sm-4 col-form-label">Database Password</label>
                 <div class="col-sm-4">
-                  <input type="password" class="form-control" id="dbpassword" name="dbpassword" required>
+                  <input type="password" class="form-control" id="dbPassword" name="dbPassword" required>
                 </div>
               </div>
               <div class="form-group row justify-content-evenly">
@@ -159,17 +157,20 @@
       </div>
 
       <div class="tab-pane container fade" id="Config">
+        <div class="mb-2 mt-2">
+          Enter Admin User information.<br>
+        </div>
         <div class="form-group row">
-          <label for="firstname" class="col-sm-4 col-form-label">Firstname</label>
+          <label for="firstName" class="col-sm-4 col-form-label">First name</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="firstname" name="firstname" required>
+            <input type="text" class="form-control" id="firstName" name="firstName" required>
           </div>
         </div>
         
         <div class="form-group row">
-          <label for="lastname" class="col-sm-4 col-form-label">Lastname</label>
+          <label for="lastName" class="col-sm-4 col-form-label">Last name</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="lastname" name="lastname" required>
+            <input type="text" class="form-control" id="lastName" name="lastName" required>
           </div>
         </div>
 
@@ -195,19 +196,19 @@
         </div>
 
         <div class="form-group row">
-          <label for="apikey" class="col-sm-4 col-form-label">API key</label>
+          <label for="apiKey" class="col-sm-4 col-form-label">API key</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="apikey" name="apikey" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_apikey;?>" required>
+            <input type="text" class="form-control" id="apiKey" name="apiKey" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_apiKey;?>" required>
           </div>
-          <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('apikey').value = makeid(32);">generate</button>
+          <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('apiKey').value = generatePassword(32);">generate</button>
         </div>
 
         <div class="form-group row">
-          <label for="md5secretstring" class="col-sm-4 col-form-label">Your Secret String (Replace with a string of your choice (>12 characters))</label>
+          <label for="md5secretString" class="col-sm-4 col-form-label">Your Secret String (Replace with a string of your choice (>12 characters))</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="md5secretstring" name="md5secretstring" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_md5secretstring;?>" required>
+            <input type="text" class="form-control" id="md5secretString" name="md5secretString" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_md5secretString;?>" required>
           </div>
-          <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('md5secretstring').value = makeid(32);">generate</button>
+          <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('md5secretString').value = generatePassword(32);">generate</button>
         </div>
 
         <div class="form-group row justify-content-evenly">
@@ -230,13 +231,13 @@
   $('.btnNext').click(function() {
   const currentTab = $('.nav-tabs .active').attr('id');
   if (currentTab === "database") {
-    returnval = write_db();
+    returnVal = write_db();
     const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
     const nextTab = new bootstrap.Tab(nextTabLinkEl);
     nextTab.show();    
-  } else if (currentTab === "adminuser") {
-    returnval = api_post_createadmin();
-    if (returnval) {
+  } else if (currentTab === "adminUser") {
+    returnVal = apiPostCreateAdmin();
+    if (returnVal) {
       const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
       const nextTab = new bootstrap.Tab(nextTabLinkEl);
       nextTab.show();
@@ -254,7 +255,7 @@ $('.btnPrevious').click(function() {
   prevTab.show();
 });
 
-const nameField = document.getElementById("dbname");
+const nameField = document.getElementById("dbName");
 
 nameField.addEventListener("input", () => {
   nameField.setCustomValidity("");
@@ -268,8 +269,8 @@ nameField.addEventListener("invalid", () => {
 
 function check_db() { 
   action = "testdb";
-  myreturn = api_post_db(action);
-  return myreturn;
+  myReturn = api_post_db(action);
+  return myReturn;
 }
 
 function write_db() { 
@@ -278,76 +279,75 @@ function write_db() {
 }
 
 function api_post_db(action) {
-  if ( ($("#dbhostname").val() != "") && ($("#dbname").val() != "") && ($("#dbusername").val() != "") && ($("#dbpassword").val() != "") ) {
-    console.log("dbname nicht leer");
-    dbhostname = $("#dbhostname").val();
-    dbname = $("#dbname").val();
-    dbusername = $("#dbusername").val();
-    dbpassword = $("#dbpassword").val();
+  if ( ($("#dbHostName").val() != "") && ($("#dbName").val() != "") && ($("#dbUserName").val() != "") && ($("#dbPassword").val() != "") ) {
+    console.log("dbName nicht leer");
+    dbHostName = $("#dbHostName").val();
+    dbName = $("#dbName").val();
+    dbUserName = $("#dbUserName").val();
+    dbPassword = $("#dbPassword").val();
     let text;
     var obj;
-    myreturnval = null;
+    myReturnVal = null;
 
     $.ajax({
       method: "POST",
       async: false,
-      url: "api_check_db_connection.php",
-      data: { action: action, dbhostname: dbhostname, dbname: dbname, dbusername: dbusername, dbpassword: dbpassword }
+      url: "api_checkDbConnection.php",
+      data: { action: action, dbHostName: dbHostName, dbName: dbName, dbUserName: dbUserName, dbPassword: dbPassword }
     })
     .done(function( response ) {
       text = response;
       obj = JSON.parse(text);
       if(obj["error"] === "true"){
         createAlert('Something went wrong',obj["error_text"],'danger',true,true,'pageMessages');
-        myreturnval = false;
+        myReturnVal = false;
       } else if (obj["error"] === "false"){
         createAlert('Nice Work!',obj["success_text"],'success',true,true,'pageMessages');
-        myreturnval = true;
+        myReturnVal = true;
       }
     });
   } else {
     createAlert('At least one input missing.','Please fill out all necessary fields.','danger',true,true,'pageMessages');
-    myreturnval = false;
+    myReturnVal = false;
   }
-  return myreturnval;
+  return myReturnVal;
 }
 
-function api_post_createadmin() {
+function apiPostCreateAdmin() {
   action = "createadmin";
-  myreturnval = null;
-  if ( ($("#firstname").val() != "") && ($("#lastname").val() != "") && ($("#email").val() != "") && ($("#password").val() != "") && ($("#password2").val() != "") && ($("#md5secretstring").val() != "") ) {
-    firstname = $("#firstname").val();
-    lastname = $("#lastname").val();
+  myReturnVal = null;
+  if ( ($("#firstName").val() != "") && ($("#lastName").val() != "") && ($("#email").val() != "") && ($("#password").val() != "") && ($("#password2").val() != "") && ($("#md5secretString").val() != "") ) {
+    firstName = $("#firstName").val();
+    lastName = $("#lastName").val();
     email = $("#email").val();
     password = $("#password").val();
     password2 = $("#password2").val();
-    apikey = $("#apikey").val();
-    md5secretstring = $("#md5secretstring").val();
-    // TODO add user to DB
+    apiKey = $("#apiKey").val();
+    md5secretString = $("#md5secretString").val();
     $.ajax({
       method: "POST",
       async: false,
-      url: "api_createadmin.php",
-      data: { action: action, firstname: firstname, lastname: lastname, email: email, password: password, password2: password2, apikey: apikey, md5secretstring: md5secretstring, demoMode: false }
+      url: "api_createAdmin.php",
+      data: { action: action, firstName: firstName, lastName: lastName, email: email, password: password, password2: password2, apiKey: apiKey, md5secretString: md5secretString, demoMode: false }
     })
     .done(function( response ) {
       text = response;
       obj = JSON.parse(text);
       if(obj["error"] === "true"){
         createAlert('Something went wrong',obj["error_text"],'danger',true,true,'pageMessages');
-        myreturnval = false;
+        myReturnVal = false;
       } else if (obj["error"] === "false"){
         createAlert('Nice Work!',obj["success_text"],'success',true,true,'pageMessages');
-        myreturnval = true;
+        myReturnVal = true;
       } else {
         createAlert('Great.','Great.','success',true,true,'pageMessages');
       }
     });
   } else {
     createAlert('At least one input missing.','Please fill out all necessary fields.','danger',true,true,'pageMessages');
-    myreturnval = false;
+    myReturnVal = false;
   }
-  return myreturnval;
+  return myReturnVal;
 }
 
 function createAlert(summary, details, severity, dismissible, autoDismiss, appendToId) {
@@ -357,9 +357,7 @@ function createAlert(summary, details, severity, dismissible, autoDismiss, appen
     warning: "bi bi-exclamation-triangle me-2",
     danger: "bi bi-exclamation-circle me-2"
   };
-
   var iconAdded = false;
-
   var alertClasses = ["alert", "animated", "flipInX"];
   alertClasses.push("alert-" + severity.toLowerCase());
 
@@ -418,20 +416,18 @@ function createAlert(summary, details, severity, dismissible, autoDismiss, appen
   }
 }
 
-function makeid(length) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      counter += 1;
-    }
-    return result;
+function generatePassword(length) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
 }
 </script>
-
 <?php include(__DIR__ . "/../frontend/common/footer.inc.php"); ?>
-
 </body>
 </html>

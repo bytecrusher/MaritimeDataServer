@@ -3,14 +3,11 @@
 <head>
 <meta charset=utf-8>
 <title>MSD Simulator</title>
-<!--link rel="stylesheet" href="./../node_modules/bootstrap/dist/css/bootstrap.min.css"-->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 
 <link rel="stylesheet" href="./../frontend/css/style.css">
 
-<!--script src="./../src/node_modules/jquery/dist/jquery.js"></script-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
-<!--script src="./../node_modules/bootstrap/dist/js/bootstrap.min.js"></script-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
 </head>
@@ -19,15 +16,29 @@
     require_once((__DIR__) . '/mdsSimulatorConfig.php');
     $mdsConfig = new mdsSimulatorConfig();
     $mdsDestServer = $mdsConfig::$mdsDestination;
+    $mdsDestServerdescription = $mdsConfig::$mdsDestinationdescription;
     ?>
 <div class="container-xl">
 <fieldset> 
 <legend><h2>MDS - TTN Simulator</h2></legend>
 <fieldset >
-	<legend class="float-none mysensorsfieldsetlegend">Destination server</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Destination server</legend>
     <?php
-    $subdir = str_replace($_SERVER['PWD'],"",__DIR__);
-    $subdir = str_replace("/simulator","/src",$subdir);
+    //$subDir = str_replace($_SERVER['PWD'],"",__DIR__);
+    //echo($subDir);
+    //echo(getcwd());
+    //echo("<br>");
+    //$subDir = str_replace(getcwd(),"",__DIR__);
+    $subDir = getcwd();
+    //echo(__DIR__);
+    //echo("<br>");
+    //echo($subDir);
+    //echo("<br>");
+    //$subDir = str_replace("/simulator","/src",$subDir);
+    $subDir = str_replace("/simulator","",$subDir);
+    $subDir = str_replace("/var/www/html","",$subDir);
+    $subDir = str_replace("/public_html","",$subDir);
+    //echo($subDir);
 
     $domain = $_SERVER['SERVER_ADDR'];
     if (isset($_SERVER['HTTPS']) &&
@@ -39,7 +50,7 @@
     else {
         $prefix = 'http://';
     }
-    $baseurl = $prefix . $domain . $subdir . "/receiver/ttndata/ttn.php";
+    $baseurl = $prefix . $domain . $subDir . "/receiver/ttndata/ttn.php";
     ?>
     <div class="input-group mb-3">
         <div class="input-group-text">
@@ -53,17 +64,17 @@
     <div class="input-group mb-3">
         <div class="input-group-text">
             <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo($server); ?>" id="check<?php echo($key); ?>">
-            <label class="ms-1" for="check<?php echo($key); ?>"><?php echo($server); ?></label>
+            <label class="ms-1" for="check<?php echo($key); ?>"> <?php echo($mdsDestServerdescription[$key]); ?>: (<?php echo($server); ?>)</label>
         </div>
     </div>
     <?php
     }
     ?>
-    </div>
+    <!--/div-->
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">Temp Battery Data Settings</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Temp Battery Data Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text">
             <input class="form-check-input mt-0" type="radio" name="checkTempBatData" value="tempBat_random" id="checkTempBatData1" onclick="$('#inputTempBat').prop('disabled', true);" checked>
@@ -78,7 +89,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">BME250 Data Settings</legend>
+	<legend class="float-none mySensorsFieldsetLegend">BME250 Data Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text col-2">
             Pressure
@@ -141,7 +152,7 @@
 </fieldset>
 
 <fieldset>
-    <legend class="float-none mysensorsfieldsetlegend">ADC Settings</legend>
+    <legend class="float-none mySensorsFieldsetLegend">ADC Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text col-2">
             Channel 1
@@ -204,7 +215,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">Send ttn data to server</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Send ttn data to server</legend>
     <button class="btn btn-primary" onclick="sendttn()">Single package</button>
     <div style="float:inline-end">
     <button class="btn btn-primary" onclick="sendttninterval()" id="btnsendttninterval">Start interval</button>
@@ -215,11 +226,12 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mysensorsfieldsetlegend">Log</legend>
+	<legend class="float-none mySensorsFieldsetLegend">Log</legend>
     <div id="txtLog">
     </div>
 </fieldset>
 </div>
+
 
 <script>
     ttncounter = 0;

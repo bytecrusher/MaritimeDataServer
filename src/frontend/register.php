@@ -1,10 +1,10 @@
 <?php
-
 require_once(__DIR__ . "/func/myFunctions.func.php");
 require_once("func/dbUpdateData.php");
+//require_once(__DIR__ . "/../../configuration.php");
 
 $config = new configuration();
-$varadmin_email_adress = $config::$admin_email_adress;
+$var_AdminEmailAddress = $config::$adminEmailAddress;
 
 if (count($_POST) > 0) {
     /* Form Required Field Validation */
@@ -38,20 +38,20 @@ if (count($_POST) > 0) {
     }
 
     if (! isset($message)) {
-        $dbdata = myFunctions::isUserRegistred($_POST["userEmail"]);
+        $dbData = myFunctions::isUserRegistered($_POST["userEmail"]);
 
-        if (!$dbdata) {
-            $hashedpassword = password_hash(($_POST["password"]), PASSWORD_DEFAULT);
+        if (!$dbData) {
+            $hashedPassword = password_hash(($_POST["password"]), PASSWORD_DEFAULT);
 
-            $current_id = dbUpdateData::insertUser($_POST["userEmail"], $hashedpassword, $_POST["firstName"], $_POST["lastName"]);
+            $current_id = dbUpdateData::insertUser($_POST["userEmail"], $hashedPassword, $_POST["firstName"], $_POST["lastName"]);
 
             if (! empty($current_id)) {
                 $actual_link = "http://$_SERVER[HTTP_HOST]" . "/frontend/activate.php?id=" . $current_id;
                 $toEmail = $_POST["userEmail"];
                 $subject = "User Registration Activation Email";
                 $content = "Hi " . $_POST["firstName"] . " click this link to activate your account. <a href='" . $actual_link . "'>" . $actual_link . "</a><br>Your MDS Team.";
-                $mailHeaders = "From: MDS User Registration <" . $varadmin_email_adress . ">\r\n";
-                $mailHeaders .= "Reply-To: " . $varadmin_email_adress . "\r\n";
+                $mailHeaders = "From: MDS User Registration <" . $var_AdminEmailAddress . ">\r\n";
+                $mailHeaders .= "Reply-To: " . $var_AdminEmailAddress . "\r\n";
                 $mailHeaders .= "Content-Type: text/html\r\n";                
 
                 if (mail($toEmail, $subject, $content, $mailHeaders)) {
@@ -73,7 +73,7 @@ if (count($_POST) > 0) {
 <head>
 <?php
 	session_start();
-	require_once(__DIR__ . "/func/myFunctions.func.php");
+	//require_once(__DIR__ . "/func/myFunctions.func.php");
 	require_once(__DIR__ . "/func/user.class.php");
 	include(__DIR__ . "/common/header.inc.php");
 ?>
@@ -91,15 +91,11 @@ if (count($_POST) > 0) {
 </head>
 <body>
     <?php
-        $userobj = new user("test@test.de");
-        $myerror = $userobj->getError();
-        if ($myerror == "42S02") {
-            $error_msg =  "<div class='alert alert-danger' role='alert'>Tables does not exist. Please run install. 
-            <a href='./../install/index.php'>Install</a></div>";
-        } 
-        if(isset($error_msg) && !empty($error_msg)) {
-            echo $error_msg;
-        }
+    $path = $actual_link = "https://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]/";
+    $path = str_replace( "/frontend/register.php", "", $path );
+    if(isset($error_msg) && !empty($error_msg)) {
+        echo $error_msg;
+    }
     ?>
     <div class="container main-container registration-form">
     <?php if(isset($message)) { 
@@ -112,11 +108,11 @@ if (count($_POST) > 0) {
         <form name="frmRegistration" method="post" action="">
             <h2>User Activation Email</h2>
             <div class="form-group">
-                <label for="firstName">Firstname:</label>
+                <label for="firstName">First name:</label>
                 <input type="text" id="firstName" size="40" maxlength="250" name="firstName" class="form-control" required value="<?php if(isset($_POST['firstName'])) echo $_POST['firstName']; ?>">
             </div>
             <div class="form-group">
-                <label for="lastName">Lastname:</label>
+                <label for="lastName">Last name:</label>
                 <input type="text" id="lastName" size="40" maxlength="250" name="lastName" class="form-control" required value="<?php if(isset($_POST['lastName'])) echo $_POST['lastName']; ?>">
             </div>
             <div class="form-group">

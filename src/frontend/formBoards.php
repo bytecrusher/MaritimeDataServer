@@ -6,25 +6,25 @@
   require_once("func/board.class.php");
   include("common/header.inc.php");
 
-  if (isset($_SESSION['userobj'])) {
-    $currentUser = unserialize($_SESSION['userobj']);
+  if (isset($_SESSION['userObj'])) {
+    $currentUser = unserialize($_SESSION['userObj']);
   } else {
     $currentUser = false;
-    header("Location: ./index.php");    // if user not loged in
+    header("Location: ./index.php");    // if user not logged in
     die();
   }
 
   $pdo = dbConfig::getInstance();
   $varId = $_GET['id'];
   $singleRowBoardId = myFunctions::getBoardById($varId);
-  $boardobj = new board($_GET['id']);
+  $boardObj = new board($_GET['id']);
 ?>
 
 <div class="jumbotron">
   <div class="container">
     <div class="row">
       <div class="col">
-        <h1>Edit board "<?php echo $boardobj->getName() ?>"</h1>
+        <h1>Edit board "<?php echo $boardObj->getName() ?>"</h1>
       </div>
       <div class="col"> <!-- Depending on the board type, select the appropriate image -->
           <img src="img/img_ESP32.png" class="rounded float-right" alt="img/img_ESP32.png" width="100" height="100">
@@ -45,53 +45,53 @@
 
       <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">id</span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id="id" name='id' value='<?=$boardobj->getId();?>'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id="id" name='id' value='<?=$boardObj->getId();?>'>
         </div>
 
         <div class="input-group mb-3">
-        <span class="input-group-text" style="width: 30%">Macaddress</span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id='macaddress' name='macaddress' value='<?=$boardobj->getMacaddress();?>'>
+        <span class="input-group-text" style="width: 30%">Mac address</span>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id='macAddress' name='macAddress' value='<?=$boardObj->getMacAddress();?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Board Type</span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardtype' name='boardtype' value='<?=$boardobj->getBoardtypeName();?>'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardType' name='boardType' value='<?=$boardObj->getBoardTypeName();?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Name</span>
-          <input type="text"  class="form-control" id='name' name='name' value='<?=$boardobj->getName();?>'>
+          <input type="text"  class="form-control" id='name' name='name' value='<?=$boardObj->getName();?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Location</span>
-          <input type="text" class="form-control" id='location' name='location' value='<?=$boardobj->getLocation();?>'>
+          <input type="text" class="form-control" id='location' name='location' value='<?=$boardObj->getLocation();?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Description</span>
-          <input type="text" class="form-control" id='description' name='description' value='<?=$boardobj->getDescription();?>'>
+          <input type="text" class="form-control" id='description' name='description' value='<?=$boardObj->getDescription();?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN app id</span>
-          <input type="text" class="form-control" id='ttn_app_id' name='ttn_app_id' value='<?=$boardobj->getTtnAppId();?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
+          <input type="text" class="form-control" id='ttnAppId' name='ttnAppId' value='<?=$boardObj->getTtnAppId();?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">TTN dev id</span>
-          <input type="text" class="form-control" id='ttn_dev_id' name='ttn_dev_id' value='<?=$boardobj->getTtnDevId();?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
+          <input type="text" class="form-control" id='ttnDevId' name='ttnDevId' value='<?=$boardObj->getTtnDevId();?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <!--div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Perform Firmware update</span>
           <div class="form-control">
           <?php
-            //if(isset($boardobj->getPerformUpdate()) && $row['performupdate'] == '1') {
-              if($boardobj->getPerformUpdate() == '1') {
-              echo"<input class='form-check-input' type='checkbox' id='performupdate' name='performupdate' value=" . $boardobj->getPerformUpdate() . " checked=" . $boardobj->getPerformUpdate() . ">";
+            //if(isset($boardObj->getPerformUpdate()) && $row['performUpdate'] == '1') {
+              if($boardObj->getPerformUpdate() == '1') {
+              echo"<input class='form-check-input' type='checkbox' id='performUpdate' name='performUpdate' value=" . $boardObj->getPerformUpdate() . " checked=" . $boardObj->getPerformUpdate() . ">";
             } else {
-              echo"<input class='form-check-input' type='checkbox' id='performupdate' name='performupdate' value='1'>";
+              echo"<input class='form-check-input' type='checkbox' id='performUpdate' name='performUpdate' value='1'>";
             }
           ?>
           </div>
@@ -99,7 +99,7 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">Firmware version</span>
-          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$boardobj->getFirmwareversion();?>' style="background:#e9ecef" readonly>
+          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$boardObj->getFirmwareVersion();?>' style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
@@ -108,8 +108,8 @@
           <label style="width: 70%;">
             <div class="form-control">
               <?php
-                if($boardobj->getAlarmOnUnavailable() == '1') {
-                  echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value=" . $boardobj->getAlarmOnUnavailable() . " checked=" . $boardobj->getAlarmOnUnavailable() . ">";
+                if($boardObj->getAlarmOnUnavailable() == '1') {
+                  echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value=" . $boardObj->getAlarmOnUnavailable() . " checked=" . $boardObj->getAlarmOnUnavailable() . ">";
                 } else {
                   echo "<input class='form-check-input' type='checkbox' id='alarmOnUnavailable' name='alarmOnUnavailable' value='1'>";
                 }
@@ -123,8 +123,8 @@
           <label style="width: 70%;">
             <div class="form-control">
             <?php
-              if($boardobj->isOnDashboard() == '1') {
-                echo "<input class='form-check-input' type='checkbox' id='onDashboard' name='onDashboard' value=" . $boardobj->isOnDashboard() . " checked=" . $boardobj->isOnDashboard() . ">";
+              if($boardObj->isOnDashboard() == '1') {
+                echo "<input class='form-check-input' type='checkbox' id='onDashboard' name='onDashboard' value=" . $boardObj->isOnDashboard() . " checked=" . $boardObj->isOnDashboard() . ">";
               } else {
                 echo "<input class='form-check-input' type='checkbox' id='onDashboard' name='onDashboard' value='1'>";
               }
@@ -135,12 +135,12 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">Update interval (Minutes)</span>
-          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$boardobj->getUpdateDataTimer();?>' style="background:#e9ecef" readonly>
+          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$boardObj->getUpdateDataTimer();?>' style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">Mark as offline after (Minutes)</span>
-          <input type="text" class="form-control" id='offlineDataTimer' name='offlineDataTimer' value='<?=$boardobj->getOfflineDataTimer();?>' title="After this timer, the board displays as offline.">
+          <input type="text" class="form-control" id='offlineDataTimer' name='offlineDataTimer' value='<?=$boardObj->getOfflineDataTimer();?>' title="After this timer, the board displays as offline.">
         </div>
 
         <?php
@@ -149,15 +149,15 @@
 				?>
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">owner User</span>
-          <select class='col col-sm-4 form-select' aria-label='Default select example' name='ownerid'>
+          <select class='col col-sm-4 form-select' aria-label='Default select example' name='ownerId'>
 							<?php
-              if ($boardobj->getOwnerUserid() == null) {
+              if ($boardObj->getOwnerUserId() == null) {
                 echo "<option selected value=''></option>";
               } else {
                 echo "<option value=''></option>";
               }
 							foreach ($AllUsers as $singleRowUser) {
-								if ($boardobj->getOwnerUserid() == $singleRowUser['id']) {
+								if ($boardObj->getOwnerUserId() == $singleRowUser['id']) {
 									echo "<option selected value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
 								} else {
 									echo "<option value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
@@ -171,12 +171,12 @@
 
         <div class='row'>
           <div class="col-sm-offset-2 col-sm-8">
-            <input type='submit' class="btn btn-danger" id='submit_inputmask_boards_remove' name='submit_inputmask_boards_remove' value='Remove Board' onclick="clicked(event)">
+            <input type='submit' class="btn btn-danger" id='submit_formBoards_remove' name='submit_formBoards_remove' value='Remove Board' onclick="clicked(event)">
           </div>
           <div class="col-sm-offset-2 col-sm-4">
           <div class="float-end">
             <a class='mr-2 btn btn-primary' href='settings.php#confBoards' role='button'>Back</a>
-            <input type='submit' class="btn btn-primary" id='submit_inputmask_boards' name='submit_inputmask_boards' value='Save'>
+            <input type='submit' class="btn btn-primary" id='submit_formBoards' name='submit_formBoards' value='Save'>
           </div>
           </div>
         </div>
@@ -195,26 +195,26 @@
       // collect all Sensor IDs that belong to the Board.
         $count = 1;
         $Sensorname = null;
-        $mysensors = myFunctions::getAllSensorsOfBoardold($varId);
-        foreach($mysensors as $singleRowMysensor) {
-          $Sensorname = myFunctions::getSensorType($singleRowMysensor['typid']);
+        $mySensors = myFunctions::getAllSensorsOfBoardOld($varId);
+        foreach($mySensors as $singleRowMySensor) {
+          $Sensorname = myFunctions::getSensorType($singleRowMySensor['typId']);
           echo "<tr>";
           echo "<td>".$count++."</td>";
-          echo "<td>". $singleRowMysensor['id'] . "</td>";
+          echo "<td>". $singleRowMySensor['id'] . "</td>";
           echo "<td>". $Sensorname['name'] . ", " . $Sensorname['description'] . "</td>";
-          echo "<td>". $singleRowMysensor['sensorAddress'] . "</td>";
-          echo "<td>".$singleRowMysensor['name']."</td>";
-          echo "<td>".$singleRowMysensor['description']."</td>";
-          echo "<td>".$singleRowMysensor['locationOfMeasurement']."</td>";
-          if(isset($singleRowMysensor['onDashboard']) && $singleRowMysensor['onDashboard'] == '1')
+          echo "<td>". $singleRowMySensor['sensorAddress'] . "</td>";
+          echo "<td>".$singleRowMySensor['name']."</td>";
+          echo "<td>".$singleRowMySensor['description']."</td>";
+          echo "<td>".$singleRowMySensor['locationOfMeasurement']."</td>";
+          if(isset($singleRowMySensor['onDashboard']) && $singleRowMySensor['onDashboard'] == '1')
           {
-            echo "<td><input type='checkbox' id='onDashboard' name='onDashboard' value=" . $singleRowMysensor['onDashboard'] . " checked=" . $singleRowMysensor['onDashboard'] . " disabled></td>";
+            echo "<td><input type='checkbox' id='onDashboard' name='onDashboard' value=" . $singleRowMySensor['onDashboard'] . " checked=" . $singleRowMySensor['onDashboard'] . " disabled></td>";
           }
           else
           {
             echo "<td><input type='checkbox' id='onDashboard' name='onDashboard' value='1' disabled></td>";
           }
-          echo "<td><a href=\"inputmask_sensors.php?id=" . $singleRowMysensor['id'] . "&boardid=" . $_GET['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
+          echo "<td><a href=\"formSensors.php?id=" . $singleRowMySensor['id'] . "&boardId=" . $_GET['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
           echo "</tr>";
         }
       ?>
@@ -225,7 +225,7 @@
 <script>
   function clicked(e)
   {
-    if(!confirm('Are you sure to remove your board?')) {
+    if(!confirm('Are you sure to remove your board with ID:' + <?=$boardObj->getId();?> + '?')) {
       e.preventDefault();
     }
   }

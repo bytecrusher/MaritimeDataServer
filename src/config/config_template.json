@@ -1,0 +1,13 @@
+{
+    "dbHost": "dbhost",
+    "dbName": "dbname",
+    "dbUser": "dbuser",
+    "dbPassword": "dbpassword",
+    "apiKey": "my_api_key",
+    "demoMode": "false",
+    "md5secretString": "your_secret_string",
+    "installFinished": "false",
+    "adminEmailAddress": "info@yourdomain.de",
+    "ShowQrCode": "0",
+    "sendEmails": "0"
+}

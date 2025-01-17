@@ -15,17 +15,17 @@ require_once("func/writeToLogFunction.func.php");
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;
 $varShowQrCode = $config::$ShowQrCode;
-$varSend_emails = $config::$send_emails;
+$var_apiKey = $config::$apiKey;
+$varSend_emails = $config::$sendEmails;
 
 
 //Check that the user is logged in
-if (isset($_SESSION['userobj'])) {
-	$userobj = unserialize($_SESSION['userobj']);
+if (isset($_SESSION['userObj'])) {
+	$userObj = unserialize($_SESSION['userObj']);
 } else {
-	$userobj = false;
+	$userObj = false;
 	header("Location: ./index.php");
 }
-include("common/header.inc.php");
 
 function fixObject (&$object)
 {
@@ -38,23 +38,29 @@ if(isset($_GET['save'])) {
 	$save = $_GET['save'];
 	if($save == 'personal_data') {
 		try {
-			$userobj->setName($_POST);
+			$userObj->setName($_POST);
 		} catch (Exception $e) {
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log("setName not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 		try {
-			$userobj->setUserTimeZone($_POST);
+			$userObj->setUserTimeZone($_POST);
 		} catch (Exception $e) {
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log("setUserTimeZone not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 		try {
-			$userobj->setReceiveNotifications($_POST);
+			$userObj->setReceiveNotifications($_POST);
 		} catch (Exception $e) {
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log("setReceiveNotifications not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
-		$_SESSION['userobj'] = serialize($userobj);
+		$_SESSION['userObj'] = serialize($userObj);
 		if (!isset($error_msg)) {
-			$success_msg = "User Data sucessfully saved.";
+			$success_msg = "User Data successfully saved.";
 		}
 	} else if($save == 'email') {
 		$password = $_POST['password'];
@@ -62,19 +68,21 @@ if(isset($_GET['save'])) {
 		$email2 = trim($_POST['email2']);
 
 		if($email != $email2) {
-			$error_msg = "The entered email adresses are not the same.";
+			$error_msg = "The entered email addresses are not the same.";
 		} else if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-			$error_msg = "The entered email adress are not valid.";
-		} else if(!password_verify($password, $userobj->getPassword())) {
+			$error_msg = "The entered email address are not valid.";
+		} else if(!password_verify($password, $userObj->getPassword())) {
 			$error_msg = "Wrong password.";
 		} else {
 			try {
-				$userobj->setEmail($_POST);
+				$userObj->setEmail($_POST);
 			} catch (Exception $e) {
 				//$error_msg = $e->getMessage();
-				$error_msg = "Email address not successully saved.";
+				$error_msg = "Email address not successfully saved.";
+				writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+				writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 			}
-			$_SESSION['userobj'] = serialize($userobj);
+			$_SESSION['userObj'] = serialize($userObj);
 			if (!isset($error_msg)) {
 				$success_msg = "E-Mail address successfully saved.";
 			}
@@ -88,27 +96,31 @@ if(isset($_GET['save'])) {
 			$error_msg = "The entered passwords are not the same.";
 		} else if($passwordNew == "") {
 			$error_msg = "Empty password is not allowed.";
-		} else if(!password_verify($passwordAlt, $userobj->getPassword())) {
+		} else if(!password_verify($passwordAlt, $userObj->getPassword())) {
 			$error_msg = "Please enter correct password.";
 		} else {
 			$password_hash = password_hash($passwordNew, PASSWORD_DEFAULT);
 			try {
-				$userobj->setUserPassword($password_hash);
+				$userObj->setUserPassword($password_hash);
 			} catch (Exception $e) {
 				$error_msg = "Password reset not successfully.";
+				writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+				writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 			}
-			$_SESSION['userobj'] = serialize($userobj);
+			$_SESSION['userObj'] = serialize($userObj);
 			if (!isset($error_msg)) {
 				$success_msg = "Password successfully saved.";
 			}
 		}
 	} else if($save == 'dashboard_data') {
 		try {
-			$updateUserReturn = $userobj->setDashboardUpdateInterval($_POST);
+			$updateUserReturn = $userObj->setDashboardUpdateInterval($_POST);
 		} catch (Exception $e) {
 			$error_msg = "Dashboard Update Interval not saved.";
+			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
-		$_SESSION['userobj'] = serialize($userobj);
+		$_SESSION['userObj'] = serialize($userObj);
 		if (!isset($error_msg)) {
 			$success_msg = "Dashboard Update Interval successfully saved.";
 		}
@@ -120,51 +132,62 @@ if(isset($_GET['save'])) {
 			$success_msg = "User Status updated.";
 		} catch (Exception $e) {
 			$error_msg = "Error on update User Status.";
+			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
-	} else if($save == 'addNewUserToBorad') {
+	} else if($save == 'addNewUserToBoard') {
 		try {
-			$addNewBoardToUserReturn = dbUpdateData::addNewBoardToUser($_POST, $userobj->getId());
+			$addNewBoardToUserReturn = dbUpdateData::addNewBoardToUser($_POST, $userObj->getId());
 			if ($addNewBoardToUserReturn) {
 				$success_msg = "Board added successfully.<br>Wait for the next Lora update.";
 			} else {
+				writeToLogFunction::write_to_log("Board not added.", $_SERVER["SCRIPT_FILENAME"]);
+				//writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 				$error_msg = "Board not added.";
 			}
 		} catch (Exception $e) {
-			//$error_msg = "Error on add new board.";
 			$error_msg = $e->getMessage();
+			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 		}
 	}
 	else if($save == 'serverSetting') {
 		try {
 			$config->saveServerSettings($_POST);
 			$varDemoMode = $config::$demoMode;
-			//$apikey
-			$success_msg = "DemoMode saved.";
+			$varShowQrCode = $config::$ShowQrCode;
+			$var_apiKey = $config::$apiKey;
+			$varSend_emails = $config::$sendEmails;
+			$success_msg = "Server settings saved.";
+			//header("Refresh:0; url=settings.php");
 		} catch (Exception $e) {
-			//$error_msg = "Error on add new board.";
+			writeToLogFunction::write_to_log("Server settings not saved.", $_SERVER["SCRIPT_FILENAME"]);
+			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
 			$error_msg = $e->getMessage();
 		}
 	}
 }
 
 // write passed data back to the database
- if (isset($_POST['submit_inputmask_boards']))	// Submit-Button of the input mask was pressed
- {
+if (isset($_POST['submit_formBoards']))	// Submit-Button of the input mask was pressed
+{
 	try {
 		$updateBoardReturn = dbUpdateData::updateBoard($_POST);
 		$success_msg = "Board successfully updated.";
 	} catch (Exception $e) {
 		$error_msg = "Error while saving board changes.";
 	}
- } elseif (isset($_POST['submit_inputmask_boards_remove']))	// remove-Button of the input mask was pressed
- {
+} elseif (isset($_POST['submit_formBoards_remove']))	// remove-Button of the input mask was pressed
+{
 	try {
 		$updateBoardReturn = dbUpdateData::removeBoardOwner($_POST);
 		$success_msg = "Board successfully removed.";
 	} catch (Exception $e) {
 		$error_msg = "Error while removing board.";
 	}
- }
+}
+
+include("common/header.inc.php");
 ?>
 
 <style>
@@ -186,10 +209,8 @@ th.rotated-text > div > span {
 }
 </style>
 
-<!--link href="../node_modules/bootstrap5-toggle/css/bootstrap5-toggle.min.css" rel="stylesheet"-->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css" rel="stylesheet">
 
-<!--script src="../node_modules/bootstrap5-toggle/js/bootstrap5-toggle.min.js"></script-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/js/bootstrap5-toggle.jquery.min.js"></script>
 
 <div class="jumbotron" style="padding: 1rem 1rem;">
@@ -198,22 +219,44 @@ th.rotated-text > div > span {
 	</div>
 </div>
 <div class="container-xl main-container">
+	<div id="alert-container"></div>
 	<?php
 	if(isset($success_msg) && !empty($success_msg)):
-	?>
-		<div class="alert alert-success">
-			<a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
-			<?php echo $success_msg; ?>
-		</div>
+	?>	<script>
+			window.onload = function () {
+				//on success
+				g = document.createElement('div');
+                g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+                g.setAttribute("role", "alert");
+                g.innerHTML = "<?php echo $success_msg; ?><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                const bsAlert = new bootstrap.Alert(g);
+                // Dismiss time out
+                setTimeout(() => {
+            	    bsAlert.close();
+                }, 5000);
+                $("#alert-container").append(g);
+			}
+		</script>
 	<?php endif; ?>
 
 	<?php
 	if(isset($error_msg) && !empty($error_msg)):
 	?>
-		<div class="alert alert-danger">
-			<a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
-			<?php echo $error_msg; ?>
-		</div>
+		<script>
+			window.onload = function () {
+				//on error
+				g = document.createElement('div');
+				g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+				g.setAttribute("role", "alert");
+				g.innerHTML = "<?php echo $error_msg; ?><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+				const bsAlert = new bootstrap.Alert(g);
+				// Dismiss time out
+				setTimeout(() => {
+					bsAlert.close();
+				}, 5000);
+				$("#alert-container").append(g);
+			}
+		</script>
 	<?php endif; ?>
 	<div>
 		<!-- Nav tabs -->
@@ -224,7 +267,7 @@ th.rotated-text > div > span {
 			<li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab">My Boards</a></li>
 			<li class="nav-item" role="presentation"><a class="nav-link" href="#confDashboard" role="tab" data-bs-toggle="tab">Dashboard</a></li>
 			<?php
-				if(($userobj->getUserGroupAdmin() == 1) ) {
+				if(($userObj->getUserGroupAdmin() == 1) ) {
 				?>
 					<li class='nav-item' role='presentation'><a class='nav-link' href='#allBoards' role='tab' data-bs-toggle='tab'>All Boards</a></li>
 					<li class='nav-item' role='presentation'><a class='nav-link' href='#users' role='tab' data-bs-toggle='tab'>Users</a></li>
@@ -241,9 +284,9 @@ th.rotated-text > div > span {
 				<form action="?save=personal_data" method="post" class="form-horizontal">
 					<div class="form-group">
 						<div class="row">
-							<label for="inputFirstname" class="col-sm-2 control-label">First name</label>
+							<label for="inputFirstName" class="col-sm-2 control-label">First name</label>
 							<div class="col-sm-4">
-								<input class="form-control" id="inputFirstname" name="firstname" type="text" value="<?php echo htmlentities($userobj->getFirstname()); ?>" required>
+								<input class="form-control" id="inputFirstName" name="firstName" type="text" value="<?php echo htmlentities($userObj->getFirstName()); ?>" required>
 							</div>
 						</div>
 					</div>
@@ -252,31 +295,31 @@ th.rotated-text > div > span {
 						<div class="row">
 							<label for="inputLastname" class="col-sm-2 control-label">Last name</label>
 							<div class="col-sm-4">
-								<input class="form-control" id="inputLastname" name="lastname" type="text" value="<?php echo htmlentities($userobj->getLastname()); ?>" required>
+								<input class="form-control" id="inputLastname" name="lastName" type="text" value="<?php echo htmlentities($userObj->getLastName()); ?>" required>
 							</div>
 						</div>
 					</div>
 
 					<?php
-						function time_zonelist() {
-						$allzones = array();
-						$timestamp = time();
-						foreach(timezone_identifiers_list() as $key => $live_zone) {
-							date_default_timezone_set($live_zone);
-							$allzones[$key]['zone'] = $live_zone;
-							$allzones[$key]['diff_from_GMT'] = 'UTC/GMT ' . date('P', $timestamp);
-						}
-							return $allzones;
+						function timeZoneList() {
+							$allZones = array();
+							$timestamp = time();
+							foreach(timezone_identifiers_list() as $key => $live_zone) {
+								date_default_timezone_set($live_zone);
+								$allZones[$key]['zone'] = $live_zone;
+								$allZones[$key]['diff_from_GMT'] = 'UTC/GMT ' . date('P', $timestamp);
+							}
+							return $allZones;
 						}
 					?>
 					<div class="form-group">
 						<div class="row">
 							<label for="inputTimezone" class="col-sm-2 control-label">Timezone</label>
-							<?php $userTimezone = htmlentities($userobj->getTimezone() ?? ""); ?>
+							<?php $userTimezone = htmlentities($userObj->getTimezone() ?? ""); ?>
 							<div class="col-sm-4">
 							<select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
 								<option value="0">Please, select your timezone</option>
-								<?php foreach(time_zonelist() as $t) { ?>
+								<?php foreach(timeZoneList() as $t) { ?>
 									<?php if($t['zone'] == $userTimezone ) { ?>
 										<option value="<?php print $t['zone'] ?>" selected>
 											<?php print $t['zone'] . ' - ' . $t['diff_from_GMT'] ?>
@@ -295,7 +338,7 @@ th.rotated-text > div > span {
 					<div class="form-group">
 						<div class="row">
 							<?php
-								if ($userobj->getReceiveNotifications()) {
+								if ($userObj->getReceiveNotifications()) {
 								?>
 									<div class="col col-sm-2">Receive notifications?</div>
 									<label class="col col-sm-4">
@@ -328,7 +371,7 @@ th.rotated-text > div > span {
 
 			<!-- change of email address -->
 			<div role="tabpanel" class="tab-pane" id="email">
-				<p style="margin-bottom: 0px; margin-top: 1rem;">To change your email adress, please enter your current password and the new email adress.</p>
+				<p style="margin-bottom: 0px; margin-top: 1rem;">To change your email address, please enter your current password and the new email address.</p>
 				<form action="?save=email" method="post" class="form-horizontal">
 					<div class="form-group">
 						<div class="row">
@@ -343,7 +386,7 @@ th.rotated-text > div > span {
 						<div class="row">
 							<label for="inputEmail" class="col-sm-2 control-label">E-Mail</label>
 							<div class="col-sm-4">
-								<input class="form-control" id="inputEmail" name="email" type="email" value="<?php echo htmlentities($userobj->getEmail()); ?>" required>
+								<input class="form-control" id="inputEmail" name="email" type="email" value="<?php echo htmlentities($userObj->getEmail()); ?>" required>
 							</div>
 						</div>
 					</div>
@@ -411,24 +454,24 @@ th.rotated-text > div > span {
 			<!-- Configure the user's boards -->
 			<div role="tabpanel" class="tab-pane" id="confBoards">
 				<div class="container-fluid border mb-2">
-				<span>toggle collums:</span>
+				<span>toggle columns:</span>
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox1" class="form-check-label">id</label>
-						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox1" value="toggleDisplayId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox2" class="form-check-label">Mac address</label>
-						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox2" value="toggleDisplayMacAddress" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox3" class="form-check-label">Location</label>
-						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox4" class="form-check-label">TTN id</label>
-						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 
 					<div class="form-check form-check-inline">
@@ -440,8 +483,8 @@ th.rotated-text > div > span {
 					<table class="table table-bordered">
 					<thead>
 					<tr>
-						<th class='toggleDisplayid'>id</th>
-						<th class='toggleDisplayMacaddress '><div><span>Mac address</span></div></th>
+						<th class='toggleDisplayId'>id</th>
+						<th class='toggleDisplayMacAddress '><div><span>Mac address</span></div></th>
 						<th>Name</th>
 						<th class="toggleDisplayLocation">Location</th>
 						<th>Description</th>
@@ -453,32 +496,32 @@ th.rotated-text > div > span {
 					</thead>
 					<tbody>
 					<?php
-					$myboards = $userobj->getMyBoardsAll();
+					$myBoards = $userObj->getMyBoardsAll();
 					$countBoardRow = 1;
-					foreach($myboards as $singleRowMyboard) {
+					foreach($myBoards as $singleRowMyBoard) {
 					?>
 						<tr>
-						<td class='toggleDisplayid'> <?php echo $singleRowMyboard['id'] ?></td>
-						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macaddress'] ?></td>
-						<td><?php echo $singleRowMyboard['name'] ?></td>
-						<td class='toggleDisplayLocation'><?php echo $singleRowMyboard['location'] ?></td>
-						<td><?php echo $singleRowMyboard['description'] ?></td>
-						<td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['ttn_dev_id'] ?></td>
+						<td class='toggleDisplayId'> <?php echo $singleRowMyBoard['id'] ?></td>
+						<td class='toggleDisplayMacAddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['macAddress'] ?></td>
+						<td><?php echo $singleRowMyBoard['name'] ?></td>
+						<td class='toggleDisplayLocation'><?php echo $singleRowMyBoard['location'] ?></td>
+						<td><?php echo $singleRowMyBoard['description'] ?></td>
+						<td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['ttnDevId'] ?></td>
 					<?php
-						$sensorsOfBoard = myFunctions::getAllSensorsOfBoardold($singleRowMyboard['id']);
+						$sensorsOfBoard = myFunctions::getAllSensorsOfBoardOld($singleRowMyBoard['id']);
 						echo "<td>".count($sensorsOfBoard)."</td>";
 
-						if(isset($singleRowMyboard['alarmOnUnavailable']) && $singleRowMyboard['alarmOnUnavailable'] == '1') {
+						if(isset($singleRowMyBoard['alarmOnUnavailable']) && $singleRowMyBoard['alarmOnUnavailable'] == '1') {
 						?>
-							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo$singleRowMyboard['id']?> "' disabled name='alarmOnUnavailable' value=" <?php echo $singleRowMyboard['alarmOnUnavailable'] ?> " checked=" <?php echo $singleRowMyboard['alarmOnUnavailable'] ?> "></td>
+							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo$singleRowMyBoard['id']?> "' disabled name='alarmOnUnavailable' value=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> " checked=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> "></td>
 						<?php
 						} else {
 						?>
-							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" <?php echo$singleRowMyboard['id'] ?> "' disabled name='alarmOnUnavailable' value='1'></td>
+							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" <?php echo$singleRowMyBoard['id'] ?> "' disabled name='alarmOnUnavailable' value='1'></td>
 						<?php
 						}
 						?>
-							<td><a href="inputmask_boards.php?id=<?php echo $singleRowMyboard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
+							<td><a href="formBoards.php?id=<?php echo $singleRowMyBoard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
 						</tr>
 						<?php
 					}
@@ -489,7 +532,7 @@ th.rotated-text > div > span {
 				<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
 				<div class="modal-dialog">
 					<div class="modal-content">
-						<form class="row g-3" action="?save=addNewUserToBorad" method="post" class="form-horizontal">
+						<form class="row g-3" action="?save=addNewUserToBoard" method="post" class="form-horizontal">
 							<div class="modal-header">
 								<h5 class="modal-title" id="exampleModalLabel">Add new Board</h5>
 								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -498,9 +541,9 @@ th.rotated-text > div > span {
 								<div class="input-group mb-3">
 									<select class="form-select input-group-text" aria-label="Default select example" id="valueType" name="valueType">
 										<option value="ttn" selected>TTN dev id</option>
-										<option value="mac">Mac Adress</option>
+										<option value="mac">Mac Address</option>
 									</select>
-									<input type="text" class="form-control" placeholder="Enter Value" aria-label="Value" aria-describedby="macAdress" name="inputValue" id="inputValue" required>
+									<input type="text" class="form-control" placeholder="Enter Value" aria-label="Value" aria-describedby="macAddress" name="inputValue" id="inputValue" required>
 								</div>
 							</div>
 							<div class="modal-footer">
@@ -521,7 +564,7 @@ th.rotated-text > div > span {
 							<div class="row">
 								<label for="inputUpdateInterval" class="col-sm-2 control-label">Update interval (in Minutes) (tbd)</label>
 								<div class="col-sm-4">
-									<input class="form-control" id="inputUpdateInterval" name="updateInterval" type="number" value="<?php echo htmlentities($userobj->getDashboardUpdateInterval()); ?>" required>
+									<input class="form-control" id="inputUpdateInterval" name="updateInterval" type="number" value="<?php echo htmlentities($userObj->getDashboardUpdateInterval()); ?>" required>
 								</div>
 								</div>
 						</div>
@@ -543,28 +586,28 @@ th.rotated-text > div > span {
 			<div role="tabpanel" class="tab-pane" id="allBoards">
 			<form action="?save=allBoards" method="post" class="form-horizontal">
 				<div class="container-fluid border mb-2">
-				<span>toggle collums:</span>
+				<span>toggle columns:</span>
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox1" class="form-check-label">id</label>
-						<input id="inlineCheckbox1" value="toggleDisplayid" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox1" value="toggleDisplayId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox2" class="form-check-label">Mac address</label>
-						<input id="inlineCheckbox2" value="toggleDisplayMacaddress" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox2" value="toggleDisplayMacAddress" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox3" class="form-check-label">Location</label>
-						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox4" class="form-check-label">TTN App id</label>
-						<input id="inlineCheckbox4" value="toggleDisplayTtnAppId" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox4" value="toggleDisplayTtnAppId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 					<div class="form-check form-switch d-inline-block pe-4">
 						<label for="inlineCheckbox5" class="form-check-label">TTN Dev id</label>
-						<input id="inlineCheckbox5" value="toggleDisplayTtnDevId" class="form-check-input mytogglebutton" type="checkbox" checked data-size="small">
+						<input id="inlineCheckbox5" value="toggleDisplayTtnDevId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
 					</div>
 
 				</div>
@@ -572,8 +615,8 @@ th.rotated-text > div > span {
 					<table class="table table-bordered">
 					<thead>
 					<tr>
-						<th class='toggleDisplayid'>id</th>
-						<th class='toggleDisplayMacaddress '><div><span>Mac address</span></div></th>
+						<th class='toggleDisplayId'>id</th>
+						<th class='toggleDisplayMacAddress '><div><span>Mac address</span></div></th>
 						<th><div><span>owner User</span></div></th>
 						<th>Name</th>
 						<th class="toggleDisplayLocation">Location</th>
@@ -587,35 +630,35 @@ th.rotated-text > div > span {
 					</thead>
 					<tbody>
 					<?php
-					$myboards = $userobj->getAllBoardsAdmin();
+					$myBoards = $userObj->getAllBoardsAdmin();
 					$countBoardRow = 1;
-					foreach($myboards as $singleRowMyboard) {
+					foreach($myBoards as $singleRowMyBoard) {
 					?>
 						<tr>
-						<td class='toggleDisplayid'> <?php echo $singleRowMyboard['id'] ?></td>
-						<td class='toggleDisplayMacaddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['macaddress'] ?></td>
-						<td><?php echo $singleRowMyboard['owner_userid'] ?></td>
+						<td class='toggleDisplayId'> <?php echo $singleRowMyBoard['id'] ?></td>
+						<td class='toggleDisplayMacAddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['macAddress'] ?></td>
+						<td><?php echo $singleRowMyBoard['ownerUserId'] ?></td>
 
-						<td><?php echo $singleRowMyboard['name'] ?></td>
-						<td class='toggleDisplayLocation'><?php echo $singleRowMyboard['location'] ?></td>
-						<td><?php echo $singleRowMyboard['description'] ?></td>
-						<td class='toggleDisplayTtnAppId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['ttn_app_id'] ?></td>
-						<td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyboard['ttn_dev_id'] ?></td>
+						<td><?php echo $singleRowMyBoard['name'] ?></td>
+						<td class='toggleDisplayLocation'><?php echo $singleRowMyBoard['location'] ?></td>
+						<td><?php echo $singleRowMyBoard['description'] ?></td>
+						<td class='toggleDisplayTtnAppId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['ttnAppId'] ?></td>
+						<td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['ttnDevId'] ?></td>
 					<?php
-						$sensorsOfBoard = myFunctions::getAllSensorsOfBoardold($singleRowMyboard['id']);
+						$sensorsOfBoard = myFunctions::getAllSensorsOfBoardOld($singleRowMyBoard['id']);
 						echo "<td>".count($sensorsOfBoard)."</td>";
 
-						if(isset($singleRowMyboard['alarmOnUnavailable']) && $singleRowMyboard['alarmOnUnavailable'] == '1') {
+						if(isset($singleRowMyBoard['alarmOnUnavailable']) && $singleRowMyBoard['alarmOnUnavailable'] == '1') {
 						?>
-							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo$singleRowMyboard['id']?> "' disabled name='alarmOnUnavailable' value=" <?php echo $singleRowMyboard['alarmOnUnavailable'] ?> " checked=" <?php echo $singleRowMyboard['alarmOnUnavailable'] ?> "></td>
+							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo$singleRowMyBoard['id']?> "' disabled name='alarmOnUnavailable' value=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> " checked=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> "></td>
 						<?php
 						} else {
 						?>
-							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" <?php echo$singleRowMyboard['id'] ?> "' disabled name='alarmOnUnavailable' value='1'></td>
+							<td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" <?php echo$singleRowMyBoard['id'] ?> "' disabled name='alarmOnUnavailable' value='1'></td>
 						<?php
 						}
 						?>
-							<td><a href="inputmask_boards.php?id=<?php echo $singleRowMyboard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
+							<td><a href="formBoards.php?id=<?php echo $singleRowMyBoard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
 						</tr>
 						<?php
 					}
@@ -641,7 +684,7 @@ th.rotated-text > div > span {
 						<th>#</th><th>Active</th><th>First name</th><th>Last name</th><th>E-Mail</th><th>Admin</th>
 					</tr>
 					<?php
-					if(($userobj->getUserGroupAdmin() != false) ) {
+					if(($userObj->getUserGroupAdmin() != false) ) {
 						$count = 1;
 						$statement = myFunctions::getAllUsers();
 
@@ -665,22 +708,22 @@ th.rotated-text > div > span {
 								<?php
 								}
 								?>
-								<td><?php echo $singleRowUser['firstname'] ?></td>
-								<td><?php echo $singleRowUser['lastname'] ?></td>
+								<td><?php echo $singleRowUser['firstName'] ?></td>
+								<td><?php echo $singleRowUser['lastName'] ?></td>
 								<td><a href="mailto:<?php echo $singleRowUser['email'] ?>"><?php echo $singleRowUser['email'] ?></a></td>
 								<?php
-								if(isset($singleRowUser['usergroup_admin']) && $singleRowUser['usergroup_admin'] == '1')
+								if(isset($singleRowUser['userGroupAdmin']) && $singleRowUser['userGroupAdmin'] == '1')
 								{
 								?>
-									<td><input type='hidden' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='0' checked=<?php echo $singleRowUser['usergroup_admin'] ?>>
-									<input type='checkbox' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='1' checked=<?php echo $singleRowUser['usergroup_admin'] ?>></td>
+									<td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='0' checked=<?php echo $singleRowUser['userGroupAdmin'] ?>>
+									<input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='1' checked=<?php echo $singleRowUser['userGroupAdmin'] ?>></td>
 								<?php
 								}
 								else
 								{
 								?>
-									<td><input type='hidden' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='0'>
-									<input type='checkbox' class='form-check-input' id='usergroup_admin<?php echo $singleRowUser['id'] ?>' name='usergroup_admin[<?php echo $singleRowUser['id'] ?>]' value='1'></td>
+									<td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='0'>
+									<input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='1'></td>
 								<?php
 								}
 								?>
@@ -764,7 +807,7 @@ th.rotated-text > div > span {
 							<div class="row">
 								<label for="apiKey" class="col col-sm-2 control-label">API Key:</label>
 								<div class="col col-sm-4">
-									<input class="form-control" id="apiKey" name="apikey" type="text" value="<?php echo $config::$api_key; ?>" required>
+									<input class="form-control" id="apiKey" name="apiKey" type="text" value="<?php echo $config::$apiKey; ?>" required>
 								</div>
 							</div>
 						</div>
@@ -781,8 +824,8 @@ th.rotated-text > div > span {
 								Send emails:
 								</div>
 								<label class="col col-sm-4">
-										<input type='hidden' class='form-check-input' id='send_emails' name='send_emails' value='0'>
-										<input type='checkbox' class='form-check-input' id='send_emails' name='send_emails' checked=true value='1'>
+										<input type='hidden' class='form-check-input' id='sendEmails' name='sendEmails' value='0'>
+										<input type='checkbox' class='form-check-input' id='sendEmails' name='sendEmails' checked=true value='1'>
 								</label>
 							<?php
 							} else {
@@ -791,13 +834,35 @@ th.rotated-text > div > span {
 								Send emails:
 								</div>
 								<label class="col col-sm-4">
-										<input type='hidden' class='form-check-input' id='send_emails' name='send_emails' checked=true value='0'>
-										<input type='checkbox' class='form-check-input' id='send_emails' name='send_emails' value='1'>
+										<input type='hidden' class='form-check-input' id='sendEmails' name='sendEmails' checked=true value='0'>
+										<input type='checkbox' class='form-check-input' id='sendEmails' name='sendEmails' value='1'>
 								</label>
 							<?php
 							}
 						?>
 						</div>
+						</div>
+					</div>
+
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
+								<label for="systemEmailAddress" class="col col-sm-2 control-label">System Email Address (sender):</label>
+								<div class="col col-sm-4">
+									<input class="form-control" id="systemEmailAddress" name="systemEmailAddress" type="text" value="<?php echo $config::$systemEmailAddress; ?>" required>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="panel panel-default">
+						<div class="form-group">
+							<div class="row">
+								<label for="applicationName" class="col col-sm-2 control-label">Application Name:</label>
+								<div class="col col-sm-4">
+									<input class="form-control" id="applicationName" name="applicationName" type="text" value="<?php echo $config::$applicationName; ?>" required>
+								</div>
+							</div>
 						</div>
 					</div>
 
@@ -817,21 +882,21 @@ th.rotated-text > div > span {
 						$format = "log"; // Possibilities: csv and txt
 						date_default_timezone_set('Europe/Berlin');
 						$datum_zeit = date("d.m.Y H:i:s");
-						$monate = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
-						$monat = date("n");
-						$jahr = date("Y");
-						$dateiname = dirname(__FILE__) . "/../logs/log_" . $monate[$monat] . "_$jahr.$format";
+						$months = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
+						$month = date("n");
+						$year = date("Y");
+						$filename = dirname(__FILE__) . "/../logs/log_" . $months[$month] . "_$year.$format";
 						$data = false;
 
-						if (file_exists($dateiname)) {
-							$data = file_get_contents($dateiname);
+						if (file_exists($filename)) {
+							$data = file_get_contents($filename);
 							if ($data != false) {
-								echo '<textarea style="height: 400px; width: 100%;" readonly>' . htmlspecialchars($data). '</textarea>';
+								echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>' . htmlspecialchars($data). '</textarea>';
 							} else {
-								echo '<textarea style="height: 400px; width: 100%;" readonly>Error while opening Log file.</textarea>';
+								echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>Error while opening Log file.</textarea>';
 							}
 						} else {
-							echo '<textarea style="height: 400px; width: 100%;" readonly>Log file not found.</textarea>';
+							echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>Log file not found.</textarea>';
 						}
 					?>
 				</div>
@@ -849,19 +914,17 @@ th.rotated-text > div > span {
 		}
 	});
 
-$(function() {
-	$('.mytogglebutton').change(function() {	
-      $('#console-event').html('Toggle: ' + $(this).prop('checked'))
-	  if ($(this).prop('checked') == true) {
-		$(".table ." + $(this).attr("value")).show();
-	  } else {
-		$(".table ." + $(this).attr("value")).hide();
-	  }
-    })
-  })
-
+	$(function() {
+		$('.myToggleButton').change(function() {	
+			$('#console-event').html('Toggle: ' + $(this).prop('checked'))
+			if ($(this).prop('checked') == true) {
+				$(".table ." + $(this).attr("value")).show();
+			} else {
+				$(".table ." + $(this).attr("value")).hide();
+			}
+		})
+	})
 </script>
-
 <?php
 include("common/footer.inc.php");
 ?>

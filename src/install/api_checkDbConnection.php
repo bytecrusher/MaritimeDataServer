@@ -1,15 +1,15 @@
 <?php
-$var_dbname = $var_dbusername = $var_dbpassword = $pdo = $rtn = null;
-$var_dbhostname = "localhost";
+$var_dbName = $var_dbUserName = $var_dbPassword = $pdo = $rtn = null;
+$var_dbHostName = "localhost";
 if (isset($_POST["action"])) {
-  $var_dbhostname = $_POST["dbhostname"];
-  $var_dbname = $_POST["dbname"];
-  $var_dbusername = $_POST["dbusername"];
-  $var_dbpassword = $_POST["dbpassword"];
+  $var_dbHostName = $_POST["dbHostName"];
+  $var_dbName = $_POST["dbName"];
+  $var_dbUserName = $_POST["dbUserName"];
+  $var_dbPassword = $_POST["dbPassword"];
   $pdo = null;
   
   if ($_POST["action"] == "savedb") {
-    $pdo = testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_dbpassword);
+    $pdo = testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword);
     if ($pdo != false) {
       $filename = 'database.sql';
 
@@ -51,10 +51,10 @@ if (isset($_POST["action"])) {
 
       $jsonString = file_get_contents($path);
       $jsonData = json_decode($jsonString, true);
-      $jsonData['db_host'] = $var_dbhostname;
-      $jsonData['db_name'] = $var_dbname;
-      $jsonData['db_user'] = $var_dbusername;
-      $jsonData['db_password'] = $var_dbpassword;
+      $jsonData['dbHost'] = $var_dbHostName;
+      $jsonData['dbName'] = $var_dbName;
+      $jsonData['dbUser'] = $var_dbUserName;
+      $jsonData['dbPassword'] = $var_dbPassword;
       $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
       // Write in the file
       $fp = fopen($path, 'w');
@@ -65,7 +65,7 @@ if (isset($_POST["action"])) {
       $rtn = array("error"=>"true", "error_text"=>$error_msg);
     }
   } else if ($_POST["action"] == "testdb") {
-    if(testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_dbpassword)) {
+    if(testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword)) {
       $rtn = array("error"=>"false", "success_text"=>$success_msg);
     } else {
       $rtn = array("error"=>"true", "error_text"=>$error_msg);
@@ -77,12 +77,12 @@ if (isset($_POST["action"])) {
   print json_encode($rtn);
 }
 
-function testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_dbpassword) {
+function testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword) {
     global $success_msg, $error_msg, $pdo;
     try {
-      $pdo = new PDO("mysql:host=" . $var_dbhostname . ";dbname=" . $var_dbname, $var_dbusername, $var_dbpassword);
+      $pdo = new PDO("mysql:host=" . $var_dbHostName . ";dbname=" . $var_dbName, $var_dbUserName, $var_dbPassword);
       if ($pdo != null) {
-        $success_msg = "Successfull connected to Database.";
+        $success_msg = "Successful connected to Database.";
       }
     }
     catch(PDOException $e)
@@ -90,13 +90,11 @@ function testDbConnection($var_dbhostname, $var_dbname, $var_dbusername, $var_db
       if ($e->getCode() == 2002) {
         $error_msg = "Database not found. Correct Hostname?<br/>";
       } else if ($e->getCode() == 1044) {
-        $error_msg = "Wrond Database name.<br/>";
+        $error_msg = "Wrong Database name.<br/>";
       } else if ($e->getCode() == 1045) {
         $error_msg = "Access denied for user. Correct Username and Password?<br/>";
       }
       return false;
     }
     return $pdo;
-} 
-
-?>
+}

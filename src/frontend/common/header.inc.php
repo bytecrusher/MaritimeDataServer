@@ -8,9 +8,30 @@
     <?php
       $config = new configuration();
       include(__DIR__ . "/includes.php");
+
+      if (isset($_SERVER['HTTPS']) &&
+            ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
+            isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+            $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+            $prefix = 'https://';
+        }
+        else {
+            $prefix = 'http://';
+        }
+
+      $path = $actual_link = $prefix . "$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+      $path = str_replace( basename("$_SERVER[REQUEST_URI]"), "", $path );
+      $myInstallPath = str_replace( basename("common/",), "", __DIR__ );
+      
       if (!$config::$config_exist) {
-        header("Location: /../../install/index.php");
-        exit();
+        if (file_exists($myInstallPath . "/../install") ) {
+          header("Location: " . $path . "../install/index.php");
+          exit();
+        } else {
+          // ToDo custom error page
+          echo ("Config file and install folder not found. Please reinstall.");
+          exit();
+        }
       }
     ?>
     <style>
@@ -79,5 +100,3 @@
     <?php endif; ?>
   </div>
   </nav>
-
-
