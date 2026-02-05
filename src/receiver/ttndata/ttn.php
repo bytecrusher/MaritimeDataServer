@@ -42,6 +42,8 @@ date_default_timezone_set('Europe/Berlin');
 $pdo2 = dbConfig::getInstance();
 $config = new configuration();
 
+#writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
+
 $ttn_post = file('php://input');
 $data = null;
 //writeToLogFunction::write_to_log($ttn_post, $_SERVER["SCRIPT_FILENAME"]);
@@ -51,6 +53,7 @@ if(sizeof($ttn_post) > 0) {
     //writeToLogFunction::write_to_log($data, $_SERVER["SCRIPT_FILENAME"]);
     //writeToLogFunction::write_to_log('ttn.php', $_SERVER["SCRIPT_FILENAME"]);
     $sensor_raw_payload = null;
+
     if(($data != null) && ($data->uplink_message->decoded_payload != null)) {
         //$payloadversion = $data->uplink_message->decoded_payload->payloadversion;
         $sensor_temperature = $sensor_humidity = $sensor_battery = 0;       // define Variables
@@ -204,6 +207,8 @@ if(sizeof($ttn_post) > 0) {
     $url = $config::$baseurl . '/receiver/receivejson.php';
     $ch = curl_init($url);
 
+    writeToLogFunction::write_to_log($config::$baseurl, $_SERVER["SCRIPT_FILENAME"]);
+
     $boardInfos = array(
         "apiKey" => $config::$apiKey,
         // TODO: Anhand der Dev_IDE die Mac ermitteln
@@ -299,8 +304,12 @@ if(sizeof($ttn_post) > 0) {
     // Return response instead of outputting
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+    #writeToLogFunction::write_to_log($ch, $_SERVER["SCRIPT_FILENAME"]);
+
     // Execute the POST request
     $result = curl_exec($ch);
+
+    #writeToLogFunction::write_to_log($result, $_SERVER["SCRIPT_FILENAME"]);
 
     // Close cURL resource
     curl_close($ch);

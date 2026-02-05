@@ -12,16 +12,6 @@
     die();
   }
 
-  if (!isset($_GET['modal'])) {
-      include("common/header.inc.php");
-  } else {
-  ?>
-    <div class='modal-header'>
-    <h5 class='modal-title' id='exampleModalLabel'>Edit Sensor</h5>
-    <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-  <?php
-  }
-
   if (isset($_POST['submit_formSensors'])) {
     if (!isset($_POST['modal'])) {
       try {
@@ -72,6 +62,16 @@
       echo "Channel: " . $_GET['channel'];
     }
   }
+
+  if (!isset($_GET['modal'])) {
+    include("common/header.inc.php");
+} else {
+?>
+  <div class='modal-header'>
+  <h5 class='modal-title' id='exampleModalLabel'>Edit Sensor</h5>
+  <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+<?php
+}
 
   if (isset($_GET['modal'])) {
     $mySingleSensorChannelConfig=(myFunctions::getSensorChannelConfig($_GET['id'], $_GET['channel']));

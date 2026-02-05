@@ -27,7 +27,14 @@ class configuration {
     static $applicationName = null;
     
     function __construct() {
-        self::$subDir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
+        #self::$subDir = "/" . str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
+        self::$subDir = str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
+        //self::$subDir = str_replace("/config","",__DIR__);
+        #self::$subDir = str_replace($_SERVER['DOCUMENT_ROOT'],"",__DIR__);
+        self::$subDir = str_replace("/config", "",self::$subDir);
+
+        #writeToLogFunction::write_to_log(self::$subDir, $_SERVER["SCRIPT_FILENAME"]);
+
         if (isset($_SERVER['HTTP_HOST'])) {
             $domain = $_SERVER['HTTP_HOST'];
         } else {

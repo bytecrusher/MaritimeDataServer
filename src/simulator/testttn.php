@@ -8,10 +8,17 @@
 
 require_once(dirname(__FILE__, 3) . "/src/frontend/func/writeToLogFunction.func.php");
 
-$url = $_POST['url'];
+$url = isset($_POST['url']) ? trim($_POST['url']) : '';
+if ($url === '') {
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Fehler: Keine Ziel-URL angegeben.';
+    exit;
+}
 $dev_eui = "devEuiSimulator";
 $application_id = "ttnSimulator";
 $gateway_id = "simulatorGateway";
+
+#writeToLogFunction::write_to_log($url, $_SERVER["SCRIPT_FILENAME"]);
 
 //date_default_timezone_set('UTC');
 date_default_timezone_set('Europe/Berlin');
@@ -30,7 +37,7 @@ try {
     // Create a new cURL resource
     $cURL = curl_init($url);
 
-    // Check if initialization had gone wrong*    
+    // Check if initialization had gone wrong*
     if ($cURL === false) {
         writeToLogFunction::write_to_log('failed to initialize', $_SERVER["SCRIPT_FILENAME"]);
         throw new Exception('failed to initialize');
@@ -119,8 +126,8 @@ try {
         )
     ));
 
-    curl_setopt($cURL, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($cURL, CURLOPT_SSL_VERIFYHOST,  2);
+    #curl_setopt($cURL, CURLOPT_SSL_VERIFYPEER, false);
+    #curl_setopt($cURL, CURLOPT_SSL_VERIFYHOST,  2);
 
     // Attach encoded JSON string to the POST fields
     curl_setopt($cURL, CURLOPT_POSTFIELDS, $payload);
@@ -134,9 +141,12 @@ try {
     // Execute the POST request
     $result = curl_exec($cURL);
 
+    #writeToLogFunction::write_to_log($result, $_SERVER["SCRIPT_FILENAME"]);
+
     // Check the return value of curl_exec(), too
     if ($result === false) {
         writeToLogFunction::write_to_log('curl error', $_SERVER["SCRIPT_FILENAME"]);
+        #die(curl_errno($cURL) . ': ' . curl_error($cURL));
         throw new Exception(curl_error($cURL), curl_errno($cURL));
     }
 
@@ -149,13 +159,15 @@ try {
         echo("Data send");
     }
 
-} catch(Exception $e) {
-    writeToLogFunction::write_to_log('Curl failed with error: ' . 
+} catch (Exception $e) {
+    writeToLogFunction::write_to_log('Curl failed with error: ' .
         $e->getCode() . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-    trigger_error(sprintf(
-        'Curl failed with error #%d: %s',
-        $e->getCode(), $e->getMessage()),
-        E_USER_ERROR);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Fehler: ' . htmlspecialchars(sprintf(
+        'Curl #%d: %s',
+        $e->getCode(),
+        $e->getMessage()
+    ), ENT_QUOTES, 'UTF-8');
 } finally {
     // Close curl handle unless it failed to initialize
     if (is_resource($cURL)) {

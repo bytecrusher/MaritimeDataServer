@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * receives data from Collectors/Devices (MDCs) in JSON format.
  * 
@@ -12,6 +12,8 @@ require_once(dirname(__FILE__, 2) . "/frontend/func/writeToLogFunction.func.php"
 require_once(dirname(__FILE__, 2) . "/frontend/func/myFunctions.func.php");
 require_once(dirname(__FILE__, 2) . "/frontend/func/board.class.php");
 
+#require_once("/src/frontend/func/writeToLogFunction.func.php");
+
 $config  = new configuration();
 
 $apiKey_value = $config::$apiKey;
@@ -19,6 +21,8 @@ $apiKey_value = $config::$apiKey;
 $apiKey = $macAddress = $sensor = $sensorId = $location = $value1 = $value2 = $value3 = $value4 = $date = $time = $transmissionPath = "";
 
 $pdo2 = dbConfig::getInstance();
+
+writeToLogFunction::write_to_log("test", "receiver");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $ttn_post = file_get_contents('php://input');
@@ -106,6 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $sql = "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
                         VALUES ('" . $sensorId . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '"  . $value4 . "', '" . $date . "', '" . $time . "', '" . $transmissionPath . "')";
                         try {
+                            writeToLogFunction::write_to_log($sql, $_SERVER["SCRIPT_FILENAME"]);
                             $pdo2->query($sql); //Invalid query
                         } catch (PDOException $ex) {
                             echo "An Error has occurred while run query.";

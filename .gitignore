@@ -24,3 +24,4 @@ src/simulator/mdsSimulatorConfig.php
 src/config_old.json
 src/install/database_old.sql
 src/config/config_old.json
+src/simulator/mdsSimulatorConfig.php

@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang=en>
+<html lang="de">
 <head>
-<meta charset=utf-8>
-<title>MSD Simulator</title>
+<meta charset="utf-8">
+<title>MDS Simulator</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 
 <link rel="stylesheet" href="./../frontend/css/style.css">
@@ -21,56 +21,54 @@
 <div class="container-xl">
 <fieldset> 
 <legend><h2>MDS - TTN Simulator</h2></legend>
-<fieldset >
+<fieldset>
 	<legend class="float-none mySensorsFieldsetLegend">Destination server</legend>
     <?php
-    //$subDir = str_replace($_SERVER['PWD'],"",__DIR__);
-    //echo($subDir);
-    //echo(getcwd());
-    //echo("<br>");
-    //$subDir = str_replace(getcwd(),"",__DIR__);
     $subDir = getcwd();
-    //echo(__DIR__);
-    //echo("<br>");
-    //echo($subDir);
-    //echo("<br>");
-    //$subDir = str_replace("/simulator","/src",$subDir);
-    $subDir = str_replace("/simulator","",$subDir);
-    $subDir = str_replace("/var/www/html","",$subDir);
-    $subDir = str_replace("/public_html","",$subDir);
-    //echo($subDir);
+    $subDir = str_replace("/simulator", "", $subDir);
+    $subDir = str_replace("/var/www/html", "", $subDir);
+    $subDir = str_replace("/public_html", "", $subDir);
 
-    $domain = $_SERVER['SERVER_ADDR'];
-    if (isset($_SERVER['HTTPS']) &&
-        ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
-        isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-        $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-        $prefix = 'https://';
-    }
-    else {
-        $prefix = 'http://';
-    }
-    $baseurl = $prefix . $domain . $subDir . "/receiver/ttndata/ttn.php";
+    $isHttps = (
+        (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] == 1))
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    );
+    $prefix = $isHttps ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? $_SERVER['SERVER_ADDR'] ?? 'localhost';
+    // Curl läuft auf dem Server: "localhost" ist dort oft nicht erreichbar (z. B. Docker) → 127.0.0.1
+    $hostForCurl = (strpos($host, 'localhost') === 0)
+        ? '127.0.0.1' . (($p = strpos($host, ':')) !== false ? substr($host, $p) : '')
+        : $host;
+    $baseurl = $prefix . $hostForCurl . $subDir . "/receiver/ttndata/ttn.php";
+    $baseurlEsc = htmlspecialchars($baseurl, ENT_QUOTES, 'UTF-8');
     ?>
     <div class="input-group mb-3">
         <div class="input-group-text">
-            <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo($baseurl); ?>" id="checklocal" checked>
-            <label class="ms-1" for="checklocal"><?php echo($baseurl); ?></label>
+            <input class="form-check-input mt-0" type="radio" name="url" value="" id="checkcustom" data-custom="1">
+            <label class="ms-1" for="checkcustom">Eigene URL (z.&nbsp;B. Docker/Proxy):</label>
+        </div>
+        <input type="url" class="form-control" id="inputCustomUrl" placeholder="https://host:port/pfad/receiver/ttndata/ttn.php" aria-label="Eigene Ziel-URL">
+    </div>
+    <div class="input-group mb-3">
+        <div class="input-group-text">
+            <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo $baseurlEsc; ?>" id="checklocal" checked>
+            <label class="ms-1" for="checklocal">Lokal (automatisch): <?php echo $baseurlEsc; ?></label>
         </div>
     </div>
     <?php
-    foreach($mdsDestServer AS $key => $server) {
+    foreach ($mdsDestServer as $key => $server) {
+        $serverEsc = htmlspecialchars($server, ENT_QUOTES, 'UTF-8');
+        $descEsc = htmlspecialchars($mdsDestServerdescription[$key] ?? '', ENT_QUOTES, 'UTF-8');
     ?>
     <div class="input-group mb-3">
         <div class="input-group-text">
-            <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo($server); ?>" id="check<?php echo($key); ?>">
-            <label class="ms-1" for="check<?php echo($key); ?>"> <?php echo($mdsDestServerdescription[$key]); ?>: (<?php echo($server); ?>)</label>
+            <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo $serverEsc; ?>" id="check<?php echo (int)$key; ?>">
+            <label class="ms-1" for="check<?php echo (int)$key; ?>"><?php echo $descEsc; ?>: (<?php echo $serverEsc; ?>)</label>
         </div>
     </div>
     <?php
     }
     ?>
-    <!--/div-->
 </fieldset>
 
 <fieldset>
@@ -89,7 +87,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mySensorsFieldsetLegend">BME250 Data Settings</legend>
+	<legend class="float-none mySensorsFieldsetLegend">BME280 Data Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text col-2">
             Pressure
@@ -130,9 +128,9 @@
         </div>
         <div class="input-group-text">
 	        <input class="form-check-input mt-0" type="radio" name="checkDewpointData" value="Dewpoint_value" id="checkDewpointData2" onclick="$('#inputDewpoint').prop('disabled', false);">
-	        <label for="checkDewpointData2">Dewpoint Value:
+	        <label class="ms-1" for="checkDewpointData2">Dewpoint Value:</label>
         </div>
-        <input type="text" class="form-control" id="inputDewpoint" placeholder="value" aria-label="inputDewpoint" aria-describedby="inputDewpoint" disabled="disabled"></label>
+        <input type="text" class="form-control" id="inputDewpoint" placeholder="value" aria-label="inputDewpoint" aria-describedby="inputDewpoint" disabled="disabled">
     </div>
 
     <div class="input-group mb-3">
@@ -145,9 +143,9 @@
         </div>
         <div class="input-group-text"> 
 	        <input class="form-check-input mt-0" type="radio" name="checkHumidityData" value="Humidity_value" id="checkHumidityData2" onclick="$('#inputHumidity').prop('disabled', false);">
-	        <label class="ms-1" for="checkHumidityData2">Humidity Value:
+	        <label class="ms-1" for="checkHumidityData2">Humidity Value:</label>
         </div>
-        <input type="text" class="form-control" id="inputHumidity" placeholder="value" aria-label="inputHumidity" aria-describedby="inputHumidity" disabled="disabled"></label>
+        <input type="text" class="form-control" id="inputHumidity" placeholder="value" aria-label="inputHumidity" aria-describedby="inputHumidity" disabled="disabled">
     </div>
 </fieldset>
 
@@ -222,7 +220,7 @@
     <label for="intervaltimer">interval timer (s)<input id="intervaltimer" type="text" value="10" size="3"></label>
     <button class="btn btn-primary" onclick="stopintervaltimer()" id="btnstopintervaltimer" disabled>Stop interval</button>
     </div>
-    <p class="broken"></p>
+    <p class="ajax-response" aria-live="polite"></p>
 </fieldset>
 
 <fieldset>
@@ -238,9 +236,11 @@
     let timerVariable;
 
     function sendttninterval() {
-        timerVariable = window.setInterval(sendttn, (document.querySelector('input[id="intervaltimer"]').value * 1000));
-        document.querySelector('button[id="btnsendttninterval"]').disabled = true
-        document.querySelector('button[id="btnstopintervaltimer"]').disabled = false
+        var sec = parseInt(document.querySelector('input[id="intervaltimer"]').value, 10);
+        if (isNaN(sec) || sec < 1) sec = 10;
+        timerVariable = window.setInterval(sendttn, sec * 1000);
+        document.querySelector('button[id="btnsendttninterval"]').disabled = true;
+        document.querySelector('button[id="btnstopintervaltimer"]').disabled = false;
     }
 
     function stopintervaltimer() {
@@ -288,28 +288,36 @@
         }
 
         if (document.querySelector('input[name="checkAdcCh2Data"]:checked').value == "AdcCh2_random") {
-            AdcCh2 = (Math.random() * (3.3 - 0.10)).toFixed(2)
+            AdcCh2 = (Math.random() * (3.3 - 0.10) + 0.10).toFixed(2);
         } else {
             AdcCh2 = document.querySelector('input[id="inputAdcCh2"]').value
         }
 
         if (document.querySelector('input[name="checkAdcCh3Data"]:checked').value == "AdcCh3_random") {
-            AdcCh3 = (Math.random() * (3.3 - 0.10)).toFixed(2)
+            AdcCh3 = (Math.random() * (3.3 - 0.10) + 0.10).toFixed(2);
         } else {
             AdcCh3 = document.querySelector('input[id="inputAdcCh3"]').value
         }
 
         if (document.querySelector('input[name="checkAdcCh4Data"]:checked').value == "AdcCh4_random") {
-            AdcCh4 = (Math.random() * (3.3 - 0.10)).toFixed(2)
+            AdcCh4 = (Math.random() * (3.3 - 0.10) + 0.10).toFixed(2);
         } else {
             AdcCh4 = document.querySelector('input[id="inputAdcCh4"]').value
         }
 
+        var urlRadio = document.querySelector('input[name="url"]:checked');
+        var destUrl = urlRadio.dataset.custom
+            ? document.getElementById('inputCustomUrl').value.trim()
+            : urlRadio.value;
+        if (!destUrl) {
+            $("p.ajax-response").html("Bitte Ziel-URL wählen oder unter „Eigene URL“ eintragen.").css("color", "var(--bs-danger, #dc3545)");
+            return;
+        }
         $.ajax({
             method: "POST",
             url: "testttn.php",
             data: {
-                url: document.querySelector('input[name="url"]:checked').value, 
+                url: destUrl, 
                 ttncounter: ttncounter,
                 tempbattery: tempbattery,
                 pressure: pressure,
@@ -324,19 +332,26 @@
                 level2: AdcCh4
             }
         })
-            .done(function( response ) {
-            $("p.broken").html(response);
-        });
-        $('#txtLog').append("Data: ");
-        $('#txtLog').append("ttncounter: " + ttncounter + ", ");
-        $('#txtLog').append("tempbattery: " + tempbattery + ", ");
-        $('#txtLog').append("pressure: " + pressure + ", ");
-        $('#txtLog').append("temperature: " + temperature + ", ");
-        $('#txtLog').append("dewpoint: " + dewpoint + ", ");
-        $('#txtLog').append("humidity: " + humidity + ", ");
-        $('#txtLog').append("randGPS: " + gpsdata['lat'] + ", " + gpsdata['long'] + ", ");
-        $('#txtLog').append("voltage: " + AdcCh1 + ", voltage2: " + AdcCh2 + ", level1: " + AdcCh3 + ", level2: " + AdcCh4 + "<br>");
-        ttncounter++;
+            .done(function (response) {
+                $("p.ajax-response").html(response);
+                appendLog();
+            })
+            .fail(function (xhr, status, err) {
+                $("p.ajax-response").html("Fehler: " + (err || status)).css("color", "var(--bs-danger, #dc3545)");
+            });
+
+        function appendLog() {
+            $('#txtLog').append("Data: ");
+            $('#txtLog').append("ttncounter: " + ttncounter + ", ");
+            $('#txtLog').append("tempbattery: " + tempbattery + ", ");
+            $('#txtLog').append("pressure: " + pressure + ", ");
+            $('#txtLog').append("temperature: " + temperature + ", ");
+            $('#txtLog').append("dewpoint: " + dewpoint + ", ");
+            $('#txtLog').append("humidity: " + humidity + ", ");
+            $('#txtLog').append("randGPS: " + gpsdata['lat'] + ", " + gpsdata['long'] + ", ");
+            $('#txtLog').append("voltage: " + AdcCh1 + ", voltage2: " + AdcCh2 + ", level1: " + AdcCh3 + ", level2: " + AdcCh4 + "<br>");
+            ttncounter++;
+        }
     }
 
     function randGPS(lat = 53.017585, long = 8.885182, radius = 50000) {

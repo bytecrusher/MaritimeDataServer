@@ -383,7 +383,8 @@ class dbUpdateData {
         $myVar['onDashboard'] = 1;
       }
       $myVar['id'] = $post['id'];
-      $myVar['name'] = $post['nameValue' . $i];
+      //$myVar['name'] = $post['nameValue' . $i];
+      $myVar['name'] = $post['name'];
       try {
         writeToLogFunction::write_to_log("updateSensor Channel nr: " . $i, $_SERVER["SCRIPT_FILENAME"]);
         $statement2 = $pdo->prepare("UPDATE sensorChannelConfig  SET onDashboard=? ,name=? WHERE sensorConfigId=? AND channelNr=?");
