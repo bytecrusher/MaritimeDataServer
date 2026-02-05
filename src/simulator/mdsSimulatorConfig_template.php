@@ -6,10 +6,10 @@
  */
 
 class mdsSimulatorConfig {
-    static $mdsDestination;
-    static $mdsDestinationdescription;
+    public static $mdsDestination;
+    public static $mdsDestinationdescription;
 
-    function __construct() {
+    public function __construct() {
         self::$mdsDestination[] = "https://localhost/receiver/ttndata/ttn.php";
         self::$mdsDestinationdescription[] = "localhost";
 

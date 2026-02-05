@@ -13,16 +13,16 @@
 </head>
 <body>
     <?php
-    require_once((__DIR__) . '/mdsSimulatorConfig.php');
+    require_once __DIR__ . '/mdsSimulatorConfig.php';
     $mdsConfig = new mdsSimulatorConfig();
     $mdsDestServer = $mdsConfig::$mdsDestination;
     $mdsDestServerdescription = $mdsConfig::$mdsDestinationdescription;
     ?>
 <div class="container-xl">
-<fieldset> 
-<legend><h2>MDS - TTN Simulator</h2></legend>
-<fieldset>
-	<legend class="float-none mySensorsFieldsetLegend">Destination server</legend>
+    <fieldset>
+        <legend><h2>MDS - TTN Simulator</h2></legend>
+    <fieldset>
+        <legend class="float-none mySensorsFieldsetLegend">Destination server</legend>
     <?php
     $subDir = getcwd();
     $subDir = str_replace("/simulator", "", $subDir);
@@ -44,15 +44,15 @@
     ?>
     <div class="input-group mb-3">
         <div class="input-group-text">
-            <input class="form-check-input mt-0" type="radio" name="url" value="" id="checkcustom" data-custom="1">
-            <label class="ms-1" for="checkcustom">Eigene URL (z.&nbsp;B. Docker/Proxy):</label>
+            <input class="form-check-input mt-0" type="radio" name="url" value="" id="checkCustom" data-custom="1">
+            <label class="ms-1" for="checkCustom">Eigene URL (z.&nbsp;B. Docker/Proxy):</label>
         </div>
         <input type="url" class="form-control" id="inputCustomUrl" placeholder="https://host:port/pfad/receiver/ttndata/ttn.php" aria-label="Eigene Ziel-URL">
     </div>
     <div class="input-group mb-3">
         <div class="input-group-text">
-            <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo $baseurlEsc; ?>" id="checklocal" checked>
-            <label class="ms-1" for="checklocal">Lokal (automatisch): <?php echo $baseurlEsc; ?></label>
+            <input class="form-check-input mt-0" type="radio" name="url" value="<?php echo $baseurlEsc; ?>" id="checkLocal" checked>
+            <label class="ms-1" for="checkLocal">Lokal (automatisch): <?php echo $baseurlEsc; ?></label>
         </div>
     </div>
     <?php
@@ -72,7 +72,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mySensorsFieldsetLegend">Temp Battery Data Settings</legend>
+    <legend class="float-none mySensorsFieldsetLegend">Temp Battery Data Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text">
             <input class="form-check-input mt-0" type="radio" name="checkTempBatData" value="tempBat_random" id="checkTempBatData1" onclick="$('#inputTempBat').prop('disabled', true);" checked>
@@ -87,34 +87,34 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mySensorsFieldsetLegend">BME280 Data Settings</legend>
+    <legend class="float-none mySensorsFieldsetLegend">BME280 Data Settings</legend>
     <div class="input-group mb-3">
         <div class="input-group-text col-2">
             Pressure
         </div>
         <div class="input-group-text">
-	        <input class="form-check-input mt-0" type="radio" name="checkPressureData" value="Pressure_random" id="checkPressureData1" onclick="$('#inputPressure').prop('disabled', true);" checked>
-	        <label class="ms-1" for="checkPressureData1">Random value</label>
+            <input class="form-check-input mt-0" type="radio" name="checkPressureData" value="Pressure_random" id="checkPressureData1" onclick="$('#inputPressure').prop('disabled', true);" checked>
+            <label class="ms-1" for="checkPressureData1">Random value</label>
         </div>
         <div class="input-group-text">
-	        <input class="form-check-input mt-0" type="radio" name="checkPressureData" value="Pressure_value" id="checkPressureData2" onclick="$('#inputPressure').prop('disabled', false);">
-	        <label class="ms-1" for="checkPressureData2">Pressure Value:</label>
+            <input class="form-check-input mt-0" type="radio" name="checkPressureData" value="Pressure_value" id="checkPressureData2" onclick="$('#inputPressure').prop('disabled', false);">
+            <label class="ms-1" for="checkPressureData2">Pressure Value:</label>
         </div>
         <input type="text" class="form-control" id="inputPressure" placeholder="value" aria-label="inputPressure" aria-describedby="inputPressure" disabled="disabled">
     </div>
 
     <div class="input-group mb-3">
         <div class="input-group-text col-2">
-	        Temperature
+            Temperature
         </div>
         <div class="input-group-text">
-	        <input class="form-check-input mt-0" type="radio" name="checkTemperatureData" value="Temperature_random" id="checkTemperatureData1" onclick="$('#inputTemperature').prop('disabled', true);" checked>
-	        <label class="ms-1" for="checkTemperatureData1">Random value</label>
+            <input class="form-check-input mt-0" type="radio" name="checkTemperatureData" value="Temperature_random" id="checkTemperatureData1" onclick="$('#inputTemperature').prop('disabled', true);" checked>
+            <label class="ms-1" for="checkTemperatureData1">Random value</label>
         </div>
         <div class="input-group-text">
-	        <input class="form-check-input mt-0" type="radio" name="checkTemperatureData" value="Temperature_value" id="checkTemperatureData2" onclick="$('#inputTemperature').prop('disabled', false);">
-	        <label class="ms-1" for="checkTemperatureData2">Temperature Value:</label>
-        </div> 
+            <input class="form-check-input mt-0" type="radio" name="checkTemperatureData" value="Temperature_value" id="checkTemperatureData2" onclick="$('#inputTemperature').prop('disabled', false);">
+            <label class="ms-1" for="checkTemperatureData2">Temperature Value:</label>
+        </div>
         <input type="text" class="form-control" id="inputTemperature" placeholder="value" aria-label="inputTemperature" aria-describedby="inputTemperature" disabled="disabled">
     </div>
 
@@ -123,12 +123,12 @@
             Dewpoint
         </div>
         <div class="input-group-text">
-	        <input class="form-check-input mt-0" type="radio" name="checkDewpointData" value="Dewpoint_random" id="checkDewpointData1" onclick="$('#inputDewpoint').prop('disabled', true);" checked>
-	        <label for="checkDewpointData1">Random value</label>
+            <input class="form-check-input mt-0" type="radio" name="checkDewpointData" value="Dewpoint_random" id="checkDewpointData1" onclick="$('#inputDewpoint').prop('disabled', true);" checked>
+            <label for="checkDewpointData1">Random value</label>
         </div>
         <div class="input-group-text">
-	        <input class="form-check-input mt-0" type="radio" name="checkDewpointData" value="Dewpoint_value" id="checkDewpointData2" onclick="$('#inputDewpoint').prop('disabled', false);">
-	        <label class="ms-1" for="checkDewpointData2">Dewpoint Value:</label>
+            <input class="form-check-input mt-0" type="radio" name="checkDewpointData" value="Dewpoint_value" id="checkDewpointData2" onclick="$('#inputDewpoint').prop('disabled', false);">
+            <label class="ms-1" for="checkDewpointData2">Dewpoint Value:</label>
         </div>
         <input type="text" class="form-control" id="inputDewpoint" placeholder="value" aria-label="inputDewpoint" aria-describedby="inputDewpoint" disabled="disabled">
     </div>
@@ -138,12 +138,12 @@
             Humidity
         </div>
         <div class="input-group-text">
-	        <input class="form-check-input mt-0" type="radio" name="checkHumidityData" value="Humidity_random" id="checkHumidityData1" onclick="$('#inputHumidity').prop('disabled', true);" checked>
-	        <label class="ms-1" for="checkHumidityData1">Random value</label>
+            <input class="form-check-input mt-0" type="radio" name="checkHumidityData" value="Humidity_random" id="checkHumidityData1" onclick="$('#inputHumidity').prop('disabled', true);" checked>
+            <label class="ms-1" for="checkHumidityData1">Random value</label>
         </div>
         <div class="input-group-text"> 
-	        <input class="form-check-input mt-0" type="radio" name="checkHumidityData" value="Humidity_value" id="checkHumidityData2" onclick="$('#inputHumidity').prop('disabled', false);">
-	        <label class="ms-1" for="checkHumidityData2">Humidity Value:</label>
+            <input class="form-check-input mt-0" type="radio" name="checkHumidityData" value="Humidity_value" id="checkHumidityData2" onclick="$('#inputHumidity').prop('disabled', false);">
+            <label class="ms-1" for="checkHumidityData2">Humidity Value:</label>
         </div>
         <input type="text" class="form-control" id="inputHumidity" placeholder="value" aria-label="inputHumidity" aria-describedby="inputHumidity" disabled="disabled">
     </div>
@@ -207,13 +207,13 @@
         <div class="input-group-text">
             <input class="form-check-input mt-0" type="radio" name="checkAdcCh4Data" value="AdcCh4_value" id="checkAdcCh4Data2" onclick="$('#inputAdcCh4').prop('disabled', false);">
             <label class="ms-1" for="checkAdcCh4Data2">ADC Channel 4 Value:</label>
-        </div>       
+        </div>
         <input type="text" class="form-control" id="inputAdcCh4" placeholder="value" aria-label="inputAdcCh4" aria-describedby="inputAdcCh4" disabled="disabled">
     </div>
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mySensorsFieldsetLegend">Send ttn data to server</legend>
+    <legend class="float-none mySensorsFieldsetLegend">Send ttn data to server</legend>
     <button class="btn btn-primary" onclick="sendttn()">Single package</button>
     <div style="float:inline-end">
     <button class="btn btn-primary" onclick="sendttninterval()" id="btnsendttninterval">Start interval</button>
@@ -224,7 +224,7 @@
 </fieldset>
 
 <fieldset>
-	<legend class="float-none mySensorsFieldsetLegend">Log</legend>
+    <legend class="float-none mySensorsFieldsetLegend">Log</legend>
     <div id="txtLog">
     </div>
 </fieldset>
@@ -317,12 +317,12 @@
             method: "POST",
             url: "testttn.php",
             data: {
-                url: destUrl, 
+                url: destUrl,
                 ttncounter: ttncounter,
                 tempbattery: tempbattery,
                 pressure: pressure,
                 temperature: temperature,
-                dewpoint: dewpoint, 
+                dewpoint: dewpoint,
                 humidity: humidity,
                 latitude: gpsdata['lat'],
                 longitude: gpsdata['long'],

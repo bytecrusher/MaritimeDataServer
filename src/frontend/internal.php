@@ -3,14 +3,14 @@
   * File for Display Data for the user
   *
   */
-  // TODO add the Option to define Virtual Sensor group, to group them visual.
+  // Note: add the option to define virtual sensor groups for visual grouping.
 
   session_start();
-  require_once("func/dbConfig.func.php");
-  require_once("func/myFunctions.func.php");
-  require_once("func/user.class.php");
-  require_once("func/board.class.php");
-  require_once("func/writeToLogFunction.func.php");
+  require_once "func/dbConfig.func.php";   // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+  require_once "func/myFunctions.func.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+  require_once "func/user.class.php";      // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+  require_once "func/board.class.php";      // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+  require_once "func/writeToLogFunction.func.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
 
   if (isset($_SESSION['userObj'])) {
     $currentUser = unserialize($_SESSION['userObj']);
@@ -20,8 +20,8 @@
     die();
   }
 
-  include(__DIR__ . "/common/header.inc.php");
-  include("func/get_data.php");
+  include_once __DIR__ . "/common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
+  include_once "func/get_data.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
   $config = new configuration();
   $varDemoMode = $config::$demoMode;
 ?>
@@ -38,7 +38,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
 
 <?php
-  if ($currentUser != false) {
+  if ($currentUser) {
     $myBoardsIdList = $currentUser->getMyBoardsAll();
   }
   $boardObjsArray = array();
@@ -57,7 +57,7 @@
   var gaugesMap = new Map();
   var gaugesArrayHelperBig = new Array();
 
-  function checkSession() { 
+  function checkSession() {
     $.ajax({
       method: "POST",
       url: "api/checkSession.php",
@@ -71,7 +71,7 @@
     });
   }
 
-  function updateGauges() { 
+  function updateGauges() {
     checkSession();
     var varIdent = getCookie("identifier");
     var varToken = getCookie("securityToken");
@@ -84,7 +84,7 @@
 
     for (let i in gaugesArrayHelper) {
       varSensorId = gaugesArrayHelper[i];
-      varSensorId = varSensorId.slice(0, -2); 
+      varSensorId = varSensorId.slice(0, -2);
 
       $.ajax({
         method: "POST",
@@ -94,7 +94,7 @@
       .done(function( response ) {
         text = response;
         obj = JSON.parse(text);
-        for (let i4 = 1; i4 < obj.length; i4++) {   
+        for (let i4 = 1; i4 < obj.length; i4++) {
           try {
             //console.error("obj[0]+i4:" + obj[0]+"."+i4 + ", " + gaugesArrayHelper.includes(obj[0]+"."+i4));
             if (gaugesArrayHelper.includes(obj[0]+"."+i4)) {
@@ -108,8 +108,8 @@
     }
   }
 
-  var DashboardUpdateInterval = <?php echo($currentUser->getDashboardUpdateInterval()); ?> * 10000;
-  setInterval(function() { 
+  var DashboardUpdateInterval = <?php echo $currentUser->getDashboardUpdateInterval(); ?> * 10000;
+  setInterval(function() {
     // run every 30 seconds
     updateGauges();
   }, DashboardUpdateInterval);
@@ -118,7 +118,7 @@
 <div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
     <div class="container">
       <h1>Welcome <?php echo htmlentities($currentUser->getFirstName()); ?>
-      <?php 
+      <?php
       if (configuration::$demoMode) {
         echo htmlentities("  (Demo mode)");
       }
@@ -130,12 +130,9 @@
   <div class="container" style="padding: 0px">
     <div id="alert-container">
       <?php
-        if(($currentUser->getUserGroupAdmin() == 1) ) {
-          // test if install folder exist
-          if (is_dir('./../install')) {
-            echo "<div class='alert alert-danger alert-dismissible' role='alert'>Please remember to remove \"install\" dir. <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
-          }
-				}
+        if($currentUser->getUserGroupAdmin() == 1 && is_dir('./../install')) {
+          echo "<div class='alert alert-danger alert-dismissible' role='alert'>Please remember to remove \"install\" dir. <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
+        }
 
         if ($currentUser->getMyBoardsAll() == null) {
           echo "<div class='alert alert-danger' role='alert'>No Board added. Please add a board first.</div>";
@@ -144,7 +141,7 @@
     </div>
 
     <!-- Nav tabs -->
-    <ul class="nav nav-tabs" role="tablist">
+    <ul class="nav nav-tabs">
       <li class="nav-item">
         <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" style="padding-right: 8px;padding-left: 8px;">Dashboard</a>
       </li>
@@ -158,12 +155,12 @@
         <a class="nav-link" data-bs-toggle="tab" href="#mapContainer" id='hrefmap' style="padding-right: 8px;padding-left: 8px;">Map</a>
       </li>
       <?php
-				if(($currentUser->getUserGroupAdmin() == 1) ) {
-				?>
-					<li class='nav-item' role='presentation'><a class='nav-link' href='#debug' role='tab' data-bs-toggle='tab'>Debug</a></li>
-				<?php
-				}
-			?>
+        if($currentUser->getUserGroupAdmin() == 1 ) {
+      ?>
+        <li class='nav-item'><a class='nav-link' href='#debug' role='tab' data-bs-toggle='tab'>Debug</a></li>
+        <?php
+        }
+        ?>
     </ul>
 
     <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px; background: white">
@@ -211,7 +208,7 @@
                 <?php
                 if ($mySensors2 != null) {
                   foreach($mySensors2 as $singleRowMySensors) {
-                    $mySensors = myFunctions::getLatestSensorData($singleRowMySensors['id']);                    
+                    $mySensors = myFunctions::getLatestSensorData($singleRowMySensors['id']);
                     foreach($mySensors as $singleRowMySensorsLastTimeSeen) {
                       $sensortype = myFunctions::getSensorType($singleRowMySensors['typId']);
                       $sensConfig = myFunctions::getSensorConfig($singleRowMySensors['id']);
@@ -259,11 +256,11 @@
                               valueToPush["typId"] = "<?php echo $singleRowMySensors['typId']; ?>";
                               valueToPush["typename"] = "<?php echo $singleRowMySensors['typename']; ?>";
                               valueToPush["NrOfSensors"] = "<?php echo $singleRowMySensors['NrOfUsedSensors']; ?>";
-                              valueToPush["channelNr"] = "<?php echo($SensorChannelConfigSingle['channelNr']); ?>";
-                              valueToPush["NameOfSensors"] = "<?php echo($singleRowMySensors['name']); ?>.<?php echo $SensorChannelConfigSingle['name']; ?>";
-                              valueToPush["ChartColor"] = "<?php echo($SensorChannelConfigSingle['ChartColor']); ?>";
-                              valueToPush["BoardName"] = "<?php echo($singleRowmyboard->getName()); ?>";
-                              valueToPush["onDashboard"] = "<?php echo($SensorChannelConfigSingle['onDashboard']); ?>";
+                              valueToPush["channelNr"] = "<?php echo $SensorChannelConfigSingle['channelNr']; ?>";
+                              valueToPush["NameOfSensors"] = "<?php echo $singleRowMySensors['name']; ?>.<?php echo $SensorChannelConfigSingle['name']; ?>";
+                              valueToPush["ChartColor"] = "<?php echo $SensorChannelConfigSingle['ChartColor']; ?>";
+                              valueToPush["BoardName"] = "<?php echo $singleRowmyboard->getName(); ?>";
+                              valueToPush["onDashboard"] = "<?php echo $SensorChannelConfigSingle['onDashboard']; ?>";
                               gaugesArrayHelperBig.push(valueToPush);
                               // TODO currently the DS2438 is not supported
                             </script>
@@ -274,17 +271,6 @@
                   }
                 }
                 ?>
-
-                <!--li id='gauge' data-id='10' class='ui-state-default justify-content-center gauge-container two bg-secondary rounded border border-dark text-light'>
-                  <div id='div_click_settings' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
-                    <i id='click_settings' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
-                     </i>
-                  </div>
-                  <div style='height:30px;'>Bilge Alarm</div>
-                  <div class="text-center">
-                    <i class="bi bi-water"></i>
-                  </div>
-                </li-->
 
                 </ul>
               </fieldset>
@@ -298,7 +284,7 @@
       </div>
 
       <!-- Show temperatures as chart -->
-      <!-- TODO: for every board its own canvas. -->
+      <!-- Note: for every board its own canvas. -->
       <div class="container tab-pane fade pl-0 pr-0" id="charts">
         <fieldset>
           <div id="chart-container">
@@ -315,7 +301,7 @@
       <!-- Show Board overview -->
       <div class="container tab-pane fade pl-0 pr-0" id="boards">
         <fieldset>
-            <?php          
+            <?php
             foreach($boardObjsArray as $singleBoardObj) {
               $transmissionPath = 0;
               $mySensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
@@ -364,9 +350,7 @@
                       <span class='badge bg-success mr-2' style='width: 55px;'>Lora</span>
                     <?php
                   } else {
-                      ?>
-                      <!--span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span-->
-                    <?php
+                    // no specific transmission path badge
                   }
                 } else {
                 ?>
@@ -375,7 +359,7 @@
                 }
                 ?>
 
-                  <label class='control-label' style='padding-left: 5px'><?php echo($singleBoardObj->getName()) ?> (<?php echo($singleBoardObj->getMacAddress()) ?>)</label>
+                  <span class='control-label' style='padding-left: 5px'><?php echo $singleBoardObj->getName(); ?> (<?php echo $singleBoardObj->getMacAddress(); ?>)</span>
               </div>
             <?php
             }
@@ -385,11 +369,11 @@
 
       <!-- Show temperatures as table, only for admin -->
       <div class="container tab-pane fade pl-0 pr-0" id="debug">
-        <div class="p-2" id="chart-container">
+        <div class="p-2" id="chart-container-debug">
           All Sensor Values as a table from ttnDataLoraBoatMonitor:
         </div>
         <?php
-            include("./../receiver/ttndata/index.php");
+            include_once "./../receiver/ttndata/index.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
           ?>
       </div>
 
@@ -397,7 +381,7 @@
       <div class="container tab-pane fade pl-0" id="mapContainer">
         <div class="row mt-2">
           <div class="container">
-            <?php include("./openstreetmaps.php"); ?>
+            <?php include_once "./openstreetmaps.php"; // NOSONAR - Legacy Template-Einbindung ?>
           </div>
         </div>
       </div>
@@ -406,7 +390,7 @@
   </div>
 
   <!-- Modal -->
-  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" role="dialog"  aria-hidden="true">
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <!-- definition in "formSensors.php"-->
@@ -523,5 +507,5 @@
     }
     </script>
   <?php
-    include("common/footer.inc.php");
+    include_once "common/footer.inc.php"; // NOSONAR - Legacy Template-Einbindung
   ?>
