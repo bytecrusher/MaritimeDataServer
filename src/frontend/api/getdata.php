@@ -1,60 +1,77 @@
 <?php
 // Get data from DB for display in JS.
+header('Content-Type: application/json');
+
 require_once("../func/myFunctions.func.php");
 require_once("../func/get_data.php");
 
-//require_once(dirname(__FILE__, 2) . '/../../configuration.php');
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;
 
-$varIdent = $_POST['identifier'];
-$varToken = $_POST['securityToken'];
-$varData = $_POST['data'];
-$varSensorId = $_POST['sensorId'];
-$varNrOfValues = $_POST['NrOfValues'];
+$varIdent = $_POST['identifier'] ?? '';
+$varToken = $_POST['securityToken'] ?? '';
+$varData = $_POST['data'] ?? '';
+$varSensorId = isset($_POST['sensorId']) ? (int)$_POST['sensorId'] : 0;
+$varNrOfValues = isset($_POST['NrOfValues']) ? (int)$_POST['NrOfValues'] : 1;
 
-if (isset($varIdent) && isset($varToken) && isset($varData)) {
-    if ( (!empty($varIdent)) && (!empty($varToken) ) && (!empty($varData))) {
-        // TODO check if identifier and token exist in DB.
-        if (($varData == "sensor") && isset($varSensorId) ) {
-            $SensorType = (myFunctions::getSensorConfig($varSensorId));
-            $mySensors = myFunctions::getLatestSensorData($varSensorId, $varNrOfValues);
-            if (isset($mySensors)) {
-                $data = array();
-                foreach ($mySensors as &$mySensorSingle) {
-                    $dbTimestamp = strtotime($mySensorSingle['reading_time']);
+if (empty($varIdent) || empty($varToken) || empty($varData)) {
+    http_response_code(400);
+    echo json_encode(array('error' => 'Missing parameters.'));
+    exit;
+}
 
-                    if ($varDemoMode == true) {
-                        $maxTimeout = strtotime("-15 Years");
-                        $deviceOnline = true;
-                    } else {
-                        $boardId = myFunctions::getBoardBySensorId($varSensorId);
-                        $deviceOnline = checkDeviceIsOnline($boardId["boardId"]);
-                        //$maxTimeout = strtotime("-15 Minutes");
-                        //$maxTimeout = strtotime("-" . $boardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
-                    }
+$authenticatedUserId = myFunctions::validateSecurityToken($varIdent, $varToken);
+if ($authenticatedUserId === false) {
+    http_response_code(401);
+    echo json_encode(array('error' => 'Invalid token.'));
+    exit;
+}
 
-                    //if ($dbTimestamp > $maxTimeout) {
-                    if ($deviceOnline) {
-                        //$data[] = $mySensorSingle['value1'];
-                        $data[] = $mySensorSingle['sensorId'];
-                        array_push($data, $mySensorSingle['value1']);
+if (($varData !== "sensor") || ($varSensorId <= 0)) {
+    http_response_code(400);
+    echo json_encode(array('error' => 'Invalid request.'));
+    exit;
+}
 
-                        if ($SensorType['NrOfUsedSensors'] >= 2) {
-                            array_push($data, $mySensorSingle['value2']);
-                        }
-                        if ($SensorType['NrOfUsedSensors'] >= 3) {
-                            array_push($data, $mySensorSingle['value3']);
-                        }
-                        if ($SensorType['NrOfUsedSensors'] >= 4) {
-                            array_push($data, $mySensorSingle['value4']);
-                        }
-                      } else {
-                        $data[] = '.';
-                      }
-                }
-                echo json_encode($data);
-            }
+if (!myFunctions::canUserAccessSensor($authenticatedUserId, $varSensorId)) {
+    http_response_code(403);
+    echo json_encode(array('error' => 'Access denied.'));
+    exit;
+}
+
+$SensorType = myFunctions::getSensorConfig($varSensorId);
+$mySensors = myFunctions::getLatestSensorData($varSensorId, max(1, min($varNrOfValues, 1000)));
+if ($SensorType === false) {
+    http_response_code(404);
+    echo json_encode(array('error' => 'Sensor not found.'));
+    exit;
+}
+
+$data = array();
+foreach ($mySensors as &$mySensorSingle) {
+    if ($varDemoMode == true) {
+        $deviceOnline = true;
+    } else {
+        $boardId = myFunctions::getBoardBySensorId($varSensorId);
+        $deviceOnline = ($boardId !== false) && checkDeviceIsOnline($boardId["boardId"]);
+    }
+
+    if ($deviceOnline) {
+        $data[] = $mySensorSingle['sensorId'];
+        array_push($data, $mySensorSingle['value1']);
+
+        if ($SensorType['NrOfUsedSensors'] >= 2) {
+            array_push($data, $mySensorSingle['value2']);
         }
+        if ($SensorType['NrOfUsedSensors'] >= 3) {
+            array_push($data, $mySensorSingle['value3']);
+        }
+        if ($SensorType['NrOfUsedSensors'] >= 4) {
+            array_push($data, $mySensorSingle['value4']);
+        }
+    } else {
+        $data[] = '.';
     }
 }
+
+echo json_encode($data);

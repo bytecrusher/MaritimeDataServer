@@ -18,7 +18,7 @@
         //$data[] = $row;
         echo "board id: " . $row['id'] . ", ";
         $boardIsOnline = checkDeviceIsOnline($row['id']);
-        if ($row['isOnline']) {
+        if ($boardIsOnline) {
             //$boardIsOnline = checkDeviceIsOnline($row['id']);
             //echo ", Board is Online: " . $boardIsOnline;
             echo ", Board is Online: true";

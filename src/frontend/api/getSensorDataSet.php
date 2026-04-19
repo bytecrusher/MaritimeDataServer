@@ -6,33 +6,44 @@ require_once("../func/dbConfig.func.php");
 require_once("../func/myFunctions.func.php");
 require_once("../func/user.class.php");
 
-$userObj = unserialize($_SESSION['userObj']);
-
 $pdo = dbConfig::getInstance();
 if ( count($_GET) == 0 ) {
   die("Parameter error.");
 }
 header('Content-Type: application/json');
 
-$maxValues = $_GET['maxValues'];
-$sensorId = $_GET['sensorId'];
+$sessionUserId = isset($_SESSION['userId']) ? (int)$_SESSION['userId'] : 0;
+$maxValues = isset($_GET['maxValues']) ? (int)$_GET['maxValues'] : 0;
+$sensorId = isset($_GET['sensorId']) ? (int)$_GET['sensorId'] : 0;
 
-// TODO change to pdo
-if (!$sensorId == null) {
-  $query = sprintf("SELECT * FROM (SELECT id, sensorId, value1, value2, value3, value4, val_date, val_time, reading_time FROM sensorData WHERE sensorId = " . $sensorId . " ORDER BY id DESC LIMIT " . $maxValues . ") sensorData ORDER BY id ASC");
-  $result = $pdo->query($query);
-
-
-  //$statement = $pdo->prepare("SELECT * FROM (SELECT id, sensorId, value1, value2, val_date, val_time, reading_time FROM sensorData WHERE sensorId = " . $sensorId . " ORDER BY id DESC LIMIT " . $maxValues . ") sensorData ORDER BY id ASC VALUES (?, ?)");
-  //$statement->execute(array($sensorId, $maxValues));
-  //$neue_id = $pdo->lastInsertId();
-  //$result = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
-
-
-
-  $data = array();
-  foreach ($result as $row) {
-    $data[] = $row;
-  }
-  echo json_encode($data);
+if ($sessionUserId <= 0) {
+  http_response_code(401);
+  echo json_encode(array('error' => 'Authentication required.'));
+  exit;
 }
+
+if (($sensorId <= 0) || ($maxValues <= 0)) {
+  http_response_code(400);
+  echo json_encode(array('error' => 'Invalid parameters.'));
+  exit;
+}
+
+if (!myFunctions::canUserAccessSensor($sessionUserId, $sensorId)) {
+  http_response_code(403);
+  echo json_encode(array('error' => 'Access denied.'));
+  exit;
+}
+
+$maxValues = min($maxValues, 1000);
+$statement = $pdo->prepare(
+  "SELECT * FROM (
+    SELECT id, sensorId, value1, value2, value3, value4, val_date, val_time, reading_time
+    FROM sensorData
+    WHERE sensorId = ?
+    ORDER BY id DESC
+    LIMIT $maxValues
+  ) sensorData ORDER BY id ASC"
+);
+$statement->execute(array($sensorId));
+$data = $statement->fetchAll(PDO::FETCH_ASSOC);
+echo json_encode($data);

@@ -29,21 +29,28 @@ For the frontend the user needs to login. Now the user is able to do some config
 
 ## Folder description
 
+- **app**
+     - **Application** application services and shared business logic
+     - **Domain** board, sensor and user domain classes
+     - **Infrastructure** config, database and logging infrastructure
+     - **Support** utilities and helper libraries
 - **docu_donotdeploy** folder contains data and images for documentation.
 - **src**
+     - public web root and legacy-compatible entrypoints
      - **frontend** the frontend files for this web project
           - **api** api files for requests from JS.
           - **common** common files like "header" and "footer".
           - **css** stylesheets
-          - **func** php functions for internal use (DB connection, users, boards...).
+          - **func** legacy wrappers that forward to the new app structure
           - **img** images for pages, i.e. board images.
           - **js** javascript files.
           - **register** Files for new user registering.
      - **install** scripts to install and prepare sql DB, create the tables and the admin user.
-     - **logs** log files for debugging.
      - **node_modules** (maybe not exist right now, because it will be created after running npm)
      - **otafirmware** contains OTA files for update ESP.
      - **receiver** functions for receiving Data from MDCs.
+- **var**
+     - **log** runtime log files
 
 
 #### Installation

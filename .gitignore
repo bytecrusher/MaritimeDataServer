@@ -28,3 +28,5 @@ src/simulator/mdsSimulatorConfig.php
 /.aider-desk
 .aider.input.history
 .aider*
+src/simulator/mdsSimulatorConfig.php
+src/cgi-bin/test/test.cgi
