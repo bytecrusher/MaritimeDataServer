@@ -1,5 +1,6 @@
 <?php
-    include("./../frontend/api/get_data.php");
+    require_once(dirname(__DIR__, 2) . "/bootstrap/app.php");
+    require_once(dirname(__DIR__, 2) . "/app/Domain/Board/get_data.php");
         
     $maxtimeout=strtotime("-15 Minutes");
     //echo "aktuelle zeit -x " . date("Y-m-d h:i:sa", $d2) . "<br>";

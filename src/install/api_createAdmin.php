@@ -1,10 +1,10 @@
 <?php
-require_once("../frontend/func/myFunctions.func.php");
-require_once("../frontend/func/dbUpdateData.php");
-require_once("../frontend/func/writeToLogFunction.func.php");
+require_once dirname(__DIR__, 2) . "/../bootstrap/app.php";
+require_once dirname(__DIR__, 2) . "/../app/Application/myFunctions.func.php";
+require_once dirname(__DIR__, 2) . "/../app/Application/dbUpdateData.php";
+require_once dirname(__DIR__, 2) . "/../app/Infrastructure/Logging/writeToLogFunction.func.php";
 
-
-$path = __DIR__ . '/../config.json';
+$path = dirname(__FILE__, 2) . '/../config/config.json';
 $jsonString = file_get_contents($path);
 $jsonData = json_decode($jsonString, true);
 

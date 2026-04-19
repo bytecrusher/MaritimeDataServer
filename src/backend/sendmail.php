@@ -1,7 +1,8 @@
 <?php
-require_once(__DIR__ . "/../frontend/func/dbConfig.func.php");
-require_once(__DIR__ . "/../frontend/func/myFunctions.func.php");
-require_once(__DIR__ . "/../frontend/func/get_data.php");
+require_once(dirname(__DIR__, 2) . "/bootstrap/app.php");
+require_once(dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php");
+require_once(dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php");
+require_once(dirname(__DIR__, 2) . "/app/Domain/Board/get_data.php");
 
 $config = new configuration();
 $var_AdminEmailAddress = $config::$adminEmailAddress;

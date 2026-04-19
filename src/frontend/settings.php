@@ -6,11 +6,12 @@
  */
 
 session_start();
-require_once("func/dbConfig.func.php");
-require_once("func/myFunctions.func.php");
-require_once("func/user.class.php");
-require_once("func/dbUpdateData.php");
-require_once("func/writeToLogFunction.func.php");
+require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
+require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
+require_once dirname(__DIR__, 2) . "/app/Application/dbUpdateData.php";
+require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
 
 $config  = new configuration();
 $varDemoMode = $config::$demoMode;

@@ -27,15 +27,10 @@ class configuration {
     static $applicationName = null;
     
     function __construct() {
-        $projectRoot = dirname(__FILE__, 3);
+        $projectRoot = dirname(__FILE__, 4);
         $legacyPublicRoot = $projectRoot . '/src';
-        $legacyConfigDir = $legacyPublicRoot . '/config';
-        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? "";
-        self::$subDir = $legacyPublicRoot;
-        if ($documentRoot !== "") {
-            self::$subDir = str_replace($documentRoot, "", $legacyPublicRoot);
-        }
-        self::$subDir = rtrim(self::$subDir, '/');
+        $modernConfigDir = $projectRoot . '/config';
+        self::$subDir = self::detectSubDir($projectRoot, $legacyPublicRoot);
 
         #writeToLogFunction::write_to_log(self::$subDir, $_SERVER["SCRIPT_FILENAME"]);
 
@@ -56,8 +51,12 @@ class configuration {
         self::$baseurl = $prefix . $domain . self::$subDir;
 
         $path = "";
-        if (file_exists($legacyConfigDir . '/config.json')) {
-            $path = $legacyConfigDir . '/config.json';
+        $path = $modernConfigDir . '/config.json';
+        if (!file_exists($path)) {
+            $path = $legacyPublicRoot . '/config/config.json';
+        }
+
+        if (file_exists($path)) {
             $jsonString = file_get_contents($path);
             $jsonData = json_decode($jsonString, true);
             self::$dbHost = $jsonData['dbHost'];
@@ -137,13 +136,18 @@ class configuration {
 
     function saveServerSettings($post) {
         try {
+            $projectRoot = dirname(__FILE__, 4);
+            $modernConfigDir = $projectRoot . '/config';
+            if (!is_dir($modernConfigDir)) {
+                mkdir($modernConfigDir, 0775, true);
+            }
             self::$apiKey = $post['apiKey'];
             self::$demoMode = $post['demoMode'];
             self::$ShowQrCode = $post['ShowQrCode'];
             self::$sendEmails = $post['sendEmails'];
             self::$systemEmailAddress = $post['systemEmailAddress'];
             self::$applicationName = $post['applicationName'];
-            $path = $legacyConfigDir . '/config.json';
+            $path = $modernConfigDir . '/config.json';
             $jsonString = file_get_contents($path);
             $jsonData = json_decode($jsonString, true);
             $jsonData['apiKey'] = $post['apiKey'];
@@ -160,5 +164,71 @@ class configuration {
         } catch (PDOException $err) {
             writeToLogFunction::write_to_log("error code: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
         }
+    }
+
+    private static function detectSubDir($projectRoot, $legacyPublicRoot) {
+        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? "";
+        $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? "";
+        $requestUri = $_SERVER['REQUEST_URI'] ?? "";
+
+        if (($documentRoot !== "") && ($scriptFilename !== "") && str_starts_with($scriptFilename, $documentRoot)) {
+            $relativeScript = str_replace($documentRoot, "", $scriptFilename);
+            $relativeScript = str_replace('\\', '/', $relativeScript);
+
+            if (str_starts_with($relativeScript, '/public/')) {
+                return '/public' === dirname($relativeScript) ? '/public' : '/public';
+            }
+
+            foreach (array('/src/frontend/', '/src/receiver/', '/src/install/', '/src/simulator/', '/src/otafirmware/') as $prefix) {
+                if (str_starts_with($relativeScript, $prefix)) {
+                    return '/src';
+                }
+            }
+
+            if (str_starts_with($relativeScript, '/src/')) {
+                return '/src';
+            }
+        }
+
+        if ($requestUri !== "") {
+            if (strpos($requestUri, '/public/') !== false || str_ends_with($requestUri, '/public') || str_contains($requestUri, '/public?')) {
+                return self::extractMountPath($requestUri, '/public');
+            }
+
+            foreach (array('/src/frontend/', '/src/receiver/', '/src/install/', '/src/simulator/', '/src/otafirmware/', '/src/') as $needle) {
+                if (strpos($requestUri, $needle) !== false) {
+                    return self::extractMountPath($requestUri, '/src');
+                }
+            }
+        }
+
+        if (is_dir($projectRoot . '/public')) {
+            return self::pathFromDocumentRoot($projectRoot . '/public');
+        }
+
+        return self::pathFromDocumentRoot($legacyPublicRoot);
+    }
+
+    private static function extractMountPath($requestUri, $rootSegment) {
+        $uriPath = parse_url($requestUri, PHP_URL_PATH);
+        if ($uriPath === false || $uriPath === null) {
+            $uriPath = $requestUri;
+        }
+
+        $position = strpos($uriPath, $rootSegment);
+        if ($position === false) {
+            return $rootSegment;
+        }
+
+        return substr($uriPath, 0, $position + strlen($rootSegment));
+    }
+
+    private static function pathFromDocumentRoot($absolutePath) {
+        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? "";
+        if (($documentRoot !== "") && str_starts_with($absolutePath, $documentRoot)) {
+            return rtrim(str_replace($documentRoot, "", $absolutePath), '/');
+        }
+
+        return rtrim($absolutePath, '/');
     }
 }

@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Install script</title>
 
-  <?php include(__DIR__ . "/../frontend/common/includes.php"); ?>
+  <?php
+    require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+    include(__DIR__ . "/../frontend/common/includes.php");
+  ?>
 
   <style>
     #pageMessages {
@@ -51,7 +54,7 @@
     $var_dbName = $var_dbUserName = $var_dbPassword = $var_apiKey = $var_md5secretString = null;
     $var_dbHostName = "localhost";
 
-    require_once(__DIR__ . '/../config/configuration.php');
+    require_once dirname(__DIR__, 2) . "/app/Infrastructure/Config/configuration.php";
 
     $config = new configuration();
     //$var_dbHost = $config::$dbHost;

@@ -1,0 +1,20 @@
+{
+  "name": "bytecrusher/maritimedataserver",
+  "description": "Maritime Data Server",
+  "type": "project",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    },
+    "classmap": [
+      "app/Application",
+      "app/Domain",
+      "app/Infrastructure",
+      "app/Support"
+    ],
+    "files": [
+      "app/Domain/Board/get_data.php"
+    ]
+  }
+}

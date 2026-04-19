@@ -17,7 +17,9 @@ node_modules/*
 otafirmware/*
 myREADME.md
 config.json
+config/config.json
 src/config.json
+vendor/
 simulator/mdsSimulatorConfig.php
 src/package_old.json
 src/simulator/mdsSimulatorConfig.php
@@ -30,3 +32,4 @@ src/simulator/mdsSimulatorConfig.php
 .aider*
 src/simulator/mdsSimulatorConfig.php
 src/cgi-bin/test/test.cgi
+config/config_old.json

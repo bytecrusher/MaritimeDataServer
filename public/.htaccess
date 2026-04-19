@@ -1,0 +1,10 @@
+DirectoryIndex index.php
+
+RewriteEngine On
+
+RewriteRule ^frontend/func/ - [F,L]
+RewriteRule ^frontend/common/ - [F,L]
+
+RedirectPermanent /index.html /frontend/index.php
+RedirectPermanent /index.htm /frontend/index.php
+RedirectPermanent /index.php /frontend/index.php

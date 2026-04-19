@@ -1,8 +1,9 @@
 <?php
 session_start();
-require_once "func/dbConfig.func.php";   // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
-require_once "func/myFunctions.func.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
-require_once "func/user.class.php";      // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
+require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
 include_once "common/header.inc.php";    // NOSONAR - Legacy Template-Einbindung
 
 if (isset($_SESSION['userObj'])) {

@@ -1,8 +1,9 @@
 <?php
   session_start();
-  require_once("func/myFunctions.func.php");
-  require_once("func/user.class.php");
-  require_once("func/dbUpdateData.php");
+  require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+  require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+  require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
+  require_once dirname(__DIR__, 2) . "/app/Application/dbUpdateData.php";
 
   if (isset($_SESSION['userObj'])) {
     $currentUser = unserialize($_SESSION['userObj']);

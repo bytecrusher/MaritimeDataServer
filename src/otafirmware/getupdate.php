@@ -12,7 +12,8 @@
 header('Content-type: text/plain; charset=utf8', true);
 $headers = getallheaders();
 
-require_once("../frontend/func/myFunctions.func.php");
+require_once(dirname(__DIR__, 2) . "/bootstrap/app.php");
+require_once(dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php");
 
 function check_header($name, $value = false) {
     global $headers;

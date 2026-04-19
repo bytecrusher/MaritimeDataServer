@@ -1,5 +1,6 @@
 <?php
-require_once("func/dbUpdateData.php");
+require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+require_once dirname(__DIR__, 2) . "/app/Application/dbUpdateData.php";
 
 if (! empty($_GET["id"])) {
     $result = dbUpdateData::activateUserStatus($_GET["id"]);
@@ -17,7 +18,7 @@ if (! empty($_GET["id"])) {
 <head>
 <?php
 	session_start();
-	require_once(__DIR__ . "/func/myFunctions.func.php");
+	require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
 	include(__DIR__ . "/common/header.inc.php");
 ?>
 <div class="container main-container registration-form">
@@ -35,4 +36,3 @@ include("./common/footer.inc.php")
 ?>
 </body>
 </html>
-

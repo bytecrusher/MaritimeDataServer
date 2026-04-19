@@ -7,8 +7,9 @@ unset($_SESSION['userId']);
 setcookie("identifier","",time()-(3600*24*365));
 setcookie("securityToken","",time()-(3600*24*365));
 
-require_once "func/dbConfig.func.php";
-require_once "func/myFunctions.func.php";
+require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
+require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
 
 include_once "common/header.inc.php";
 ?>

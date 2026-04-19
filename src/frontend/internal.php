@@ -6,11 +6,12 @@
   // Note: add the option to define virtual sensor groups for visual grouping.
 
   session_start();
-  require_once "func/dbConfig.func.php";   // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
-  require_once "func/myFunctions.func.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
-  require_once "func/user.class.php";      // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
-  require_once "func/board.class.php";      // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
-  require_once "func/writeToLogFunction.func.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+  require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+  require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
+  require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+  require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
+  require_once dirname(__DIR__, 2) . "/app/Domain/Board/board.class.php";
+  require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
 
   if (isset($_SESSION['userObj'])) {
     $currentUser = unserialize($_SESSION['userObj']);
@@ -21,7 +22,7 @@
   }
 
   include_once __DIR__ . "/common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
-  include_once "func/get_data.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+  require_once dirname(__DIR__, 2) . "/app/Domain/Board/get_data.php";
   $config = new configuration();
   $varDemoMode = $config::$demoMode;
 ?>

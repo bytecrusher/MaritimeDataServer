@@ -1,6 +1,7 @@
 <?php
-require_once(__DIR__ . "/func/myFunctions.func.php");
-require_once("func/dbUpdateData.php");
+require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+require_once dirname(__DIR__, 2) . "/app/Application/dbUpdateData.php";
 //require_once(__DIR__ . "/../../configuration.php");
 
 $config = new configuration();
@@ -73,8 +74,7 @@ if (count($_POST) > 0) {
 <head>
 <?php
 	session_start();
-	//require_once(__DIR__ . "/func/myFunctions.func.php");
-	require_once(__DIR__ . "/func/user.class.php");
+	require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
 	include(__DIR__ . "/common/header.inc.php");
 ?>
 <title>User Registration</title>

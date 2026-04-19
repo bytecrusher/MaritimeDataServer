@@ -9,7 +9,8 @@
  * @license TBD
  */
 
-require_once dirname(__FILE__, 3) . "/src/frontend/func/writeToLogFunction.func.php";
+require_once dirname(__FILE__, 2) . "/../bootstrap/app.php";
+require_once dirname(__FILE__, 2) . "/../app/Infrastructure/Logging/writeToLogFunction.func.php";
 
 // Einheitlicher Response-Typ für das Ajax im Simulator
 header('Content-Type: text/plain; charset=utf-8');

@@ -44,10 +44,14 @@ if (isset($_POST["action"])) {
         }
       }
       
-      if (!file_exists(__DIR__ . '/../config.json')) {
-        touch(__DIR__ . '/../config.json');
+      $configDir = dirname(__FILE__, 2) . '/../config';
+      if (!is_dir($configDir)) {
+        mkdir($configDir, 0775, true);
       }
-      $path = __DIR__ . '/../config.json';
+      $path = $configDir . '/config.json';
+      if (!file_exists($path)) {
+        touch($path);
+      }
 
       $jsonString = file_get_contents($path);
       $jsonData = json_decode($jsonString, true);

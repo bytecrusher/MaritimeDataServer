@@ -31,10 +31,18 @@ For the frontend the user needs to login. Now the user is able to do some config
 
 - **app**
      - **Application** application services and shared business logic
+     - **Bootstrap** bootstrap and path helpers for startup
      - **Domain** board, sensor and user domain classes
+     - **Http** browser APIs, ingest endpoints and webhooks
      - **Infrastructure** config, database and logging infrastructure
      - **Support** utilities and helper libraries
+- **bootstrap**
+     - startup bootstrap for web and CLI entrypoints
+- **config**
+     - non-public runtime configuration like `config.json`
 - **docu_donotdeploy** folder contains data and images for documentation.
+- **public**
+     - preferred web root for web server configuration
 - **src**
      - public web root and legacy-compatible entrypoints
      - **frontend** the frontend files for this web project
