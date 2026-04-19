@@ -1,31 +1,197 @@
 <?php
 /**
- * Class for handling "write to log".
+ * Central logging helper for the project.
  *
  * @author: Guntmar Hoeche
  * @license: TBD
  */
 
-require_once(dirname(__FILE__) . "/../../config/configuration.php");
+class writeToLogFunction
+{
+    private static $handlersRegistered = false;
 
-class writeToLogFunction {
-  public static function write_to_log($text, $source)
-  {
-    $format = "log"; // Possibilities: csv and txt
-    date_default_timezone_set('Europe/Berlin');
-    $datum_zeit = date("d.m.Y H:i:s");
-    $months = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
-    $month = date("n");
-    $year = date("Y");
-    $filename = dirname(__FILE__) . "/../../logs/log_" . $months[$month] . "_$year.$format";
-    $header = "Date       Time     File           Log Info";
-    $write_header = !file_exists($filename);
-    if ($write_header) {
-      error_log( print_r($header . "\r\n", true), 3, $filename );
+    public static function registerGlobalHandlers()
+    {
+        if (self::$handlersRegistered) {
+            return;
+        }
+
+        self::$handlersRegistered = true;
+
+        set_error_handler(function ($severity, $message, $file, $line) {
+            $errorMessage = sprintf('%s in %s:%d', $message, $file, $line);
+            self::logBySeverity($severity, $errorMessage, $file);
+            return false;
+        });
+
+        set_exception_handler(function ($throwable) {
+            self::exception($throwable, $throwable->getFile());
+        });
+
+        register_shutdown_function(function () {
+            $lastError = error_get_last();
+            if ($lastError === null) {
+                return;
+            }
+
+            $fatalTypes = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR);
+            if (in_array($lastError['type'], $fatalTypes, true)) {
+                $message = sprintf(
+                    'Fatal shutdown error: %s in %s:%d',
+                    $lastError['message'],
+                    $lastError['file'],
+                    $lastError['line']
+                );
+                self::error($message, $lastError['file']);
+            }
+        });
     }
-    error_log( print_r($datum_zeit . " " . basename($source) . ": ", true), 3, $filename );
-    error_log( print_r($text, true), 3, $filename );
-    error_log( print_r("\r\n", true), 3, $filename );
-    return;
-  }
+
+    public static function write_to_log($text, $source, $level = 'INFO', array $context = array())
+    {
+        self::registerGlobalHandlers();
+
+        date_default_timezone_set('Europe/Berlin');
+        $datumZeit = date('d.m.Y H:i:s');
+        $months = array(
+            1 => 'Januar',
+            2 => 'Februar',
+            3 => 'Maerz',
+            4 => 'April',
+            5 => 'Mai',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'August',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Dezember'
+        );
+        $month = date('n');
+        $year = date('Y');
+        $filename = dirname(__FILE__) . '/../../logs/log_' . $months[$month] . '_' . $year . '.log';
+        $header = 'Date Time Level Source Message';
+
+        if (!file_exists($filename)) {
+            error_log($header . PHP_EOL, 3, $filename);
+        }
+
+        $normalizedSource = self::normalizeSource($source);
+        $context = self::buildContext($context);
+        $message = self::stringify($text);
+        $line = sprintf(
+            '[%s] [%s] [%s] %s%s',
+            $datumZeit,
+            strtoupper((string)$level),
+            $normalizedSource,
+            $message,
+            self::formatContext($context)
+        );
+
+        error_log($line . PHP_EOL, 3, $filename);
+    }
+
+    public static function info($text, $source, array $context = array())
+    {
+        self::write_to_log($text, $source, 'INFO', $context);
+    }
+
+    public static function debug($text, $source, array $context = array())
+    {
+        self::write_to_log($text, $source, 'DEBUG', $context);
+    }
+
+    public static function warning($text, $source, array $context = array())
+    {
+        self::write_to_log($text, $source, 'WARNING', $context);
+    }
+
+    public static function error($text, $source, array $context = array())
+    {
+        self::write_to_log($text, $source, 'ERROR', $context);
+    }
+
+    public static function exception($throwable, $source, array $context = array())
+    {
+        $payload = array_merge(
+            $context,
+            array(
+                'exceptionClass' => get_class($throwable),
+                'exceptionMessage' => $throwable->getMessage(),
+                'exceptionFile' => $throwable->getFile(),
+                'exceptionLine' => $throwable->getLine(),
+            )
+        );
+
+        self::write_to_log($throwable->getTraceAsString(), $source, 'EXCEPTION', $payload);
+    }
+
+    private static function logBySeverity($severity, $message, $source)
+    {
+        $level = 'ERROR';
+        if (in_array($severity, array(E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED), true)) {
+            $level = 'NOTICE';
+        } elseif (in_array($severity, array(E_WARNING, E_USER_WARNING, E_CORE_WARNING, E_COMPILE_WARNING), true)) {
+            $level = 'WARNING';
+        }
+
+        self::write_to_log($message, $source, $level);
+    }
+
+    private static function normalizeSource($source)
+    {
+        if (is_string($source) && $source !== '') {
+            return basename($source);
+        }
+
+        if (isset($_SERVER['SCRIPT_FILENAME']) && $_SERVER['SCRIPT_FILENAME'] !== '') {
+            return basename($_SERVER['SCRIPT_FILENAME']);
+        }
+
+        return 'unknown-source';
+    }
+
+    private static function buildContext(array $context)
+    {
+        if (isset($_SERVER['REQUEST_METHOD'])) {
+            $context['requestMethod'] = $_SERVER['REQUEST_METHOD'];
+        }
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $context['requestUri'] = $_SERVER['REQUEST_URI'];
+        }
+        if (isset($_SERVER['REMOTE_ADDR'])) {
+            $context['remoteAddr'] = $_SERVER['REMOTE_ADDR'];
+        }
+
+        return $context;
+    }
+
+    private static function formatContext(array $context)
+    {
+        if (empty($context)) {
+            return '';
+        }
+
+        return ' | context=' . self::stringify($context);
+    }
+
+    private static function stringify($value)
+    {
+        if ($value instanceof Throwable) {
+            return $value->getMessage();
+        }
+
+        if (is_scalar($value) || $value === null) {
+            return (string)$value;
+        }
+
+        $json = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json !== false) {
+            return $json;
+        }
+
+        return print_r($value, true);
+    }
 }
+
+writeToLogFunction::registerGlobalHandlers();

@@ -42,40 +42,35 @@ date_default_timezone_set('Europe/Berlin');
 $pdo2 = dbConfig::getInstance();
 $config = new configuration();
 
-#writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
-
-$ttn_post = file('php://input');
+$ttn_post = file_get_contents('php://input');
 $data = null;
-//writeToLogFunction::write_to_log($ttn_post, $_SERVER["SCRIPT_FILENAME"]);
-if(sizeof($ttn_post) > 0) {
-    $data = json_decode($ttn_post[0]);
-    //$data = json_decode($ttn_post);
-    //writeToLogFunction::write_to_log($data, $_SERVER["SCRIPT_FILENAME"]);
-    //writeToLogFunction::write_to_log('ttn.php', $_SERVER["SCRIPT_FILENAME"]);
+if(strlen($ttn_post) > 0) {
+    $data = json_decode($ttn_post);
     $sensor_raw_payload = null;
+    $ttn_device_id = null;
+    $ttn_dev_eui = null;
+    $ttn_board_identifier = null;
 
-    if(($data != null) && ($data->uplink_message->decoded_payload != null)) {
-        //$payloadversion = $data->uplink_message->decoded_payload->payloadversion;
+    if(($data != null) && isset($data->uplink_message) && isset($data->uplink_message->decoded_payload) && ($data->uplink_message->decoded_payload != null)) {
         $sensor_temperature = $sensor_humidity = $sensor_battery = 0;       // define Variables
 
         // Sensor Data
-        $sensor_alarm1 = $data->uplink_message->decoded_payload->alarm1;
-        $sensor_altitude = $data->uplink_message->decoded_payload->altitude;
+        $decodedPayload = $data->uplink_message->decoded_payload;
+        $sensor_alarm1 = $decodedPayload->alarm1 ?? 0;
+        $sensor_altitude = $decodedPayload->altitude ?? 0;
         if (isset($data->uplink_message->decoded_payload->counter)) {
           $frame_counter = $data->uplink_message->decoded_payload->counter;
         } else {
           $frame_counter = 0;
         }
         
-        $sensor_dewpoint = $data->uplink_message->decoded_payload->dewpoint;
-        $sensor_humidity = $data->uplink_message->decoded_payload->humidity;
+        $sensor_dewpoint = $decodedPayload->dewpoint ?? 0;
+        $sensor_humidity = $decodedPayload->humidity ?? 0;
         if(isset($data->uplink_message->decoded_payload->Hum_SHT)) {
           $sensor_humidity = $data->uplink_message->decoded_payload->Hum_SHT;
-        } else {
-          //$sensor_humidity = 0;
         }
 
-        $sensor_latitude = $data->uplink_message->decoded_payload->latitude;
+        $sensor_latitude = $decodedPayload->latitude ?? 0;
         if(isset($data->uplink_message->decoded_payload->level1)) {
           $sensor_level1 = $data->uplink_message->decoded_payload->level1;
         } else {
@@ -87,10 +82,10 @@ if(sizeof($ttn_post) > 0) {
         } else {
           $sensor_level2 = 0;
         }
-        $sensor_longitude = $data->uplink_message->decoded_payload->longitude;
-        $position_lat = $data->uplink_message->decoded_payload->position->context->lat;
-        $position_lng = $data->uplink_message->decoded_payload->position->context->lng;
-        $sensor_pressure = $data->uplink_message->decoded_payload->pressure;
+        $sensor_longitude = $decodedPayload->longitude ?? 0;
+        $position_lat = $decodedPayload->position->context->lat ?? 0;
+        $position_lng = $decodedPayload->position->context->lng ?? 0;
+        $sensor_pressure = $decodedPayload->pressure ?? 0;
         if(isset($data->uplink_message->decoded_payload->relay)) {
           $sensor_relay = $data->uplink_message->decoded_payload->relay;
         } else {
@@ -130,13 +125,32 @@ if(sizeof($ttn_post) > 0) {
         $sensor_raw_payload = $data->uplink_message->frm_payload;
 
         // TTN Data
-        $gtw_id = $data->uplink_message->rx_metadata[0]->gateway_ids->gateway_id;
-        $gtw_rssi = $data->uplink_message->rx_metadata[0]->rssi;
-        $gtw_snr = $data->uplink_message->rx_metadata[0]->snr;
+        $gtw_id = $data->uplink_message->rx_metadata[0]->gateway_ids->gateway_id ?? '';
+        $gtw_rssi = $data->uplink_message->rx_metadata[0]->rssi ?? 0;
+        $gtw_snr = $data->uplink_message->rx_metadata[0]->snr ?? 0;
 
         $ttn_app_id = $data->end_device_ids->application_ids->application_id;
-        $ttn_dev_id = $data->end_device_ids->dev_eui;
+        $ttn_device_id = $data->end_device_ids->device_id ?? null;
+        $ttn_dev_eui = $data->end_device_ids->dev_eui ?? null;
+        $ttn_dev_id = $ttn_dev_eui;
+        $ttn_board_identifier = $ttn_device_id ?: $ttn_dev_eui;
         $ttn_time = $data->received_at;
+        writeToLogFunction::info(
+            'TTN uplink received.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'ttnAppId' => $ttn_app_id,
+                'ttnDeviceId' => $ttn_device_id,
+                'ttnDevEui' => $ttn_dev_eui,
+                'frameCounter' => $frame_counter
+            )
+        );
+    } else {
+        writeToLogFunction::warning(
+            'TTN payload missing decoded_payload.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array('rawPayload' => $ttn_post)
+        );
     }
 
     $DATABASE_HOST = $config::$dbHost;
@@ -157,57 +171,80 @@ if(sizeof($ttn_post) > 0) {
     }
 
     // TODO: insert data into 'sensordata' (first get Board-ID by TTN Appid and Devid)
-    $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_id);
+    $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
     $myFunctions = new myFunctions();
     
     // if board not exist, create it.
     if (!$singleRowBoardIdbyTTN) {
-        $newId = myFunctions::addBoardByTTN($ttn_app_id, $ttn_dev_id);
-        //echo("new board created. BoardID: " . $newId);
-        writeToLogFunction::write_to_log('new board created. BoardID: ' . $newId, $_SERVER["SCRIPT_FILENAME"]);
-        $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_id);
+        $newId = myFunctions::addBoardByTTN($ttn_app_id, $ttn_board_identifier);
+        writeToLogFunction::info(
+            'New board created from TTN uplink.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'boardId' => $newId,
+                'ttnAppId' => $ttn_app_id,
+                'ttnDeviceIdentifier' => $ttn_board_identifier
+            )
+        );
+        $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
     }
     
     $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
+    $createdSensors = false;
     if(array_search('GPS', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
-      writeToLogFunction::write_to_log('Sensor GPS does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::info('Sensor GPS does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
+      $createdSensors = true;
     }
 
     if(array_search('Lora', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
-      writeToLogFunction::write_to_log('Sensor Lora does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::info('Sensor Lora does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Lora", "Lora");
+      $createdSensors = true;
     }
 
     if(array_search('ADC', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
-      writeToLogFunction::write_to_log('Sensor ADC does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::info('Sensor ADC does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "ADC", "ADC");
+      $createdSensors = true;
     }
 
     if(array_search('DS18B20', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
-      writeToLogFunction::write_to_log('Sensor DS18B20 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::info('Sensor DS18B20 does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "DS18B20", "DS18B20");
+      $createdSensors = true;
     }
 
     if(array_search('BME280', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
-      writeToLogFunction::write_to_log('Sensor BME280 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::info('Sensor BME280 does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "BME280", "BME280");
+      $createdSensors = true;
     }
 
     if(array_search('DS2438', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
-      writeToLogFunction::write_to_log('Sensor DS2438 does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::info('Sensor DS2438 does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "DS2438", "DS2438");
+      $createdSensors = true;
     }
 
     if(array_search('Digital', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
-      writeToLogFunction::write_to_log('Sensor Digital does not exist. Will now create for boardid: ' . $singleRowBoardIdbyTTN['id'], $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::info('Sensor Digital does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
+      $createdSensors = true;
+    }
+
+    if ($createdSensors) {
+      $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
     }
 
     $url = $config::$baseurl . '/receiver/receivejson.php';
     $ch = curl_init($url);
 
-    writeToLogFunction::write_to_log($config::$baseurl, $_SERVER["SCRIPT_FILENAME"]);
+    writeToLogFunction::info(
+      'Forwarding TTN payload to receivejson.php.',
+      $_SERVER["SCRIPT_FILENAME"],
+      array('targetUrl' => $url, 'boardId' => $singleRowBoardIdbyTTN['id'])
+    );
 
     $boardInfos = array(
         "apiKey" => $config::$apiKey,
@@ -234,7 +271,7 @@ if(sizeof($ttn_post) > 0) {
             "value1" => $sensor_temperature_2,
             "date" => $dateNow,
             "time" => $timeNow,
-            "transmissionpath" => "2"
+            "transmissionPath" => "2"
           );
         } elseif ($eachsensor['sensorTypesName'] == "ADC") {
           $sensor1 = array(
@@ -246,7 +283,7 @@ if(sizeof($ttn_post) > 0) {
             "value4" => $sensor_level2,
             "date" => $dateNow,
             "time" => $timeNow,
-            "transmissionpath" => "2"
+            "transmissionPath" => "2"
           );
         } elseif ($eachsensor['sensorTypesName'] == "BME280") {
           $sensor1 = array(
@@ -258,7 +295,7 @@ if(sizeof($ttn_post) > 0) {
             "value4" => $sensor_dewpoint,
             "date" => $dateNow,
             "time" => $timeNow,
-            "transmissionpath" => "2"
+            "transmissionPath" => "2"
           );
         } elseif ($eachsensor['sensorTypesName'] == "GPS") {
           $sensor1 = array(
@@ -270,7 +307,7 @@ if(sizeof($ttn_post) > 0) {
             "value4" => $position_lng,
             "date" => $dateNow,
             "time" => $timeNow,
-            "transmissionpath" => "2"
+            "transmissionPath" => "2"
           );
         } elseif ($eachsensor['sensorTypesName'] == "Lora") {
           $sensor1 = array(
@@ -281,10 +318,12 @@ if(sizeof($ttn_post) > 0) {
             "value3" => $gtw_snr,
             "date" => $dateNow,
             "time" => $timeNow,
-            "transmissionpath" => "2"
+            "transmissionPath" => "2"
           );
         }
-        array_push($sensors, $sensor1);
+        if ($sensor1 !== null) {
+          array_push($sensors, $sensor1);
+        }
       //}   
     }
     $payload = json_encode(array(
@@ -308,10 +347,31 @@ if(sizeof($ttn_post) > 0) {
 
     // Execute the POST request
     $result = curl_exec($ch);
-
-    #writeToLogFunction::write_to_log($result, $_SERVER["SCRIPT_FILENAME"]);
+    if ($result === false) {
+      writeToLogFunction::error(
+        'cURL forwarding to receivejson failed.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+          'targetUrl' => $url,
+          'curlError' => curl_error($ch),
+          'curlErrno' => curl_errno($ch)
+        )
+      );
+    } else {
+      writeToLogFunction::info(
+        'cURL forwarding to receivejson succeeded.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+          'targetUrl' => $url,
+          'response' => $result,
+          'sensorCount' => count($sensors)
+        )
+      );
+    }
 
     // Close cURL resource
     curl_close($ch);
+} else {
+    writeToLogFunction::warning('TTN endpoint called without body.', $_SERVER["SCRIPT_FILENAME"]);
 }
 ?>

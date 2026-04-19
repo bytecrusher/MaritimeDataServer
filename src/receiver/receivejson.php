@@ -22,30 +22,47 @@ $apiKey = $macAddress = $sensor = $sensorId = $location = $value1 = $value2 = $v
 
 $pdo2 = dbConfig::getInstance();
 
-writeToLogFunction::write_to_log("test", "receiver");
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $ttn_post = file_get_contents('php://input');
     $data = json_decode($ttn_post, true);
 
-    //writeToLogFunction::write_to_log($data, $_SERVER["SCRIPT_FILENAME"]);
+    if (!is_array($data)) {
+        echo "Invalid JSON payload.";
+        writeToLogFunction::error(
+            "Invalid JSON payload received by receivejson.php",
+            $_SERVER["SCRIPT_FILENAME"],
+            array('rawPayload' => $ttn_post)
+        );
+        exit;
+    }
 
-    $boardData = $data['board'];    // Array of board information from "POST"
-    $sensors = $data['sensors'];    // Array of Sensors from "POST"
-    //writeToLogFunction::write_to_log($boardData, $_SERVER["SCRIPT_FILENAME"]);
+    $boardData = $data['board'] ?? array();
+    $sensors = $data['sensors'] ?? array();
+    writeToLogFunction::info(
+        'receivejson request received.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+            'boardKeys' => array_keys($boardData),
+            'sensorCount' => is_array($sensors) ? count($sensors) : 0
+        )
+    );
+
     if (isset($boardData['apiKey'])) {
         $apiKey = ($boardData['apiKey']);
     } else {
-        writeToLogFunction::write_to_log("Wrong Api key!!", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::warning("Missing API key in board payload.", $_SERVER["SCRIPT_FILENAME"]);
     }
 
-    $sql = null;
     if ($apiKey == $apiKey_value) {
         if ((isset($boardData['protocolVersion'])) && ($boardData['protocolVersion'] != null)) {
             if ($boardData['protocolVersion'] == "1") {
                 $macAddress = test_input($boardData['macAddress']);
                 $macAddressId = check_macAddress($macAddress, $pdo2);
-                //$boardObj = new board($macAddress);
+                $insertStatement = $pdo2->prepare(
+                    "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                );
+
                 foreach ($sensors as $key => &$sensor) {
                     $sensorId = null;
                     $value1 = $value2 = $value3 = $value4 = "";
@@ -101,41 +118,80 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $time = test_input($sensor["time"]);
 
                         if(isset($sensor["transmissionPath"])) {
-                            // 1 = WiFi, 2 = lora
                             $transmissionPath = test_input($sensor["transmissionPath"]);
+                        } elseif (isset($sensor["transmissionpath"])) {
+                            $transmissionPath = test_input($sensor["transmissionpath"]);
                         } else {
                             $transmissionPath = 1;
                         }
 
-                        $sql = "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
-                        VALUES ('" . $sensorId . "', '" . $value1 . "', '" . $value2 . "', '" . $value3 . "', '"  . $value4 . "', '" . $date . "', '" . $time . "', '" . $transmissionPath . "')";
                         try {
-                            writeToLogFunction::write_to_log($sql, $_SERVER["SCRIPT_FILENAME"]);
-                            $pdo2->query($sql); //Invalid query
+                            $insertStatement->execute(array(
+                                $sensorId,
+                                $value1,
+                                $value2,
+                                $value3,
+                                $value4,
+                                $date,
+                                $time,
+                                $transmissionPath
+                            ));
+                            writeToLogFunction::debug(
+                                'sensorData row inserted.',
+                                $_SERVER["SCRIPT_FILENAME"],
+                                array(
+                                    'boardId' => $macAddressId,
+                                    'sensorId' => $sensorId,
+                                    'transmissionPath' => $transmissionPath,
+                                    'date' => $date,
+                                    'time' => $time
+                                )
+                            );
                         } catch (PDOException $ex) {
                             echo "An Error has occurred while run query.";
-                            writeToLogFunction::write_to_log("An Error has occurred while run query.", $_SERVER["SCRIPT_FILENAME"]);
-                            writeToLogFunction::write_to_log($ex, $_SERVER["SCRIPT_FILENAME"]);
+                            writeToLogFunction::error("An error has occurred while inserting sensorData.", $_SERVER["SCRIPT_FILENAME"]);
+                            writeToLogFunction::exception(
+                                $ex,
+                                $_SERVER["SCRIPT_FILENAME"],
+                                array(
+                                    'boardId' => $macAddressId,
+                                    'sensorId' => $sensorId,
+                                    'payloadSensor' => $sensor
+                                )
+                            );
                         }
                         if (myFunctions::getAlreadyNotified($macAddressId) == 1) {
                             myFunctions::unsetAlreadyNotified($macAddressId);
-                            //todo: send mail: device is online.
+                            writeToLogFunction::info(
+                                'Board was marked as reachable again. alreadyNotified reset.',
+                                $_SERVER["SCRIPT_FILENAME"],
+                                array('boardId' => $macAddressId)
+                            );
                         }
                     }
                 }
+                writeToLogFunction::info(
+                    'receivejson processing finished successfully.',
+                    $_SERVER["SCRIPT_FILENAME"],
+                    array('boardId' => $macAddressId)
+                );
             }
         } else {
             echo "Wrong protocol version.";
-            writeToLogFunction::write_to_log("Wrong protocol version.", $_SERVER["SCRIPT_FILENAME"]);
+            writeToLogFunction::warning("Wrong protocol version.", $_SERVER["SCRIPT_FILENAME"], array('board' => $boardData));
             die();
         }
     } else {
         echo "Wrong API Key provided.";
-        writeToLogFunction::write_to_log("Wrong API Key provided.", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::warning(
+            "Wrong API Key provided.",
+            $_SERVER["SCRIPT_FILENAME"],
+            array('providedApiKey' => $apiKey)
+        );
     }
 } else {
     echo "No data posted with HTTP POST.";
-    writeToLogFunction::write_to_log("No data posted with HTTP POST.", $_SERVER["SCRIPT_FILENAME"]);
+    writeToLogFunction::warning("No data posted with HTTP POST.", $_SERVER["SCRIPT_FILENAME"]);
 }
 
 function test_input($data)
@@ -148,20 +204,20 @@ function test_input($data)
 
 function check_macAddress($macAddress, $pdo2)
 {
-    $sql = "SELECT id FROM boardConfig WHERE macAddress = '" . $macAddress . "' LIMIT 1";
     try {
-        $idMacAddress_temp = $pdo2->query($sql); //Invalid query
-        $idMacAddress = $idMacAddress_temp->fetch();
+        $statement = $pdo2->prepare("SELECT id FROM boardConfig WHERE macAddress = ? LIMIT 1");
+        $statement->execute(array($macAddress));
+        $idMacAddress = $statement->fetch();
     } catch (PDOException $ex) {
         echo "An Error has occurred while check macAddress";
-        writeToLogFunction::write_to_log("An Error has occurred while check macAddress", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::exception($ex, $_SERVER["SCRIPT_FILENAME"], array('macAddress' => $macAddress));
     }
 
     if ( (!isset($idMacAddress['id']) ) || ($idMacAddress['id'] == null) ) {
         $statement = $pdo2->prepare("INSERT INTO boardConfig (macAddress, ownerUserId, name) VALUES (?, ?, ?)");
         $statement->execute(array($macAddress, 1, "- new imported -"));     // Default Owner User
         $neue_id = $pdo2->lastInsertId();
-        writeToLogFunction::write_to_log("New Board with id $neue_id created", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::info("New board created during receivejson import.", $_SERVER["SCRIPT_FILENAME"], array('boardId' => $neue_id, 'macAddress' => $macAddress));
 
         return $neue_id;
     } else {
@@ -171,23 +227,30 @@ function check_macAddress($macAddress, $pdo2)
 
 function checkOwSensorAddress($sensorAddress, $macAddressId, $pdo2)
 {
-    $sql = "SELECT id FROM sensorConfig WHERE sensorAddress = '" . $sensorAddress . "' LIMIT 1";
     try {
-        $idSensorAddress_temp = $pdo2->query($sql); //Invalid query
-        $sensorAddressId = $idSensorAddress_temp->fetch();
+        $statement = $pdo2->prepare("SELECT id FROM sensorConfig WHERE sensorAddress = ? LIMIT 1");
+        $statement->execute(array($sensorAddress));
+        $sensorAddressId = $statement->fetch();
         if ($sensorAddress != "00000000") {
             if (!$sensorAddressId) { // if no sensor found in DB, it should be created.
                 $sensorAddressFamilyCode = substr($sensorAddress, 0, 2);
-                $sql2 = "SELECT id FROM sensorTypes WHERE oneWireFamilyCode = '" . $sensorAddressFamilyCode . "' LIMIT 1";
-                $idSensorTypes_temp = $pdo2->query($sql2); //Invalid query
-                $idSensorTypes = $idSensorTypes_temp->fetch();
-                writeToLogFunction::write_to_log("sensor: " . $idSensorTypes, $_SERVER["SCRIPT_FILENAME"]);
-                $statement2 = "INSERT INTO sensorConfig (boardId, sensorAddress, typId) VALUES ('$macAddressId', '$sensorAddress', '" . $idSensorTypes['id'] . "')";
-                $insertSuccess = $pdo2->exec($statement2);
-                writeToLogFunction::write_to_log("Insert sensorConfig " . $statement2 . ", " . $insertSuccess, $_SERVER["SCRIPT_FILENAME"]);
+                $statementType = $pdo2->prepare("SELECT id FROM sensorTypes WHERE oneWireFamilyCode = ? LIMIT 1");
+                $statementType->execute(array($sensorAddressFamilyCode));
+                $idSensorTypes = $statementType->fetch();
+                $statement2 = $pdo2->prepare("INSERT INTO sensorConfig (boardId, sensorAddress, typId) VALUES (?, ?, ?)");
+                $insertSuccess = $statement2->execute(array($macAddressId, $sensorAddress, $idSensorTypes['id']));
+                writeToLogFunction::info(
+                    'Sensor auto-created from one-wire address.',
+                    $_SERVER["SCRIPT_FILENAME"],
+                    array(
+                        'boardId' => $macAddressId,
+                        'sensorAddress' => $sensorAddress,
+                        'sensorTypeId' => $idSensorTypes['id']
+                    )
+                );
                 if ($insertSuccess) {
                     $neue_id = $pdo2->lastInsertId();
-                    writeToLogFunction::write_to_log("New Sensor with id $neue_id created", $_SERVER["SCRIPT_FILENAME"]);
+                    writeToLogFunction::info("New sensor created.", $_SERVER["SCRIPT_FILENAME"], array('sensorId' => $neue_id));
                     return $neue_id;
                 } else {
                     return false;
@@ -197,6 +260,10 @@ function checkOwSensorAddress($sensorAddress, $macAddressId, $pdo2)
             }
         }
     } catch (PDOException $ex) {
-        writeToLogFunction::write_to_log("An Error has occurred while add / check sensor. ", $_SERVER["SCRIPT_FILENAME"]);
+        writeToLogFunction::exception(
+            $ex,
+            $_SERVER["SCRIPT_FILENAME"],
+            array('sensorAddress' => $sensorAddress, 'boardId' => $macAddressId)
+        );
     }
 }

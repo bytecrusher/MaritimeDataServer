@@ -16,27 +16,40 @@ require_once(dirname(__FILE__)."/board.class.php");
 function checkDeviceIsOnline($boardId) {
     $pdo = dbConfig::getInstance();
     $boardObj = new board($boardId);
-    $maxTimeout = strtotime("-" . $boardObj->getOfflineDataTimer() . " Minutes"); // For show Online / Offline
+    $offlineDataTimer = (int)$boardObj->getOfflineDataTimer();
+    if ($offlineDataTimer <= 0) {
+        $offlineDataTimer = 15;
+        writeToLogFunction::warning(
+            'Board has invalid offlineDataTimer, fallback to 15 minutes.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array('boardId' => $boardId)
+        );
+    }
+    $maxTimeout = strtotime("-" . $offlineDataTimer . " Minutes");
     $config = new configuration();
 
     if ($config::$demoMode) {
         return true;
     }
 
-    // get all sensors
-    $query2 = sprintf("SELECT * FROM sensorConfig WHERE boardId = " . $boardId . " ORDER BY id");
-    $result2 = $pdo->query($query2);
-    foreach ($result2 as $row2) {
-        $query = sprintf("SELECT * FROM sensorData WHERE sensorId = " . $row2['id'] . " ORDER BY id DESC LIMIT 1");
-        $result = $pdo->query($query);
-        $data = array();
-        foreach ($result as $row) {
-            $data[] = $row;
-            $dbTimestamp=strtotime($data[0]['reading_time']);
-            if ($dbTimestamp >= $maxTimeout) {
-                return true;
-            }
-        }
+    $statement = $pdo->prepare(
+        "SELECT MAX(sensorData.reading_time) AS latestReadingTime
+        FROM sensorData
+        INNER JOIN sensorConfig ON sensorConfig.id = sensorData.sensorId
+        WHERE sensorConfig.boardId = ?"
+    );
+    $statement->execute(array($boardId));
+    $latestRow = $statement->fetch(PDO::FETCH_ASSOC);
+
+    if (($latestRow === false) || empty($latestRow['latestReadingTime'])) {
+        writeToLogFunction::debug(
+            'Board has no sensorData entries yet.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array('boardId' => $boardId)
+        );
+        return false;
     }
-    return false;
+
+    $dbTimestamp = strtotime($latestRow['latestReadingTime']);
+    return ($dbTimestamp !== false) && ($dbTimestamp >= $maxTimeout);
 }

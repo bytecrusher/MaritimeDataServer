@@ -122,14 +122,24 @@ class myFunctions {
 /*
   * Get Board by Board TTN appid and dev id. Only one dataset will return.
   */
-  public static function getBoardByTTN($ttnAppId, $ttnDevId) {
-    if ((!$ttnAppId == null) && (!$ttnDevId == null)) {
-      $pdo = dbConfig::getInstance();
-      $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE ttnAppId = '$ttnAppId' AND ttnDevId = '$ttnDevId' ORDER BY id LIMIT 1");
-      $result = $myBoards->execute();
-      $myBoards2 = $myBoards->fetch(PDO::FETCH_ASSOC);
-      return $myBoards2;
+  public static function getBoardByTTN($ttnAppId, $ttnDevId, $ttnDeviceId = null) {
+    if (($ttnAppId == null) || (($ttnDevId == null) && ($ttnDeviceId == null))) {
+      return null;
     }
+
+    $pdo = dbConfig::getInstance();
+    $sql = "SELECT * FROM boardConfig WHERE ttnAppId = ? AND (ttnDevId = ?";
+    $params = array($ttnAppId, $ttnDevId);
+
+    if ($ttnDeviceId != null) {
+      $sql .= " OR ttnDevId = ?";
+      $params[] = $ttnDeviceId;
+    }
+
+    $sql .= ") ORDER BY id LIMIT 1";
+    $myBoards = $pdo->prepare($sql);
+    $myBoards->execute($params);
+    return $myBoards->fetch(PDO::FETCH_ASSOC);
   }
 
   /*
@@ -137,8 +147,8 @@ class myFunctions {
   */
   public static function addBoardByTTN($ttnAppId, $ttnDevId) {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("INSERT INTO boardConfig (macAddress, name, ttnAppId, ttnDevId, onDashboard, updateDataTimer  ) VALUES (?, ?, ?, ?, ?, ?)");
-    $statement->execute(array("fakeMacAddress" . $ttnDevId, "- new imported -", $ttnAppId, $ttnDevId, 1, 15));
+    $statement = $pdo->prepare("INSERT INTO boardConfig (macAddress, name, ttnAppId, ttnDevId, onDashboard, updateDataTimer, offlineDataTimer) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $statement->execute(array("fakeMacAddress" . $ttnDevId, "- new imported -", $ttnAppId, $ttnDevId, 1, 15, 15));
     $neue_id = $pdo->lastInsertId();
     return $neue_id;
   }
@@ -788,10 +798,13 @@ class myFunctions {
    */
   public static function getAlreadyNotified($boardId) {
     $pdo = dbConfig::getInstance();
-    $result = null;
     $statement = $pdo->prepare("SELECT alreadyNotified FROM boardConfig WHERE id =?");
-    $pdoResult = $statement->execute(array($boardId));
-    return $pdoResult;
+    $statement->execute(array($boardId));
+    $result = $statement->fetch(PDO::FETCH_ASSOC);
+    if (($result !== false) && isset($result['alreadyNotified'])) {
+      return (int)$result['alreadyNotified'];
+    }
+    return 0;
   }
 
   /**
