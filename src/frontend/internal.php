@@ -13,10 +13,22 @@
   require_once dirname(__DIR__, 2) . "/app/Domain/Board/board.class.php";
   require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
 
-  if (isset($_SESSION['userObj'])) {
-    $currentUser = unserialize($_SESSION['userObj']);
-  } else {
-    $currentUser = false;
+  $currentUser = false;
+  if (isset($_SESSION['userId']) && (int) $_SESSION['userId'] > 0) {
+    $sessionUserData = dbGetData::getUserById((int) $_SESSION['userId']);
+    if (is_array($sessionUserData) && !empty($sessionUserData['email'])) {
+      $currentUser = new user($sessionUserData['email']);
+      $_SESSION['userObj'] = serialize($currentUser);
+    }
+  } elseif (isset($_SESSION['userObj'])) {
+    $sessionUserObj = @unserialize($_SESSION['userObj'], ['allowed_classes' => ['user']]);
+    if ($sessionUserObj instanceof user) {
+      $currentUser = $sessionUserObj;
+      $_SESSION['userId'] = $currentUser->getId();
+    }
+  }
+
+  if (!$currentUser) {
     header("Location: ./index.php");    // if user not logged in
     die();
   }
@@ -94,7 +106,18 @@
       })
       .done(function( response ) {
         text = response;
-        obj = JSON.parse(text);
+        try {
+          obj = JSON.parse(text);
+        } catch (error) {
+          console.error("invalid gauge response for sensor " + varSensorId, error, text);
+          return;
+        }
+
+        if (!Array.isArray(obj) || obj.length < 2) {
+          console.error("unexpected gauge payload for sensor " + varSensorId, obj);
+          return;
+        }
+
         for (let i4 = 1; i4 < obj.length; i4++) {
           try {
             //console.error("obj[0]+i4:" + obj[0]+"."+i4 + ", " + gaugesArrayHelper.includes(obj[0]+"."+i4));
@@ -105,6 +128,9 @@
             console.error("error accessing: " + obj[0]+"."+i4);
           }
         }
+      })
+      .fail(function(jqxhr, settings, ex) {
+        console.error('failed (updateGauges), ' + varSensorId + ", " + ex);
       });
     }
   }
@@ -141,75 +167,24 @@
         ?>
     </div>
 
-    <script>
-      function switchInternalTab(event, targetSelector) {
-        if (event) {
-          event.preventDefault();
-        }
-
-        if (!targetSelector || targetSelector.charAt(0) !== '#') {
-          return false;
-        }
-
-        document.querySelectorAll('#internalTabs .nav-link').forEach(function(tabLink) {
-          tabLink.classList.remove('active');
-          tabLink.setAttribute('aria-selected', 'false');
-        });
-
-        document.querySelectorAll('.tab-content .tab-pane').forEach(function(tabPane) {
-          tabPane.classList.remove('active', 'show');
-        });
-
-        const targetTabLink = document.querySelector('#internalTabs a[href="' + targetSelector + '"]');
-        const targetPane = document.querySelector(targetSelector);
-
-        if (!targetTabLink || !targetPane) {
-          return false;
-        }
-
-        targetTabLink.classList.add('active');
-        targetTabLink.setAttribute('aria-selected', 'true');
-        targetPane.classList.add('active', 'show');
-
-        if (targetSelector === '#mapContainer' && typeof initInternalMap === 'function') {
-          window.setTimeout(function() {
-            initInternalMap();
-            if (typeof map !== 'undefined' && map && typeof map.invalidateSize === 'function') {
-              window.setTimeout(function() {
-                map.invalidateSize();
-              }, 150);
-            }
-          }, 50);
-        }
-
-        if (window.history && window.history.replaceState) {
-          window.history.replaceState(null, '', targetSelector);
-        } else {
-          window.location.hash = targetSelector;
-        }
-
-        return false;
-      }
-    </script>
-
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" id="internalTabs" role="tablist">
       <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab" onclick="return switchInternalTab(event, '#dashboard');">Dashboard</a>
+        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab">Dashboard</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#charts" role="tab" onclick="return switchInternalTab(event, '#charts');">Charts</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#charts" role="tab">Charts</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#boards" role="tab" onclick="return switchInternalTab(event, '#boards');">Boards</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#boards" role="tab">Boards</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab" onclick="return switchInternalTab(event, '#mapContainer');">Map</a>
+        <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab">Map</a>
       </li>
       <?php
         if($currentUser->getUserGroupAdmin() == 1 ) {
       ?>
-        <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab' onclick="return switchInternalTab(event, '#debug');">Debug</a></li>
+        <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab'>Debug</a></li>
         <?php
         }
         ?>
@@ -359,6 +334,15 @@
               $mySensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
               $boardOnlineStatus = false;
               $mySensorIdList = null;
+              if ($mySensors2 == null) {
+                ?>
+                  <div class='container mt-2'>
+                    <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
+                    <span class='control-label' style='padding-left: 5px'><?php echo $singleBoardObj->getName(); ?> (<?php echo $singleBoardObj->getMacAddress(); ?>)</span>
+                  </div>
+                <?php
+                continue;
+              }
               foreach($mySensors2 as $singleRowMySensors) {
                 if ($mySensorIdList == null) {
                   $mySensorIdList = $singleRowMySensors['id'];
@@ -519,45 +503,41 @@
 
       // TODO: Bug!!! on more than one board, the sensors will be added to everyone.
       $( document ).ready(function() {
-        $('#internalTabs a[data-bs-toggle="tab"]').each(function() {
-          this.addEventListener('click', function(event) {
-            event.preventDefault();
+        function showInternalTab(targetSelector) {
+          if (!targetSelector || targetSelector.charAt(0) !== '#') {
+            return;
+          }
 
-            const targetSelector = this.getAttribute('href');
-            if (!targetSelector || !targetSelector.startsWith('#')) {
-              return;
-            }
+          $('#internalTabs .nav-link').removeClass('active').attr('aria-selected', 'false');
+          $('.tab-content .tab-pane').removeClass('active show');
 
-            const targetPane = document.querySelector(targetSelector);
-            if (!targetPane) {
-              return;
-            }
+          $('#internalTabs a[href="' + targetSelector + '"]').addClass('active').attr('aria-selected', 'true');
+          $(targetSelector).addClass('active show');
 
-            document.querySelectorAll('#internalTabs .nav-link').forEach(function(tabLink) {
-              tabLink.classList.remove('active');
-              tabLink.setAttribute('aria-selected', 'false');
-            });
+          if (targetSelector === '#mapContainer' && typeof initInternalMap === 'function') {
+            window.setTimeout(function() {
+              initInternalMap();
+              if (typeof map !== 'undefined' && map && typeof map.invalidateSize === 'function') {
+                window.setTimeout(function() {
+                  map.invalidateSize();
+                }, 150);
+              }
+            }, 50);
+          }
 
-            document.querySelectorAll('.tab-content .tab-pane').forEach(function(tabPane) {
-              tabPane.classList.remove('active', 'show');
-            });
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', targetSelector);
+          }
+        }
 
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-            targetPane.classList.add('active', 'show');
-
-            if (window.history && window.history.replaceState) {
-              window.history.replaceState(null, '', targetSelector);
-            }
-          });
+        $('#internalTabs').on('click', 'a[data-bs-toggle="tab"]', function(event) {
+          event.preventDefault();
+          showInternalTab($(this).attr('href'));
         });
 
         const currentHash = window.location.hash;
-        if (currentHash) {
-          const initialTab = document.querySelector('#internalTabs a[href="' + currentHash + '"]');
-          if (initialTab) {
-            initialTab.click();
-          }
+        if (currentHash && $('#internalTabs a[href="' + currentHash + '"]').length) {
+          showInternalTab(currentHash);
         }
 
         $('.gauge-container').css("cursor", "auto");

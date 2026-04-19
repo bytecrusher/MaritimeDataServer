@@ -157,10 +157,6 @@ function initInternalMap() {
 }
 
 $(document).ready(function() {
-  $('#hrefmap').on('click', function() {
-    initInternalMap();
-  });
-
   if (window.location.hash === '#mapContainer') {
     window.setTimeout(function() {
       initInternalMap();
