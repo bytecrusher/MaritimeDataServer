@@ -144,21 +144,21 @@
     <!-- Nav tabs -->
     <ul class="nav nav-tabs">
       <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" style="padding-right: 8px;padding-left: 8px;">Dashboard</a>
+        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard">Dashboard</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#charts" id='hrefcharts' style="padding-right: 8px;padding-left: 8px;">Charts</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#charts">Charts</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#boards" id='hrefboards' style="padding-right: 8px;padding-left: 8px;">Boards</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#boards">Boards</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#mapContainer" id='hrefmap' style="padding-right: 8px;padding-left: 8px;">Map</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#mapContainer">Map</a>
       </li>
       <?php
         if($currentUser->getUserGroupAdmin() == 1 ) {
       ?>
-        <li class='nav-item'><a class='nav-link' href='#debug' role='tab' data-bs-toggle='tab'>Debug</a></li>
+        <li class='nav-item'><a class='nav-link' href='#debug'>Debug</a></li>
         <?php
         }
         ?>
@@ -167,10 +167,10 @@
     <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px; background: white">
 
       <!-- Show dashboard -->
-      <div class="container tab-pane active position-relative" id="dashboard" style="padding-left: 10px; padding-right: 10px;">
-      <div class="position-absolute" id="click_lockUnlock" style="top: -40px; right: 0px;" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
-        <i class="bi bi-lock-fill" style="font-size:20px; color: #007bff"></i>
-      </div>
+      <div class="container tab-pane active position-relative" id="dashboard">
+        <div class="position-absolute" id="click_lockUnlock" style="top: -40px; right: 0px;" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
+          <i class="bi bi-lock-fill" style="font-size:20px; color: #007bff"></i>
+        </div>
 
         <div class="page-content page-container" id="page-content" style="--bs-gutter-x: 0rem; ">
         </div>
