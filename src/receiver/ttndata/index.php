@@ -1,2 +1,2 @@
 <?php
-require_once(dirname(__FILE__, 3) . '/../../app/Http/Webhooks/TTN/index.php');
+require_once(dirname(__FILE__, 4) . '/app/Http/Webhooks/TTN/index.php');

@@ -8,7 +8,7 @@
  *  Modified by: Guntmar Höche 2023-04-05
  */
 
-require_once(dirname(__FILE__, 3).'/../../Infrastructure/Config/configuration.php');
+require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 $config  = new configuration();
 
 $DATABASE_HOST = $config::$dbHost;

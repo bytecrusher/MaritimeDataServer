@@ -141,24 +141,75 @@
         ?>
     </div>
 
+    <script>
+      function switchInternalTab(event, targetSelector) {
+        if (event) {
+          event.preventDefault();
+        }
+
+        if (!targetSelector || targetSelector.charAt(0) !== '#') {
+          return false;
+        }
+
+        document.querySelectorAll('#internalTabs .nav-link').forEach(function(tabLink) {
+          tabLink.classList.remove('active');
+          tabLink.setAttribute('aria-selected', 'false');
+        });
+
+        document.querySelectorAll('.tab-content .tab-pane').forEach(function(tabPane) {
+          tabPane.classList.remove('active', 'show');
+        });
+
+        const targetTabLink = document.querySelector('#internalTabs a[href="' + targetSelector + '"]');
+        const targetPane = document.querySelector(targetSelector);
+
+        if (!targetTabLink || !targetPane) {
+          return false;
+        }
+
+        targetTabLink.classList.add('active');
+        targetTabLink.setAttribute('aria-selected', 'true');
+        targetPane.classList.add('active', 'show');
+
+        if (targetSelector === '#mapContainer' && typeof initInternalMap === 'function') {
+          window.setTimeout(function() {
+            initInternalMap();
+            if (typeof map !== 'undefined' && map && typeof map.invalidateSize === 'function') {
+              window.setTimeout(function() {
+                map.invalidateSize();
+              }, 150);
+            }
+          }, 50);
+        }
+
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', targetSelector);
+        } else {
+          window.location.hash = targetSelector;
+        }
+
+        return false;
+      }
+    </script>
+
     <!-- Nav tabs -->
-    <ul class="nav nav-tabs">
+    <ul class="nav nav-tabs" id="internalTabs" role="tablist">
       <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard">Dashboard</a>
+        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab" onclick="return switchInternalTab(event, '#dashboard');">Dashboard</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#charts">Charts</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#charts" role="tab" onclick="return switchInternalTab(event, '#charts');">Charts</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#boards">Boards</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#boards" role="tab" onclick="return switchInternalTab(event, '#boards');">Boards</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#mapContainer">Map</a>
+        <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab" onclick="return switchInternalTab(event, '#mapContainer');">Map</a>
       </li>
       <?php
         if($currentUser->getUserGroupAdmin() == 1 ) {
       ?>
-        <li class='nav-item'><a class='nav-link' href='#debug'>Debug</a></li>
+        <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab' onclick="return switchInternalTab(event, '#debug');">Debug</a></li>
         <?php
         }
         ?>
@@ -167,7 +218,7 @@
     <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px; background: white">
 
       <!-- Show dashboard -->
-      <div class="container tab-pane active position-relative" id="dashboard">
+      <div class="container tab-pane fade show active position-relative" id="dashboard">
         <div class="position-absolute" id="click_lockUnlock" style="top: -40px; right: 0px;" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
           <i class="bi bi-lock-fill" style="font-size:20px; color: #007bff"></i>
         </div>
@@ -468,6 +519,47 @@
 
       // TODO: Bug!!! on more than one board, the sensors will be added to everyone.
       $( document ).ready(function() {
+        $('#internalTabs a[data-bs-toggle="tab"]').each(function() {
+          this.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const targetSelector = this.getAttribute('href');
+            if (!targetSelector || !targetSelector.startsWith('#')) {
+              return;
+            }
+
+            const targetPane = document.querySelector(targetSelector);
+            if (!targetPane) {
+              return;
+            }
+
+            document.querySelectorAll('#internalTabs .nav-link').forEach(function(tabLink) {
+              tabLink.classList.remove('active');
+              tabLink.setAttribute('aria-selected', 'false');
+            });
+
+            document.querySelectorAll('.tab-content .tab-pane').forEach(function(tabPane) {
+              tabPane.classList.remove('active', 'show');
+            });
+
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            targetPane.classList.add('active', 'show');
+
+            if (window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', targetSelector);
+            }
+          });
+        });
+
+        const currentHash = window.location.hash;
+        if (currentHash) {
+          const initialTab = document.querySelector('#internalTabs a[href="' + currentHash + '"]');
+          if (initialTab) {
+            initialTab.click();
+          }
+        }
+
         $('.gauge-container').css("cursor", "auto");
         var wrapper = $('.card-block');
         for (let i=0; i<wrapper.length; i++) {

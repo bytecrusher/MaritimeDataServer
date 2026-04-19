@@ -30,10 +30,10 @@
   */
 
 // load configuration data
-require_once(dirname(__FILE__, 3) . '/../../Infrastructure/Config/configuration.php');
-require_once(dirname(__FILE__, 3) . "/../../Application/myFunctions.func.php");
-require_once(dirname(__FILE__, 3) . "/../../Infrastructure/Database/dbConfig.func.php");
-require_once(dirname(__FILE__, 3) . "/../../Infrastructure/Logging/writeToLogFunction.func.php");
+require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
+require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
+require_once(dirname(__DIR__, 3) . "/Infrastructure/Database/dbConfig.func.php");
+require_once(dirname(__DIR__, 3) . "/Infrastructure/Logging/writeToLogFunction.func.php");
 
 //date_default_timezone_set('UTC');
 date_default_timezone_set('Europe/Berlin');

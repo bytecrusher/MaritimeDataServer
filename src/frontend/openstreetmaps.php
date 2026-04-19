@@ -1,129 +1,170 @@
+<?php
+$mapBoardNames = array();
+$mapGpsData = array();
+
+if (isset($currentUser) && $currentUser) {
+    $mapBoards = myFunctions::getMyBoards($currentUser->getId());
+    foreach ($mapBoards as $mapBoard) {
+        $gpsData = myFunctions::getAllGpsData($mapBoard['id']);
+        if (!empty($gpsData) && $gpsData !== 0) {
+            $boardId = (string) $mapBoard['id'];
+            $mapBoardNames[$boardId] = $mapBoard['name'];
+            $mapGpsData[$boardId] = $gpsData;
+        }
+    }
+}
+?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.css" crossorigin=""/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.js" crossorigin=""></script>
-<div id="map"></div>
+<div id="map" style="height: 50vh; min-height: 420px; width: 100%;"></div>
+<div id="mapFallback" class="alert alert-warning mt-3" style="display:none;"></div>
 
 <script>
 var map = null;
-var myBoardIdMarkerGroup = null;
+var internalMapData = {
+  boardNames: <?php echo json_encode($mapBoardNames, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>,
+  gpsData: <?php echo json_encode($mapGpsData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
+};
 
-$('#hrefmap').click( function (e) {
-  $( document ).ready( function() {
-    if (map != null) {
-      map.off();
-      map.remove();
-      map = null;
-    }
-    var layerControl = false;
+function renderMapFallback(message) {
+  const fallback = document.getElementById('mapFallback');
+  if (!fallback) {
+    return;
+  }
 
-    map = L.map('map').setView([53.017585, 8.885182], 13);
+  fallback.style.display = 'block';
+  fallback.textContent = message;
+}
+
+function hideMapFallback() {
+  const fallback = document.getElementById('mapFallback');
+  if (!fallback) {
+    return;
+  }
+
+  fallback.style.display = 'none';
+  fallback.textContent = '';
+}
+
+function initInternalMap() {
+  const mapElement = document.getElementById('map');
+  if (!mapElement) {
+    return;
+  }
+
+  const boardIds = Object.keys(internalMapData.gpsData || {});
+  if (boardIds.length === 0) {
+    renderMapFallback('Keine GPS-Daten fuer die Karte vorhanden.');
+    return;
+  }
+
+  if (typeof L === 'undefined') {
+    renderMapFallback('Leaflet konnte nicht geladen werden. Bitte Seite neu laden.');
+    return;
+  }
+
+  hideMapFallback();
+
+  if (map != null) {
+    map.off();
+    map.remove();
+    map = null;
+  }
+
+  try {
+    map = L.map('map');
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, // was 19
+      maxZoom: 19,
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    //myBoardIdMarkerGroup[4] = new L.LayerGroup().addTo(map);
-    myBoardIdMarkerGroup = new Array ();
-          
-    var greenIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-green.png',
-      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+    const icons = [
+      new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-green.png',
+        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      }),
+      new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-blue.png',
+        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      }),
+      new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-orange.png',
+        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      }),
+      new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-red.png',
+        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    ];
 
-    var blueIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-blue.png',
+    const bounds = [];
+    let iconCounter = 0;
 
-      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+    boardIds.forEach(function(boardId) {
+      const points = internalMapData.gpsData[boardId] || [];
+      const boardName = internalMapData.boardNames[boardId] || ('Board ' + boardId);
+      const layerGroup = new L.LayerGroup().addTo(map);
 
-    var orangeIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-orange.png',
-      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+      points.forEach(function(point) {
+        const lat = parseFloat(point.value1);
+        const lng = parseFloat(point.value2);
 
-    var redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-red.png',
-      shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    var myIcons = new Array (greenIcon, blueIcon, orangeIcon, redIcon)
-
-    let myObjNames = null;
-
-    // function for getting all Board names.
-    jQuery.ajax({
-      type: "POST",
-      url: 'api/getBoardName.php',
-      dataType: 'json',
-      data: {functionName: 'get', userId: <?php echo($currentUser->getId()); ?>},
-      async: false,
-      success: function (obj, textstatus) {
-        if( !('error' in obj) ) {
-          //var iconCounter = 0;
-          myObjNames = obj;
+        if (Number.isNaN(lat) || Number.isNaN(lng)) {
+          return;
         }
-        else {
-          console.log(obj.error);
-        }
-      }
+
+        bounds.push([lat, lng]);
+        layerGroup.addLayer(
+          L.marker([lat, lng], {icon: icons[iconCounter % icons.length]})
+            .bindPopup('<b>' + boardName + '</b><br>Timestamp: ' + point.reading_time)
+        );
+      });
+
+      iconCounter++;
     });
 
-    // function for getting all GPS for a given Board and create marker for each.
-    jQuery.ajax({
-      type: "POST",
-      url: 'api/getGpsData.php',
-      dataType: 'json',
-      data: {functionName: 'get', userId: <?php echo($currentUser->getId()); ?>},
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, {padding: [20, 20]});
+    } else {
+      map.setView([53.017585, 8.885182], 13);
+      renderMapFallback('GPS-Daten sind vorhanden, konnten aber nicht gezeichnet werden.');
+    }
 
-      success: function (obj, textstatus) {
-        if( !('error' in obj) ) {
-          var iconCounter = 0;
-          Object.keys(obj).forEach(key => {
-            myBoardIdMarkerGroup[key] = new L.LayerGroup().addTo(map);
-            yourVariable = obj[key];
-            yourVariable.forEach(
-              function(element) { 
-                // TODO extend to loop for boards of the user, and adapt to the color for each group / board
-                myBoardIdMarkerGroup[key].addLayer(L.marker([element["value1"], element["value2"]], {icon: myIcons[iconCounter]}).bindPopup("<b>" + myObjNames[key] + "</b><br>Timestamp: " + element["reading_time"])).addTo(map);
-              }
-            );
+    window.setTimeout(function() {
+      map.invalidateSize();
+    }, 250);
+  } catch (error) {
+    console.error(error);
+    renderMapFallback('Fehler beim Aufbau der Karte: ' + error.message);
+  }
+}
 
-            if(layerControl === false) {  // var layerControl set to false in init phase; 
-              layerControl = L.control.layers().addTo(map);
-            }
-            layerControl.addOverlay(myBoardIdMarkerGroup[key] , "Board: " + myObjNames[key]);
-            iconCounter++;
-          });
-        }
-        else {
-          console.log(obj.error);
-        }
-      }
-    });
-
-    map.whenReady(() => {
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 1000);
-    });
+$(document).ready(function() {
+  $('#hrefmap').on('click', function() {
+    initInternalMap();
   });
+
+  if (window.location.hash === '#mapContainer') {
+    window.setTimeout(function() {
+      initInternalMap();
+    }, 50);
+  }
 });
 </script>
-
-
-   
