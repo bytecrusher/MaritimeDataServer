@@ -38,4 +38,5 @@ require_once dirname(__DIR__, 2) . "/app/Domain/Board/get_data.php";
 $config = new configuration();
 $varDemoMode = $config::$demoMode;
 ?>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="./js/internal.js"></script>
