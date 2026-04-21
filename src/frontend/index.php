@@ -3,14 +3,10 @@ session_start();
 require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
 require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
 require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+require_once dirname(__DIR__, 2) . "/app/Application/InternalPageService.php";
 require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
+$userObj = InternalPageService::resolveCurrentUserFromSession();
 include_once "common/header.inc.php";    // NOSONAR - Legacy Template-Einbindung
-
-if (isset($_SESSION['userObj'])) {
-  $userObj = unserialize($_SESSION['userObj']);
-} else {
-  $userObj = false;
-}
 
 ?>
 <div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;">

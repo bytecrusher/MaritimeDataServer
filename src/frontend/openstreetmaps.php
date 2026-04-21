@@ -1,18 +1,6 @@
 <?php
-$mapBoardNames = array();
-$mapGpsData = array();
-
-if (isset($currentUser) && $currentUser) {
-    $mapBoards = myFunctions::getMyBoards($currentUser->getId());
-    foreach ($mapBoards as $mapBoard) {
-        $gpsData = myFunctions::getAllGpsData($mapBoard['id']);
-        if (!empty($gpsData) && $gpsData !== 0) {
-            $boardId = (string) $mapBoard['id'];
-            $mapBoardNames[$boardId] = $mapBoard['name'];
-            $mapGpsData[$boardId] = $gpsData;
-        }
-    }
-}
+$mapBoardNames = isset($mapBoardNames) && is_array($mapBoardNames) ? $mapBoardNames : array();
+$mapGpsData = isset($mapGpsData) && is_array($mapGpsData) ? $mapGpsData : array();
 ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.css" crossorigin=""/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.js" crossorigin=""></script>

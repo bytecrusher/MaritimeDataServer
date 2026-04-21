@@ -3,22 +3,31 @@
   require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
   require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
   require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+  require_once dirname(__DIR__, 2) . "/app/Application/BoardFormPageService.php";
   require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
   require_once dirname(__DIR__, 2) . "/app/Domain/Board/board.class.php";
-  include("common/header.inc.php");
 
-  if (isset($_SESSION['userObj'])) {
-    $currentUser = unserialize($_SESSION['userObj']);
-  } else {
-    $currentUser = false;
+  $currentUser = BoardFormPageService::resolveCurrentUserFromSession();
+  if (!$currentUser) {
     header("Location: ./index.php");    // if user not logged in
     die();
   }
 
-  $pdo = dbConfig::getInstance();
-  $varId = $_GET['id'];
-  $singleRowBoardId = myFunctions::getBoardById($varId);
-  $boardObj = new board($_GET['id']);
+  try {
+    $pageData = BoardFormPageService::buildPageData($currentUser, $_GET['id'] ?? 0);
+  } catch (Throwable $e) {
+    header("Location: settings.php#confBoards");
+    die();
+  }
+
+  $varId = $pageData['boardId'];
+  $singleRowBoardId = $pageData['boardRow'];
+  $boardObj = $pageData['boardObj'];
+  $mySensors = $pageData['sensors'];
+  $allUsers = $pageData['allUsers'];
+  $isAdmin = $pageData['isAdmin'];
+
+  include("common/header.inc.php");
 ?>
 
 <div class="jumbotron">
@@ -145,8 +154,7 @@
         </div>
 
         <?php
-				if(($currentUser->getUserGroupAdmin() == 1) ) {
-          $AllUsers =(myFunctions::getAllUsers());
+				if($isAdmin) {
 				?>
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces">owner User</span>
@@ -157,7 +165,7 @@
               } else {
                 echo "<option value=''></option>";
               }
-							foreach ($AllUsers as $singleRowUser) {
+							foreach ($allUsers as $singleRowUser) {
 								if ($boardObj->getOwnerUserId() == $singleRowUser['id']) {
 									echo "<option selected value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
 								} else {
@@ -196,7 +204,6 @@
       // collect all Sensor IDs that belong to the Board.
         $count = 1;
         $Sensorname = null;
-        $mySensors = myFunctions::getAllSensorsOfBoardOld($varId);
         foreach($mySensors as $singleRowMySensor) {
           $Sensorname = myFunctions::getSensorType($singleRowMySensor['typId']);
           echo "<tr>";

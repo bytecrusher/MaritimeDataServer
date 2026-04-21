@@ -9,184 +9,42 @@ session_start();
 require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
 require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
 require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
+require_once dirname(__DIR__, 2) . "/app/Application/SettingsPageService.php";
 require_once dirname(__DIR__, 2) . "/app/Domain/User/user.class.php";
 require_once dirname(__DIR__, 2) . "/app/Application/dbUpdateData.php";
 require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
 
 $config  = new configuration();
-$varDemoMode = $config::$demoMode;
-$varShowQrCode = $config::$ShowQrCode;
-$var_apiKey = $config::$apiKey;
-$varSend_emails = $config::$sendEmails;
-
-
-//Check that the user is logged in
-if (isset($_SESSION['userObj'])) {
-  $userObj = unserialize($_SESSION['userObj']);
-} else {
-  $userObj = false;
+$userObj = SettingsPageService::resolveCurrentUserFromSession();
+if (!$userObj) {
   header("Location: ./index.php");
-}
-
-function fixObject (&$object)
-{
-  if (!is_object ($object) && gettype ($object) == 'object')
-    return ($object = unserialize (serialize ($object)));
-  return $object;
+  exit();
 }
 
 if(isset($_GET['save'])) {
-  $save = $_GET['save'];
-  if($save == 'personal_data') {
-    try {
-      $userObj->setName($_POST);
-    } catch (Exception $e) {
-      $error_msg = $e->getMessage();
-      writeToLogFunction::write_to_log("setName not saved.", $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-    }
-    try {
-      $userObj->setUserTimeZone($_POST);
-    } catch (Exception $e) {
-      $error_msg = $e->getMessage();
-      writeToLogFunction::write_to_log("setUserTimeZone not saved.", $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-    }
-    try {
-      $userObj->setReceiveNotifications($_POST);
-    } catch (Exception $e) {
-      $error_msg = $e->getMessage();
-      writeToLogFunction::write_to_log("setReceiveNotifications not saved.", $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-    }
-    $_SESSION['userObj'] = serialize($userObj);
-    if (!isset($error_msg)) {
-      $success_msg = "User Data successfully saved.";
-    }
-  } elseif($save == 'email') {
-    $password = $_POST['password'];
-    $email = trim($_POST['email']);
-    $email2 = trim($_POST['email2']);
-
-    if($email != $email2) {
-      $error_msg = "The entered email addresses are not the same.";
-    } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-      $error_msg = "The entered email address are not valid.";
-    } elseif(!password_verify($password, $userObj->getPassword())) {
-      $error_msg = "Wrong password.";
-    } else {
-      try {
-        $userObj->setEmail($_POST);
-      } catch (Exception $e) {
-        //$error_msg = $e->getMessage();
-        $error_msg = "Email address not successfully saved.";
-        writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
-        writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-      }
-      $_SESSION['userObj'] = serialize($userObj);
-      if (!isset($error_msg)) {
-        $success_msg = "E-Mail address successfully saved.";
-      }
-    }
-  } elseif($save == 'password') {
-    $passwordAlt = $_POST['passwordOld'];
-    $passwordNew = trim($_POST['passwordNew']);
-    $passwordNew2 = trim($_POST['passwordNew2']);
-
-    if($passwordNew != $passwordNew2) {
-      $error_msg = "The entered passwords are not the same.";
-    } elseif($passwordNew == "") {
-      $error_msg = "Empty password is not allowed.";
-    } elseif(!password_verify($passwordAlt, $userObj->getPassword())) {
-      $error_msg = "Please enter correct password.";
-    } else {
-      $password_hash = password_hash($passwordNew, PASSWORD_DEFAULT);
-      try {
-        $userObj->setUserPassword($password_hash);
-      } catch (Exception $e) {
-        $error_msg = "Password reset not successfully.";
-        writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
-        writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-      }
-      $_SESSION['userObj'] = serialize($userObj);
-      if (!isset($error_msg)) {
-        $success_msg = "Password successfully saved.";
-      }
-    }
-  } elseif($save == 'dashboard_data') {
-    try {
-      $updateUserReturn = $userObj->setDashboardUpdateInterval($_POST);
-    } catch (Exception $e) {
-      $error_msg = "Dashboard Update Interval not saved.";
-      writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-    }
-    $_SESSION['userObj'] = serialize($userObj);
-    if (!isset($error_msg)) {
-      $success_msg = "Dashboard Update Interval successfully saved.";
-    }
-  } elseif ($save == 'allBoards') {
-
-  } elseif($save == 'users') {
-    try {
-      dbUpdateData::updateUserStatus($_POST);
-      $success_msg = "User Status updated.";
-    } catch (Exception $e) {
-      $error_msg = "Error on update User Status.";
-      writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-    }
-  } elseif($save == 'addNewUserToBoard') {
-    try {
-      $addNewBoardToUserReturn = dbUpdateData::addNewBoardToUser($_POST, $userObj->getId());
-      if ($addNewBoardToUserReturn) {
-        $success_msg = "Board added successfully.<br>Wait for the next Lora update.";
-      } else {
-        writeToLogFunction::write_to_log("Board not added.", $_SERVER["SCRIPT_FILENAME"]);
-        //writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-        $error_msg = "Board not added.";
-      }
-    } catch (Exception $e) {
-      $error_msg = $e->getMessage();
-      writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-    }
-  }
-  elseif($save == 'serverSetting') {
-    try {
-      $config->saveServerSettings($_POST);
-      $varDemoMode = $config::$demoMode;
-      $varShowQrCode = $config::$ShowQrCode;
-      $var_apiKey = $config::$apiKey;
-      $varSend_emails = $config::$sendEmails;
-      $success_msg = "Server settings saved.";
-      //header("Refresh:0; url=settings.php");
-    } catch (Exception $e) {
-      writeToLogFunction::write_to_log("Server settings not saved.", $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-      $error_msg = $e->getMessage();
-    }
-  }
+  $saveResult = SettingsPageService::handleSettingsSave($userObj, $config, $_GET['save'], $_POST);
+  $userObj = $saveResult['userObj'];
+  $success_msg = $saveResult['success_msg'];
+  $error_msg = $saveResult['error_msg'];
 }
 
-// write passed data back to the database
-if (isset($_POST['submit_formBoards']))  // Submit-Button of the input mask was pressed
-{
-  try {
-    $updateBoardReturn = dbUpdateData::updateBoard($_POST);
-    $success_msg = "Board successfully updated.";
-  } catch (Exception $e) {
-    $error_msg = "Error while saving board changes.";
-  }
-} elseif (isset($_POST['submit_formBoards_remove']))  // remove-Button of the input mask was pressed
-{
-  try {
-    $updateBoardReturn = dbUpdateData::removeBoardOwner($_POST);
-    $success_msg = "Board successfully removed.";
-  } catch (Exception $e) {
-    $error_msg = "Error while removing board.";
-  }
+if (isset($_POST['submit_formBoards']) || isset($_POST['submit_formBoards_remove'])) {
+  $boardResult = SettingsPageService::handleBoardFormSubmission($_POST);
+  $success_msg = $boardResult['success_msg'] ?? $success_msg ?? null;
+  $error_msg = $boardResult['error_msg'] ?? $error_msg ?? null;
 }
+
+$pageData = SettingsPageService::buildPageData($userObj, $config);
+$varDemoMode = $pageData['demoMode'];
+$varShowQrCode = $pageData['showQrCode'];
+$var_apiKey = $pageData['apiKey'];
+$varSend_emails = $pageData['sendEmails'];
+$myBoards = $pageData['myBoards'];
+$allBoards = $pageData['allBoards'];
+$allUsers = $pageData['allUsers'];
+$timeZones = $pageData['timeZones'];
+$currentLogContent = $pageData['currentLogContent'];
+$isAdmin = $pageData['isAdmin'];
 
 include_once "common/header.inc.php";
 ?>
@@ -268,7 +126,7 @@ th.rotated-text > div > span {
       <li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab">My Boards</a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#confDashboard" role="tab" data-bs-toggle="tab">Dashboard</a></li>
       <?php
-        if($userObj->getUserGroupAdmin() == 1 ) {
+        if($isAdmin) {
         ?>
           <li class='nav-item' role='presentation'><a class='nav-link' href='#allBoards' role='tab' data-bs-toggle='tab'>All Boards</a></li>
           <li class='nav-item' role='presentation'><a class='nav-link' href='#users' role='tab' data-bs-toggle='tab'>Users</a></li>
@@ -301,18 +159,6 @@ th.rotated-text > div > span {
             </div>
           </div>
 
-          <?php
-            function timeZoneList() {
-              $allZones = array();
-              $timestamp = time();
-              foreach(timezone_identifiers_list() as $key => $live_zone) {
-                date_default_timezone_set($live_zone);
-                $allZones[$key]['zone'] = $live_zone;
-                $allZones[$key]['diff_from_GMT'] = 'UTC/GMT ' . date('P', $timestamp);
-              }
-              return $allZones;
-            }
-          ?>
           <div class="form-group">
             <div class="row">
               <label for="inputTimezone" class="col-sm-2 control-label">Timezone</label>
@@ -320,7 +166,7 @@ th.rotated-text > div > span {
               <div class="col-sm-4">
               <select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
                 <option value="0">Please, select your timezone</option>
-                <?php foreach(timeZoneList() as $t) { ?>
+                <?php foreach($timeZones as $t) { ?>
                   <?php if($t['zone'] == $userTimezone ) { ?>
                     <option value="<?php print $t['zone'] ?>" selected>
                       <?php print $t['zone'] . ' - ' . $t['diff_from_GMT'] ?>
@@ -497,7 +343,6 @@ th.rotated-text > div > span {
           </thead>
           <tbody>
           <?php
-          $myBoards = $userObj->getMyBoardsAll();
           $countBoardRow = 1;
           foreach($myBoards as $singleRowMyBoard) {
           ?>
@@ -631,9 +476,8 @@ th.rotated-text > div > span {
           </thead>
           <tbody>
           <?php
-          $myBoards = $userObj->getAllBoardsAdmin();
           $countBoardRow = 1;
-          foreach($myBoards as $singleRowMyBoard) {
+          foreach($allBoards as $singleRowMyBoard) {
           ?>
             <tr>
             <td class='toggleDisplayId'> <?php echo $singleRowMyBoard['id'] ?></td>
@@ -685,11 +529,9 @@ th.rotated-text > div > span {
             <th>#</th><th>Active</th><th>First name</th><th>Last name</th><th>E-Mail</th><th>Admin</th>
           </tr>
           <?php
-          if(($userObj->getUserGroupAdmin() != false) ) {
+          if($isAdmin) {
             $count = 1;
-            $statement = myFunctions::getAllUsers();
-
-            foreach($statement as $singleRowUser) {
+            foreach($allUsers as $singleRowUser) {
               ?>
               <tr>
                 <td><?php echo $count++ ?></td>
@@ -808,7 +650,7 @@ th.rotated-text > div > span {
               <div class="row">
                 <label for="apiKey" class="col col-sm-2 control-label">API Key:</label>
                 <div class="col col-sm-4">
-                  <input class="form-control" id="apiKey" name="apiKey" type="text" value="<?php echo $config::$apiKey; ?>" required>
+                  <input class="form-control" id="apiKey" name="apiKey" type="text" value="<?php echo $var_apiKey; ?>" required>
                 </div>
               </div>
             </div>
@@ -880,25 +722,7 @@ th.rotated-text > div > span {
         <div class="panel panel-default p-2">The log file of the current month will be displayed.</div>
         <div class="panel panel-default p-2">
           <?php
-            $format = "log"; // Possibilities: csv and txt
-            date_default_timezone_set('Europe/Berlin');
-            $datum_zeit = date("d.m.Y H:i:s");
-            $months = array(1 => "Januar", 2 => "Februar", 3 => "Maerz", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
-            $month = date("n");
-            $year = date("Y");
-            $filename = dirname(__FILE__) . "/../logs/log_" . $months[$month] . "_$year.$format";
-            $data = false;
-
-            if (file_exists($filename)) {
-              $data = file_get_contents($filename);
-              if ($data != false) {
-                echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>' . htmlspecialchars($data). '</textarea>';
-              } else {
-                echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>Error while opening Log file.</textarea>';
-              }
-            } else {
-              echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>Log file not found.</textarea>';
-            }
+            echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>' . htmlspecialchars($currentLogContent) . '</textarea>';
           ?>
         </div>
       </div>
