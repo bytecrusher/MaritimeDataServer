@@ -43,7 +43,7 @@ class InternalPageService
             'mapPayload' => self::buildMapPayload($currentUser),
             'dashboardUpdateIntervalMs' => max(1000, (int) $currentUser->getDashboardUpdateInterval() * 10000),
             'demoMode' => (bool) $config::$demoMode,
-            'showInstallAlert' => ((int) $currentUser->getUserGroupAdmin() === 1) && is_dir(__DIR__ . '/../../src/install'),
+            'showInstallAlert' => ((int) $currentUser->getUserGroupAdmin() === 1) && is_dir(__DIR__ . '/../../public/install'),
             'hasBoards' => !empty($myBoardsIdList),
         );
     }

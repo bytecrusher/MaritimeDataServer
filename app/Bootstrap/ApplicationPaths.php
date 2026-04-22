@@ -14,11 +14,6 @@ final class ApplicationPaths
         return self::projectRoot() . '/public';
     }
 
-    public static function legacyPublicRoot(): string
-    {
-        return self::projectRoot() . '/src';
-    }
-
     public static function configRoot(): string
     {
         return self::projectRoot() . '/config';

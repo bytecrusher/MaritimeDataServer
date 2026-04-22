@@ -12,7 +12,7 @@ require_once(dirname(__FILE__, 2) . "/../Infrastructure/Logging/writeToLogFuncti
 require_once(dirname(__FILE__, 2) . "/../Application/myFunctions.func.php");
 require_once(dirname(__FILE__, 2) . "/../Domain/Board/board.class.php");
 
-#require_once("/src/frontend/func/writeToLogFunction.func.php");
+// legacy include removed during public webroot migration
 
 $config  = new configuration();
 

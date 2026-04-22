@@ -17,6 +17,7 @@ class configuration {
     static $apiKey = null;
     static $baseurl = null;
     static $subDir = null;
+    static $mountPath = null;
     static $demoMode = null;
     static $md5secretString = null;
     static $installFinished = null;
@@ -28,9 +29,9 @@ class configuration {
     
     function __construct() {
         $projectRoot = dirname(__FILE__, 4);
-        $legacyPublicRoot = $projectRoot . '/src';
         $modernConfigDir = $projectRoot . '/config';
-        self::$subDir = self::detectSubDir($projectRoot, $legacyPublicRoot);
+        self::$mountPath = self::detectMountPath($projectRoot);
+        self::$subDir = self::$mountPath;
 
         #writeToLogFunction::write_to_log(self::$subDir, $_SERVER["SCRIPT_FILENAME"]);
 
@@ -52,9 +53,6 @@ class configuration {
 
         $path = "";
         $path = $modernConfigDir . '/config.json';
-        if (!file_exists($path)) {
-            $path = $legacyPublicRoot . '/config/config.json';
-        }
 
         if (file_exists($path)) {
             $jsonString = file_get_contents($path);
@@ -166,69 +164,53 @@ class configuration {
         }
     }
 
-    private static function detectSubDir($projectRoot, $legacyPublicRoot) {
-        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? "";
-        $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? "";
+    private static function detectMountPath($projectRoot) {
         $requestUri = $_SERVER['REQUEST_URI'] ?? "";
+        $requestPath = parse_url($requestUri, PHP_URL_PATH);
+        if ($requestPath === false || $requestPath === null) {
+            $requestPath = "";
+        }
 
-        if (($documentRoot !== "") && ($scriptFilename !== "") && str_starts_with($scriptFilename, $documentRoot)) {
-            $relativeScript = str_replace($documentRoot, "", $scriptFilename);
+        $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? "";
+        $publicRoot = realpath($projectRoot . '/public');
+        $realScriptFilename = $scriptFilename !== "" ? realpath($scriptFilename) : false;
+
+        if ($publicRoot !== false && $realScriptFilename !== false && str_starts_with($realScriptFilename, $publicRoot)) {
+            $relativeScript = substr($realScriptFilename, strlen($publicRoot));
             $relativeScript = str_replace('\\', '/', $relativeScript);
-
-            if (str_starts_with($relativeScript, '/public/')) {
-                return '/public' === dirname($relativeScript) ? '/public' : '/public';
+            if ($relativeScript === '') {
+                $relativeScript = '/index.php';
             }
 
-            foreach (array('/src/frontend/', '/src/receiver/', '/src/install/', '/src/simulator/', '/src/otafirmware/') as $prefix) {
-                if (str_starts_with($relativeScript, $prefix)) {
-                    return '/src';
+            if ($requestPath !== '') {
+                if (str_ends_with($requestPath, $relativeScript)) {
+                    return self::normalizeMountPath(substr($requestPath, 0, -strlen($relativeScript)));
                 }
-            }
 
-            if (str_starts_with($relativeScript, '/src/')) {
-                return '/src';
-            }
-        }
-
-        if ($requestUri !== "") {
-            if (strpos($requestUri, '/public/') !== false || str_ends_with($requestUri, '/public') || str_contains($requestUri, '/public?')) {
-                return self::extractMountPath($requestUri, '/public');
-            }
-
-            foreach (array('/src/frontend/', '/src/receiver/', '/src/install/', '/src/simulator/', '/src/otafirmware/', '/src/') as $needle) {
-                if (strpos($requestUri, $needle) !== false) {
-                    return self::extractMountPath($requestUri, '/src');
+                if ($relativeScript === '/index.php' || $relativeScript === '/index.html') {
+                    return self::normalizeMountPath(dirname($requestPath));
                 }
             }
         }
 
-        if (is_dir($projectRoot . '/public')) {
-            return self::pathFromDocumentRoot($projectRoot . '/public');
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? "";
+        if ($scriptName !== "") {
+            return self::normalizeMountPath(dirname(str_replace('\\', '/', $scriptName)));
         }
 
-        return self::pathFromDocumentRoot($legacyPublicRoot);
+        return '';
     }
 
-    private static function extractMountPath($requestUri, $rootSegment) {
-        $uriPath = parse_url($requestUri, PHP_URL_PATH);
-        if ($uriPath === false || $uriPath === null) {
-            $uriPath = $requestUri;
+    private static function normalizeMountPath($path) {
+        if ($path === false || $path === null) {
+            return '';
         }
 
-        $position = strpos($uriPath, $rootSegment);
-        if ($position === false) {
-            return $rootSegment;
+        $normalizedPath = str_replace('\\', '/', (string) $path);
+        if ($normalizedPath === '/' || $normalizedPath === '.' || $normalizedPath === '') {
+            return '';
         }
 
-        return substr($uriPath, 0, $position + strlen($rootSegment));
-    }
-
-    private static function pathFromDocumentRoot($absolutePath) {
-        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? "";
-        if (($documentRoot !== "") && str_starts_with($absolutePath, $documentRoot)) {
-            return rtrim(str_replace($documentRoot, "", $absolutePath), '/');
-        }
-
-        return rtrim($absolutePath, '/');
+        return rtrim($normalizedPath, '/');
     }
 }

@@ -52,8 +52,7 @@ class myFunctions {
 	 * Returns the URL to the site without the script name.
 	 */
 	public static function getSiteURL() {
-		$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-		return $protocol.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']).'/';
+		return rtrim(mds_absolute_url(), '/') . '/';
 	}
 
   /**
@@ -964,9 +963,9 @@ class myFunctions {
 	 * Outputs an error message and stops the further execution of the script.
 	 */
 	public function error($error_msg) {
-		include(dirname(__FILE__, 2) . "/../src/frontend/common/header.inc.php");
-		include(dirname(__FILE__, 2) . "/../src/frontend/common/error.inc.php");
-		include(dirname(__FILE__, 2) . "/../src/frontend/common/footer.inc.php");
+		include(dirname(__FILE__, 2) . "/Presentation/Common/header.inc.php");
+		include(dirname(__FILE__, 2) . "/Presentation/Common/error.inc.php");
+		include(dirname(__FILE__, 2) . "/Presentation/Common/footer.inc.php");
 	    writeToLogFunction::write_to_log("Error: function error was triggered.", $_SERVER["SCRIPT_FILENAME"]);
 			exit();
 	}

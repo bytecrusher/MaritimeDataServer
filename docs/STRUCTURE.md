@@ -20,13 +20,11 @@ The project now separates public entrypoints from internal application code.
   - configuration, database access and logging
 - `app/Support`
   - utilities and helper libraries
-- `src`
-  - public webroot, UI pages, APIs, webhooks and legacy wrappers
 - `public`
-  - preferred document root for modern deployment
+  - the only public document root for UI, APIs, webhooks, OTA and simulator tools
 - `var/log`
   - runtime-generated log files
 
-## Compatibility
+## Runtime Layout
 
-Public entrypoints remain under `src/` and `public/`, but the old internal helper wrappers under `src/frontend/func` and `src/config` have been removed in favor of direct bootstrapping into `app/`.
+The application now runs only from `public/`. Legacy `src/` entrypoints and duplicate compatibility wrappers have been removed as part of the webroot migration.

@@ -237,7 +237,7 @@ if(strlen($ttn_post) > 0) {
       $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
     }
 
-    $url = $config::$baseurl . '/receiver/receivejson.php';
+    $url = $config::$baseurl . '/ingest/receivejson.php';
     $ch = curl_init($url);
 
     writeToLogFunction::info(
