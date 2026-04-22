@@ -9,5 +9,6 @@
     "installFinished": "false",
     "adminEmailAddress": "info@yourdomain.de",
     "ShowQrCode": "0",
-    "sendEmails": "0"
+    "sendEmails": "0",
+    "ttnWebhookSecret": "optional_shared_secret_for_ttn_webhook"
 }

@@ -41,115 +41,103 @@ date_default_timezone_set('Europe/Berlin');
 
 $pdo2 = dbConfig::getInstance();
 $config = new configuration();
+$requestHeaders = function_exists('getallheaders') ? getallheaders() : array();
 
 $ttn_post = file_get_contents('php://input');
 $data = null;
 if(strlen($ttn_post) > 0) {
     $data = json_decode($ttn_post);
-    $sensor_raw_payload = null;
-    $ttn_device_id = null;
-    $ttn_dev_eui = null;
-    $ttn_board_identifier = null;
-
-    if(($data != null) && isset($data->uplink_message) && isset($data->uplink_message->decoded_payload) && ($data->uplink_message->decoded_payload != null)) {
-        $sensor_temperature = $sensor_humidity = $sensor_battery = 0;       // define Variables
-
-        // Sensor Data
-        $decodedPayload = $data->uplink_message->decoded_payload;
-        $sensor_alarm1 = $decodedPayload->alarm1 ?? 0;
-        $sensor_altitude = $decodedPayload->altitude ?? 0;
-        if (isset($data->uplink_message->decoded_payload->counter)) {
-          $frame_counter = $data->uplink_message->decoded_payload->counter;
-        } else {
-          $frame_counter = 0;
-        }
-        
-        $sensor_dewpoint = $decodedPayload->dewpoint ?? 0;
-        $sensor_humidity = $decodedPayload->humidity ?? 0;
-        if(isset($data->uplink_message->decoded_payload->Hum_SHT)) {
-          $sensor_humidity = $data->uplink_message->decoded_payload->Hum_SHT;
-        }
-
-        $sensor_latitude = $decodedPayload->latitude ?? 0;
-        if(isset($data->uplink_message->decoded_payload->level1)) {
-          $sensor_level1 = $data->uplink_message->decoded_payload->level1;
-        } else {
-          $sensor_level1 = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->level2)) {
-          $sensor_level2 = $data->uplink_message->decoded_payload->level2;
-        } else {
-          $sensor_level2 = 0;
-        }
-        $sensor_longitude = $decodedPayload->longitude ?? 0;
-        $position_lat = $decodedPayload->position->context->lat ?? 0;
-        $position_lng = $decodedPayload->position->context->lng ?? 0;
-        $sensor_pressure = $decodedPayload->pressure ?? 0;
-        if(isset($data->uplink_message->decoded_payload->relay)) {
-          $sensor_relay = $data->uplink_message->decoded_payload->relay;
-        } else {
-          $sensor_relay = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->tempbattery)) {
-          $sensor_temperature_2 = $data->uplink_message->decoded_payload->tempbattery;
-        } else {
-          $sensor_temperature_2 = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->BatV)) {
-            $sensor_battery = $data->uplink_message->decoded_payload->BatV;
-        } else {
-          $sensor_battery = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->temperature)) {
-          $sensor_temperature = $data->uplink_message->decoded_payload->temperature;
-        }
-        if(isset($data->uplink_message->decoded_payload->TempC_SHT)) {
-          $sensor_temperature = $data->uplink_message->decoded_payload->TempC_SHT;
-        }
-        if(isset($data->uplink_message->decoded_payload->voltage)) {
-          $sensor_battery = $data->uplink_message->decoded_payload->voltage;
-        } else {
-          $sensor_battery = 0;
-        }
-
-        if(isset($data->uplink_message->decoded_payload->voltage2)) {
-          $sensor_battery2 = $data->uplink_message->decoded_payload->voltage2;
-        } else {
-          $sensor_battery2 = 0;
-        }
-
-        $sensor_raw_payload = $data->uplink_message->frm_payload;
-
-        // TTN Data
-        $gtw_id = $data->uplink_message->rx_metadata[0]->gateway_ids->gateway_id ?? '';
-        $gtw_rssi = $data->uplink_message->rx_metadata[0]->rssi ?? 0;
-        $gtw_snr = $data->uplink_message->rx_metadata[0]->snr ?? 0;
-
-        $ttn_app_id = $data->end_device_ids->application_ids->application_id;
-        $ttn_device_id = $data->end_device_ids->device_id ?? null;
-        $ttn_dev_eui = $data->end_device_ids->dev_eui ?? null;
-        $ttn_dev_id = $ttn_dev_eui;
-        $ttn_board_identifier = $ttn_device_id ?: $ttn_dev_eui;
-        $ttn_time = $data->received_at;
-        writeToLogFunction::info(
-            'TTN uplink received.',
-            $_SERVER["SCRIPT_FILENAME"],
-            array(
-                'ttnAppId' => $ttn_app_id,
-                'ttnDeviceId' => $ttn_device_id,
-                'ttnDevEui' => $ttn_dev_eui,
-                'frameCounter' => $frame_counter
-            )
-        );
-    } else {
+    if ($data === null || !isset($data->uplink_message) || !isset($data->end_device_ids) || !isset($data->end_device_ids->application_ids->application_id)) {
+        http_response_code(400);
         writeToLogFunction::warning(
-            'TTN payload missing decoded_payload.',
+            'TTN payload missing required uplink fields.',
             $_SERVER["SCRIPT_FILENAME"],
             array('rawPayload' => $ttn_post)
+        );
+        exit;
+    }
+
+    if (!ttnWebhookSecretIsValid($requestHeaders, (string)$config::$ttnWebhookSecret)) {
+        http_response_code(403);
+        writeToLogFunction::warning(
+            'TTN webhook secret validation failed.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array('requestHeaders' => ttnFilterHeadersForLogging($requestHeaders))
+        );
+        exit;
+    }
+
+    $sensor_temperature = 0;
+    $sensor_temperature_2 = 0;
+    $sensor_humidity = 0;
+    $sensor_battery = 0;
+    $sensor_battery2 = 0;
+    $sensor_alarm1 = 0;
+    $sensor_altitude = 0;
+    $frame_counter = 0;
+    $sensor_dewpoint = 0;
+    $sensor_latitude = 0;
+    $sensor_level1 = 0;
+    $sensor_level2 = 0;
+    $sensor_longitude = 0;
+    $position_lat = 0;
+    $position_lng = 0;
+    $sensor_pressure = 0;
+    $sensor_relay = 0;
+
+    $uplinkMessage = $data->uplink_message;
+    $decodedPayload = ttnExtractMeasurementPayload($uplinkMessage);
+    $sensor_raw_payload = $uplinkMessage->frm_payload ?? null;
+    $bestRxMetadata = ttnSelectBestRxMetadata($uplinkMessage->rx_metadata ?? array());
+
+    // Sensor Data
+    $sensor_alarm1 = ttnPayloadValue($decodedPayload, array('alarm1'), 0);
+    $sensor_altitude = ttnPayloadValue($decodedPayload, array('altitude'), 0);
+    $frame_counter = ttnPayloadValue($decodedPayload, array('counter'), 0);
+    $sensor_dewpoint = ttnPayloadValue($decodedPayload, array('dewpoint'), 0);
+    $sensor_humidity = ttnPayloadValue($decodedPayload, array('humidity', 'Hum_SHT'), 0);
+    $sensor_latitude = ttnPayloadValue($decodedPayload, array('latitude', 'position.latitude'), 0);
+    $sensor_level1 = ttnPayloadValue($decodedPayload, array('level1'), 0);
+    $sensor_level2 = ttnPayloadValue($decodedPayload, array('level2'), 0);
+    $sensor_longitude = ttnPayloadValue($decodedPayload, array('longitude', 'position.longitude'), 0);
+    $position_lat = ttnPayloadValue($decodedPayload, array('position.context.lat', 'position.latitude'), 0);
+    $position_lng = ttnPayloadValue($decodedPayload, array('position.context.lng', 'position.longitude'), 0);
+    $sensor_pressure = ttnPayloadValue($decodedPayload, array('pressure', 'air.pressure'), 0);
+    $sensor_relay = ttnPayloadValue($decodedPayload, array('relay'), 0);
+    $sensor_temperature_2 = ttnPayloadValue($decodedPayload, array('tempbattery'), 0);
+    $sensor_battery = ttnPayloadValue($decodedPayload, array('BatV', 'voltage', 'battery'), 0);
+    $sensor_temperature = ttnPayloadValue($decodedPayload, array('temperature', 'TempC_SHT', 'air.temperature'), 0);
+    $sensor_battery2 = ttnPayloadValue($decodedPayload, array('voltage2'), 0);
+
+    // TTN Data
+    $gtw_id = $bestRxMetadata->gateway_ids->gateway_id ?? '';
+    $gtw_rssi = $bestRxMetadata->rssi ?? 0;
+    $gtw_snr = $bestRxMetadata->snr ?? 0;
+
+    $ttn_app_id = $data->end_device_ids->application_ids->application_id;
+    $ttn_device_id = $data->end_device_ids->device_id ?? null;
+    $ttn_dev_eui = $data->end_device_ids->dev_eui ?? null;
+    $ttn_dev_id = $ttn_dev_eui;
+    $ttn_board_identifier = $ttn_device_id ?: $ttn_dev_eui;
+    $ttn_time = $data->received_at ?? ($uplinkMessage->received_at ?? null);
+    writeToLogFunction::info(
+        'TTN uplink received.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+            'ttnAppId' => $ttn_app_id,
+            'ttnDeviceId' => $ttn_device_id,
+            'ttnDevEui' => $ttn_dev_eui,
+            'frameCounter' => $frame_counter,
+            'hasDecodedPayload' => isset($uplinkMessage->decoded_payload),
+            'hasNormalizedPayload' => isset($uplinkMessage->normalized_payload)
+        )
+    );
+
+    if (!isset($uplinkMessage->decoded_payload) || $uplinkMessage->decoded_payload === null) {
+        writeToLogFunction::warning(
+            'TTN uplink arrived without decoded_payload. Fallback extraction used.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array('rawPayload' => $sensor_raw_payload)
         );
     }
 
@@ -333,6 +321,8 @@ if(strlen($ttn_post) > 0) {
 
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,  2);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
 
     // Attach encoded JSON string to the POST fields
     curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
@@ -347,6 +337,7 @@ if(strlen($ttn_post) > 0) {
 
     // Execute the POST request
     $result = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if ($result === false) {
       writeToLogFunction::error(
         'cURL forwarding to receivejson failed.',
@@ -357,12 +348,24 @@ if(strlen($ttn_post) > 0) {
           'curlErrno' => curl_errno($ch)
         )
       );
+    } elseif ($httpCode < 200 || $httpCode >= 300) {
+      writeToLogFunction::error(
+        'receivejson returned a non-success HTTP status.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+          'targetUrl' => $url,
+          'httpCode' => $httpCode,
+          'response' => $result,
+          'sensorCount' => count($sensors)
+        )
+      );
     } else {
       writeToLogFunction::info(
         'cURL forwarding to receivejson succeeded.',
         $_SERVER["SCRIPT_FILENAME"],
         array(
           'targetUrl' => $url,
+          'httpCode' => $httpCode,
           'response' => $result,
           'sensorCount' => count($sensors)
         )
@@ -373,5 +376,106 @@ if(strlen($ttn_post) > 0) {
     curl_close($ch);
 } else {
     writeToLogFunction::warning('TTN endpoint called without body.', $_SERVER["SCRIPT_FILENAME"]);
+}
+
+function ttnWebhookSecretIsValid(array $headers, string $expectedSecret) {
+    if ($expectedSecret === '') {
+        return true;
+    }
+
+    $providedSecret = ttnHeaderValue($headers, array('X-MDS-Webhook-Secret', 'X-Webhook-Secret', 'X-TTN-Webhook-Secret'));
+    if ($providedSecret === null) {
+        return false;
+    }
+
+    return hash_equals($expectedSecret, $providedSecret);
+}
+
+function ttnFilterHeadersForLogging(array $headers) {
+    $filteredHeaders = array();
+    foreach ($headers as $name => $value) {
+        if (stripos((string)$name, 'secret') !== false || stripos((string)$name, 'authorization') !== false) {
+            $filteredHeaders[$name] = '***';
+        } else {
+            $filteredHeaders[$name] = $value;
+        }
+    }
+    return $filteredHeaders;
+}
+
+function ttnHeaderValue(array $headers, array $candidates) {
+    foreach ($headers as $name => $value) {
+        foreach ($candidates as $candidate) {
+            if (strcasecmp((string)$name, $candidate) === 0) {
+                return is_array($value) ? null : (string)$value;
+            }
+        }
+    }
+    return null;
+}
+
+function ttnSelectBestRxMetadata($rxMetadataList) {
+    if (!is_array($rxMetadataList) || empty($rxMetadataList)) {
+        return (object)array();
+    }
+
+    usort($rxMetadataList, function ($left, $right) {
+        $leftRssi = isset($left->rssi) ? (float)$left->rssi : -INF;
+        $rightRssi = isset($right->rssi) ? (float)$right->rssi : -INF;
+        return $rightRssi <=> $leftRssi;
+    });
+
+    return $rxMetadataList[0];
+}
+
+function ttnExtractMeasurementPayload($uplinkMessage) {
+    if (isset($uplinkMessage->decoded_payload) && is_object($uplinkMessage->decoded_payload)) {
+        return $uplinkMessage->decoded_payload;
+    }
+
+    if (isset($uplinkMessage->normalized_payload)) {
+        $normalizedPayload = $uplinkMessage->normalized_payload;
+        if (is_array($normalizedPayload) && !empty($normalizedPayload) && is_object($normalizedPayload[0])) {
+            return $normalizedPayload[0];
+        }
+        if (is_object($normalizedPayload)) {
+            return $normalizedPayload;
+        }
+    }
+
+    return (object)array();
+}
+
+function ttnPayloadValue($payload, array $paths, $default = 0) {
+    foreach ($paths as $path) {
+        $value = ttnReadPath($payload, $path);
+        if ($value !== null) {
+            return $value;
+        }
+    }
+    return $default;
+}
+
+function ttnReadPath($payload, $path) {
+    if (!is_object($payload) && !is_array($payload)) {
+        return null;
+    }
+
+    $current = $payload;
+    foreach (explode('.', $path) as $segment) {
+        if (is_object($current) && isset($current->{$segment})) {
+            $current = $current->{$segment};
+            continue;
+        }
+
+        if (is_array($current) && array_key_exists($segment, $current)) {
+            $current = $current[$segment];
+            continue;
+        }
+
+        return null;
+    }
+
+    return $current;
 }
 ?>

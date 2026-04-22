@@ -26,6 +26,7 @@ class configuration {
     static $sendEmails = null;
     static $systemEmailAddress = null;
     static $applicationName = null;
+    static $ttnWebhookSecret = null;
     
     function __construct() {
         $projectRoot = dirname(__FILE__, 4);
@@ -122,6 +123,11 @@ class configuration {
                 self::$applicationName = $jsonData['applicationName'];
             } else {
                 writeToLogFunction::write_to_log("Missing applicationName in config.", $_SERVER["SCRIPT_FILENAME"]);
+            }
+
+            self::$ttnWebhookSecret = "";
+            if (array_key_exists('ttnWebhookSecret', $jsonData)) {
+                self::$ttnWebhookSecret = (string)$jsonData['ttnWebhookSecret'];
             }
 
             self::$config_exist = true;
