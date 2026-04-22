@@ -108,7 +108,12 @@
           try {
             //console.error("obj[0]+i4:" + obj[0]+"."+i4 + ", " + gaugesArrayHelper.includes(obj[0]+"."+i4));
             if (gaugesArrayHelper.includes(obj[0]+"."+i4)) {
-              gaugesMap.get(obj[0]+"."+i4).setValueAnimated(obj[i4]);
+              const numericValue = Number.parseFloat(obj[i4]);
+              if (Number.isFinite(numericValue)) {
+                gaugesMap.get(obj[0]+"."+i4).setValueAnimated(numericValue);
+              } else {
+                console.warn("non-numeric gauge value for sensor " + obj[0] + "." + i4, obj[i4]);
+              }
             }
           } catch (error) {
             console.error("error accessing: " + obj[0]+"."+i4);
@@ -228,7 +233,9 @@
                       $sensChannelConfig = myFunctions::getSensorChannelsConfig($singleRowMySensors['id']);
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
                         $SensorChannelConfigSingle = myFunctions::getSensorChannelConfig($singleRowMySensors['id'], $i);
-                        if (($mySensors != null) && (is_array($SensorChannelConfigSingle)) && ($SensorChannelConfigSingle['onDashboard'] == 1)) {
+                        $currentChannelValue = $singleRowMySensorsLastTimeSeen['value' . $i] ?? null;
+                        $numericCurrentChannelValue = is_numeric($currentChannelValue) ? (float)$currentChannelValue : null;
+                        if (($mySensors != null) && (is_array($SensorChannelConfigSingle)) && ($SensorChannelConfigSingle['onDashboard'] == 1) && ($numericCurrentChannelValue !== null)) {
                           ?>
                           <li id='gauge<?php echo $singleRowMySensors['id'] . "." . $i; ?>' data-id=<?php echo $SensorChannelConfigSingle['DashboardOrderNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
                             <div id='div_click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
@@ -246,7 +253,7 @@
                                   max: <?php echo $SensorChannelConfigSingle['GaugeMaxValue'] ?>,
                                   dialStartAngle: 180,
                                   dialEndAngle: 0,
-                                  value: '.', // so that "NaN" is displayed as the default value
+                                  value: <?php echo json_encode($numericCurrentChannelValue); ?>,
                                   viewBox: "0 0 100 57",
                                   id: "<?php echo $singleRowMySensors['id'] . "." . $i; ?>",
                                   color: function(value) {

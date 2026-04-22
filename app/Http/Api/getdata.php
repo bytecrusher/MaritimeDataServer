@@ -1,6 +1,7 @@
 <?php
 // Get data from DB for display in JS.
 header('Content-Type: application/json');
+session_start();
 
 require_once(__DIR__ . "/../../Application/myFunctions.func.php");
 require_once(__DIR__ . "/../../Domain/Board/get_data.php");
@@ -14,16 +15,24 @@ $varData = $_POST['data'] ?? '';
 $varSensorId = isset($_POST['sensorId']) ? (int)$_POST['sensorId'] : 0;
 $varNrOfValues = isset($_POST['NrOfValues']) ? (int)$_POST['NrOfValues'] : 1;
 
-if (empty($varIdent) || empty($varToken) || empty($varData)) {
+if (empty($varData)) {
     http_response_code(400);
     echo json_encode(array('error' => 'Missing parameters.'));
     exit;
 }
 
-$authenticatedUserId = myFunctions::validateSecurityToken($varIdent, $varToken);
+$authenticatedUserId = false;
+if (!empty($varIdent) && !empty($varToken)) {
+    $authenticatedUserId = myFunctions::validateSecurityToken($varIdent, $varToken);
+}
+
+if ($authenticatedUserId === false && isset($_SESSION['userId']) && (int)$_SESSION['userId'] > 0) {
+    $authenticatedUserId = (int)$_SESSION['userId'];
+}
+
 if ($authenticatedUserId === false) {
     http_response_code(401);
-    echo json_encode(array('error' => 'Invalid token.'));
+    echo json_encode(array('error' => 'Authentication required.'));
     exit;
 }
 
