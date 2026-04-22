@@ -229,7 +229,8 @@ Unterstuetzte Zuordnungen:
    - `board.macAddress`
    - optionalen Hinweisen wie `sensorType`, `type`, `sensorName`, `name`
    - Anzahl der uebergebenen Werte `value1..value4`
-   - notfalls der Reihenfolge in `sensorConfig`
+   - bevorzugt ueber die Kombination `sensorType + sensorName`
+   - danach ueber eindeutige Einzelhinweise
 4. wenn noch kein passender `sensorConfig`-Eintrag existiert:
    - kann MDS ihn automatisch anlegen
    - Voraussetzung ist ein eindeutiger Typ-Hinweis ueber `sensorType`, `type`, `sensorName` oder `name`, der einem bekannten `sensorTypes.name` entspricht
@@ -272,6 +273,7 @@ Empfohlene Payload fuer externe Geraete ohne bekannte `sensorId`:
 Empfehlung fuer externe Devices:
 
 - `sensorType` immer mitsenden, wenn `sensorId` nicht bekannt ist
+- `sensorName` ebenfalls mitsenden, wenn mehrere Sensoren desselben Typs auf einem Board existieren koennen, z. B. `ADC/Battery` und `ADC/Tanks`
 - gute Werte sind z. B. `BME280`, `ADC`, `GPS`, `DS18B20`, `Digital`, `DS2438`, `Lora`
 - dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
 

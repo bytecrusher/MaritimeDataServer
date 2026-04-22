@@ -357,25 +357,57 @@ function resolveBoardSensorFromConfig(array $sensor, array $boardSensors, array 
         $unusedSensors = $boardSensors;
     }
 
-    if ($sensorTypeHint !== null || $sensorNameHint !== null) {
-        $namedMatches = array_values(array_filter($unusedSensors, function ($boardSensor) use ($sensorTypeHint, $sensorNameHint) {
+    if ($sensorTypeHint !== null && $sensorNameHint !== null) {
+        $exactTypeAndNameMatches = array_values(array_filter($unusedSensors, function ($boardSensor) use ($sensorTypeHint, $sensorNameHint) {
             $boardSensorName = normalizeSensorLookupValue($boardSensor['name'] ?? null);
             $boardSensorTypeName = normalizeSensorLookupValue($boardSensor['sensorTypesName'] ?? null);
 
-            return ($sensorTypeHint !== null && ($sensorTypeHint === $boardSensorTypeName || $sensorTypeHint === $boardSensorName))
-                || ($sensorNameHint !== null && ($sensorNameHint === $boardSensorName || $sensorNameHint === $boardSensorTypeName));
+            return $sensorTypeHint === $boardSensorTypeName && $sensorNameHint === $boardSensorName;
         }));
 
-        if (count($namedMatches) === 1) {
-            return $namedMatches[0];
+        if (count($exactTypeAndNameMatches) === 1) {
+            return $exactTypeAndNameMatches[0];
         }
 
         if ($providedValueCount > 0) {
-            $namedCountMatches = array_values(array_filter($namedMatches, function ($boardSensor) use ($providedValueCount) {
+            $exactTypeAndNameCountMatches = array_values(array_filter($exactTypeAndNameMatches, function ($boardSensor) use ($providedValueCount) {
                 return (int)($boardSensor['NrOfUsedSensors'] ?? 0) === $providedValueCount;
             }));
-            if (count($namedCountMatches) >= 1) {
-                return $namedCountMatches[0];
+            if (count($exactTypeAndNameCountMatches) >= 1) {
+                return $exactTypeAndNameCountMatches[0];
+            }
+        }
+
+        return null;
+    }
+
+    if ($sensorNameHint !== null) {
+        $nameMatches = array_values(array_filter($unusedSensors, function ($boardSensor) use ($sensorNameHint) {
+            $boardSensorName = normalizeSensorLookupValue($boardSensor['name'] ?? null);
+            return $sensorNameHint === $boardSensorName;
+        }));
+
+        if (count($nameMatches) === 1) {
+            return $nameMatches[0];
+        }
+    }
+
+    if ($sensorTypeHint !== null) {
+        $typeMatches = array_values(array_filter($unusedSensors, function ($boardSensor) use ($sensorTypeHint) {
+            $boardSensorTypeName = normalizeSensorLookupValue($boardSensor['sensorTypesName'] ?? null);
+            return $sensorTypeHint === $boardSensorTypeName;
+        }));
+
+        if (count($typeMatches) === 1) {
+            return $typeMatches[0];
+        }
+
+        if ($providedValueCount > 0) {
+            $typeCountMatches = array_values(array_filter($typeMatches, function ($boardSensor) use ($providedValueCount) {
+                return (int)($boardSensor['NrOfUsedSensors'] ?? 0) === $providedValueCount;
+            }));
+            if (count($typeCountMatches) === 1) {
+                return $typeCountMatches[0];
             }
         }
     }
@@ -388,17 +420,13 @@ function resolveBoardSensorFromConfig(array $sensor, array $boardSensors, array 
         if (count($countMatches) === 1) {
             return $countMatches[0];
         }
-
-        if (count($countMatches) > 1) {
-            return $countMatches[0];
-        }
     }
 
     if (count($unusedSensors) === 1) {
         return $unusedSensors[0];
     }
 
-    return $unusedSensors[0] ?? null;
+    return null;
 }
 
 function ensureBoardSensorConfigExists(array $sensor, $boardId, array &$boardSensors, array $usedBoardSensorIds, PDO $pdo2)
@@ -429,7 +457,11 @@ function ensureBoardSensorConfigExists(array $sensor, $boardId, array &$boardSen
 
     try {
         $myFunctions = new myFunctions();
-        $myFunctions->addSensorConfig($boardId, $canonicalTypeName, $sensorName);
+        $createdSensorId = $myFunctions->addSensorConfig($boardId, $canonicalTypeName, $canonicalTypeName);
+        if ($createdSensorId && $sensorName !== $canonicalTypeName) {
+            $renameStatement = $pdo2->prepare("UPDATE sensorConfig SET name = ? WHERE id = ?");
+            $renameStatement->execute(array($sensorName, $createdSensorId));
+        }
         $boardSensors = myFunctions::getAllSensorsOfBoard($boardId);
     } catch (Throwable $ex) {
         writeToLogFunction::exception(
