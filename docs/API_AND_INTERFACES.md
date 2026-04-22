@@ -166,6 +166,11 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 }
 ```
 
+Hinweis:
+
+- die interne TTN-Bridge sendet weiterhin `sensorId`
+- fuer externe Geraete ist `sensorId` inzwischen optional
+
 ### Wichtige Hinweise
 
 - `transmissionPath = 2` steht fuer LoRa/TTN
@@ -212,12 +217,77 @@ Pflichtstruktur:
 }
 ```
 
+### Sensor-Mapping
+
+`sensorId` ist fuer `/ingest/receivejson.php` nicht mehr zwingend erforderlich.
+
+Unterstuetzte Zuordnungen:
+
+1. direkt ueber `sensorId`
+2. ueber `sensorAddress`
+3. automatisch ueber die Sensor-Konfiguration des Boards anhand von:
+   - `board.macAddress`
+   - optionalen Hinweisen wie `sensorType`, `type`, `sensorName`, `name`
+   - Anzahl der uebergebenen Werte `value1..value4`
+   - notfalls der Reihenfolge in `sensorConfig`
+4. wenn noch kein passender `sensorConfig`-Eintrag existiert:
+   - kann MDS ihn automatisch anlegen
+   - Voraussetzung ist ein eindeutiger Typ-Hinweis ueber `sensorType`, `type`, `sensorName` oder `name`, der einem bekannten `sensorTypes.name` entspricht
+   - ohne solchen Typ-Hinweis legt MDS nichts blind an, sondern loggt eine Warnung und verwirft den Sensor
+
+Empfohlene Payload fuer externe Geraete ohne bekannte `sensorId`:
+
+```json
+{
+  "board": {
+    "apiKey": "my_api_key",
+    "macAddress": "24:6F:28:7B:A9:14",
+    "protocolVersion": "1"
+  },
+  "sensors": [
+    {
+      "sensorType": "BME280",
+      "value1": 21.5,
+      "value2": 61.2,
+      "value3": 1013.8,
+      "value4": 13.8,
+      "date": "22.04.2026",
+      "time": "11:40:00",
+      "transmissionPath": "1"
+    },
+    {
+      "sensorType": "ADC",
+      "value1": 12.7,
+      "value2": 0.0,
+      "value3": 0.0,
+      "value4": 0.0,
+      "date": "22.04.2026",
+      "time": "11:40:00",
+      "transmissionPath": "1"
+    }
+  ]
+}
+```
+
+Empfehlung fuer externe Devices:
+
+- `sensorType` immer mitsenden, wenn `sensorId` nicht bekannt ist
+- gute Werte sind z. B. `BME280`, `ADC`, `GPS`, `DS18B20`, `Digital`, `DS2438`, `Lora`
+- dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
+
+Verhalten bei neuen oder unvollstaendig provisionierten Boards:
+
+- das Board selbst kann ueber `board.macAddress` automatisch angelegt werden
+- ein fehlender `sensorConfig`-Eintrag wird nur dann automatisch erzeugt, wenn der Sensortyp eindeutig erkennbar ist
+- nur `macAddress` plus rohe Werte ohne Typ-/Namenshinweis reicht fuer ein sicheres Auto-Provisioning nicht aus
+
 ### Validierung
 
 - `board.apiKey` muss dem konfigurierten API-Key entsprechen
 - `board.protocolVersion` muss aktuell `"1"` sein
 - `board.macAddress` wird auf `boardConfig` aufgeloest
 - falls das Board noch nicht existiert, wird es automatisch angelegt
+- falls `sensorId` fehlt, wird der Sensor automatisch aus `sensorConfig` des Boards aufgeloest
 
 ### Speicherung
 

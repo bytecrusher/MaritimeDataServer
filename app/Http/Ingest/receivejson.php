@@ -58,6 +58,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($boardData['protocolVersion'] == "1") {
                 $macAddress = test_input($boardData['macAddress']);
                 $macAddressId = check_macAddress($macAddress, $pdo2);
+                $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
+                $usedBoardSensorIds = array();
                 $insertStatement = $pdo2->prepare(
                     "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
@@ -83,6 +85,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             if (isset($sensor["value4"])) {
                                 $value4 = $sensor["value4"];
                             }
+                            if ($sensorId != null) {
+                                $usedBoardSensorIds[] = (int)$sensorId;
+                            }
                         } else {
                             if(isset($sensor["sensorAddress"])) {
                                 $owSensorAddress = test_input($sensor["sensorAddress"]);
@@ -96,11 +101,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     $value1 = test_input($sensor["value1"]);
                                     $value2 = test_input($sensor["value2"]);
                                 }
+                                if ($sensorId != null) {
+                                    $usedBoardSensorIds[] = (int)$sensorId;
+                                }
                             } else {
                                $owSensorAddress = null; 
                             }
-                            
-                            writeToLogFunction::write_to_log("sensorId: " . $sensorId, $_SERVER["SCRIPT_FILENAME"]);
                             if (isset($sensor["value1"])) {
                                 $value1 = test_input($sensor["value1"]);
                             }
@@ -113,6 +119,57 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             if (isset($sensor["value4"])) {
                                 $value4 = test_input($sensor["value4"]);
                             }
+
+                            if ($sensorId == null) {
+                                $resolvedSensor = resolveBoardSensorFromConfig(
+                                    $sensor,
+                                    $boardSensors,
+                                    $usedBoardSensorIds
+                                );
+                                if ($resolvedSensor !== null) {
+                                    $sensorId = $resolvedSensor['id'];
+                                    $usedBoardSensorIds[] = (int)$resolvedSensor['id'];
+                                    writeToLogFunction::info(
+                                        'Sensor resolved automatically from board config.',
+                                        $_SERVER["SCRIPT_FILENAME"],
+                                        array(
+                                            'boardId' => $macAddressId,
+                                            'sensorId' => $sensorId,
+                                            'sensorName' => $resolvedSensor['name'] ?? null,
+                                            'sensorTypeName' => $resolvedSensor['sensorTypesName'] ?? null,
+                                            'mappingHint' => array(
+                                                'sensorType' => $sensor['sensorType'] ?? ($sensor['type'] ?? null),
+                                                'sensorName' => $sensor['sensorName'] ?? ($sensor['name'] ?? null),
+                                                'providedValueCount' => countProvidedSensorValues($sensor)
+                                            )
+                                        )
+                                    );
+                                }
+                            }
+
+                            if ($sensorId == null) {
+                                $createdSensor = ensureBoardSensorConfigExists(
+                                    $sensor,
+                                    $macAddressId,
+                                    $boardSensors,
+                                    $usedBoardSensorIds,
+                                    $pdo2
+                                );
+                                if ($createdSensor !== null) {
+                                    $sensorId = $createdSensor['id'];
+                                    $usedBoardSensorIds[] = (int)$createdSensor['id'];
+                                    writeToLogFunction::info(
+                                        'Missing sensorConfig was auto-created from payload metadata.',
+                                        $_SERVER["SCRIPT_FILENAME"],
+                                        array(
+                                            'boardId' => $macAddressId,
+                                            'sensorId' => $sensorId,
+                                            'sensorName' => $createdSensor['name'] ?? null,
+                                            'sensorTypeName' => $createdSensor['sensorTypesName'] ?? null
+                                        )
+                                    );
+                                }
+                            }
                         }
                         $date = test_input($sensor["date"]);
                         $time = test_input($sensor["time"]);
@@ -123,6 +180,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $transmissionPath = test_input($sensor["transmissionpath"]);
                         } else {
                             $transmissionPath = 1;
+                        }
+
+                        if ($sensorId == null) {
+                            writeToLogFunction::warning(
+                                'Sensor payload could not be mapped to a sensorConfig entry. Sensor skipped.',
+                                $_SERVER["SCRIPT_FILENAME"],
+                                array(
+                                    'boardId' => $macAddressId,
+                                    'payloadSensor' => $sensor
+                                )
+                            );
+                            continue;
                         }
 
                         try {
@@ -266,4 +335,220 @@ function checkOwSensorAddress($sensorAddress, $macAddressId, $pdo2)
             array('sensorAddress' => $sensorAddress, 'boardId' => $macAddressId)
         );
     }
+
+    return false;
+}
+
+function resolveBoardSensorFromConfig(array $sensor, array $boardSensors, array $usedBoardSensorIds)
+{
+    if (empty($boardSensors)) {
+        return null;
+    }
+
+    $providedValueCount = countProvidedSensorValues($sensor);
+    $sensorTypeHint = normalizeSensorLookupValue($sensor['sensorType'] ?? ($sensor['type'] ?? null));
+    $sensorNameHint = normalizeSensorLookupValue($sensor['sensorName'] ?? ($sensor['name'] ?? null));
+
+    $unusedSensors = array_values(array_filter($boardSensors, function ($boardSensor) use ($usedBoardSensorIds) {
+        return !in_array((int)$boardSensor['id'], $usedBoardSensorIds, true);
+    }));
+
+    if (empty($unusedSensors)) {
+        $unusedSensors = $boardSensors;
+    }
+
+    if ($sensorTypeHint !== null || $sensorNameHint !== null) {
+        $namedMatches = array_values(array_filter($unusedSensors, function ($boardSensor) use ($sensorTypeHint, $sensorNameHint) {
+            $boardSensorName = normalizeSensorLookupValue($boardSensor['name'] ?? null);
+            $boardSensorTypeName = normalizeSensorLookupValue($boardSensor['sensorTypesName'] ?? null);
+
+            return ($sensorTypeHint !== null && ($sensorTypeHint === $boardSensorTypeName || $sensorTypeHint === $boardSensorName))
+                || ($sensorNameHint !== null && ($sensorNameHint === $boardSensorName || $sensorNameHint === $boardSensorTypeName));
+        }));
+
+        if (count($namedMatches) === 1) {
+            return $namedMatches[0];
+        }
+
+        if ($providedValueCount > 0) {
+            $namedCountMatches = array_values(array_filter($namedMatches, function ($boardSensor) use ($providedValueCount) {
+                return (int)($boardSensor['NrOfUsedSensors'] ?? 0) === $providedValueCount;
+            }));
+            if (count($namedCountMatches) >= 1) {
+                return $namedCountMatches[0];
+            }
+        }
+    }
+
+    if ($providedValueCount > 0) {
+        $countMatches = array_values(array_filter($unusedSensors, function ($boardSensor) use ($providedValueCount) {
+            return (int)($boardSensor['NrOfUsedSensors'] ?? 0) === $providedValueCount;
+        }));
+
+        if (count($countMatches) === 1) {
+            return $countMatches[0];
+        }
+
+        if (count($countMatches) > 1) {
+            return $countMatches[0];
+        }
+    }
+
+    if (count($unusedSensors) === 1) {
+        return $unusedSensors[0];
+    }
+
+    return $unusedSensors[0] ?? null;
+}
+
+function ensureBoardSensorConfigExists(array $sensor, $boardId, array &$boardSensors, array $usedBoardSensorIds, PDO $pdo2)
+{
+    $canonicalTypeName = detectCanonicalSensorTypeName($sensor, $boardSensors, $pdo2);
+    if ($canonicalTypeName === null) {
+        return null;
+    }
+
+    $existingSensor = resolveBoardSensorFromConfig(
+        array(
+            'sensorType' => $canonicalTypeName,
+            'sensorName' => $sensor['sensorName'] ?? ($sensor['name'] ?? null),
+            'value1' => $sensor['value1'] ?? null,
+            'value2' => $sensor['value2'] ?? null,
+            'value3' => $sensor['value3'] ?? null,
+            'value4' => $sensor['value4'] ?? null
+        ),
+        $boardSensors,
+        $usedBoardSensorIds
+    );
+
+    if ($existingSensor !== null) {
+        return $existingSensor;
+    }
+
+    $sensorName = determineSensorConfigName($sensor, $canonicalTypeName);
+
+    try {
+        $myFunctions = new myFunctions();
+        $myFunctions->addSensorConfig($boardId, $canonicalTypeName, $sensorName);
+        $boardSensors = myFunctions::getAllSensorsOfBoard($boardId);
+    } catch (Throwable $ex) {
+        writeToLogFunction::exception(
+            $ex,
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'boardId' => $boardId,
+                'sensorTypeName' => $canonicalTypeName,
+                'sensorName' => $sensorName,
+                'payloadSensor' => $sensor
+            )
+        );
+        return null;
+    }
+
+    return resolveBoardSensorFromConfig(
+        array(
+            'sensorType' => $canonicalTypeName,
+            'sensorName' => $sensorName,
+            'value1' => $sensor['value1'] ?? null,
+            'value2' => $sensor['value2'] ?? null,
+            'value3' => $sensor['value3'] ?? null,
+            'value4' => $sensor['value4'] ?? null
+        ),
+        $boardSensors,
+        $usedBoardSensorIds
+    );
+}
+
+function detectCanonicalSensorTypeName(array $sensor, array $boardSensors, PDO $pdo2)
+{
+    $typeCandidates = array(
+        $sensor['sensorType'] ?? null,
+        $sensor['type'] ?? null,
+        $sensor['sensorName'] ?? null,
+        $sensor['name'] ?? null
+    );
+
+    foreach ($typeCandidates as $candidate) {
+        $canonicalName = resolveCanonicalSensorTypeName($candidate, $boardSensors, $pdo2);
+        if ($canonicalName !== null) {
+            return $canonicalName;
+        }
+    }
+
+    return null;
+}
+
+function resolveCanonicalSensorTypeName($candidate, array $boardSensors, PDO $pdo2)
+{
+    if (!is_string($candidate)) {
+        return null;
+    }
+
+    $trimmedCandidate = trim($candidate);
+    if ($trimmedCandidate === '') {
+        return null;
+    }
+
+    $normalizedCandidate = normalizeSensorLookupValue($trimmedCandidate);
+
+    foreach ($boardSensors as $boardSensor) {
+        $boardSensorTypeName = $boardSensor['sensorTypesName'] ?? null;
+        if (normalizeSensorLookupValue($boardSensorTypeName) === $normalizedCandidate) {
+            return $boardSensorTypeName;
+        }
+    }
+
+    $statement = $pdo2->prepare("SELECT name FROM sensorTypes WHERE LOWER(name) = LOWER(?) LIMIT 1");
+    $statement->execute(array($trimmedCandidate));
+    $sensorType = $statement->fetch(PDO::FETCH_ASSOC);
+
+    return $sensorType['name'] ?? null;
+}
+
+function determineSensorConfigName(array $sensor, $canonicalTypeName)
+{
+    foreach (array('sensorName', 'name') as $nameKey) {
+        if (!isset($sensor[$nameKey]) || !is_string($sensor[$nameKey])) {
+            continue;
+        }
+
+        $trimmedName = trim($sensor[$nameKey]);
+        if ($trimmedName === '') {
+            continue;
+        }
+
+        if (normalizeSensorLookupValue($trimmedName) === normalizeSensorLookupValue($canonicalTypeName)) {
+            return $canonicalTypeName;
+        }
+
+        return $trimmedName;
+    }
+
+    return $canonicalTypeName;
+}
+
+function countProvidedSensorValues(array $sensor)
+{
+    $valueCount = 0;
+    foreach (array('value1', 'value2', 'value3', 'value4') as $valueKey) {
+        if (array_key_exists($valueKey, $sensor) && $sensor[$valueKey] !== null && $sensor[$valueKey] !== '') {
+            $valueCount++;
+        }
+    }
+
+    return $valueCount;
+}
+
+function normalizeSensorLookupValue($value)
+{
+    if (!is_string($value)) {
+        return null;
+    }
+
+    $normalizedValue = trim($value);
+    if ($normalizedValue === '') {
+        return null;
+    }
+
+    return mb_strtolower($normalizedValue);
 }
