@@ -171,6 +171,11 @@ class configuration {
             $requestPath = "";
         }
 
+        $mountPathFromRequest = self::detectMountPathFromRequest($requestPath);
+        if ($mountPathFromRequest !== null) {
+            return $mountPathFromRequest;
+        }
+
         $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? "";
         $publicRoot = realpath($projectRoot . '/public');
         $realScriptFilename = $scriptFilename !== "" ? realpath($scriptFilename) : false;
@@ -194,11 +199,62 @@ class configuration {
         }
 
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? "";
-        if ($scriptName !== "") {
+        if ($scriptName !== "" && !self::looksLikeFilesystemPath($scriptName, $projectRoot)) {
             return self::normalizeMountPath(dirname(str_replace('\\', '/', $scriptName)));
         }
 
         return '';
+    }
+
+    private static function detectMountPathFromRequest($requestPath) {
+        if ($requestPath === '' || $requestPath === '/') {
+            return '';
+        }
+
+        $knownPrefixes = array(
+            '/index.php',
+            '/login.php',
+            '/logout.php',
+            '/internal.php',
+            '/settings.php',
+            '/formBoards.php',
+            '/formSensors.php',
+            '/register.php',
+            '/resetPassword.php',
+            '/activate.php',
+            '/openstreetmaps.php',
+            '/api/',
+            '/webhooks/',
+            '/ingest/',
+            '/ota/',
+            '/install/',
+            '/tools/',
+            '/debug/',
+            '/receiver/',
+            '/frontend/',
+            '/simulator/',
+            '/otafirmware/',
+        );
+
+        foreach ($knownPrefixes as $prefix) {
+            $position = strpos($requestPath, $prefix);
+            if ($position !== false) {
+                return self::normalizeMountPath(substr($requestPath, 0, $position));
+            }
+        }
+
+        return null;
+    }
+
+    private static function looksLikeFilesystemPath($path, $projectRoot) {
+        $normalizedPath = str_replace('\\', '/', (string) $path);
+        $normalizedProjectRoot = str_replace('\\', '/', $projectRoot);
+
+        return str_starts_with($normalizedPath, $normalizedProjectRoot)
+            || str_starts_with($normalizedPath, '/var/')
+            || str_starts_with($normalizedPath, '/home/')
+            || str_contains($normalizedPath, '/httpdocs/')
+            || str_contains($normalizedPath, '/public_html/');
     }
 
     private static function normalizeMountPath($path) {
