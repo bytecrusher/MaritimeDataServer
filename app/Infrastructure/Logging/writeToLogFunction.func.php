@@ -69,9 +69,20 @@ class writeToLogFunction
         );
         $month = date('n');
         $year = date('Y');
-        $logDirectory = dirname(__FILE__, 3) . '/var/log';
+        $logDirectory = dirname(__FILE__, 4) . '/var/log';
         if (!is_dir($logDirectory)) {
-            mkdir($logDirectory, 0775, true);
+            @mkdir($logDirectory, 0775, true);
+        }
+
+        if (!is_dir($logDirectory) || !is_writable($logDirectory)) {
+            error_log(
+                sprintf(
+                    '[MDS][%s] Logging directory is not writable: %s',
+                    strtoupper((string)$level),
+                    $logDirectory
+                )
+            );
+            return;
         }
         $filename = $logDirectory . '/log_' . $months[$month] . '_' . $year . '.log';
         $header = 'Date Time Level Source Message';

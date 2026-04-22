@@ -213,7 +213,16 @@ class SettingsPageService
         $months = array(1 => 'Januar', 2 => 'Februar', 3 => 'Maerz', 4 => 'April', 5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember');
         $month = date('n');
         $year = date('Y');
-        $filename = dirname(__DIR__, 2) . "/var/log/log_" . $months[$month] . "_$year.$format";
+        $logDirectory = dirname(__DIR__, 2) . "/var/log";
+        $filename = $logDirectory . "/log_" . $months[$month] . "_$year.$format";
+
+        if (!is_dir($logDirectory)) {
+            return 'Log directory not found: ' . $logDirectory;
+        }
+
+        if (!is_readable($logDirectory)) {
+            return 'Log directory is not readable: ' . $logDirectory;
+        }
 
         if (!file_exists($filename)) {
             return 'Log file not found.';

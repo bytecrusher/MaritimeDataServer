@@ -5,6 +5,17 @@ RewriteEngine On
 RewriteRule ^frontend/func/ - [F,L]
 RewriteRule ^frontend/common/ - [F,L]
 
-RedirectPermanent /index.html /frontend/index.php
-RedirectPermanent /index.htm /frontend/index.php
-RedirectPermanent /index.php /frontend/index.php
+RedirectPermanent /index.html /index.php
+RedirectPermanent /index.htm /index.php
+
+RedirectMatch 301 ^/frontend/index\.php$ /index.php
+RedirectMatch 301 ^/frontend/login\.php$ /login.php
+RedirectMatch 301 ^/frontend/logout\.php$ /logout.php
+RedirectMatch 301 ^/frontend/internal\.php$ /internal.php
+RedirectMatch 301 ^/frontend/settings\.php$ /settings.php
+RedirectMatch 301 ^/frontend/formBoards\.php$ /formBoards.php
+RedirectMatch 301 ^/frontend/formSensors\.php$ /formSensors.php
+RedirectMatch 301 ^/frontend/register\.php$ /register.php
+RedirectMatch 301 ^/frontend/resetPassword\.php$ /resetPassword.php
+RedirectMatch 301 ^/frontend/activate\.php$ /activate.php
+RedirectMatch 301 ^/frontend/openstreetmaps\.php$ /openstreetmaps.php
