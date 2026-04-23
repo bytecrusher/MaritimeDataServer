@@ -43,9 +43,188 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/solid.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/fontawesome.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="<?php echo htmlspecialchars(mds_asset_path('js/app.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
 <script src="<?php echo htmlspecialchars(mds_asset_path('js/gauge.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<script src="<?php echo htmlspecialchars(mds_asset_path('js/dashboard.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<script src="<?php echo htmlspecialchars(mds_asset_path('js/app.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+
+<style>
+  .dashboard-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+  .dashboard-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #f8fbff 0%, #eef4f9 100%);
+  }
+  .dashboard-toolbar-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .dashboard-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    font-size: 0.92rem;
+  }
+  .dashboard-board-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  }
+  .dashboard-board-card.is-offline {
+    opacity: 0.86;
+  }
+  .dashboard-board-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(255, 255, 255, 1) 100%);
+  }
+  .dashboard-board-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .dashboard-board-title h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+  .dashboard-board-subtitle {
+    color: #64748b;
+    font-size: 0.92rem;
+  }
+  .dashboard-board-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .dashboard-board-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: #475569;
+    font-size: 0.9rem;
+  }
+  .dashboard-board-gauges {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .dashboard-gauge-card {
+    position: relative;
+    min-height: 235px;
+    padding: 0.9rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: radial-gradient(circle at top left, rgba(241, 245, 249, 0.94), rgba(226, 232, 240, 0.9));
+    color: #0f172a;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+  .dashboard-gauge-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+    border-color: rgba(37, 99, 235, 0.20);
+  }
+  .dashboard-gauge-card.disabled {
+    opacity: 0.72;
+  }
+  .dashboard-gauge-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .dashboard-gauge-headline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+  .dashboard-gauge-headline strong {
+    font-size: 1rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .dashboard-gauge-headline span {
+    color: #475569;
+    font-size: 0.84rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .dashboard-gauge-value {
+    text-align: left;
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.15;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: baseline;
+  }
+  .dashboard-gauge-value-number {
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+  }
+  .dashboard-gauge-value-unit {
+    font-size: 0.95rem;
+    color: #334155;
+    overflow-wrap: anywhere;
+  }
+  .dashboard-gauge-visual {
+    height: 122px;
+  }
+  .dashboard-gauge-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.45rem;
+    color: #475569;
+    font-size: 0.82rem;
+  }
+  .dashboard-gauge-meta span {
+    overflow-wrap: anywhere;
+  }
+  .dashboard-empty-state {
+    padding: 1rem;
+    border-radius: 0.9rem;
+    background: rgba(241, 245, 249, 0.7);
+    color: #64748b;
+  }
+  .dashboard-board-hidden {
+    display: none !important;
+  }
+  @media (max-width: 767.98px) {
+    .dashboard-board-gauges {
+      grid-template-columns: 1fr;
+    }
+    .dashboard-toolbar {
+      align-items: flex-start;
+    }
+  }
+</style>
 
 <script>
   $(document).ready(function() {
@@ -111,6 +290,13 @@
               const numericValue = Number.parseFloat(obj[i4]);
               if (Number.isFinite(numericValue)) {
                 gaugesMap.get(obj[0]+"."+i4).setValueAnimated(numericValue);
+                const gaugeCard = document.getElementById("gauge" + obj[0] + "." + i4);
+                if (gaugeCard) {
+                  const valueNode = gaugeCard.querySelector('.dashboard-gauge-value-number');
+                  if (valueNode) {
+                    valueNode.textContent = numericValue.toFixed(2);
+                  }
+                }
               } else {
                 console.warn("non-numeric gauge value for sensor " + obj[0] + "." + i4, obj[i4]);
               }
@@ -189,117 +375,125 @@
           <i class="bi bi-lock-fill" style="font-size:20px; color: #007bff"></i>
         </div>
 
-        <div class="page-content page-container" id="page-content" style="--bs-gutter-x: 0rem; ">
-        </div>
-        <div class="container" style="--bs-gutter-x: 0; padding-right: 0px; padding-left: 0px;">
+        <div class="dashboard-shell">
+          <div class="dashboard-toolbar">
+            <div class="dashboard-toolbar-meta">
+              <span class="dashboard-stat-pill"><strong><?php echo count($boardObjsArray); ?></strong> Devices</span>
+              <span class="dashboard-stat-pill"><strong><?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</strong> Refresh</span>
+            </div>
+            <div class="dashboard-toolbar-meta">
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle">
+                <label class="form-check-label" for="dashboard-online-only-toggle">Nur Online-Devices</label>
+              </div>
+            </div>
+          </div>
+          <div class="page-content page-container" id="page-content" style="--bs-gutter-x: 0rem; "></div>
+          <div class="container" style="--bs-gutter-x: 0; padding-right: 0px; padding-left: 0px;">
             <?php
             foreach($boardObjsArray as $singleRowmyboard) {
               if($singleRowmyboard->isOnDashboard() == 1) {
-                ?>
-                  <div class='row d-flex justify-content-center'>
-                    <div class='col-lg-12 col-xl-12' style='padding-right: 0px; padding-left: 0px;'>
-                      <fieldset>
-                        <legend>
-                        <?php $deviceOnline = checkDeviceIsOnline($singleRowmyboard->getId());
-                        if ($deviceOnline) {
-                          ?>
-                            <span class='badge bg-success mr-2'>Online</span>
-                          <?php
-                          } else {
-                          ?>
-                            <span class='badge bg-danger mr-2'>Offline</span>
-                          <?php
-                          }
-                        ?>
-                        <div style="float: right; margin-top: 3px; margin-left: 10px"><?php echo $singleRowmyboard->getName() ?></div>
-                        </legend>
-                          <ul class='card-block' id='gaugescontainer<?php echo $singleRowmyboard->getId() ?>' style="display: flex; justify-content: center; flex-wrap: wrap;">
-                <?php
-                $boardOnlineStatus = false;
+                $deviceOnline = checkDeviceIsOnline($singleRowmyboard->getId());
                 $mySensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
+                $boardGaugeCount = 0;
+                ?>
+                  <section class="dashboard-board-card <?php if(!$deviceOnline) { echo 'is-offline'; } ?>" data-dashboard-board-id="<?php echo $singleRowmyboard->getId(); ?>" data-dashboard-online="<?php echo $deviceOnline ? '1' : '0'; ?>">
+                    <div class="dashboard-board-header">
+                      <div class="dashboard-board-title">
+                        <h3><?php echo htmlentities($singleRowmyboard->getName()); ?></h3>
+                        <div class="dashboard-board-subtitle"><?php echo htmlentities($singleRowmyboard->getMacAddress()); ?></div>
+                        <div class="dashboard-board-summary">
+                          <span>Update alle <?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</span>
+                          <span>Offline-Timer: <?php echo (int)$singleRowmyboard->getOfflineDataTimer(); ?> min</span>
+                        </div>
+                      </div>
+                      <div class="dashboard-board-badges">
+                        <span class="badge <?php echo $deviceOnline ? 'bg-success' : 'bg-danger'; ?>"><?php echo $deviceOnline ? 'Online' : 'Offline'; ?></span>
+                        <span class="badge text-bg-light"><?php echo is_array($mySensors2) ? count($mySensors2) : 0; ?> Sensoren</span>
+                      </div>
+                    </div>
+                    <div class="card-block dashboard-board-gauges" id="gaugescontainer<?php echo $singleRowmyboard->getId() ?>">
+                <?php
                 if ($mySensors2 == null) {
                   ?>
-                    <div class='col m-b-20'>no Sensors</div>
+                    <div class='dashboard-empty-state'>Dieses Device hat noch keine Dashboard-Sensoren.</div>
                   <?php
                 }
-                ?>
-                <?php
                 if ($mySensors2 != null) {
                   foreach($mySensors2 as $singleRowMySensors) {
                     $mySensors = myFunctions::getLatestSensorData($singleRowMySensors['id']);
                     foreach($mySensors as $singleRowMySensorsLastTimeSeen) {
                       $sensortype = myFunctions::getSensorType($singleRowMySensors['typId']);
                       $sensConfig = myFunctions::getSensorConfig($singleRowMySensors['id']);
-                      $sensChannelConfig = myFunctions::getSensorChannelsConfig($singleRowMySensors['id']);
                       for ($i = 1; $i <= $sensConfig['NrOfUsedSensors']; $i++) {
                         $SensorChannelConfigSingle = myFunctions::getSensorChannelConfig($singleRowMySensors['id'], $i);
                         $currentChannelValue = $singleRowMySensorsLastTimeSeen['value' . $i] ?? null;
                         $numericCurrentChannelValue = is_numeric($currentChannelValue) ? (float)$currentChannelValue : null;
+                        $unitValue = html_entity_decode((string)($sensortype['siUnitVal' . $i] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
                         if (($mySensors != null) && (is_array($SensorChannelConfigSingle)) && ($SensorChannelConfigSingle['onDashboard'] == 1) && ($numericCurrentChannelValue !== null)) {
+                          $boardGaugeCount++;
                           ?>
-                          <li id='gauge<?php echo $singleRowMySensors['id'] . "." . $i; ?>' data-id=<?php echo $SensorChannelConfigSingle['DashboardOrderNr']; ?> class='ui-state-default gauge-container two bg-secondary rounded border border-dark text-light <?php if(!$deviceOnline) { echo "disabled"; } ?>'>
-                            <div id='div_click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; float:right;'>
-                              <i id='click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'>
-                              </i>
+                          <div
+                            id='gauge<?php echo $singleRowMySensors['id'] . "." . $i; ?>'
+                            data-id="<?php echo $SensorChannelConfigSingle['DashboardOrderNr']; ?>"
+                            class='ui-state-default dashboard-gauge-card gauge-container <?php if(!$deviceOnline) { echo "disabled"; } ?>'
+                            data-gauge-key="<?php echo $singleRowMySensors['id'] . "." . $i; ?>"
+                            data-sensor-id="<?php echo $singleRowMySensors['id']; ?>"
+                            data-typ-id="<?php echo $singleRowMySensors['typId']; ?>"
+                            data-typename="<?php echo htmlspecialchars($singleRowMySensors['typename'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-nr-of-sensors="<?php echo $singleRowMySensors['NrOfUsedSensors']; ?>"
+                            data-channel-nr="<?php echo $SensorChannelConfigSingle['channelNr']; ?>"
+                            data-sensor-display-name="<?php echo htmlspecialchars($singleRowMySensors['name'] . "." . $SensorChannelConfigSingle['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-chart-color="<?php echo htmlspecialchars($SensorChannelConfigSingle['ChartColor'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-board-id="<?php echo $singleRowmyboard->getId(); ?>"
+                            data-board-name="<?php echo htmlspecialchars($singleRowmyboard->getName(), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-min="<?php echo $SensorChannelConfigSingle['GaugeMinValue']; ?>"
+                            data-max="<?php echo $SensorChannelConfigSingle['GaugeMaxValue']; ?>"
+                            data-value="<?php echo htmlspecialchars((string)$numericCurrentChannelValue, ENT_QUOTES, 'UTF-8'); ?>"
+                            data-low-threshold="<?php echo $SensorChannelConfigSingle['GaugeRedAreaLowValue']; ?>"
+                            data-low-color="<?php echo htmlspecialchars($SensorChannelConfigSingle['GaugeRedAreaLowColor'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-high-threshold="<?php echo $SensorChannelConfigSingle['GaugeRedAreaHighValue']; ?>"
+                            data-high-color="<?php echo htmlspecialchars($SensorChannelConfigSingle['GaugeRedAreaHighColor'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-normal-color="<?php echo htmlspecialchars($SensorChannelConfigSingle['GaugeNormalAreaColor'], ENT_QUOTES, 'UTF-8'); ?>"
+                          >
+                            <div class="dashboard-gauge-top">
+                              <div class="dashboard-gauge-headline">
+                                <strong><?php echo htmlentities($SensorChannelConfigSingle['name']); ?></strong>
+                                <span><?php echo htmlentities($singleRowMySensors['name']); ?></span>
+                              </div>
+                              <div class="dashboard-gauge-value">
+                                <span class="dashboard-gauge-value-number"><?php echo htmlentities(number_format($numericCurrentChannelValue, 2, '.', '')); ?></span>
+                                <span class="dashboard-gauge-value-unit"><?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
+                              </div>
                             </div>
-                            <div style='height:30px;'><?php echo $SensorChannelConfigSingle['name']; ?> (<?php echo $sensortype['siUnitVal' . $i]; ?>)
+                            <div id='div_click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; position:absolute; top:12px; right:12px;'>
+                              <i id='click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'></i>
                             </div>
-                          </li>
-                            <script>
-                              if (<?php echo sizeof($mySensors); ?> != null) {
-                                var gauge_temp = Gauge(document.getElementById("gauge" + "<?php echo $singleRowMySensors['id'] . "." . $i; ?>"),
-                                {
-                                  min: <?php echo $SensorChannelConfigSingle['GaugeMinValue'] ?>,
-                                  max: <?php echo $SensorChannelConfigSingle['GaugeMaxValue'] ?>,
-                                  dialStartAngle: 180,
-                                  dialEndAngle: 0,
-                                  value: <?php echo json_encode($numericCurrentChannelValue); ?>,
-                                  viewBox: "0 0 100 57",
-                                  id: "<?php echo $singleRowMySensors['id'] . "." . $i; ?>",
-                                  color: function(value) {
-                                    if(value < <?php echo $SensorChannelConfigSingle['GaugeRedAreaLowValue'] ?>) {
-                                      return '<?php echo $SensorChannelConfigSingle['GaugeRedAreaLowColor'] ?>';
-                                    }else if(value < <?php echo $SensorChannelConfigSingle['GaugeRedAreaHighValue'] ?>) {
-                                      return '<?php echo $SensorChannelConfigSingle['GaugeNormalAreaColor'] ?>';
-                                    }else {
-                                      return '<?php echo $SensorChannelConfigSingle['GaugeRedAreaHighColor'] ?>';
-                                    }
-                                  },
-                                }
-                                );
-                                gaugesArrayHelper.push("<?php echo $singleRowMySensors['id'] . "." . $i; ?>");
-                                gaugesMap.set("<?php echo $singleRowMySensors['id'] . "." . $i; ?>", gauge_temp);
-                              }
-                              SensorArrayHelper.push(<?php echo $singleRowMySensors['id']; ?>);
-                              var valueToPush = {};
-                              valueToPush["sensorId"] = "<?php echo $singleRowMySensors['id']; ?>";
-                              valueToPush["typId"] = "<?php echo $singleRowMySensors['typId']; ?>";
-                              valueToPush["typename"] = "<?php echo $singleRowMySensors['typename']; ?>";
-                              valueToPush["NrOfSensors"] = "<?php echo $singleRowMySensors['NrOfUsedSensors']; ?>";
-                              valueToPush["channelNr"] = "<?php echo $SensorChannelConfigSingle['channelNr']; ?>";
-                              valueToPush["NameOfSensors"] = "<?php echo $singleRowMySensors['name']; ?>.<?php echo $SensorChannelConfigSingle['name']; ?>";
-                              valueToPush["ChartColor"] = "<?php echo $SensorChannelConfigSingle['ChartColor']; ?>";
-                              valueToPush["BoardName"] = "<?php echo $singleRowmyboard->getName(); ?>";
-                              valueToPush["onDashboard"] = "<?php echo $SensorChannelConfigSingle['onDashboard']; ?>";
-                              gaugesArrayHelperBig.push(valueToPush);
-                              // TODO currently the DS2438 is not supported
-                            </script>
-                            <?php
+                            <div class="dashboard-gauge-visual"></div>
+                            <div class="dashboard-gauge-meta">
+                              <span><?php echo htmlentities($singleRowmyboard->getName()); ?></span>
+                              <span><?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
+                            </div>
+                          </div>
+                          <?php
                         }
                       }
                     }
                   }
                 }
+                if ($boardGaugeCount === 0) {
+                  ?>
+                    <div class='dashboard-empty-state'>Aktuell gibt es fuer dieses Device keine numerischen Dashboard-Werte.</div>
+                  <?php
+                }
                 ?>
-
-                </ul>
-              </fieldset>
-            </div>
-          </div>
+                    </div>
+                  </section>
         <?php
               }
             }
             ?>
+          </div>
         </div>
       </div>
 
@@ -308,12 +502,33 @@
       <div class="container tab-pane fade pl-0 pr-0" id="charts">
         <fieldset>
           <div id="chart-container">
-            Temperaturen
-            <canvas id="mycanvas"></canvas>
-            <br>
-            ADC / Spannungen
-            <canvas id="mycanvas2"></canvas>
-            <canvas id="mycanvas3"></canvas>
+            <div class="mb-4">
+              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                <strong>Temperaturen</strong>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="temperature">Alle anzeigen</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="temperature">Alle ausblenden</button>
+              </div>
+              <div id="chart-device-filter-temperature" class="d-flex flex-wrap gap-3 mb-2"></div>
+              <canvas id="mycanvas"></canvas>
+            </div>
+            <div class="mb-4">
+              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                <strong>ADC / Spannungen</strong>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="adc">Alle anzeigen</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="adc">Alle ausblenden</button>
+              </div>
+              <div id="chart-device-filter-adc" class="d-flex flex-wrap gap-3 mb-2"></div>
+              <canvas id="mycanvas2"></canvas>
+            </div>
+            <div class="mb-4">
+              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                <strong>Weitere Sensoren</strong>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="other">Alle anzeigen</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="other">Alle ausblenden</button>
+              </div>
+              <div id="chart-device-filter-other" class="d-flex flex-wrap gap-3 mb-2"></div>
+              <canvas id="mycanvas3"></canvas>
+            </div>
           </div>
         </fieldset>
       </div>

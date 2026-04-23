@@ -10,6 +10,11 @@
 const myChart = null;
 const myChart2 = null;
 const myChart3 = null;
+const chartBoardVisibility = {
+  temperature: new Map(),
+  adc: new Map(),
+  other: new Map(),
+};
 
 //function sleep(ms) {
 //  return new Promise(resolve => setTimeout(resolve, ms));
@@ -23,6 +28,7 @@ $(document).ready(async function(){
   var hoverBorderColor = 'rgba(0, 100, 0, 1)';
   var varSensorId = null;
   InitialSetupChart();
+  initializeChartBoardFilters();
   // TODO: Check, how to add values with timestamp (currently it begins from the left to add values, indepented from the timestampt).
 
   for (let i in gaugesArrayHelperBig) {
@@ -31,12 +37,12 @@ $(document).ready(async function(){
     var borderColor = randomColor;
 
     if ( (gaugesArrayHelperBig[i]["typename"] == "DS18B20") || (gaugesArrayHelperBig[i]["NameOfSensors"] == "BME280.Temp") ) {
-      addDataToChart(window.myChart, gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1);
+      addDataToChart(window.myChart, 'temperature', gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
       addLabelsToChart(window.myChart, gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
     }
 
     if (gaugesArrayHelperBig[i]["typename"] == "ADC") {
-      addDataToChart(window.myChart2, gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1);
+      addDataToChart(window.myChart2, 'adc', gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
       addLabelsToChart(window.myChart2, gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
     }
 
@@ -47,13 +53,13 @@ $(document).ready(async function(){
       sensorname = gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"];
       sensorChannel = gaugesArrayHelperBig[i]["channelNr"];
 
-      addDataToChart(window.myChart3, varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname, sensorChannel-1);
+      addDataToChart(window.myChart3, 'other', varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname, sensorChannel-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
       addLabelsToChart(window.myChart3, varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
     }
   }
 });
 
-function addDataToChart(destinationChart, varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor, sensorname, sensorChannel) {
+function addDataToChart(destinationChart, chartKey, varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor, sensorname, sensorChannel, boardId, boardName) {
   if (varSensorId != null) {
     // TODO: make more efficient: call get function with the channel name and receive only these channels
     $.getJSON('api/getSensorDataSet.php', { sensorId:varSensorId, maxValues:varMaxValues}, async function(data, textStatus, jqXHR){
@@ -92,6 +98,10 @@ function addDataToChart(destinationChart, varSensorId, varMaxValues, varLabel, v
         backgroundColor: dsColor,
         borderColor: dsColor,
         data: value1,
+        boardId: String(boardId),
+        boardName: boardName,
+        chartKey: chartKey,
+        hidden: chartBoardVisibility[chartKey].get(String(boardId)) === false,
       };
       destinationChart.data.datasets.push(newDataset);
       destinationChart.update();
@@ -105,6 +115,153 @@ function addDataToChart(destinationChart, varSensorId, varMaxValues, varLabel, v
       //console.log(data);
     });
   }
+}
+
+function initializeChartBoardFilters() {
+  if (!Array.isArray(gaugesArrayHelperBig)) {
+    return;
+  }
+
+  const boardsByChart = {
+    temperature: new Map(),
+    adc: new Map(),
+    other: new Map(),
+  };
+
+  for (let i in gaugesArrayHelperBig) {
+    const boardId = String(gaugesArrayHelperBig[i]["BoardId"]);
+    const boardName = gaugesArrayHelperBig[i]["BoardName"];
+    const chartKey = getChartKeyForDataset(gaugesArrayHelperBig[i]);
+
+    if (!boardsByChart[chartKey].has(boardId)) {
+      boardsByChart[chartKey].set(boardId, boardName);
+    }
+    if (!chartBoardVisibility[chartKey].has(boardId)) {
+      chartBoardVisibility[chartKey].set(boardId, true);
+    }
+  }
+
+  Object.keys(chartBoardVisibility).forEach(function (chartKey) {
+    const filterContainer = document.getElementById('chart-device-filter-' + chartKey);
+    if (!filterContainer) {
+      return;
+    }
+
+    filterContainer.innerHTML = '';
+    boardsByChart[chartKey].forEach((boardName, boardId) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'd-inline-flex align-items-center border rounded px-2 py-1 bg-light-subtle';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'form-check-input chart-device-filter-checkbox me-2';
+      checkbox.dataset.boardId = boardId;
+      checkbox.dataset.chartKey = chartKey;
+      checkbox.checked = chartBoardVisibility[chartKey].get(boardId) !== false;
+      checkbox.addEventListener('change', function () {
+        setChartBoardVisibility(chartKey, boardId, checkbox.checked);
+      });
+
+      const text = document.createElement('span');
+      text.className = 'small fw-semibold me-2';
+      text.textContent = boardName;
+
+      const soloButton = document.createElement('button');
+      soloButton.type = 'button';
+      soloButton.className = 'btn btn-sm btn-link p-0 text-decoration-none';
+      soloButton.dataset.boardId = boardId;
+      soloButton.dataset.chartKey = chartKey;
+      soloButton.textContent = 'Nur dieses';
+      soloButton.addEventListener('click', function () {
+        setOnlyChartBoardVisible(chartKey, boardId);
+      });
+
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(text);
+      wrapper.appendChild(soloButton);
+      filterContainer.appendChild(wrapper);
+      updateChartBoardFilterButton(chartKey, boardId);
+    });
+  });
+
+  document.querySelectorAll('.chart-show-all-devices').forEach(function (button) {
+    button.addEventListener('click', function () {
+      setAllChartBoardVisibility(button.dataset.chartKey, true);
+    });
+  });
+
+  document.querySelectorAll('.chart-hide-all-devices').forEach(function (button) {
+    button.addEventListener('click', function () {
+      setAllChartBoardVisibility(button.dataset.chartKey, false);
+    });
+  });
+}
+
+function setAllChartBoardVisibility(chartKey, isVisible) {
+  chartBoardVisibility[chartKey].forEach(function (_, boardId) {
+    chartBoardVisibility[chartKey].set(boardId, isVisible);
+    updateChartBoardDatasets(chartKey, boardId);
+    updateChartBoardFilterButton(chartKey, boardId);
+  });
+}
+
+function setChartBoardVisibility(chartKey, boardId, isVisible) {
+  chartBoardVisibility[chartKey].set(boardId, isVisible);
+  updateChartBoardDatasets(chartKey, boardId);
+  updateChartBoardFilterButton(chartKey, boardId);
+}
+
+function setOnlyChartBoardVisible(chartKey, activeBoardId) {
+  chartBoardVisibility[chartKey].forEach(function (_, boardId) {
+    const isVisible = String(boardId) === String(activeBoardId);
+    chartBoardVisibility[chartKey].set(boardId, isVisible);
+    updateChartBoardDatasets(chartKey, boardId);
+    updateChartBoardFilterButton(chartKey, boardId);
+  });
+}
+
+function updateChartBoardDatasets(chartKey, boardId) {
+  const chartInstance = getChartInstance(chartKey);
+  if (!chartInstance || !chartInstance.data || !Array.isArray(chartInstance.data.datasets)) {
+    return;
+  }
+
+  chartInstance.data.datasets.forEach(function (dataset) {
+    if (String(dataset.boardId) === String(boardId)) {
+      dataset.hidden = chartBoardVisibility[chartKey].get(String(boardId)) === false;
+    }
+  });
+  chartInstance.update();
+}
+
+function updateChartBoardFilterButton(chartKey, boardId) {
+  const checkbox = document.querySelector('.chart-device-filter-checkbox[data-chart-key="' + chartKey + '"][data-board-id="' + boardId + '"]');
+  if (!checkbox) {
+    return;
+  }
+
+  const isVisible = chartBoardVisibility[chartKey].get(String(boardId)) !== false;
+  checkbox.checked = isVisible;
+}
+
+function getChartInstance(chartKey) {
+  if (chartKey === 'temperature') {
+    return window.myChart;
+  }
+  if (chartKey === 'adc') {
+    return window.myChart2;
+  }
+  return window.myChart3;
+}
+
+function getChartKeyForDataset(datasetInfo) {
+  if ((datasetInfo["typename"] == "DS18B20") || (datasetInfo["NameOfSensors"] == "BME280.Temp")) {
+    return 'temperature';
+  }
+  if (datasetInfo["typename"] == "ADC") {
+    return 'adc';
+  }
+  return 'other';
 }
 
 function addLabelsToChart(destinationChart, varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor) {
