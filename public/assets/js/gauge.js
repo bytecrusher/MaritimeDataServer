@@ -236,7 +236,7 @@
         gaugeValueElem = svg("text", {
           x: 50,
           y: 50,
-          fill: "#999",
+          fill: "#64748b",
           "class": valueTextClass,
           "font-size": "100%",
           "font-family": "sans-serif",
@@ -250,7 +250,7 @@
           "class": valueDialClass,
           fill: "none",
           stroke: "#666",
-          "stroke-width": 2.5,
+          "stroke-width": 4.6,
           d: pathString(radius, startAngle, startAngle) // value of 0
         });
 
@@ -260,8 +260,8 @@
           svg("path", {
             "class": dialClass,
             fill: "none",
-            stroke: "#eee",
-            "stroke-width": 2,
+            stroke: "#dbe4ef",
+            "stroke-width": 3.6,
             d: pathString(radius, startAngle, endAngle, flag)
           }),
           svg("g", { "class": "text-container" }, [gaugeValueElem]),

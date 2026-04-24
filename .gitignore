@@ -33,3 +33,4 @@ src/simulator/mdsSimulatorConfig.php
 src/simulator/mdsSimulatorConfig.php
 src/cgi-bin/test/test.cgi
 config/config_old.json
+.env

@@ -9,6 +9,10 @@ Diese Datei dokumentiert die aktuell aktiven HTTP-Schnittstellen des Maritime Da
 - OTA-Firmware-Update fuer ESP32
 - Simulator fuer Test-Uplinks
 
+Maschinenlesbare API-Beschreibung:
+
+- [docs/openapi.yaml](/Users/guntmar/Documents/Docker/MDS/mds_from_workdir/public_html/maritimedataserver/docs/openapi.yaml:1)
+
 Basisannahme dieser Doku:
 
 - `public/` ist der einzige Webroot

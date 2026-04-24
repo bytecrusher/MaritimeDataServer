@@ -1,0 +1,811 @@
+openapi: 3.1.0
+info:
+  title: Maritime Data Server API
+  version: "2026-04-23"
+  summary: Aktuelle HTTP-Schnittstellen des Maritime Data Server
+  description: |
+    Diese OpenAPI-Beschreibung dokumentiert die aktuell implementierten
+    HTTP-Endpunkte des Maritime Data Server (MDS) im Ist-Zustand.
+
+    Wichtige Hinweise:
+    - `public/` ist der einzige Webroot.
+    - Mehrere Endpunkte sind historisch gewachsen und PHP-dateibasiert benannt.
+    - Nicht alle Endpunkte liefern bereits vollständig vereinheitlichte JSON-Fehler.
+    - Diese Spezifikation beschreibt bewusst den aktuellen Ist-Zustand.
+
+    Aktuelle Abweichungen von einer "sauberen" OpenAPI-Ziel-API:
+    - dateibasierte Pfade wie `/api/getdata.php` statt ressourcenorientierter Routen
+    - gemischte Antwortformate aus JSON, Plain-Text und HTML
+    - einzelne Endpunkte geben fachliche Fehler noch als Text statt als JSON-Struktur zurück
+    - Session- und Cookie-basierte Browser-Authentifizierung statt Token-API als Primärmodell
+servers:
+  - url: https://mds-git.derguntmar.de
+    description: Produktion
+  - url: http://localhost/maritimedataserver
+    description: Lokale Entwicklung
+tags:
+  - name: Webhooks
+  - name: Ingest
+  - name: Browser API
+  - name: OTA
+  - name: Simulator
+paths:
+  /webhooks/ttn.php:
+    post:
+      tags: [Webhooks]
+      summary: TTN-Uplink empfangen
+      description: |
+        Nimmt Uplink-Nachrichten von The Things Network entgegen, extrahiert
+        Werte aus `uplink_message.decoded_payload` oder `normalized_payload`,
+        legt bei Bedarf Board- und Sensor-Konfigurationen automatisch an und
+        leitet die normalisierte Payload intern an `/ingest/receivejson.php` weiter.
+      security:
+        - ttnWebhookSecret: []
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TtnWebhookPayload'
+            examples:
+              uplink:
+                value:
+                  end_device_ids:
+                    device_id: eui-devEuiSimulator
+                    dev_eui: devEuiSimulator
+                    application_ids:
+                      application_id: ttnSimulator
+                  received_at: "2026-04-23T11:40:00.000000Z"
+                  uplink_message:
+                    frm_payload: ghredFHTeFiLhDbffzewSderGjKLJgfftrO
+                    decoded_payload:
+                      counter: 180
+                      temperature: 21.5
+                      humidity: 61.2
+                      pressure: 1013.8
+                      dewpoint: 13.8
+                      latitude: 53.55
+                      longitude: 9.99
+                      altitude: 1
+                      level1: 13.8
+                      level2: 100
+                    rx_metadata:
+                      - gateway_ids:
+                          gateway_id: simulatorGateway
+                        rssi: -35
+                        snr: 9.75
+      responses:
+        '200':
+          description: Uplink akzeptiert und intern verarbeitet oder weitergeleitet
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  boardId:
+                    type: integer
+                  forwardedTo:
+                    type: string
+                  forwardHttpCode:
+                    type: integer
+                  sensorCount:
+                    type: integer
+                required: [status, boardId, forwardedTo, forwardHttpCode, sensorCount]
+                examples:
+                  ok:
+                    value:
+                      status: ok
+                      boardId: 10
+                      forwardedTo: https://mds-git.derguntmar.de/ingest/receivejson.php
+                      forwardHttpCode: 200
+                      sensorCount: 5
+        '400':
+          description: Ungültige oder unvollständige Payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Optionales Webhook-Secret fehlt oder ist ungültig
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Weiterleitung an receivejson fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Nicht verwendet
+        '500':
+          description: Interner Fehler bei Verarbeitung oder Weiterleitung
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ingest/receivejson.php:
+    post:
+      tags: [Ingest]
+      summary: Generischen JSON-Ingest verarbeiten
+      description: |
+        Nimmt MDS-interne oder externe Sensor-Payloads entgegen.
+
+        `sensorId` ist optional. Die Zuordnung erfolgt in dieser Reihenfolge:
+        1. direkt über `sensorId`
+        2. über `sensorAddress`
+        3. bevorzugt über die Kombination `sensorType + sensorName`
+        4. danach über eindeutige Einzelhinweise und vorhandene `sensorConfig`
+        5. wenn kein passender `sensorConfig`-Eintrag existiert, kann MDS
+           ihn automatisch anlegen, sofern der Typ eindeutig erkennbar ist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceiveJsonPayload'
+            examples:
+              directDevice:
+                value:
+                  board:
+                    apiKey: my_api_key
+                    macAddress: "94:B9:7E:FE:F5:40"
+                    protocolVersion: "1"
+                  sensors:
+                    - sensorType: ADC
+                      sensorName: Battery
+                      value1: 13.68
+                      value2: 100
+                      value3: 0
+                      value4: 0
+                      date: "23.04.2026"
+                      time: "11:40:00"
+                      transmissionPath: "1"
+                    - sensorType: GPS
+                      sensorName: GPS
+                      value1: 53.55
+                      value2: 9.99
+                      value3: 4.2
+                      value4: 0
+                      date: "23.04.2026"
+                      time: "11:40:00"
+                      transmissionPath: "1"
+      responses:
+        '200':
+          description: Payload verarbeitet
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  boardId:
+                    type: integer
+                  insertedSensorRows:
+                    type: integer
+                  skippedSensorRows:
+                    type: integer
+                  autoResolvedSensorRows:
+                    type: integer
+                  autoCreatedSensorConfigs:
+                    type: integer
+                required:
+                  - status
+                  - boardId
+                  - insertedSensorRows
+                  - skippedSensorRows
+                  - autoResolvedSensorRows
+                  - autoCreatedSensorConfigs
+                examples:
+                  success:
+                    value:
+                      status: ok
+                      boardId: 10
+                      insertedSensorRows: 4
+                      skippedSensorRows: 0
+                      autoResolvedSensorRows: 2
+                      autoCreatedSensorConfigs: 1
+        '400':
+          description: Ungültige JSON-Payload oder ungültige Parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: API-Key ungültig
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '405':
+          description: HTTP-Methode nicht erlaubt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Interner Fehler beim Speichern
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/checkSession.php:
+    post:
+      tags: [Browser API]
+      summary: Session-Status prüfen
+      description: Prüft, ob eine eingeloggte PHP-Session vorhanden ist.
+      security:
+        - phpSession: []
+        - {}
+      responses:
+        '200':
+          description: Boolean-Status
+          content:
+            application/json:
+              schema:
+                type: boolean
+                examples:
+                  loggedIn:
+                    value: true
+                  loggedOut:
+                    value: false
+
+  /api/getdata.php:
+    post:
+      tags: [Browser API]
+      summary: Aktuelle Sensorwerte für Gauges laden
+      description: |
+        Liefert die aktuellsten Werte eines Sensors für die Gauge-Anzeige.
+        Authentifizierung erfolgt bevorzugt über `identifier` und `securityToken`,
+        alternativ über eine eingeloggte PHP-Session.
+      security:
+        - phpSession: []
+        - rememberMeIdentifier: []
+          rememberMeToken: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [data, sensorId, NrOfValues]
+              properties:
+                data:
+                  type: string
+                  enum: [sensor]
+                sensorId:
+                  type: integer
+                  minimum: 1
+                NrOfValues:
+                  type: integer
+                  minimum: 1
+                  maximum: 1000
+                identifier:
+                  type: string
+                securityToken:
+                  type: string
+      responses:
+        '200':
+          description: Sensorwerte als positionsbasiertes Array
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Index 0 ist sensorId, danach folgen value1..value4
+                items:
+                  oneOf:
+                    - type: integer
+                    - type: number
+                    - type: string
+              examples:
+                sensorData:
+                  value: [17, 12.3, 55.1, 1013, 7.2]
+        '400':
+          description: Fehlende oder ungültige Parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentifizierung erforderlich
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Kein Zugriff auf den Sensor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sensor nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/getSensorDataSet.php:
+    get:
+      tags: [Browser API]
+      summary: Historische Sensordaten für Charts laden
+      security:
+        - phpSession: []
+      parameters:
+        - name: sensorId
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: maxValues
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Zeitreihe für Chart.js
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SensorDataRow'
+        '400':
+          description: Ungültige Parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentifizierung erforderlich
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Kein Zugriff auf den Sensor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/getBoardName.php:
+    post:
+      tags: [Browser API]
+      summary: Board-Namen für die Kartenansicht laden
+      security:
+        - phpSession: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [functionName]
+              properties:
+                functionName:
+                  type: string
+                  enum: [get]
+      responses:
+        '200':
+          description: Board-Namen keyed by boardId
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+              examples:
+                boards:
+                  value:
+                    "1": Simulator
+                    "2": Boat 1
+        '400':
+          description: Ungültige Funktion oder fehlender Parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentifizierung erforderlich
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/getGpsData.php:
+    post:
+      tags: [Browser API]
+      summary: GPS-Daten für die Kartenansicht laden
+      security:
+        - phpSession: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [functionName]
+              properties:
+                functionName:
+                  type: string
+                  enum: [get]
+      responses:
+        '200':
+          description: GPS-Daten keyed by boardId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GpsBoardsResponse'
+              examples:
+                gpsData:
+                  value:
+                    "1":
+                      - id: 101
+                        sensorId: 12
+                        value1: "53.5500"
+                        value2: "9.9900"
+                        value3: "4.2"
+                        value4: "0"
+                        val_date: "23.04.2026"
+                        val_time: "11:40:00"
+                        reading_time: "2026-04-23 11:40:00"
+        '400':
+          description: Ungültige Funktion oder fehlender Parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentifizierung erforderlich
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/updateData.php:
+    post:
+      tags: [Browser API]
+      summary: Dashboard-bezogene Daten aktualisieren
+      description: Aktuell für `sensorOrderNumber` verwendet.
+      security:
+        - phpSession: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [update]
+              properties:
+                update:
+                  type: string
+                  enum: [sensorOrderNumber]
+                id:
+                  type: integer
+                  minimum: 1
+                channel:
+                  type: integer
+                  minimum: 1
+                orderNumber:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Update durchgeführt
+          content:
+            application/json:
+              schema:
+                type: string
+                enum: [done]
+        '400':
+          description: Ungültige Update-Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentifizierung erforderlich
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ota/getupdate.php:
+    get:
+      tags: [OTA]
+      summary: ESP32 OTA-Update anfragen
+      description: |
+        Header-basierter OTA-Endpunkt für ESP32-Devices.
+        Die Firmware-Auswahl erfolgt aktuell über MAC-Adresse.
+      parameters:
+        - name: User-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+            const: ESP32-http-Update
+        - name: x-ESP32-STA-MAC
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: x-ESP32-sketch-md5
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: x-ESP32-sdk-version
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: x-ESP32-version
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Neue Firmware wird ausgeliefert
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '304':
+          description: Keine neuere Firmware vorhanden
+        '403':
+          description: Header oder User-Agent ungültig
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Device nicht für Updates konfiguriert oder interner OTA-Fehler
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /tools/simulator/index.php:
+    get:
+      tags: [Simulator]
+      summary: TTN-Simulator-Oberfläche anzeigen
+      responses:
+        '200':
+          description: HTML-Oberfläche
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags: [Simulator]
+      summary: TTN-Simulator-Formular absenden
+      description: |
+        Liefert die HTML-Oberfläche erneut aus. Die eigentliche Testsendung
+        erfolgt über `/tools/simulator/testttn.php`.
+      responses:
+        '200':
+          description: HTML-Oberfläche
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /tools/simulator/testttn.php:
+    post:
+      tags: [Simulator]
+      summary: TTN-ähnlichen Test-Uplink an Ziel-URL senden
+      description: Baut eine TTN-ähnliche Payload und sendet sie per cURL an die gewählte Ziel-URL.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Testsendung ausgeführt
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Ungültige Ziel-URL oder ungültige Eingaben
+        '500':
+          description: Transportfehler beim Versand
+
+components:
+  securitySchemes:
+    phpSession:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+    rememberMeIdentifier:
+      type: apiKey
+      in: cookie
+      name: identifier
+    rememberMeToken:
+      type: apiKey
+      in: cookie
+      name: securityToken
+    ttnWebhookSecret:
+      type: apiKey
+      in: header
+      name: X-MDS-Webhook-Secret
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    SensorDataRow:
+      type: object
+      properties:
+        id:
+          type: integer
+        sensorId:
+          type: integer
+        value1:
+          type: string
+        value2:
+          type: string
+          nullable: true
+        value3:
+          type: string
+          nullable: true
+        value4:
+          type: string
+          nullable: true
+        val_date:
+          type: string
+        val_time:
+          type: string
+        reading_time:
+          type: string
+      required:
+        - id
+        - sensorId
+        - value1
+        - val_date
+        - val_time
+    GpsBoardsResponse:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          $ref: '#/components/schemas/SensorDataRow'
+    ReceiveJsonBoard:
+      type: object
+      required: [apiKey, macAddress, protocolVersion]
+      properties:
+        apiKey:
+          type: string
+        api_key:
+          type: string
+          description: Legacy-/Gerätealias für apiKey
+        macAddress:
+          type: string
+        protocolVersion:
+          type: string
+          const: "1"
+    ReceiveJsonSensor:
+      type: object
+      required: [date, time]
+      properties:
+        sensorId:
+          type: integer
+          minimum: 1
+        sensorAddress:
+          type: string
+        sensorType:
+          type: string
+          description: Empfohlener Typ-Hinweis, z. B. ADC, BME280, GPS
+        type:
+          type: string
+          description: Alias für sensorType
+        sensorName:
+          type: string
+          description: Friendly Name, wichtig bei mehreren Sensoren desselben Typs
+        name:
+          type: string
+          description: Alias für sensorName
+        value1:
+          oneOf:
+            - type: number
+            - type: string
+        value2:
+          oneOf:
+            - type: number
+            - type: string
+        value3:
+          oneOf:
+            - type: number
+            - type: string
+        value4:
+          oneOf:
+            - type: number
+            - type: string
+        date:
+          type: string
+          example: "23.04.2026"
+        time:
+          type: string
+          example: "11:40:00"
+        transmissionPath:
+          oneOf:
+            - type: integer
+            - type: string
+        transmissionpath:
+          oneOf:
+            - type: integer
+            - type: string
+          description: Legacy-Schreibweise
+    ReceiveJsonPayload:
+      type: object
+      required: [board, sensors]
+      properties:
+        board:
+          $ref: '#/components/schemas/ReceiveJsonBoard'
+        sensors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceiveJsonSensor'
+    TtnWebhookPayload:
+      type: object
+      properties:
+        end_device_ids:
+          type: object
+          properties:
+            device_id:
+              type: string
+            dev_eui:
+              type: string
+            application_ids:
+              type: object
+              properties:
+                application_id:
+                  type: string
+        received_at:
+          type: string
+        uplink_message:
+          type: object
+          properties:
+            frm_payload:
+              type: string
+            decoded_payload:
+              type: object
+              additionalProperties: true
+            normalized_payload:
+              type: object
+              additionalProperties: true
+            rx_metadata:
+              type: array
+              items:
+                type: object
+                properties:
+                  gateway_ids:
+                    type: object
+                    properties:
+                      gateway_id:
+                        type: string
+                  rssi:
+                    type: number
+                  snr:
+                    type: number
+          additionalProperties: true
+      additionalProperties: true

@@ -33,14 +33,143 @@
       }
     ?>
     <style>
+      :root {
+        --mds-surface: #ffffff;
+        --mds-surface-muted: #f8fafc;
+        --mds-ink: #0f172a;
+        --mds-ink-soft: #475569;
+        --mds-border: rgba(15, 23, 42, 0.08);
+        --mds-shadow: 0 18px 40px rgba(15, 23, 42, 0.10);
+        --mds-radius: 1.1rem;
+      }
       .filter-green {
         filter: invert(66%) sepia(16%) saturate(1367%) hue-rotate(71deg) brightness(93%) contrast(89%);
       }
-      </style>
+      body {
+        background:
+          radial-gradient(circle at top right, rgba(59, 130, 246, 0.09), transparent 28%),
+          linear-gradient(180deg, #f3f6fb 0%, #eef2f7 100%);
+        color: var(--mds-ink);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      .main-container {
+        width: min(1200px, calc(100% - 24px));
+        margin: 0 auto 1.25rem;
+      }
+      .navbar.mds-navbar {
+        width: min(1200px, calc(100% - 24px));
+        margin: 0.7rem auto 0.9rem;
+        border-radius: var(--mds-radius);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(135deg, rgba(17, 24, 39, 0.96) 0%, rgba(31, 41, 55, 0.96) 100%) !important;
+        box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
+        backdrop-filter: blur(12px);
+      }
+      .navbar.mds-navbar .container-fluid {
+        padding-left: 0.95rem;
+        padding-right: 0.95rem;
+      }
+      .navbar.mds-navbar .navbar-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .navbar.mds-navbar .navbar-brand img {
+        height: 42px;
+      }
+      .navbar.mds-navbar .nav-link {
+        color: rgba(255, 255, 255, 0.78) !important;
+        font-weight: 600;
+        padding: 0.6rem 0.9rem !important;
+        border-radius: 999px;
+        transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+      }
+      .navbar.mds-navbar .nav-link:hover,
+      .navbar.mds-navbar .nav-link:focus {
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-1px);
+      }
+      .navbar.mds-navbar .navbar-toggler {
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: none;
+      }
+      .navbar.mds-navbar .navbar-toggler-icon {
+        width: 1.15rem;
+        height: 1.15rem;
+        background-image: none;
+        position: relative;
+      }
+      .navbar.mds-navbar .navbar-toggler-icon::before,
+      .navbar.mds-navbar .navbar-toggler-icon::after,
+      .navbar.mds-navbar .navbar-toggler-icon {
+        display: block;
+        background-color: #fff;
+        border-radius: 999px;
+      }
+      .navbar.mds-navbar .navbar-toggler-icon::before,
+      .navbar.mds-navbar .navbar-toggler-icon::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        width: 1.15rem;
+        height: 2px;
+      }
+      .navbar.mds-navbar .navbar-toggler-icon {
+        height: 2px;
+        margin-top: 0.45rem;
+      }
+      .navbar.mds-navbar .navbar-toggler-icon::before {
+        top: -0.35rem;
+      }
+      .navbar.mds-navbar .navbar-toggler-icon::after {
+        top: 0.35rem;
+      }
+      .navbar.mds-navbar .mds-qr-slot {
+        max-width: 104px;
+        margin-left: auto;
+        padding: 0.3rem;
+        border-radius: 0.8rem;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .navbar.mds-navbar .mds-qr-slot figcaption {
+        color: rgba(255, 255, 255, 0.72) !important;
+        text-align: center;
+        font-size: 0.72rem !important;
+      }
+      .mds-alert {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.95rem 1rem;
+        border-radius: var(--mds-radius);
+        border: 1px solid rgba(245, 158, 11, 0.18);
+        background: linear-gradient(135deg, rgba(255, 251, 235, 0.98) 0%, rgba(255, 247, 237, 0.94) 100%);
+        color: #78350f;
+        box-shadow: 0 14px 26px rgba(245, 158, 11, 0.08);
+      }
+      .mds-alert strong {
+        display: block;
+        margin-bottom: 0.1rem;
+        font-size: 0.98rem;
+      }
+      .mds-alert p {
+        margin: 0;
+        color: #92400e;
+      }
+      .mds-alert .btn-close {
+        margin: 0;
+      }
+    </style>
   </head>
 
 <body>
-  <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
   <div class="container-fluid">
     <a class="navbar-brand" href="<?php echo htmlspecialchars(mds_route_path('index.php'), ENT_QUOTES, 'UTF-8'); ?>">
       <img src="<?php echo htmlspecialchars(mds_asset_path('img/MDS_Logo_black.png'), ENT_QUOTES, 'UTF-8'); ?>" class="filter-green me-2" height="40px" />
@@ -81,7 +210,7 @@
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('internal.php'), ENT_QUOTES, 'UTF-8'); ?>">My Sensors</a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('settings.php'), ENT_QUOTES, 'UTF-8'); ?>">Settings</a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('logout.php'), ENT_QUOTES, 'UTF-8'); ?>">Logout</a></li>
-          <li class="nav-item container" style="max-width: 10%; position: absolute; right: 20px; background-color: var(--bs-body-color)">
+          <li class="nav-item container mds-qr-slot">
             <?php
               if ($config::$ShowQrCode == "1") {
             ?>

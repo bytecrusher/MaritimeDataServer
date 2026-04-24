@@ -34,6 +34,7 @@ require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Database/dbConfig.func.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Logging/writeToLogFunction.func.php");
+header('Content-Type: application/json; charset=utf-8');
 
 //date_default_timezone_set('UTC');
 date_default_timezone_set('Europe/Berlin');
@@ -54,17 +55,16 @@ if(strlen($ttn_post) > 0) {
             $_SERVER["SCRIPT_FILENAME"],
             array('rawPayload' => $ttn_post)
         );
-        exit;
+        ttnJsonResponse(400, array('error' => 'TTN payload missing required uplink fields.'));
     }
 
     if (!ttnWebhookSecretIsValid($requestHeaders, (string)$config::$ttnWebhookSecret)) {
-        http_response_code(403);
         writeToLogFunction::warning(
             'TTN webhook secret validation failed.',
             $_SERVER["SCRIPT_FILENAME"],
             array('requestHeaders' => ttnFilterHeadersForLogging($requestHeaders))
         );
-        exit;
+        ttnJsonResponse(403, array('error' => 'TTN webhook secret validation failed.'));
     }
 
     $sensor_temperature = 0;
@@ -348,6 +348,11 @@ if(strlen($ttn_post) > 0) {
           'curlErrno' => curl_errno($ch)
         )
       );
+      curl_close($ch);
+      ttnJsonResponse(502, array(
+        'error' => 'cURL forwarding to receivejson failed.',
+        'targetUrl' => $url
+      ));
     } elseif ($httpCode < 200 || $httpCode >= 300) {
       writeToLogFunction::error(
         'receivejson returned a non-success HTTP status.',
@@ -359,6 +364,12 @@ if(strlen($ttn_post) > 0) {
           'sensorCount' => count($sensors)
         )
       );
+      curl_close($ch);
+      ttnJsonResponse(502, array(
+        'error' => 'receivejson returned a non-success HTTP status.',
+        'targetUrl' => $url,
+        'httpCode' => $httpCode
+      ));
     } else {
       writeToLogFunction::info(
         'cURL forwarding to receivejson succeeded.',
@@ -370,13 +381,21 @@ if(strlen($ttn_post) > 0) {
           'sensorCount' => count($sensors)
         )
       );
+      curl_close($ch);
+      ttnJsonResponse(200, array(
+        'status' => 'ok',
+        'boardId' => $singleRowBoardIdbyTTN['id'],
+        'forwardedTo' => $url,
+        'forwardHttpCode' => $httpCode,
+        'sensorCount' => count($sensors)
+      ));
     }
-
-    // Close cURL resource
-    curl_close($ch);
 } else {
     writeToLogFunction::warning('TTN endpoint called without body.', $_SERVER["SCRIPT_FILENAME"]);
+    ttnJsonResponse(400, array('error' => 'TTN endpoint called without body.'));
 }
+
+ttnJsonResponse(500, array('error' => 'Unexpected TTN webhook state.'));
 
 function ttnWebhookSecretIsValid(array $headers, string $expectedSecret) {
     if ($expectedSecret === '') {
@@ -454,6 +473,12 @@ function ttnPayloadValue($payload, array $paths, $default = 0) {
         }
     }
     return $default;
+}
+
+function ttnJsonResponse($statusCode, array $payload) {
+    http_response_code($statusCode);
+    echo json_encode($payload);
+    exit;
 }
 
 function ttnReadPath($payload, $path) {

@@ -15,8 +15,10 @@ if ($sessionUserId <= 0) {
 }
 
 if (!isset($_POST['functionName'])) {
+    http_response_code(400);
     $aResult['error'] = 'No function name!';
 } elseif ($_POST['functionName'] !== 'get') {
+    http_response_code(400);
     $aResult['error'] = 'Not found function ' . $_POST['functionName'] . '!';
 } else {
     $myBoards = myFunctions::getMyBoards($sessionUserId);
