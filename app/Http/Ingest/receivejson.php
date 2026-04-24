@@ -13,6 +13,7 @@ require_once(dirname(__FILE__, 2) . "/../Application/myFunctions.func.php");
 require_once(dirname(__FILE__, 2) . "/../Domain/Board/board.class.php");
 
 // legacy include removed during public webroot migration
+header('Content-Type: application/json; charset=utf-8');
 
 $config  = new configuration();
 
@@ -21,19 +22,23 @@ $apiKey_value = $config::$apiKey;
 $apiKey = $macAddress = $sensor = $sensorId = $location = $value1 = $value2 = $value3 = $value4 = $date = $time = $transmissionPath = "";
 
 $pdo2 = dbConfig::getInstance();
+$responseBoardId = null;
+$insertedSensorRows = 0;
+$skippedSensorRows = 0;
+$autoResolvedSensorRows = 0;
+$autoCreatedSensorConfigs = 0;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $ttn_post = file_get_contents('php://input');
     $data = json_decode($ttn_post, true);
 
     if (!is_array($data)) {
-        echo "Invalid JSON payload.";
         writeToLogFunction::error(
             "Invalid JSON payload received by receivejson.php",
             $_SERVER["SCRIPT_FILENAME"],
             array('rawPayload' => $ttn_post)
         );
-        exit;
+        ingestJsonResponse(400, array('error' => 'Invalid JSON payload.'));
     }
 
     $boardData = $data['board'] ?? array();
@@ -42,23 +47,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         'receivejson request received.',
         $_SERVER["SCRIPT_FILENAME"],
         array(
+            'board' => summarizeBoardPayloadForLog($boardData),
             'boardKeys' => array_keys($boardData),
-            'sensorCount' => is_array($sensors) ? count($sensors) : 0
+            'sensorCount' => is_array($sensors) ? count($sensors) : 0,
+            'rawBodyBytes' => strlen($ttn_post)
         )
     );
 
     if (isset($boardData['apiKey'])) {
         $apiKey = ($boardData['apiKey']);
+    } elseif (isset($boardData['api_key'])) {
+        $apiKey = ($boardData['api_key']);
     } else {
         writeToLogFunction::warning("Missing API key in board payload.", $_SERVER["SCRIPT_FILENAME"]);
     }
 
     if ($apiKey == $apiKey_value) {
+        writeToLogFunction::info(
+            'receivejson API key accepted.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'board' => summarizeBoardPayloadForLog($boardData),
+                'sensorCount' => is_array($sensors) ? count($sensors) : 0
+            )
+        );
         if ((isset($boardData['protocolVersion'])) && ($boardData['protocolVersion'] != null)) {
             if ($boardData['protocolVersion'] == "1") {
+                writeToLogFunction::info(
+                    'receivejson protocol version accepted.',
+                    $_SERVER["SCRIPT_FILENAME"],
+                    array(
+                        'protocolVersion' => $boardData['protocolVersion'],
+                        'board' => summarizeBoardPayloadForLog($boardData)
+                    )
+                );
+                if (!isset($boardData['macAddress']) || trim((string)$boardData['macAddress']) === '') {
+                    writeToLogFunction::warning("Missing macAddress in board payload.", $_SERVER["SCRIPT_FILENAME"], array('board' => $boardData));
+                    ingestJsonResponse(400, array('error' => 'Missing board.macAddress.'));
+                }
                 $macAddress = test_input($boardData['macAddress']);
                 $macAddressId = check_macAddress($macAddress, $pdo2);
+                $responseBoardId = $macAddressId;
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
+                $boardSensorCount = is_array($boardSensors) ? count($boardSensors) : 0;
+                writeToLogFunction::info(
+                    'Board resolved for receivejson payload.',
+                    $_SERVER["SCRIPT_FILENAME"],
+                    array(
+                        'boardId' => $macAddressId,
+                        'macAddress' => $macAddress,
+                        'sensorConfigCount' => $boardSensorCount
+                    )
+                );
                 $usedBoardSensorIds = array();
                 $insertStatement = $pdo2->prepare(
                     "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
@@ -67,12 +107,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 foreach ($sensors as $key => &$sensor) {
                     $sensorId = null;
+                    $sensorWasAutoResolved = false;
+                    $sensorWasAutoCreated = false;
+                    $sensorMappingSource = 'unresolved';
                     $value1 = $value2 = $value3 = $value4 = "";
                     if ($sensor != null) {
+                        writeToLogFunction::info(
+                            'Processing incoming sensor payload.',
+                            $_SERVER["SCRIPT_FILENAME"],
+                            array(
+                                'boardId' => $macAddressId,
+                                'sensorIndex' => $key,
+                                'sensorPayload' => summarizeSensorPayloadForLog($sensor),
+                                'knownSensorConfigCount' => $boardSensorCount
+                            )
+                        );
                         $mySensorId = $owSensorAddress = null;
                         if (isset($sensor["sensorId"])) {
                             $mySensorId = test_input($sensor["sensorId"]);
                             $sensorId = $mySensorId;
+                            $sensorMappingSource = 'payload.sensorId';
                             if (isset($sensor["value1"])) {
                                 $value1 = $sensor["value1"];
                             }
@@ -87,11 +141,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             }
                             if ($sensorId != null) {
                                 $usedBoardSensorIds[] = (int)$sensorId;
+                                writeToLogFunction::info(
+                                    'Using explicit sensorId from payload.',
+                                    $_SERVER["SCRIPT_FILENAME"],
+                                    array(
+                                        'boardId' => $macAddressId,
+                                        'sensorIndex' => $key,
+                                        'sensorId' => $sensorId,
+                                        'sensorPayload' => summarizeSensorPayloadForLog($sensor)
+                                    )
+                                );
                             }
                         } else {
                             if(isset($sensor["sensorAddress"])) {
                                 $owSensorAddress = test_input($sensor["sensorAddress"]);
-                                writeToLogFunction::write_to_log("owSensorAddress: " . $owSensorAddress, $_SERVER["SCRIPT_FILENAME"]);
+                                writeToLogFunction::info(
+                                    'Attempting sensor resolution via sensorAddress.',
+                                    $_SERVER["SCRIPT_FILENAME"],
+                                    array(
+                                        'boardId' => $macAddressId,
+                                        'sensorIndex' => $key,
+                                        'sensorAddress' => $owSensorAddress
+                                    )
+                                );
                                 $sensorId = checkOwSensorAddress($owSensorAddress, $macAddressId, $pdo2);
                                 if (substr($owSensorAddress, 0, 2) === "28") {
                                     $value1 = test_input($sensor["value1"]);
@@ -103,6 +175,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 }
                                 if ($sensorId != null) {
                                     $usedBoardSensorIds[] = (int)$sensorId;
+                                    $sensorMappingSource = 'payload.sensorAddress';
+                                    writeToLogFunction::info(
+                                        'Sensor mapped via sensorAddress.',
+                                        $_SERVER["SCRIPT_FILENAME"],
+                                        array(
+                                            'boardId' => $macAddressId,
+                                            'sensorIndex' => $key,
+                                            'sensorId' => $sensorId,
+                                            'sensorAddress' => $owSensorAddress
+                                        )
+                                    );
                                 }
                             } else {
                                $owSensorAddress = null; 
@@ -129,11 +212,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 if ($resolvedSensor !== null) {
                                     $sensorId = $resolvedSensor['id'];
                                     $usedBoardSensorIds[] = (int)$resolvedSensor['id'];
+                                    $sensorWasAutoResolved = true;
+                                    $sensorMappingSource = 'boardConfig.match';
                                     writeToLogFunction::info(
                                         'Sensor resolved automatically from board config.',
                                         $_SERVER["SCRIPT_FILENAME"],
                                         array(
                                             'boardId' => $macAddressId,
+                                            'sensorIndex' => $key,
                                             'sensorId' => $sensorId,
                                             'sensorName' => $resolvedSensor['name'] ?? null,
                                             'sensorTypeName' => $resolvedSensor['sensorTypesName'] ?? null,
@@ -158,14 +244,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 if ($createdSensor !== null) {
                                     $sensorId = $createdSensor['id'];
                                     $usedBoardSensorIds[] = (int)$createdSensor['id'];
+                                    $sensorWasAutoCreated = true;
+                                    $sensorMappingSource = 'sensorConfig.autoCreate';
+                                    $boardSensorCount = is_array($boardSensors) ? count($boardSensors) : $boardSensorCount;
                                     writeToLogFunction::info(
                                         'Missing sensorConfig was auto-created from payload metadata.',
                                         $_SERVER["SCRIPT_FILENAME"],
                                         array(
                                             'boardId' => $macAddressId,
+                                            'sensorIndex' => $key,
                                             'sensorId' => $sensorId,
                                             'sensorName' => $createdSensor['name'] ?? null,
-                                            'sensorTypeName' => $createdSensor['sensorTypesName'] ?? null
+                                            'sensorTypeName' => $createdSensor['sensorTypesName'] ?? null,
+                                            'sensorPayload' => summarizeSensorPayloadForLog($sensor),
+                                            'sensorConfigCount' => $boardSensorCount
                                         )
                                     );
                                 }
@@ -188,9 +280,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $_SERVER["SCRIPT_FILENAME"],
                                 array(
                                     'boardId' => $macAddressId,
+                                    'sensorIndex' => $key,
                                     'payloadSensor' => $sensor
                                 )
                             );
+                            $skippedSensorRows++;
                             continue;
                         }
 
@@ -205,19 +299,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $time,
                                 $transmissionPath
                             ));
-                            writeToLogFunction::debug(
+                            writeToLogFunction::info(
                                 'sensorData row inserted.',
                                 $_SERVER["SCRIPT_FILENAME"],
                                 array(
                                     'boardId' => $macAddressId,
+                                    'sensorIndex' => $key,
                                     'sensorId' => $sensorId,
+                                    'mappingSource' => $sensorMappingSource,
                                     'transmissionPath' => $transmissionPath,
                                     'date' => $date,
-                                    'time' => $time
+                                    'time' => $time,
+                                    'values' => summarizeSensorValuesForLog($value1, $value2, $value3, $value4)
                                 )
                             );
+                            $insertedSensorRows++;
+                            if ($sensorWasAutoResolved) {
+                                $autoResolvedSensorRows++;
+                            }
+                            if ($sensorWasAutoCreated) {
+                                $autoCreatedSensorConfigs++;
+                            }
                         } catch (PDOException $ex) {
-                            echo "An Error has occurred while run query.";
                             writeToLogFunction::error("An error has occurred while inserting sensorData.", $_SERVER["SCRIPT_FILENAME"]);
                             writeToLogFunction::exception(
                                 $ex,
@@ -228,6 +331,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     'payloadSensor' => $sensor
                                 )
                             );
+                            ingestJsonResponse(500, array('error' => 'An error has occurred while inserting sensorData.'));
                         }
                         if (myFunctions::getAlreadyNotified($macAddressId) == 1) {
                             myFunctions::unsetAlreadyNotified($macAddressId);
@@ -242,26 +346,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 writeToLogFunction::info(
                     'receivejson processing finished successfully.',
                     $_SERVER["SCRIPT_FILENAME"],
-                    array('boardId' => $macAddressId)
+                    array(
+                        'boardId' => $macAddressId,
+                        'sensorConfigCount' => $boardSensorCount,
+                        'insertedSensorRows' => $insertedSensorRows,
+                        'skippedSensorRows' => $skippedSensorRows,
+                        'autoResolvedSensorRows' => $autoResolvedSensorRows,
+                        'autoCreatedSensorConfigs' => $autoCreatedSensorConfigs
+                    )
                 );
+                ingestJsonResponse(200, array(
+                    'status' => 'ok',
+                    'boardId' => $macAddressId,
+                    'insertedSensorRows' => $insertedSensorRows,
+                    'skippedSensorRows' => $skippedSensorRows,
+                    'autoResolvedSensorRows' => $autoResolvedSensorRows,
+                    'autoCreatedSensorConfigs' => $autoCreatedSensorConfigs
+                ));
             }
+            ingestJsonResponse(400, array('error' => 'Unsupported protocol version.'));
         } else {
-            echo "Wrong protocol version.";
             writeToLogFunction::warning("Wrong protocol version.", $_SERVER["SCRIPT_FILENAME"], array('board' => $boardData));
-            die();
+            ingestJsonResponse(400, array('error' => 'Wrong protocol version.'));
         }
     } else {
-        echo "Wrong API Key provided.";
         writeToLogFunction::warning(
             "Wrong API Key provided.",
             $_SERVER["SCRIPT_FILENAME"],
-            array('providedApiKey' => $apiKey)
+            array(
+                'providedApiKey' => maskSecretForLog($apiKey),
+                'board' => summarizeBoardPayloadForLog($boardData)
+            )
         );
+        ingestJsonResponse(401, array('error' => 'Wrong API Key provided.'));
     }
 } else {
-    echo "No data posted with HTTP POST.";
     writeToLogFunction::warning("No data posted with HTTP POST.", $_SERVER["SCRIPT_FILENAME"]);
+    ingestJsonResponse(405, array('error' => 'No data posted with HTTP POST.'));
 }
+
+ingestJsonResponse(500, array(
+    'error' => 'Unexpected receivejson state.',
+    'boardId' => $responseBoardId
+));
 
 function test_input($data)
 {
@@ -269,6 +396,84 @@ function test_input($data)
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
     return $data;
+}
+
+function ingestJsonResponse($statusCode, array $payload)
+{
+    http_response_code($statusCode);
+    echo json_encode($payload);
+    exit;
+}
+
+function summarizeBoardPayloadForLog(array $boardData)
+{
+    return array(
+        'protocolVersion' => $boardData['protocolVersion'] ?? null,
+        'macAddress' => $boardData['macAddress'] ?? null,
+        'apiKeyPresent' => isset($boardData['apiKey']) || isset($boardData['api_key']),
+        'apiKeyMasked' => maskSecretForLog($boardData['apiKey'] ?? ($boardData['api_key'] ?? null)),
+    );
+}
+
+function summarizeSensorPayloadForLog(array $sensor)
+{
+    return array(
+        'sensorId' => $sensor['sensorId'] ?? null,
+        'sensorAddress' => $sensor['sensorAddress'] ?? null,
+        'sensorType' => $sensor['sensorType'] ?? ($sensor['type'] ?? null),
+        'sensorName' => $sensor['sensorName'] ?? ($sensor['name'] ?? null),
+        'valueCount' => countProvidedSensorValues($sensor),
+        'values' => summarizeSensorValuesForLog(
+            $sensor['value1'] ?? null,
+            $sensor['value2'] ?? null,
+            $sensor['value3'] ?? null,
+            $sensor['value4'] ?? null
+        ),
+        'date' => $sensor['date'] ?? null,
+        'time' => $sensor['time'] ?? null,
+        'transmissionPath' => $sensor['transmissionPath'] ?? ($sensor['transmissionpath'] ?? null),
+    );
+}
+
+function summarizeSensorValuesForLog($value1, $value2, $value3, $value4)
+{
+    return array(
+        'value1' => normalizeSensorValueForLog($value1),
+        'value2' => normalizeSensorValueForLog($value2),
+        'value3' => normalizeSensorValueForLog($value3),
+        'value4' => normalizeSensorValueForLog($value4),
+    );
+}
+
+function normalizeSensorValueForLog($value)
+{
+    if ($value === null || $value === '') {
+        return null;
+    }
+
+    if (is_numeric($value)) {
+        return (float)$value;
+    }
+
+    return (string)$value;
+}
+
+function maskSecretForLog($secret)
+{
+    if (!is_string($secret)) {
+        return null;
+    }
+
+    $trimmedSecret = trim($secret);
+    if ($trimmedSecret === '') {
+        return null;
+    }
+
+    if (strlen($trimmedSecret) <= 8) {
+        return str_repeat('*', strlen($trimmedSecret));
+    }
+
+    return substr($trimmedSecret, 0, 4) . str_repeat('*', max(0, strlen($trimmedSecret) - 8)) . substr($trimmedSecret, -4);
 }
 
 function check_macAddress($macAddress, $pdo2)

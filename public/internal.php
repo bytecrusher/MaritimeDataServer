@@ -49,6 +49,100 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
 
 <style>
+  .internal-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.45rem 1.35rem;
+    margin-bottom: 1rem;
+    border-radius: 1.1rem;
+    background:
+      radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 28%),
+      linear-gradient(135deg, #111827 0%, #1b2535 48%, #273449 100%);
+    color: #fff;
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .internal-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 38%);
+    pointer-events: none;
+  }
+  .internal-hero h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 2.5vw, 2.25rem);
+    letter-spacing: -0.03em;
+    position: relative;
+    z-index: 1;
+  }
+  .internal-hero p {
+    max-width: 46rem;
+    margin: 0.45rem 0 0;
+    color: rgba(255, 255, 255, 0.82);
+    position: relative;
+    z-index: 1;
+  }
+  #internalTabs {
+    gap: 0.4rem;
+    padding: 0.45rem;
+    border: 0;
+    border-radius: 1rem 1rem 0 0;
+    background: linear-gradient(180deg, #e5e7eb 0%, #dbe4ef 100%);
+  }
+  #internalTabs .nav-link {
+    border: 0;
+    border-radius: 999px;
+    color: #334155;
+    font-weight: 600;
+    padding: 0.65rem 1rem;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+  }
+  #internalTabs .nav-link:hover {
+    background: rgba(255, 255, 255, 0.7);
+    color: #0f172a;
+    transform: translateY(-1px);
+  }
+  #internalTabs .nav-link.active {
+    background: #fff;
+    color: #0f172a;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  }
+  .internal-tab-shell {
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    padding-bottom: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-top: 0;
+  }
+  .tab-section-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+    padding: 1rem;
+  }
+  .tab-section-card + .tab-section-card {
+    margin-top: 1rem;
+  }
+  .tab-section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .tab-section-title h3 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+  .tab-section-title p {
+    margin: 0.2rem 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
   .dashboard-shell {
     display: flex;
     flex-direction: column;
@@ -64,7 +158,7 @@
     padding: 0.9rem 1rem;
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 1rem;
-    background: linear-gradient(135deg, #f8fbff 0%, #eef4f9 100%);
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
   }
   .dashboard-toolbar-meta {
     display: flex;
@@ -82,12 +176,21 @@
     border: 1px solid rgba(15, 23, 42, 0.08);
     font-size: 0.92rem;
   }
+  #alert-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  #alert-container .mds-alert {
+    margin: 0;
+  }
   .dashboard-board-card {
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 1rem;
     overflow: hidden;
     background: #fff;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
   }
   .dashboard-board-card.is-offline {
     opacity: 0.86;
@@ -129,19 +232,23 @@
   }
   .dashboard-board-gauges {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 1.15rem;
     padding: 1rem;
   }
   .dashboard-gauge-card {
     position: relative;
-    min-height: 235px;
-    padding: 0.9rem;
+    width: auto !important;
+    height: auto !important;
+    min-height: 290px;
+    padding: 1rem;
     border-radius: 1rem;
     border: 1px solid rgba(148, 163, 184, 0.22);
-    background: radial-gradient(circle at top left, rgba(241, 245, 249, 0.94), rgba(226, 232, 240, 0.9));
+    background: linear-gradient(180deg, #f8fafc 0%, #e8eef6 100%);
     color: #0f172a;
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    display: flex;
+    flex-direction: column;
   }
   .dashboard-gauge-card:hover {
     transform: translateY(-2px);
@@ -154,8 +261,8 @@
   .dashboard-gauge-top {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
+    gap: 0.9rem;
+    margin-bottom: 0.9rem;
   }
   .dashboard-gauge-headline {
     display: flex;
@@ -164,13 +271,13 @@
     min-width: 0;
   }
   .dashboard-gauge-headline strong {
-    font-size: 1rem;
+    font-size: 1.25rem;
     line-height: 1.2;
     overflow-wrap: anywhere;
   }
   .dashboard-gauge-headline span {
     color: #475569;
-    font-size: 0.84rem;
+    font-size: 0.96rem;
     line-height: 1.2;
     overflow-wrap: anywhere;
   }
@@ -185,24 +292,39 @@
     align-items: baseline;
   }
   .dashboard-gauge-value-number {
-    font-size: 1.35rem;
+    font-size: 2rem;
     letter-spacing: -0.02em;
   }
   .dashboard-gauge-value-unit {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     color: #334155;
     overflow-wrap: anywhere;
   }
   .dashboard-gauge-visual {
-    height: 122px;
+    flex: 1 1 auto;
+    min-height: 170px;
+    height: 170px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.2rem;
+  }
+  .dashboard-gauge-card .gauge,
+  .dashboard-gauge-card svg.gauge {
+    width: 100%;
+    height: 100%;
+    max-width: 220px;
+    max-height: 170px;
+    margin: 0 auto;
+    overflow: visible;
   }
   .dashboard-gauge-meta {
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
-    margin-top: 0.45rem;
+    margin-top: 0.8rem;
     color: #475569;
-    font-size: 0.82rem;
+    font-size: 0.92rem;
   }
   .dashboard-gauge-meta span {
     overflow-wrap: anywhere;
@@ -216,12 +338,59 @@
   .dashboard-board-hidden {
     display: none !important;
   }
+  .board-overview-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.85rem;
+  }
+  .board-overview-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+  }
+  .board-overview-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .board-overview-name {
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .board-overview-meta {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+  .chart-panel canvas {
+    width: 100% !important;
+    max-height: 380px;
+  }
+  #chart-container-debug {
+    max-height: 520px;
+    overflow: auto;
+  }
+  #mapContainer .map-shell {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+    padding: 1rem;
+  }
   @media (max-width: 767.98px) {
     .dashboard-board-gauges {
       grid-template-columns: 1fr;
     }
     .dashboard-toolbar {
       align-items: flex-start;
+    }
+    #internalTabs {
+      border-radius: 1rem;
     }
   }
 </style>
@@ -319,27 +488,25 @@
   }, DashboardUpdateInterval);
 </script>
 
-<div style="padding: 1rem 1rem; margin-bottom: 1rem; background: #acacac;">
-    <div class="container">
+  <div class="main-container">
+  <div class="internal-hero">
       <h1>Welcome <?php echo htmlentities($currentUser->getFirstName()); ?>
       <?php
       if (configuration::$demoMode) {
         echo htmlentities("  (Demo mode)");
       }
       ?></h1>
-    </div>
+      <p>Live-Uebersicht fuer Devices, Sensoren und eingehende Telemetrie.</p>
   </div>
-
-  <div class="main-container">
   <div class="container" style="padding: 0px">
     <div id="alert-container">
       <?php
         if($showInstallAlert) {
-          echo "<div class='alert alert-danger alert-dismissible' role='alert'>Please remember to remove \"install\" dir. <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
+          echo "<div class='mds-alert alert-dismissible' role='alert'><div><strong>Deployment Hinweis</strong><p>Please remember to remove the \"install\" directory before production use.</p></div><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
         }
 
         if (!$hasBoards) {
-          echo "<div class='alert alert-danger' role='alert'>No Board added. Please add a board first.</div>";
+          echo "<div class='mds-alert' role='alert'><div><strong>No board added</strong><p>Please add a board first so dashboard, charts and map can display data.</p></div></div>";
         }
         ?>
     </div>
@@ -367,7 +534,7 @@
         ?>
     </ul>
 
-    <div class="tab-content" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding-bottom: 15px; background: white">
+    <div class="tab-content internal-tab-shell">
 
       <!-- Show dashboard -->
       <div class="container tab-pane fade show active position-relative" id="dashboard">
@@ -500,31 +667,46 @@
       <!-- Show temperatures as chart -->
       <!-- Note: for every board its own canvas. -->
       <div class="container tab-pane fade pl-0 pr-0" id="charts">
-        <fieldset>
+        <fieldset class="pt-3">
           <div id="chart-container">
-            <div class="mb-4">
-              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                <strong>Temperaturen</strong>
+            <div class="tab-section-card chart-panel">
+              <div class="tab-section-title">
+                <div>
+                  <h3>Temperaturen</h3>
+                  <p>Temperaturkurven pro Device vergleichen und gezielt ein- oder ausblenden.</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="temperature">Alle anzeigen</button>
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="temperature">Alle ausblenden</button>
+              </div>
               </div>
               <div id="chart-device-filter-temperature" class="d-flex flex-wrap gap-3 mb-2"></div>
               <canvas id="mycanvas"></canvas>
             </div>
-            <div class="mb-4">
-              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                <strong>ADC / Spannungen</strong>
+            <div class="tab-section-card chart-panel">
+              <div class="tab-section-title">
+                <div>
+                  <h3>ADC / Spannungen</h3>
+                  <p>Spannungen, Pegel und analoge Kanaele pro Device direkt gegeneinander lesen.</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="adc">Alle anzeigen</button>
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="adc">Alle ausblenden</button>
+              </div>
               </div>
               <div id="chart-device-filter-adc" class="d-flex flex-wrap gap-3 mb-2"></div>
               <canvas id="mycanvas2"></canvas>
             </div>
-            <div class="mb-4">
-              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                <strong>Weitere Sensoren</strong>
+            <div class="tab-section-card chart-panel">
+              <div class="tab-section-title">
+                <div>
+                  <h3>Weitere Sensoren</h3>
+                  <p>Alle restlichen Sensortypen in einer gemeinsamen Vergleichsansicht.</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="other">Alle anzeigen</button>
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="other">Alle ausblenden</button>
+              </div>
               </div>
               <div id="chart-device-filter-other" class="d-flex flex-wrap gap-3 mb-2"></div>
               <canvas id="mycanvas3"></canvas>
@@ -535,7 +717,15 @@
 
       <!-- Show Board overview -->
       <div class="container tab-pane fade pl-0 pr-0" id="boards">
-        <fieldset>
+        <fieldset class="pt-3">
+            <div class="tab-section-card">
+              <div class="tab-section-title">
+                <div>
+                  <h3>Boards</h3>
+                  <p>Status, Uebertragungsweg und Zuordnung deiner registrierten Devices.</p>
+                </div>
+              </div>
+              <div class="board-overview-list">
             <?php
             foreach($boardObjsArray as $singleBoardObj) {
               $transmissionPath = 0;
@@ -579,10 +769,11 @@
                 }
               }
             ?>
-              <div class='container mt-2'>
+              <div class='board-overview-item'>
                 <?php
                 if ($boardOnlineStatus) {
                 ?>
+                  <div class='board-overview-badges'>
                   <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
                 <?php
                   if ($transmissionPath == 1) {
@@ -598,33 +789,45 @@
                   }
                 } else {
                 ?>
+                  <div class='board-overview-badges'>
                   <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
                 <?php
                 }
                 ?>
-
-                  <span class='control-label' style='padding-left: 5px'><?php echo $singleBoardObj->getName(); ?> (<?php echo $singleBoardObj->getMacAddress(); ?>)</span>
+                  </div>
+                  <div class='board-overview-name'><?php echo $singleBoardObj->getName(); ?></div>
+                  <div class='board-overview-meta'><?php echo $singleBoardObj->getMacAddress(); ?></div>
               </div>
             <?php
             }
             ?>
+              </div>
+            </div>
         </fieldset>
       </div>
 
       <!-- Show temperatures as table, only for admin -->
       <div class="container tab-pane fade pl-0 pr-0" id="debug">
-        <div class="p-2" id="chart-container-debug">
-          All Sensor Values as a table from ttnDataLoraBoatMonitor:
-        </div>
+        <div class="tab-section-card mt-3">
+          <div class="tab-section-title">
+            <div>
+              <h3>Debug</h3>
+              <p>Rohdaten aus `ttnDataLoraBoatMonitor` fuer Analyse und Fehlersuche.</p>
+            </div>
+          </div>
+          <div class="p-2" id="chart-container-debug">
+            All Sensor Values as a table from ttnDataLoraBoatMonitor:
+          </div>
         <?php
             include_once dirname(__DIR__) . "/app/Http/Webhooks/TTN/index.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
           ?>
+        </div>
       </div>
 
       <!-- Show map -->
       <div class="container tab-pane fade pl-0" id="mapContainer">
         <div class="row mt-2">
-          <div class="container">
+          <div class="container map-shell">
             <?php include_once __DIR__ . "/openstreetmaps.php"; // NOSONAR - Legacy Template-Einbindung ?>
           </div>
         </div>
