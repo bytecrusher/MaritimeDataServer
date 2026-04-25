@@ -30,7 +30,6 @@ $(document).ready(async function(){
   var varSensorId = null;
   InitialSetupChart();
   initializeChartBoardFilters();
-  initializeEventSummaryChart();
   initializeEventTimeline();
   // TODO: Check, how to add values with timestamp (currently it begins from the left to add values, indepented from the timestampt).
 
@@ -306,7 +305,13 @@ function initializeEventSummaryChart() {
     return;
   }
 
+  const eventSummaryShell = eventSummaryCanvas.closest('.event-summary-chart-shell');
+  if (eventSummaryShell) {
+    eventSummaryShell.style.height = '320px';
+  }
+
   const eventSummaryData = Array.isArray(window.eventTimelineSummary) ? window.eventTimelineSummary : [];
+  const eventSummaryLabels = Array.isArray(window.eventTimelineSummaryLabels) ? window.eventTimelineSummaryLabels : [];
   if (eventSummaryData.length === 0) {
     const container = eventSummaryCanvas.parentElement;
     if (container) {
@@ -316,29 +321,10 @@ function initializeEventSummaryChart() {
   }
 
   window.eventSummaryChart = new Chart(eventSummaryCanvas, {
-    type: 'bar',
+    type: 'line',
     data: {
-      labels: [],
-      datasets: [
-        {
-          label: 'Wakeup',
-          data: [],
-          backgroundColor: 'rgba(22, 163, 74, 0.82)',
-          borderColor: 'rgba(21, 128, 61, 1)',
-          borderWidth: 1,
-          borderRadius: 6,
-          borderSkipped: false,
-        },
-        {
-          label: 'Standby',
-          data: [],
-          backgroundColor: 'rgba(245, 158, 11, 0.82)',
-          borderColor: 'rgba(217, 119, 6, 1)',
-          borderWidth: 1,
-          borderRadius: 6,
-          borderSkipped: false,
-        }
-      ]
+      labels: eventSummaryLabels,
+      datasets: []
     },
     options: {
       maintainAspectRatio: false,
@@ -365,14 +351,13 @@ function initializeEventSummaryChart() {
               const total = tooltipItems.reduce(function (sum, item) {
                 return sum + (Number(item.raw) || 0);
               }, 0);
-              return 'Gesamt: ' + total;
+              return 'Summe an diesem Tag: ' + total.toFixed(2) + ' h';
             }
           }
         }
       },
       scales: {
         x: {
-          stacked: true,
           grid: {
             display: false,
           },
@@ -384,18 +369,19 @@ function initializeEventSummaryChart() {
           }
         },
         y: {
-          stacked: true,
           beginAtZero: true,
           ticks: {
-            precision: 0,
             color: '#64748b',
+            callback: function (value) {
+              return Number(value).toFixed(1) + ' h';
+            }
           },
           grid: {
             color: 'rgba(148, 163, 184, 0.18)',
           },
           title: {
             display: true,
-            text: 'Anzahl Ereignisse',
+            text: 'Stunden pro Tag',
             color: '#475569',
           }
         }
@@ -416,16 +402,116 @@ function updateEventSummaryChart() {
     return chartBoardVisibility.events.get(String(summaryEntry.boardId)) !== false;
   });
 
-  window.eventSummaryChart.data.labels = visibleSummaries.map(function (summaryEntry) {
-    return summaryEntry.boardName;
+  const canvas = document.getElementById('eventSummaryCanvas');
+  const eventSummaryShell = canvas ? canvas.closest('.event-summary-chart-shell') : null;
+  let emptyState = eventSummaryShell ? eventSummaryShell.querySelector('.event-timeline-empty.is-chart-empty') : null;
+
+  if (visibleSummaries.length === 0) {
+    window.eventSummaryChart.data.datasets = [];
+    window.eventSummaryChart.update();
+
+    if (eventSummaryShell && !emptyState) {
+      emptyState = document.createElement('div');
+      emptyState.className = 'event-timeline-empty is-chart-empty';
+      emptyState.textContent = 'Für die aktuell ausgewählten Devices liegen keine ESP-Ereignisse vor.';
+      eventSummaryShell.appendChild(emptyState);
+    }
+    if (emptyState) {
+      emptyState.hidden = false;
+    }
+    return;
+  }
+
+  if (emptyState) {
+    emptyState.hidden = true;
+  }
+
+  const datasets = [];
+  visibleSummaries.forEach(function (summaryEntry) {
+    const boardId = String(summaryEntry.boardId);
+    const boardColor = getEventSeriesColor(boardId);
+    datasets.push({
+      label: summaryEntry.boardName + ' Online',
+      data: Array.isArray(summaryEntry.onlineDailyHours) ? summaryEntry.onlineDailyHours.map(Number) : [],
+      borderColor: boardColor.wakeupBorder,
+      backgroundColor: boardColor.wakeupFill,
+      pointBackgroundColor: boardColor.wakeupBorder,
+      pointBorderColor: '#ffffff',
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      borderWidth: 3,
+      tension: 0.28,
+      fill: false,
+      boardId: boardId,
+    });
+    datasets.push({
+      label: summaryEntry.boardName + ' Standby',
+      data: Array.isArray(summaryEntry.standbyDailyHours) ? summaryEntry.standbyDailyHours.map(Number) : [],
+      borderColor: boardColor.standbyBorder,
+      backgroundColor: boardColor.standbyFill,
+      pointBackgroundColor: boardColor.standbyBorder,
+      pointBorderColor: '#ffffff',
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      borderWidth: 2,
+      tension: 0.28,
+      borderDash: [6, 4],
+      fill: false,
+      boardId: boardId,
+    });
   });
-  window.eventSummaryChart.data.datasets[0].data = visibleSummaries.map(function (summaryEntry) {
-    return Number(summaryEntry.wakeupCount || 0);
-  });
-  window.eventSummaryChart.data.datasets[1].data = visibleSummaries.map(function (summaryEntry) {
-    return Number(summaryEntry.standbyCount || 0);
-  });
+  window.eventSummaryChart.data.labels = Array.isArray(window.eventTimelineSummaryLabels) ? window.eventTimelineSummaryLabels : [];
+  window.eventSummaryChart.data.datasets = datasets;
   window.eventSummaryChart.update();
+}
+
+function getEventSeriesColor(boardId) {
+  const palette = [
+    {
+      wakeupBorder: 'rgba(22, 163, 74, 1)',
+      wakeupFill: 'rgba(22, 163, 74, 0.22)',
+      standbyBorder: 'rgba(245, 158, 11, 1)',
+      standbyFill: 'rgba(245, 158, 11, 0.18)',
+    },
+    {
+      wakeupBorder: 'rgba(37, 99, 235, 1)',
+      wakeupFill: 'rgba(37, 99, 235, 0.22)',
+      standbyBorder: 'rgba(124, 58, 237, 1)',
+      standbyFill: 'rgba(124, 58, 237, 0.18)',
+    },
+    {
+      wakeupBorder: 'rgba(14, 165, 233, 1)',
+      wakeupFill: 'rgba(14, 165, 233, 0.22)',
+      standbyBorder: 'rgba(249, 115, 22, 1)',
+      standbyFill: 'rgba(249, 115, 22, 0.18)',
+    },
+    {
+      wakeupBorder: 'rgba(236, 72, 153, 1)',
+      wakeupFill: 'rgba(236, 72, 153, 0.22)',
+      standbyBorder: 'rgba(225, 29, 72, 1)',
+      standbyFill: 'rgba(225, 29, 72, 0.18)',
+    }
+  ];
+  const numericBoardId = Number(boardId) || 0;
+  return palette[numericBoardId % palette.length];
+}
+
+function refreshChartsTabViews() {
+  if (!window.eventSummaryChart) {
+    initializeEventSummaryChart();
+  }
+  ['myChart', 'myChart2', 'myChart3', 'eventSummaryChart'].forEach(function (chartName) {
+    const chartInstance = window[chartName];
+    if (!chartInstance) {
+      return;
+    }
+    if (typeof chartInstance.resize === 'function') {
+      chartInstance.resize();
+    }
+    if (typeof chartInstance.update === 'function') {
+      chartInstance.update();
+    }
+  });
 }
 
 function updateEventTimelineVisibility() {

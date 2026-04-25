@@ -34,7 +34,16 @@
   $hasBoards = $pageData['hasBoards'];
   $eventChartSensors = array();
   $eventTimelineBoards = array();
+  $eventTimelineSummaryLabels = array();
   $eventTimelineSummary = array();
+  $eventTimelineSummaryBuckets = array();
+  $eventWindowStart = new DateTimeImmutable('today -6 days');
+  $eventWindowEnd = new DateTimeImmutable('now');
+  for ($eventOffset = 0; $eventOffset < 7; $eventOffset++) {
+    $eventDay = $eventWindowStart->modify('+' . $eventOffset . ' days');
+    $eventTimelineSummaryLabels[] = $eventDay->format('d.m.');
+    $eventTimelineSummaryBuckets[] = $eventDay->format('Y-m-d');
+  }
   foreach ($boardObjsArray as $eventBoardObj) {
     $eventBoardSensors = myFunctions::getAllSensorsOfBoard($eventBoardObj->getId());
     if (!is_array($eventBoardSensors)) {
@@ -86,15 +95,12 @@
     if (empty($eventTimelineBoard['events'])) {
       continue;
     }
-    $wakeupCount = 0;
-    $standbyCount = 0;
-    foreach ($eventTimelineBoard['events'] as $eventTimelineCountEntry) {
-      if (($eventTimelineCountEntry['stateClass'] ?? '') === 'is-wakeup') {
-        $wakeupCount++;
-      } elseif (($eventTimelineCountEntry['stateClass'] ?? '') === 'is-standby') {
-        $standbyCount++;
-      }
-    }
+    $eventDurationSummary = mds_build_event_duration_summary(
+      $eventTimelineBoard['events'],
+      $eventTimelineSummaryBuckets,
+      $eventWindowStart,
+      $eventWindowEnd
+    );
     usort($eventTimelineBoard['events'], function ($leftEvent, $rightEvent) {
       $leftTime = strtotime((string)($leftEvent['readingTime'] ?? '')) ?: 0;
       $rightTime = strtotime((string)($rightEvent['readingTime'] ?? '')) ?: 0;
@@ -104,9 +110,10 @@
     $eventTimelineSummary[] = array(
       'boardId' => (int)$eventTimelineBoard['boardId'],
       'boardName' => $eventTimelineBoard['boardName'],
-      'wakeupCount' => $wakeupCount,
-      'standbyCount' => $standbyCount,
-      'totalCount' => $wakeupCount + $standbyCount,
+      'onlineHoursTotal' => $eventDurationSummary['onlineHoursTotal'],
+      'standbyHoursTotal' => $eventDurationSummary['standbyHoursTotal'],
+      'onlineDailyHours' => $eventDurationSummary['onlineDailyHours'],
+      'standbyDailyHours' => $eventDurationSummary['standbyDailyHours'],
     );
   }
   unset($eventTimelineBoard);
@@ -145,6 +152,104 @@
       return array('label' => 'Wakeup', 'stateClass' => 'is-wakeup');
     }
     return array('label' => $rawValue, 'stateClass' => 'is-other');
+  }
+
+  function mds_parse_event_datetime($eventEntry)
+  {
+    if (!empty($eventEntry['timestamp'])) {
+      $timestampDate = DateTimeImmutable::createFromFormat('d.m.Y H:i:s', (string)$eventEntry['timestamp']);
+      if ($timestampDate instanceof DateTimeImmutable) {
+        return $timestampDate;
+      }
+      $timestampDate = DateTime::createFromFormat('d.m.Y H:i:s', (string)$eventEntry['timestamp']);
+      if ($timestampDate instanceof DateTime) {
+        return DateTimeImmutable::createFromMutable($timestampDate);
+      }
+    }
+
+    if (!empty($eventEntry['readingTime'])) {
+      try {
+        return new DateTimeImmutable((string)$eventEntry['readingTime']);
+      } catch (Exception $exception) {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  function mds_build_event_duration_summary($eventEntries, $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+  {
+    $onlineDailyHours = array_fill(0, count($bucketDates), 0.0);
+    $standbyDailyHours = array_fill(0, count($bucketDates), 0.0);
+    $normalizedEvents = array();
+
+    foreach ($eventEntries as $eventEntry) {
+      $eventDateTime = mds_parse_event_datetime($eventEntry);
+      if (!$eventDateTime instanceof DateTimeImmutable) {
+        continue;
+      }
+      $stateClass = $eventEntry['stateClass'] ?? '';
+      if (!in_array($stateClass, array('is-wakeup', 'is-standby'), true)) {
+        continue;
+      }
+      $normalizedEvents[] = array(
+        'stateClass' => $stateClass,
+        'dateTime' => $eventDateTime,
+      );
+    }
+
+    usort($normalizedEvents, function ($leftEvent, $rightEvent) {
+      return $leftEvent['dateTime']->getTimestamp() <=> $rightEvent['dateTime']->getTimestamp();
+    });
+
+    $eventCount = count($normalizedEvents);
+    for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
+      $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
+      $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
+      $segmentEnd = ($eventIndex + 1 < $eventCount) ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
+
+      if ($segmentEnd <= $windowStart || $segmentStart >= $windowEnd || $segmentEnd <= $segmentStart) {
+        continue;
+      }
+
+      if ($segmentStart < $windowStart) {
+        $segmentStart = $windowStart;
+      }
+      if ($segmentEnd > $windowEnd) {
+        $segmentEnd = $windowEnd;
+      }
+
+      foreach ($bucketDates as $bucketIndex => $bucketDate) {
+        $bucketStart = new DateTimeImmutable($bucketDate . ' 00:00:00');
+        $bucketEnd = $bucketStart->modify('+1 day');
+        if ($bucketEnd > $windowEnd) {
+          $bucketEnd = $windowEnd;
+        }
+
+        $overlapStart = ($segmentStart > $bucketStart) ? $segmentStart : $bucketStart;
+        $overlapEnd = ($segmentEnd < $bucketEnd) ? $segmentEnd : $bucketEnd;
+        $overlapSeconds = $overlapEnd->getTimestamp() - $overlapStart->getTimestamp();
+
+        if ($overlapSeconds <= 0) {
+          continue;
+        }
+
+        $overlapHours = round($overlapSeconds / 3600, 2);
+        if ($segmentState === 'is-wakeup') {
+          $onlineDailyHours[$bucketIndex] += $overlapHours;
+        } elseif ($segmentState === 'is-standby') {
+          $standbyDailyHours[$bucketIndex] += $overlapHours;
+        }
+      }
+    }
+
+    return array(
+      'onlineHoursTotal' => round(array_sum($onlineDailyHours), 2),
+      'standbyHoursTotal' => round(array_sum($standbyDailyHours), 2),
+      'onlineDailyHours' => array_map(function ($hours) { return round($hours, 2); }, $onlineDailyHours),
+      'standbyDailyHours' => array_map(function ($hours) { return round($hours, 2); }, $standbyDailyHours),
+    );
   }
 
   include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
@@ -577,7 +682,12 @@
   }
   .event-summary-chart-shell {
     position: relative;
-    min-height: 280px;
+    min-height: 320px;
+    height: 320px;
+  }
+  .event-summary-chart-shell canvas {
+    width: 100% !important;
+    height: 100% !important;
   }
   #chart-container-debug {
     max-height: 520px;
@@ -878,6 +988,7 @@
         <fieldset class="pt-3">
           <script>
             window.eventChartSensors = <?php echo json_encode($eventChartSensors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+            window.eventTimelineSummaryLabels = <?php echo json_encode($eventTimelineSummaryLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
             window.eventTimelineSummary = <?php echo json_encode($eventTimelineSummary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
           </script>
           <div id="chart-container">
@@ -927,7 +1038,7 @@
               <div class="tab-section-title">
                 <div>
                   <h3>ESP Ereignisse</h3>
-                  <p>Zeigt grafisch, wie oft der ESP pro Device aufgeweckt wurde oder in den Standby ging.</p>
+                  <p>Zeigt den zeitlichen Verlauf der letzten Woche, wie lange ein Device online oder im Standby war.</p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                   <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="events">Alle anzeigen</button>
@@ -938,12 +1049,12 @@
               <div class="chart-panel-surface mb-4">
                 <div class="tab-section-title mb-3">
                   <div>
-                    <h4 class="mb-1">Wakeup / Standby je Device</h4>
-                    <p>Vergleich der gezählten Zustandswechsel über die zuletzt erkannten ESP-Ereignisse.</p>
+                    <h4 class="mb-1">Verlauf der letzten 7 Tage</h4>
+                    <p>Pro Tag siehst du die Summe in Stunden, die ein Device online oder im Standby war.</p>
                   </div>
                 </div>
                 <div class="event-summary-chart-shell">
-                  <canvas id="eventSummaryCanvas"></canvas>
+                  <canvas id="eventSummaryCanvas" height="320"></canvas>
                 </div>
               </div>
               <div class="tab-section-title mb-3">
@@ -1220,6 +1331,12 @@
                 }, 150);
               }
             }, 50);
+          }
+
+          if (targetSelector === '#charts' && typeof refreshChartsTabViews === 'function') {
+            window.setTimeout(function() {
+              refreshChartsTabViews();
+            }, 80);
           }
 
           if (window.history && window.history.replaceState) {
