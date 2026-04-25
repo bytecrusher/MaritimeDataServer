@@ -30,6 +30,7 @@ $(document).ready(async function(){
   var varSensorId = null;
   InitialSetupChart();
   initializeChartBoardFilters();
+  initializeEventSummaryChart();
   initializeEventTimeline();
   // TODO: Check, how to add values with timestamp (currently it begins from the left to add values, indepented from the timestampt).
 
@@ -235,6 +236,7 @@ function setOnlyChartBoardVisible(chartKey, activeBoardId) {
 
 function updateChartBoardDatasets(chartKey, boardId) {
   if (chartKey === 'events') {
+    updateEventSummaryChart();
     updateEventTimelineVisibility();
     return;
   }
@@ -296,6 +298,134 @@ function initializeEventTimeline() {
     eventTimelineContainer.innerHTML = '<div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>';
     return;
   }
+}
+
+function initializeEventSummaryChart() {
+  const eventSummaryCanvas = document.getElementById('eventSummaryCanvas');
+  if (!eventSummaryCanvas) {
+    return;
+  }
+
+  const eventSummaryData = Array.isArray(window.eventTimelineSummary) ? window.eventTimelineSummary : [];
+  if (eventSummaryData.length === 0) {
+    const container = eventSummaryCanvas.parentElement;
+    if (container) {
+      container.innerHTML = '<div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>';
+    }
+    return;
+  }
+
+  window.eventSummaryChart = new Chart(eventSummaryCanvas, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Wakeup',
+          data: [],
+          backgroundColor: 'rgba(22, 163, 74, 0.82)',
+          borderColor: 'rgba(21, 128, 61, 1)',
+          borderWidth: 1,
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+        {
+          label: 'Standby',
+          data: [],
+          backgroundColor: 'rgba(245, 158, 11, 0.82)',
+          borderColor: 'rgba(217, 119, 6, 1)',
+          borderWidth: 1,
+          borderRadius: 6,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            boxWidth: 10,
+            color: '#334155',
+            font: {
+              weight: '600',
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            footer: function (tooltipItems) {
+              const total = tooltipItems.reduce(function (sum, item) {
+                return sum + (Number(item.raw) || 0);
+              }, 0);
+              return 'Gesamt: ' + total;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: '#475569',
+            font: {
+              weight: '600',
+            }
+          }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+            color: '#64748b',
+          },
+          grid: {
+            color: 'rgba(148, 163, 184, 0.18)',
+          },
+          title: {
+            display: true,
+            text: 'Anzahl Ereignisse',
+            color: '#475569',
+          }
+        }
+      }
+    }
+  });
+
+  updateEventSummaryChart();
+}
+
+function updateEventSummaryChart() {
+  if (!window.eventSummaryChart) {
+    return;
+  }
+
+  const eventSummaryData = Array.isArray(window.eventTimelineSummary) ? window.eventTimelineSummary : [];
+  const visibleSummaries = eventSummaryData.filter(function (summaryEntry) {
+    return chartBoardVisibility.events.get(String(summaryEntry.boardId)) !== false;
+  });
+
+  window.eventSummaryChart.data.labels = visibleSummaries.map(function (summaryEntry) {
+    return summaryEntry.boardName;
+  });
+  window.eventSummaryChart.data.datasets[0].data = visibleSummaries.map(function (summaryEntry) {
+    return Number(summaryEntry.wakeupCount || 0);
+  });
+  window.eventSummaryChart.data.datasets[1].data = visibleSummaries.map(function (summaryEntry) {
+    return Number(summaryEntry.standbyCount || 0);
+  });
+  window.eventSummaryChart.update();
 }
 
 function updateEventTimelineVisibility() {

@@ -34,6 +34,7 @@
   $hasBoards = $pageData['hasBoards'];
   $eventChartSensors = array();
   $eventTimelineBoards = array();
+  $eventTimelineSummary = array();
   foreach ($boardObjsArray as $eventBoardObj) {
     $eventBoardSensors = myFunctions::getAllSensorsOfBoard($eventBoardObj->getId());
     if (!is_array($eventBoardSensors)) {
@@ -85,12 +86,28 @@
     if (empty($eventTimelineBoard['events'])) {
       continue;
     }
+    $wakeupCount = 0;
+    $standbyCount = 0;
+    foreach ($eventTimelineBoard['events'] as $eventTimelineCountEntry) {
+      if (($eventTimelineCountEntry['stateClass'] ?? '') === 'is-wakeup') {
+        $wakeupCount++;
+      } elseif (($eventTimelineCountEntry['stateClass'] ?? '') === 'is-standby') {
+        $standbyCount++;
+      }
+    }
     usort($eventTimelineBoard['events'], function ($leftEvent, $rightEvent) {
       $leftTime = strtotime((string)($leftEvent['readingTime'] ?? '')) ?: 0;
       $rightTime = strtotime((string)($rightEvent['readingTime'] ?? '')) ?: 0;
       return $rightTime <=> $leftTime;
     });
     $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 40);
+    $eventTimelineSummary[] = array(
+      'boardId' => (int)$eventTimelineBoard['boardId'],
+      'boardName' => $eventTimelineBoard['boardName'],
+      'wakeupCount' => $wakeupCount,
+      'standbyCount' => $standbyCount,
+      'totalCount' => $wakeupCount + $standbyCount,
+    );
   }
   unset($eventTimelineBoard);
 
@@ -551,6 +568,17 @@
     background: rgba(241, 245, 249, 0.8);
     color: #64748b;
   }
+  .chart-panel-surface {
+    padding: 1rem 1rem 0.75rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  }
+  .event-summary-chart-shell {
+    position: relative;
+    min-height: 280px;
+  }
   #chart-container-debug {
     max-height: 520px;
     overflow: auto;
@@ -850,6 +878,7 @@
         <fieldset class="pt-3">
           <script>
             window.eventChartSensors = <?php echo json_encode($eventChartSensors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+            window.eventTimelineSummary = <?php echo json_encode($eventTimelineSummary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
           </script>
           <div id="chart-container">
             <div class="tab-section-card chart-panel">
@@ -898,7 +927,7 @@
               <div class="tab-section-title">
                 <div>
                   <h3>ESP Ereignisse</h3>
-                  <p>Zeigt Wakeup- und Standby-Wechsel als Verlauf pro Device.</p>
+                  <p>Zeigt grafisch, wie oft der ESP pro Device aufgeweckt wurde oder in den Standby ging.</p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                   <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="events">Alle anzeigen</button>
@@ -906,6 +935,23 @@
                 </div>
               </div>
               <div id="chart-device-filter-events" class="d-flex flex-wrap gap-3 mb-3"></div>
+              <div class="chart-panel-surface mb-4">
+                <div class="tab-section-title mb-3">
+                  <div>
+                    <h4 class="mb-1">Wakeup / Standby je Device</h4>
+                    <p>Vergleich der gezählten Zustandswechsel über die zuletzt erkannten ESP-Ereignisse.</p>
+                  </div>
+                </div>
+                <div class="event-summary-chart-shell">
+                  <canvas id="eventSummaryCanvas"></canvas>
+                </div>
+              </div>
+              <div class="tab-section-title mb-3">
+                <div>
+                  <h4 class="mb-1">Detailverlauf</h4>
+                  <p>Die letzten einzelnen Wakeup- und Standby-Ereignisse pro Device.</p>
+                </div>
+              </div>
               <div id="event-timeline-container" class="d-flex flex-column gap-3" data-server-rendered="1">
                 <?php if (empty($eventTimelineBoards)) { ?>
                   <div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>
