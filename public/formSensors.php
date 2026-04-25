@@ -329,9 +329,12 @@
   </div>
   <div class="modal-footer">
   <?php
+    $backBoardId = $_GET['boardId'] ?? ($SensorConfig['boardId'] ?? null);
     if (!isset($_GET['modal'])) {
     ?>
-      <a class='col col-sm-2 m-1 btn btn-primary' href='formBoards.php?id=<?php echo $_GET['boardId'] ?>' role='button'>Back</a>
+      <?php if ($backBoardId !== null) { ?>
+        <a class='col col-sm-2 m-1 btn btn-primary' href='formBoards.php?id=<?php echo (int)$backBoardId ?>' role='button'>Back</a>
+      <?php } ?>
     <?php
     } else {
     ?>

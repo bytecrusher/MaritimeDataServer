@@ -339,6 +339,12 @@ class myFunctions {
     $pdo = dbConfig::getInstance();
     $valuesDefined = false;
     $mySensorTypId = $pdo->query('SELECT id, name FROM sensorTypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
+    if (!$mySensorTypId) {
+      throw new Exception('Unknown sensor type: ' . $typIdName);
+    }
+    $sensorTypeMeta = $pdo->prepare("SELECT * FROM sensorTypes WHERE id = ? LIMIT 1");
+    $sensorTypeMeta->execute(array($mySensorTypId->id));
+    $sensorTypeMeta = $sensorTypeMeta->fetch(PDO::FETCH_ASSOC);
 
     $defaultValues['Value1onDashboard'] = $defaultValues['Value2onDashboard'] = $defaultValues['Value3onDashboard'] = $defaultValues['Value4onDashboard'] = 1;
 
@@ -800,6 +806,30 @@ class myFunctions {
 
       $defaultValues['ttnPayloadId'] = null;
       $defaultValues['NrOfUsedSensors'] = 2;
+      $valuesDefined = true;
+    }
+
+    if ($valuesDefined == false) {
+      $genericValueCount = max(1, min(4, (int)($sensorTypeMeta['MaxNrOfValues'] ?? 1)));
+      for ($channelNr = 1; $channelNr <= $genericValueCount; $channelNr++) {
+        $defaultValuesPerChannel['name'] = "Value" . $channelNr;
+        $defaultValuesPerChannel['description'] = $sensorName . " value " . $channelNr;
+        $defaultValuesPerChannel['channelNr'] = $channelNr;
+        $defaultValuesPerChannel['locationOfMeasurement'] = "";
+        $defaultValuesPerChannel['GaugeMinValue'] = 0;
+        $defaultValuesPerChannel['GaugeMaxValue'] = 100;
+        $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 0;
+        $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
+        $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 0;
+        $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+        $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+        $defaultValuesPerChannel['onDashboard'] = 0;
+        $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+        array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
+      }
+
+      $defaultValues['ttnPayloadId'] = null;
+      $defaultValues['NrOfUsedSensors'] = $genericValueCount;
       $valuesDefined = true;
     }
 

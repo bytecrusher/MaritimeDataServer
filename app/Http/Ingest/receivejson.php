@@ -698,15 +698,22 @@ function ensureBoardSensorConfigExists(array $sensor, $boardId, array &$boardSen
 
 function detectCanonicalSensorTypeName(array $sensor, array $boardSensors, PDO $pdo2)
 {
+    $valueCount = max(1, countProvidedSensorValues($sensor));
     $typeCandidates = array(
-        $sensor['sensorType'] ?? null,
-        $sensor['type'] ?? null,
-        $sensor['sensorName'] ?? null,
-        $sensor['name'] ?? null
+        array('value' => $sensor['sensorType'] ?? null, 'allowAutoCreate' => true),
+        array('value' => $sensor['type'] ?? null, 'allowAutoCreate' => true),
+        array('value' => $sensor['sensorName'] ?? null, 'allowAutoCreate' => false),
+        array('value' => $sensor['name'] ?? null, 'allowAutoCreate' => false)
     );
 
-    foreach ($typeCandidates as $candidate) {
-        $canonicalName = resolveCanonicalSensorTypeName($candidate, $boardSensors, $pdo2);
+    foreach ($typeCandidates as $candidateConfig) {
+        $canonicalName = resolveCanonicalSensorTypeName(
+            $candidateConfig['value'],
+            $boardSensors,
+            $pdo2,
+            $candidateConfig['allowAutoCreate'],
+            $valueCount
+        );
         if ($canonicalName !== null) {
             return $canonicalName;
         }
@@ -715,7 +722,7 @@ function detectCanonicalSensorTypeName(array $sensor, array $boardSensors, PDO $
     return null;
 }
 
-function resolveCanonicalSensorTypeName($candidate, array $boardSensors, PDO $pdo2)
+function resolveCanonicalSensorTypeName($candidate, array $boardSensors, PDO $pdo2, $allowAutoCreate = false, $valueCount = 4)
 {
     if (!is_string($candidate)) {
         return null;
@@ -739,7 +746,15 @@ function resolveCanonicalSensorTypeName($candidate, array $boardSensors, PDO $pd
     $statement->execute(array($trimmedCandidate));
     $sensorType = $statement->fetch(PDO::FETCH_ASSOC);
 
-    return $sensorType['name'] ?? null;
+    if (isset($sensorType['name'])) {
+        return $sensorType['name'];
+    }
+
+    if ($allowAutoCreate) {
+        return createSensorTypeFromPayloadCandidate($trimmedCandidate, $valueCount, $pdo2);
+    }
+
+    return null;
 }
 
 function determineSensorConfigName(array $sensor, $canonicalTypeName)
@@ -788,4 +803,43 @@ function normalizeSensorLookupValue($value)
     }
 
     return mb_strtolower($normalizedValue);
+}
+
+function createSensorTypeFromPayloadCandidate($candidate, $valueCount, PDO $pdo2)
+{
+    $trimmedCandidate = trim((string)$candidate);
+    if ($trimmedCandidate === '') {
+        return null;
+    }
+
+    $maxNrOfValues = max(1, min(4, (int)$valueCount));
+
+    try {
+        $statement = $pdo2->prepare("INSERT INTO sensorTypes (name, siUnitVal1, siUnitVal2, siUnitVal3, siUnitVal4, oneWireFamilyCode, description, MaxNrOfValues, hasAddress) VALUES (?, '', '', '', '', '', ?, ?, 0)");
+        $statement->execute(array(
+            $trimmedCandidate,
+            'Auto-created from receivejson ingest',
+            $maxNrOfValues
+        ));
+        writeToLogFunction::info(
+            'New sensor type auto-created from receivejson payload.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'sensorTypeName' => $trimmedCandidate,
+                'maxNrOfValues' => $maxNrOfValues
+            )
+        );
+        return $trimmedCandidate;
+    } catch (PDOException $ex) {
+        writeToLogFunction::exception(
+            $ex,
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'sensorTypeName' => $trimmedCandidate,
+                'maxNrOfValues' => $maxNrOfValues
+            )
+        );
+    }
+
+    return null;
 }
