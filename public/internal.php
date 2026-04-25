@@ -33,6 +33,7 @@
   $showInstallAlert = $pageData['showInstallAlert'];
   $hasBoards = $pageData['hasBoards'];
   $eventChartSensors = array();
+  $eventTimelineBoards = array();
   foreach ($boardObjsArray as $eventBoardObj) {
     $eventBoardSensors = myFunctions::getAllSensorsOfBoard($eventBoardObj->getId());
     if (!is_array($eventBoardSensors)) {
@@ -49,7 +50,84 @@
         'sensorName' => $eventSensor['name'] ?? 'WakeupStan',
         'sensorTypeName' => $eventSensor['sensorTypesName'] ?? 'WakeupStan',
       );
+
+      $eventRows = myFunctions::getLatestSensorData((int)$eventSensor['id'], 200);
+      if (!is_array($eventRows)) {
+        continue;
+      }
+      foreach ($eventRows as $eventRow) {
+        $eventTimelineBoards[(int)$eventBoardObj->getId()]['boardId'] = (int)$eventBoardObj->getId();
+        $eventTimelineBoards[(int)$eventBoardObj->getId()]['boardName'] = $eventBoardObj->getName();
+        $eventTimelineBoards[(int)$eventBoardObj->getId()]['events'] = $eventTimelineBoards[(int)$eventBoardObj->getId()]['events'] ?? array();
+
+        foreach (array(
+          array('label' => $eventRow['value1'] ?? null, 'time' => $eventRow['value2'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? '')),
+          array('label' => $eventRow['value3'] ?? null, 'time' => $eventRow['value4'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? ''))
+        ) as $eventPair) {
+          if (!mds_is_event_label($eventPair['label'])) {
+            continue;
+          }
+          $normalizedEvent = mds_normalize_event_label($eventPair['label']);
+          $eventTimelineBoards[(int)$eventBoardObj->getId()]['events'][] = array(
+            'label' => $normalizedEvent['label'],
+            'stateClass' => $normalizedEvent['stateClass'],
+            'rawLabel' => trim((string)$eventPair['label']),
+            'timestamp' => mds_is_event_timestamp($eventPair['time']) ? trim((string)$eventPair['time']) : trim((string)$eventPair['fallback']),
+            'fallbackTimestamp' => trim((string)$eventPair['fallback']),
+            'sensorName' => $eventSensor['name'] ?? 'WakeupStan',
+            'readingTime' => $eventRow['reading_time'] ?? null,
+          );
+        }
+      }
     }
+  }
+  foreach ($eventTimelineBoards as &$eventTimelineBoard) {
+    if (empty($eventTimelineBoard['events'])) {
+      continue;
+    }
+    usort($eventTimelineBoard['events'], function ($leftEvent, $rightEvent) {
+      $leftTime = strtotime((string)($leftEvent['readingTime'] ?? '')) ?: 0;
+      $rightTime = strtotime((string)($rightEvent['readingTime'] ?? '')) ?: 0;
+      return $rightTime <=> $leftTime;
+    });
+    $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 40);
+  }
+  unset($eventTimelineBoard);
+
+  function mds_is_event_label($value)
+  {
+    if ($value === null) {
+      return false;
+    }
+
+    $trimmedValue = trim((string)$value);
+    if ($trimmedValue === '') {
+      return false;
+    }
+
+    return !is_numeric($trimmedValue);
+  }
+
+  function mds_is_event_timestamp($value)
+  {
+    if ($value === null) {
+      return false;
+    }
+
+    return preg_match('/^\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}:\d{2}$/', trim((string)$value)) === 1;
+  }
+
+  function mds_normalize_event_label($value)
+  {
+    $rawValue = trim((string)$value);
+    $normalizedValue = mb_strtolower($rawValue);
+    if (str_contains($normalizedValue, 'sleep') || str_contains($normalizedValue, 'standby')) {
+      return array('label' => 'Standby', 'stateClass' => 'is-standby');
+    }
+    if (str_contains($normalizedValue, 'wake')) {
+      return array('label' => 'Wakeup', 'stateClass' => 'is-wakeup');
+    }
+    return array('label' => $rawValue, 'stateClass' => 'is-other');
   }
 
   include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
@@ -592,10 +670,10 @@
 
   <div class="main-container">
   <div class="internal-hero">
-      <h1>Welcome <?php echo htmlentities($currentUser->getFirstName()); ?>
+      <h1>Welcome <?php echo htmlspecialchars($currentUser->getFirstName(), ENT_QUOTES, 'UTF-8'); ?>
       <?php
       if (configuration::$demoMode) {
-        echo htmlentities("  (Demo mode)");
+        echo htmlspecialchars("  (Demo mode)", ENT_QUOTES, 'UTF-8');
       }
       ?></h1>
       <p>Live-Uebersicht fuer Devices, Sensoren und eingehende Telemetrie.</p>
@@ -669,8 +747,8 @@
                   <section class="dashboard-board-card <?php if(!$deviceOnline) { echo 'is-offline'; } ?>" data-dashboard-board-id="<?php echo $singleRowmyboard->getId(); ?>" data-dashboard-online="<?php echo $deviceOnline ? '1' : '0'; ?>">
                     <div class="dashboard-board-header">
                       <div class="dashboard-board-title">
-                        <h3><?php echo htmlentities($singleRowmyboard->getName()); ?></h3>
-                        <div class="dashboard-board-subtitle"><?php echo htmlentities($singleRowmyboard->getMacAddress()); ?></div>
+                        <h3><?php echo htmlspecialchars($singleRowmyboard->getName(), ENT_QUOTES, 'UTF-8'); ?></h3>
+                        <div class="dashboard-board-subtitle"><?php echo htmlspecialchars($singleRowmyboard->getMacAddress(), ENT_QUOTES, 'UTF-8'); ?></div>
                         <div class="dashboard-board-summary">
                           <span>Update alle <?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</span>
                           <span>Offline-Timer: <?php echo (int)$singleRowmyboard->getOfflineDataTimer(); ?> min</span>
@@ -727,11 +805,11 @@
                           >
                             <div class="dashboard-gauge-top">
                               <div class="dashboard-gauge-headline">
-                                <strong><?php echo htmlentities($SensorChannelConfigSingle['name']); ?></strong>
-                                <span><?php echo htmlentities($singleRowMySensors['name']); ?></span>
+                                <strong><?php echo htmlspecialchars($SensorChannelConfigSingle['name'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <span><?php echo htmlspecialchars($singleRowMySensors['name'], ENT_QUOTES, 'UTF-8'); ?></span>
                               </div>
                               <div class="dashboard-gauge-value">
-                                <span class="dashboard-gauge-value-number"><?php echo htmlentities(number_format($numericCurrentChannelValue, 2, '.', '')); ?></span>
+                                <span class="dashboard-gauge-value-number"><?php echo htmlspecialchars(number_format($numericCurrentChannelValue, 2, '.', ''), ENT_QUOTES, 'UTF-8'); ?></span>
                                 <span class="dashboard-gauge-value-unit"><?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
                               </div>
                             </div>
@@ -740,7 +818,7 @@
                             </div>
                             <div class="dashboard-gauge-visual"></div>
                             <div class="dashboard-gauge-meta">
-                              <span><?php echo htmlentities($singleRowmyboard->getName()); ?></span>
+                              <span><?php echo htmlspecialchars($singleRowmyboard->getName(), ENT_QUOTES, 'UTF-8'); ?></span>
                               <span><?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
                           </div>
@@ -828,7 +906,50 @@
                 </div>
               </div>
               <div id="chart-device-filter-events" class="d-flex flex-wrap gap-3 mb-3"></div>
-              <div id="event-timeline-container" class="d-flex flex-column gap-3"></div>
+              <div id="event-timeline-container" class="d-flex flex-column gap-3" data-server-rendered="1">
+                <?php if (empty($eventTimelineBoards)) { ?>
+                  <div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>
+                <?php } else { ?>
+                  <?php foreach ($eventTimelineBoards as $eventTimelineBoard) { ?>
+                    <section class="event-timeline-board" data-event-board-id="<?php echo (int)$eventTimelineBoard['boardId']; ?>">
+                      <div class="event-timeline-head">
+                        <div>
+                          <strong><?php echo htmlspecialchars($eventTimelineBoard['boardName'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                          <span><?php echo count($eventTimelineBoard['events']); ?> Ereignisse im Verlauf</span>
+                        </div>
+                      </div>
+                      <ol class="event-timeline-list">
+                        <?php foreach ($eventTimelineBoard['events'] as $eventTimelineEntry) { ?>
+                          <li class="event-timeline-item">
+                            <span class="event-timeline-dot <?php echo htmlspecialchars($eventTimelineEntry['stateClass'], ENT_QUOTES, 'UTF-8'); ?>"></span>
+                            <div class="event-timeline-content">
+                              <div class="event-timeline-title">
+                                <strong><?php echo htmlspecialchars($eventTimelineEntry['label'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <time><?php echo htmlspecialchars($eventTimelineEntry['timestamp'], ENT_QUOTES, 'UTF-8'); ?></time>
+                              </div>
+                              <div class="event-timeline-meta">
+                                <?php
+                                  $detailParts = array();
+                                  if (!empty($eventTimelineEntry['sensorName'])) {
+                                    $detailParts[] = $eventTimelineEntry['sensorName'];
+                                  }
+                                  if (!empty($eventTimelineEntry['rawLabel']) && $eventTimelineEntry['rawLabel'] !== $eventTimelineEntry['label']) {
+                                    $detailParts[] = 'Rohwert: ' . $eventTimelineEntry['rawLabel'];
+                                  }
+                                  if (!empty($eventTimelineEntry['fallbackTimestamp']) && $eventTimelineEntry['fallbackTimestamp'] !== $eventTimelineEntry['timestamp']) {
+                                    $detailParts[] = 'Datensatz: ' . $eventTimelineEntry['fallbackTimestamp'];
+                                  }
+                                  echo htmlspecialchars(implode(' · ', $detailParts), ENT_QUOTES, 'UTF-8');
+                                ?>
+                              </div>
+                            </div>
+                          </li>
+                        <?php } ?>
+                      </ol>
+                    </section>
+                  <?php } ?>
+                <?php } ?>
+              </div>
             </div>
           </div>
         </fieldset>

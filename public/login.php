@@ -46,7 +46,7 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
 
 $email_value = "";
 if(isset($_POST['email'])) {
-  $email_value = htmlentities($_POST['email']);
+  $email_value = htmlspecialchars($_POST['email'], ENT_QUOTES, 'UTF-8');
 }
 include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>

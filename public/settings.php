@@ -145,7 +145,7 @@ th.rotated-text > div > span {
             <div class="row">
               <label for="inputFirstName" class="col-sm-2 control-label">First name</label>
               <div class="col-sm-4">
-                <input class="form-control" id="inputFirstName" name="firstName" type="text" value="<?php echo htmlentities($userObj->getFirstName()); ?>" required>
+                <input class="form-control" id="inputFirstName" name="firstName" type="text" value="<?php echo htmlspecialchars($userObj->getFirstName(), ENT_QUOTES, 'UTF-8'); ?>" required>
               </div>
             </div>
           </div>
@@ -154,7 +154,7 @@ th.rotated-text > div > span {
             <div class="row">
               <label for="inputLastname" class="col-sm-2 control-label">Last name</label>
               <div class="col-sm-4">
-                <input class="form-control" id="inputLastname" name="lastName" type="text" value="<?php echo htmlentities($userObj->getLastName()); ?>" required>
+                <input class="form-control" id="inputLastname" name="lastName" type="text" value="<?php echo htmlspecialchars($userObj->getLastName(), ENT_QUOTES, 'UTF-8'); ?>" required>
               </div>
             </div>
           </div>
@@ -162,7 +162,7 @@ th.rotated-text > div > span {
           <div class="form-group">
             <div class="row">
               <label for="inputTimezone" class="col-sm-2 control-label">Timezone</label>
-              <?php $userTimezone = htmlentities($userObj->getTimezone() ?? ""); ?>
+              <?php $userTimezone = htmlspecialchars($userObj->getTimezone() ?? "", ENT_QUOTES, 'UTF-8'); ?>
               <div class="col-sm-4">
               <select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
                 <option value="0">Please, select your timezone</option>
@@ -233,7 +233,7 @@ th.rotated-text > div > span {
             <div class="row">
               <label for="inputEmail" class="col-sm-2 control-label">E-Mail</label>
               <div class="col-sm-4">
-                <input class="form-control" id="inputEmail" name="email" type="email" value="<?php echo htmlentities($userObj->getEmail()); ?>" required>
+                <input class="form-control" id="inputEmail" name="email" type="email" value="<?php echo htmlspecialchars($userObj->getEmail(), ENT_QUOTES, 'UTF-8'); ?>" required>
               </div>
             </div>
           </div>
@@ -410,7 +410,7 @@ th.rotated-text > div > span {
               <div class="row">
                 <label for="inputUpdateInterval" class="col-sm-2 control-label">Update interval (in Minutes) (tbd)</label>
                 <div class="col-sm-4">
-                  <input class="form-control" id="inputUpdateInterval" name="updateInterval" type="number" value="<?php echo htmlentities($userObj->getDashboardUpdateInterval()); ?>" required>
+                  <input class="form-control" id="inputUpdateInterval" name="updateInterval" type="number" value="<?php echo htmlspecialchars((string)$userObj->getDashboardUpdateInterval(), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
                 </div>
             </div>

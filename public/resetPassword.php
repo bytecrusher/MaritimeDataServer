@@ -141,7 +141,7 @@ $config  = new configuration();
 		?>
 		<form action="?send=1" method="post">
 			<label for="inputEmail">E-Mail</label>
-			<input class="form-control" placeholder="E-Mail" name="email" type="email" value="<?php echo isset($_POST['email']) ? htmlentities($_POST['email']) : ''; ?>" required>
+			<input class="form-control" placeholder="E-Mail" name="email" type="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email'], ENT_QUOTES, 'UTF-8') : ''; ?>" required>
 			<br>
 			<input class="btn btn-lg btn-primary btn-block" type="submit" value="new password">
 		</form>

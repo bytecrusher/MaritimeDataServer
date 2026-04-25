@@ -16,9 +16,6 @@ const chartBoardVisibility = {
   other: new Map(),
   events: new Map(),
 };
-const eventTimelineState = {
-  boardEvents: new Map(),
-};
 
 //function sleep(ms) {
 //  return new Promise(resolve => setTimeout(resolve, ms));
@@ -238,7 +235,7 @@ function setOnlyChartBoardVisible(chartKey, activeBoardId) {
 
 function updateChartBoardDatasets(chartKey, boardId) {
   if (chartKey === 'events') {
-    renderEventTimeline();
+    updateEventTimelineVisibility();
     return;
   }
   const chartInstance = getChartInstance(chartKey);
@@ -290,178 +287,50 @@ function initializeEventTimeline() {
     return;
   }
 
+  if (eventTimelineContainer.dataset.serverRendered === '1') {
+    updateEventTimelineVisibility();
+    return;
+  }
+
   if (!Array.isArray(window.eventChartSensors) || window.eventChartSensors.length === 0) {
     eventTimelineContainer.innerHTML = '<div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>';
     return;
   }
-
-  window.eventChartSensors.forEach(function (eventSensor) {
-    $.getJSON('api/getSensorDataSet.php', { sensorId: eventSensor.sensorId, maxValues: 200 }, function (data) {
-      const boardId = String(eventSensor.boardId);
-      const currentEvents = eventTimelineState.boardEvents.get(boardId) || [];
-      const extractedEvents = extractBoardEventsFromSensorRows(data, eventSensor);
-      eventTimelineState.boardEvents.set(boardId, currentEvents.concat(extractedEvents));
-      renderEventTimeline();
-    }).fail(function (jqxhr, settings, ex) {
-      console.log('failed (initializeEventTimeline), ' + eventSensor.sensorId + ', ' + ex);
-    });
-  });
 }
 
-function extractBoardEventsFromSensorRows(rows, eventSensor) {
-  if (!Array.isArray(rows)) {
-    return [];
-  }
-
-  const extractedEvents = [];
-  rows.forEach(function (row) {
-    appendEventFromPair(extractedEvents, row.value1, row.value2, row, eventSensor, 1);
-    appendEventFromPair(extractedEvents, row.value3, row.value4, row, eventSensor, 3);
-
-    if (extractedEvents.length === 0 && isMeaningfulEventLabel(row.value1)) {
-      extractedEvents.push(buildBoardEventEntry(row.value1, row.val_date + ' ' + row.val_time, row, eventSensor, 1));
-    }
-  });
-
-  return extractedEvents;
-}
-
-function appendEventFromPair(targetEvents, labelValue, timestampValue, row, eventSensor, sourceIndex) {
-  if (!isMeaningfulEventLabel(labelValue)) {
-    return;
-  }
-
-  const eventTimestamp = isLikelyEventTimestamp(timestampValue)
-    ? String(timestampValue).trim()
-    : ((row.val_date || '') + ' ' + (row.val_time || '')).trim();
-
-  targetEvents.push(buildBoardEventEntry(labelValue, eventTimestamp, row, eventSensor, sourceIndex));
-}
-
-function buildBoardEventEntry(labelValue, timestampValue, row, eventSensor, sourceIndex) {
-  const normalizedLabel = normalizeEventLabel(labelValue);
-  return {
-    boardId: String(eventSensor.boardId),
-    boardName: eventSensor.boardName,
-    sensorId: String(eventSensor.sensorId),
-    sensorName: eventSensor.sensorName,
-    label: normalizedLabel.label,
-    stateClass: normalizedLabel.stateClass,
-    rawLabel: labelValue,
-    timestamp: timestampValue,
-    rowTimestamp: ((row.val_date || '') + ' ' + (row.val_time || '')).trim(),
-    readingTime: row.reading_time || null,
-    sourceIndex: sourceIndex,
-  };
-}
-
-function normalizeEventLabel(labelValue) {
-  const rawLabel = String(labelValue || '').trim();
-  const normalized = rawLabel.toLowerCase();
-
-  if (normalized.includes('sleep') || normalized.includes('standby')) {
-    return { label: 'Standby', stateClass: 'is-standby' };
-  }
-  if (normalized.includes('wake')) {
-    return { label: 'Wakeup', stateClass: 'is-wakeup' };
-  }
-
-  return { label: rawLabel, stateClass: 'is-other' };
-}
-
-function isMeaningfulEventLabel(labelValue) {
-  if (labelValue === null || labelValue === undefined) {
-    return false;
-  }
-
-  const normalized = String(labelValue).trim();
-  if (normalized === '') {
-    return false;
-  }
-
-  return Number.isNaN(Number(normalized));
-}
-
-function isLikelyEventTimestamp(timestampValue) {
-  if (timestampValue === null || timestampValue === undefined) {
-    return false;
-  }
-
-  return /^\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}:\d{2}$/.test(String(timestampValue).trim());
-}
-
-function renderEventTimeline() {
+function updateEventTimelineVisibility() {
   const eventTimelineContainer = document.getElementById('event-timeline-container');
   if (!eventTimelineContainer) {
     return;
   }
 
-  const visibleBoards = [];
-  chartBoardVisibility.events.forEach(function (isVisible, boardId) {
-    if (isVisible !== false) {
-      visibleBoards.push(String(boardId));
-    }
-  });
-
-  const boardEntries = Array.from(eventTimelineState.boardEvents.entries())
-    .filter(function ([boardId]) {
-      return visibleBoards.includes(String(boardId));
-    })
-    .map(function ([boardId, boardEvents]) {
-      const sortedEvents = boardEvents.slice().sort(function (a, b) {
-        const left = Date.parse((a.readingTime || '').replace(' ', 'T')) || 0;
-        const right = Date.parse((b.readingTime || '').replace(' ', 'T')) || 0;
-        return right - left;
-      });
-      return {
-        boardId: boardId,
-        boardName: sortedEvents[0] ? sortedEvents[0].boardName : boardId,
-        events: sortedEvents.slice(0, 40),
-      };
-    });
-
-  if (boardEntries.length === 0) {
-    eventTimelineContainer.innerHTML = '<div class="event-timeline-empty">Für die aktuell ausgewählten Devices liegen keine ESP-Ereignisse vor.</div>';
+  const boardSections = Array.from(eventTimelineContainer.querySelectorAll('.event-timeline-board[data-event-board-id]'));
+  if (boardSections.length === 0) {
     return;
   }
 
-  eventTimelineContainer.innerHTML = boardEntries.map(function (boardEntry) {
-    const items = boardEntry.events.map(function (eventEntry) {
-      const detailBits = [];
-      if (eventEntry.sensorName) {
-        detailBits.push(eventEntry.sensorName);
-      }
-      if (eventEntry.rawLabel && eventEntry.rawLabel !== eventEntry.label) {
-        detailBits.push('Rohwert: ' + eventEntry.rawLabel);
-      }
-      if (eventEntry.rowTimestamp && eventEntry.timestamp !== eventEntry.rowTimestamp) {
-        detailBits.push('Datensatz: ' + eventEntry.rowTimestamp);
-      }
-      return '<li class="event-timeline-item">' +
-        '<span class="event-timeline-dot ' + eventEntry.stateClass + '"></span>' +
-        '<div class="event-timeline-content">' +
-          '<div class="event-timeline-title"><strong>' + escapeHtml(eventEntry.label) + '</strong><time>' + escapeHtml(eventEntry.timestamp || eventEntry.rowTimestamp || '-') + '</time></div>' +
-          '<div class="event-timeline-meta">' + escapeHtml(detailBits.join(' · ')) + '</div>' +
-        '</div>' +
-      '</li>';
-    }).join('');
+  let hasVisibleBoards = false;
+  boardSections.forEach(function (boardSection) {
+    const boardId = String(boardSection.dataset.eventBoardId || '');
+    const isVisible = chartBoardVisibility.events.get(boardId) !== false;
+    boardSection.hidden = !isVisible;
+    if (isVisible) {
+      hasVisibleBoards = true;
+    }
+  });
 
-    return '<section class="event-timeline-board">' +
-      '<div class="event-timeline-head">' +
-        '<div><strong>' + escapeHtml(boardEntry.boardName) + '</strong><br><span>' + boardEntry.events.length + ' Ereignisse im Verlauf</span></div>' +
-      '</div>' +
-      '<ol class="event-timeline-list">' + items + '</ol>' +
-    '</section>';
-  }).join('');
-}
-
-function escapeHtml(value) {
-  return String(value || '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
+  let emptyState = eventTimelineContainer.querySelector('.event-timeline-empty.is-filter-empty');
+  if (!hasVisibleBoards) {
+    if (!emptyState) {
+      emptyState = document.createElement('div');
+      emptyState.className = 'event-timeline-empty is-filter-empty';
+      emptyState.textContent = 'Für die aktuell ausgewählten Devices liegen keine ESP-Ereignisse vor.';
+      eventTimelineContainer.appendChild(emptyState);
+    }
+    emptyState.hidden = false;
+  } else if (emptyState) {
+    emptyState.hidden = true;
+  }
 }
 
 function addLabelsToChart(destinationChart, varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor) {
