@@ -32,6 +32,25 @@
   $varDemoMode = $pageData['demoMode'];
   $showInstallAlert = $pageData['showInstallAlert'];
   $hasBoards = $pageData['hasBoards'];
+  $eventChartSensors = array();
+  foreach ($boardObjsArray as $eventBoardObj) {
+    $eventBoardSensors = myFunctions::getAllSensorsOfBoard($eventBoardObj->getId());
+    if (!is_array($eventBoardSensors)) {
+      continue;
+    }
+    foreach ($eventBoardSensors as $eventSensor) {
+      if (($eventSensor['sensorTypesName'] ?? null) !== 'WakeupStan') {
+        continue;
+      }
+      $eventChartSensors[] = array(
+        'sensorId' => (int)$eventSensor['id'],
+        'boardId' => (int)$eventBoardObj->getId(),
+        'boardName' => $eventBoardObj->getName(),
+        'sensorName' => $eventSensor['name'] ?? 'WakeupStan',
+        'sensorTypeName' => $eventSensor['sensorTypesName'] ?? 'WakeupStan',
+      );
+    }
+  }
 
   include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
 ?>
@@ -371,6 +390,89 @@
     width: 100% !important;
     max-height: 380px;
   }
+  .event-timeline-board {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.95rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    padding: 1rem;
+  }
+  .event-timeline-board + .event-timeline-board {
+    margin-top: 0.85rem;
+  }
+  .event-timeline-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+  .event-timeline-head strong {
+    font-size: 1rem;
+  }
+  .event-timeline-head span {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+  .event-timeline-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .event-timeline-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+  .event-timeline-dot {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 999px;
+    margin-top: 0.18rem;
+    box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.12);
+  }
+  .event-timeline-dot.is-wakeup {
+    background: #16a34a;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+  }
+  .event-timeline-dot.is-standby {
+    background: #f59e0b;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+  }
+  .event-timeline-dot.is-other {
+    background: #64748b;
+  }
+  .event-timeline-content {
+    min-width: 0;
+  }
+  .event-timeline-title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.15rem;
+  }
+  .event-timeline-title strong {
+    font-size: 0.98rem;
+  }
+  .event-timeline-title time {
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+  .event-timeline-meta {
+    color: #475569;
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+  }
+  .event-timeline-empty {
+    padding: 0.95rem 1rem;
+    border-radius: 0.85rem;
+    background: rgba(241, 245, 249, 0.8);
+    color: #64748b;
+  }
   #chart-container-debug {
     max-height: 520px;
     overflow: auto;
@@ -668,6 +770,9 @@
       <!-- Note: for every board its own canvas. -->
       <div class="container tab-pane fade pl-0 pr-0" id="charts">
         <fieldset class="pt-3">
+          <script>
+            window.eventChartSensors = <?php echo json_encode($eventChartSensors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+          </script>
           <div id="chart-container">
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
@@ -710,6 +815,20 @@
               </div>
               <div id="chart-device-filter-other" class="d-flex flex-wrap gap-3 mb-2"></div>
               <canvas id="mycanvas3"></canvas>
+            </div>
+            <div class="tab-section-card chart-panel">
+              <div class="tab-section-title">
+                <div>
+                  <h3>ESP Ereignisse</h3>
+                  <p>Zeigt Wakeup- und Standby-Wechsel als Verlauf pro Device.</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="events">Alle anzeigen</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="events">Alle ausblenden</button>
+                </div>
+              </div>
+              <div id="chart-device-filter-events" class="d-flex flex-wrap gap-3 mb-3"></div>
+              <div id="event-timeline-container" class="d-flex flex-column gap-3"></div>
             </div>
           </div>
         </fieldset>
