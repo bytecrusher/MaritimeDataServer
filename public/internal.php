@@ -826,7 +826,7 @@
                 $mySensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
                 $boardGaugeCount = 0;
                 ?>
-                  <section class="dashboard-board-card <?php if(!$deviceOnline) { echo 'is-offline'; } ?>" data-dashboard-board-id="<?php echo $singleRowmyboard->getId(); ?>" data-dashboard-online="<?php echo $deviceOnline ? '1' : '0'; ?>">
+                  <section class="dashboard-board-card <?php if(!$deviceOnline) { echo 'is-offline'; } ?> <?php if ((int)$dashboardOnlineOnlyDefault === 1 && !$deviceOnline) { echo 'dashboard-board-hidden'; } ?>" data-dashboard-board-id="<?php echo $singleRowmyboard->getId(); ?>" data-dashboard-online="<?php echo $deviceOnline ? '1' : '0'; ?>">
                     <div class="dashboard-board-header">
                       <div class="dashboard-board-title">
                         <h3><?php echo htmlspecialchars($singleRowmyboard->getName(), ENT_QUOTES, 'UTF-8'); ?></h3>
