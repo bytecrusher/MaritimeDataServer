@@ -689,9 +689,64 @@
     width: 100% !important;
     height: 100% !important;
   }
+  .event-detail-disclosure {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    overflow: hidden;
+  }
+  .event-detail-disclosure > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .event-detail-disclosure > summary::-webkit-details-marker {
+    display: none;
+  }
+  .event-detail-disclosure > summary::after {
+    content: 'Einblenden';
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+  }
+  .event-detail-disclosure[open] > summary::after {
+    content: 'Ausblenden';
+  }
+  .event-detail-body {
+    padding: 0 1rem 1rem;
+  }
   #chart-container-debug {
     max-height: 520px;
     overflow: auto;
+  }
+  .debug-table-shell {
+    overflow: auto;
+    max-width: 100%;
+    max-height: 60vh;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.9rem;
+    background: #fff;
+  }
+  .debug-table-shell table {
+    min-width: 1100px;
+  }
+  .debug-table-shell thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+    box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.08);
+    white-space: nowrap;
+  }
+  .debug-table-shell tbody td {
+    white-space: nowrap;
+    vertical-align: top;
   }
   #mapContainer .map-shell {
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -740,33 +795,51 @@
     checkSession();
     var varIdent = getCookie("identifier");
     var varToken = getCookie("securityToken");
-    //var varBoardId = null;
-    var varSensorId = null;
     var varData = "sensor";
     var varNrOfValues = "1";
     let text;
     var obj;
+    const sensorIdsToRefresh = Array.from(new Set(
+      gaugesArrayHelper.map(function (gaugeKey) {
+        return String(gaugeKey).split(".")[0];
+      })
+    ));
 
-    for (let i in gaugesArrayHelper) {
-      varSensorId = gaugesArrayHelper[i];
-      varSensorId = varSensorId.slice(0, -2);
+    sensorIdsToRefresh.forEach(function (varSensorId) {
 
       $.ajax({
         method: "POST",
         url: "api/getdata.php",
+        dataType: "json",
         data: { identifier: varIdent, securityToken: varToken, data: varData, sensorId: varSensorId, NrOfValues: varNrOfValues }
       })
       .done(function( response ) {
         text = response;
-        try {
-          obj = JSON.parse(text);
-        } catch (error) {
-          console.error("invalid gauge response for sensor " + varSensorId, error, text);
+        if (response === '.' || response === null || response === undefined) {
+          return;
+        }
+
+        if (Array.isArray(response)) {
+          obj = response;
+        } else if (typeof response === 'string') {
+          try {
+            obj = JSON.parse(response);
+          } catch (error) {
+            console.error("invalid gauge response for sensor " + varSensorId, error, response);
+            return;
+          }
+        } else {
+          obj = response;
+        }
+
+        if (Array.isArray(obj) && obj.length === 1 && obj[0] === '.') {
           return;
         }
 
         if (!Array.isArray(obj) || obj.length < 2) {
-          console.error("unexpected gauge payload for sensor " + varSensorId, obj);
+          if (obj !== '.') {
+            console.error("unexpected gauge payload for sensor " + varSensorId, obj);
+          }
           return;
         }
 
@@ -796,7 +869,7 @@
       .fail(function(jqxhr, settings, ex) {
         console.error('failed (updateGauges), ' + varSensorId + ", " + ex);
       });
-    }
+    });
   }
 
   var DashboardUpdateInterval = <?php echo $dashboardUpdateIntervalMs; ?>;
@@ -1057,56 +1130,56 @@
                   <canvas id="eventSummaryCanvas" height="320"></canvas>
                 </div>
               </div>
-              <div class="tab-section-title mb-3">
-                <div>
-                  <h4 class="mb-1">Detailverlauf</h4>
-                  <p>Die letzten einzelnen Wakeup- und Standby-Ereignisse pro Device.</p>
-                </div>
-              </div>
-              <div id="event-timeline-container" class="d-flex flex-column gap-3" data-server-rendered="1">
-                <?php if (empty($eventTimelineBoards)) { ?>
-                  <div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>
-                <?php } else { ?>
-                  <?php foreach ($eventTimelineBoards as $eventTimelineBoard) { ?>
-                    <section class="event-timeline-board" data-event-board-id="<?php echo (int)$eventTimelineBoard['boardId']; ?>">
-                      <div class="event-timeline-head">
-                        <div>
-                          <strong><?php echo htmlspecialchars($eventTimelineBoard['boardName'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                          <span><?php echo count($eventTimelineBoard['events']); ?> Ereignisse im Verlauf</span>
-                        </div>
-                      </div>
-                      <ol class="event-timeline-list">
-                        <?php foreach ($eventTimelineBoard['events'] as $eventTimelineEntry) { ?>
-                          <li class="event-timeline-item">
-                            <span class="event-timeline-dot <?php echo htmlspecialchars($eventTimelineEntry['stateClass'], ENT_QUOTES, 'UTF-8'); ?>"></span>
-                            <div class="event-timeline-content">
-                              <div class="event-timeline-title">
-                                <strong><?php echo htmlspecialchars($eventTimelineEntry['label'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                                <time><?php echo htmlspecialchars($eventTimelineEntry['timestamp'], ENT_QUOTES, 'UTF-8'); ?></time>
-                              </div>
-                              <div class="event-timeline-meta">
-                                <?php
-                                  $detailParts = array();
-                                  if (!empty($eventTimelineEntry['sensorName'])) {
-                                    $detailParts[] = $eventTimelineEntry['sensorName'];
-                                  }
-                                  if (!empty($eventTimelineEntry['rawLabel']) && $eventTimelineEntry['rawLabel'] !== $eventTimelineEntry['label']) {
-                                    $detailParts[] = 'Rohwert: ' . $eventTimelineEntry['rawLabel'];
-                                  }
-                                  if (!empty($eventTimelineEntry['fallbackTimestamp']) && $eventTimelineEntry['fallbackTimestamp'] !== $eventTimelineEntry['timestamp']) {
-                                    $detailParts[] = 'Datensatz: ' . $eventTimelineEntry['fallbackTimestamp'];
-                                  }
-                                  echo htmlspecialchars(implode(' · ', $detailParts), ENT_QUOTES, 'UTF-8');
-                                ?>
-                              </div>
+              <details class="event-detail-disclosure mt-4">
+                <summary>Detailverlauf</summary>
+                <div class="event-detail-body">
+                  <p class="text-muted mb-3">Die letzten einzelnen Wakeup- und Standby-Ereignisse pro Device.</p>
+                  <div id="event-timeline-container" class="d-flex flex-column gap-3" data-server-rendered="1">
+                    <?php if (empty($eventTimelineBoards)) { ?>
+                      <div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>
+                    <?php } else { ?>
+                      <?php foreach ($eventTimelineBoards as $eventTimelineBoard) { ?>
+                        <section class="event-timeline-board" data-event-board-id="<?php echo (int)$eventTimelineBoard['boardId']; ?>">
+                          <div class="event-timeline-head">
+                            <div>
+                              <strong><?php echo htmlspecialchars($eventTimelineBoard['boardName'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
+                              <span><?php echo count($eventTimelineBoard['events']); ?> Ereignisse im Verlauf</span>
                             </div>
-                          </li>
-                        <?php } ?>
-                      </ol>
-                    </section>
-                  <?php } ?>
-                <?php } ?>
-              </div>
+                          </div>
+                          <ol class="event-timeline-list">
+                            <?php foreach ($eventTimelineBoard['events'] as $eventTimelineEntry) { ?>
+                              <li class="event-timeline-item">
+                                <span class="event-timeline-dot <?php echo htmlspecialchars($eventTimelineEntry['stateClass'], ENT_QUOTES, 'UTF-8'); ?>"></span>
+                                <div class="event-timeline-content">
+                                  <div class="event-timeline-title">
+                                    <strong><?php echo htmlspecialchars($eventTimelineEntry['label'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    <time><?php echo htmlspecialchars($eventTimelineEntry['timestamp'], ENT_QUOTES, 'UTF-8'); ?></time>
+                                  </div>
+                                  <div class="event-timeline-meta">
+                                    <?php
+                                      $detailParts = array();
+                                      if (!empty($eventTimelineEntry['sensorName'])) {
+                                        $detailParts[] = $eventTimelineEntry['sensorName'];
+                                      }
+                                      if (!empty($eventTimelineEntry['rawLabel']) && $eventTimelineEntry['rawLabel'] !== $eventTimelineEntry['label']) {
+                                        $detailParts[] = 'Rohwert: ' . $eventTimelineEntry['rawLabel'];
+                                      }
+                                      if (!empty($eventTimelineEntry['fallbackTimestamp']) && $eventTimelineEntry['fallbackTimestamp'] !== $eventTimelineEntry['timestamp']) {
+                                        $detailParts[] = 'Datensatz: ' . $eventTimelineEntry['fallbackTimestamp'];
+                                      }
+                                      echo htmlspecialchars(implode(' · ', $detailParts), ENT_QUOTES, 'UTF-8');
+                                    ?>
+                                  </div>
+                                </div>
+                              </li>
+                            <?php } ?>
+                          </ol>
+                        </section>
+                      <?php } ?>
+                    <?php } ?>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
         </fieldset>
@@ -1212,8 +1285,8 @@
               <p>Rohdaten aus `ttnDataLoraBoatMonitor` fuer Analyse und Fehlersuche.</p>
             </div>
           </div>
-          <div class="p-2" id="chart-container-debug">
-            All Sensor Values as a table from ttnDataLoraBoatMonitor:
+          <div class="p-2 d-flex flex-column gap-2" id="chart-container-debug">
+            <p class="mb-0 text-muted">Alle TTN-Rohdaten aus `ttnDataLoraBoatMonitor`. Horizontal und vertikal scrollbar.</p>
           </div>
         <?php
             include_once dirname(__DIR__) . "/app/Http/Webhooks/TTN/index.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar

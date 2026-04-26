@@ -8,27 +8,20 @@
  *  Modified by: Guntmar Höche 2023-04-05
  */
 
-require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
-$config  = new configuration();
+require_once(dirname(__DIR__, 3) . '/Infrastructure/Database/dbGetData.php');
 
-$DATABASE_HOST = $config::$dbHost;
-$DATABASE_USERNAME = $config::$dbUser;
-$DATABASE_PASSWORD = $config::$dbPassword;
-$DATABASE_NAME = $config::$dbName;
+$debugRows = dbGetData::getRecentTtnDebugRows(30);
+$row_cnt = count($debugRows);
 
-$db_connect = mysqli_connect($DATABASE_HOST, $DATABASE_USERNAME, $DATABASE_PASSWORD, $DATABASE_NAME);
-$sel_data = mysqli_query($db_connect, "SELECT * FROM `ttnDataLoraBoatMonitor` ORDER BY `id` DESC");
-$row_cnt = mysqli_num_rows($sel_data);
+function debugTableCell($value)
+{
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
 
 if ($row_cnt > 0) {
-    if ($row_cnt > 0) {
-        $show_table = "";
-    } else {
-        $show_table = "display: none;";
-        echo 'Error: No values in database!';
-    }
+    $show_table = "";
 
-    echo "<table id='ttnvalues' class='table' style=" . $show_table . ">" .
+    echo "<div class='debug-table-shell'><table id='ttnvalues' class='table table-sm table-striped table-hover align-middle mb-0' style='" . $show_table . "'>" .
             "<thead><tr>" .
                 "<th>Time</th>" .
                 "<th>TTN Dev ID</th>" .
@@ -45,13 +38,7 @@ if ($row_cnt > 0) {
                 "<th>Spreading Factor</th>" .
             "</tr></thead>" .
         "<tbody>";
-    if ($row_cnt >= 30) {
-        $i_max = 30;
-    } else {
-        $i_max = $row_cnt - 1;
-    }
-        for ($i=0; $i <= $i_max; $i++) {
-            $mysql_row = mysqli_fetch_array($sel_data);
+        foreach ($debugRows as $mysql_row) {
             if ($mysql_row != null) {
                 $dev_name;
                 $datetime = $mysql_row["datetime"];
@@ -69,19 +56,19 @@ if ($row_cnt > 0) {
                 $spreading_factor = $mysql_row["gtw_sf"];
         
                 echo "<tr>";
-                echo "<td>" . $datetime . "</td>";
-                echo "<td>" . $dev_name . "</td>";
-                echo "<td>" . $dev_counter . "</td>";
-                echo "<td>" . $value1 . "</td>";
-                echo "<td>" . $value2 . "</td>";
-                echo "<td>" . $value3 . "</td>";
-                echo "<td>" . $value4 . "</td>";
-                echo "<td>" . $gateway . "</td>";
-                echo "<td>" . $rssi . "</td>";
-                echo "<td>" . $snr . "</td>";
-                echo "<td>" . $channel_index . "</td>";
-                echo "<td>" . $bandwidth . "</td>";
-                echo "<td>" . $spreading_factor . "</td>";
+                echo "<td>" . debugTableCell($datetime) . "</td>";
+                echo "<td>" . debugTableCell($dev_name) . "</td>";
+                echo "<td>" . debugTableCell($dev_counter) . "</td>";
+                echo "<td>" . debugTableCell($value1) . "</td>";
+                echo "<td>" . debugTableCell($value2) . "</td>";
+                echo "<td>" . debugTableCell($value3) . "</td>";
+                echo "<td>" . debugTableCell($value4) . "</td>";
+                echo "<td>" . debugTableCell($gateway) . "</td>";
+                echo "<td>" . debugTableCell($rssi) . "</td>";
+                echo "<td>" . debugTableCell($snr) . "</td>";
+                echo "<td>" . debugTableCell($channel_index) . "</td>";
+                echo "<td>" . debugTableCell($bandwidth) . "</td>";
+                echo "<td>" . debugTableCell($spreading_factor) . "</td>";
                 echo "</tr>";
             }
         }
@@ -91,3 +78,4 @@ if ($row_cnt > 0) {
 ?>
 </tbody>
 </table>
+</div>

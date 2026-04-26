@@ -321,7 +321,7 @@ function initializeEventSummaryChart() {
   }
 
   window.eventSummaryChart = new Chart(eventSummaryCanvas, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: eventSummaryLabels,
       datasets: []
@@ -435,13 +435,9 @@ function updateEventSummaryChart() {
       data: Array.isArray(summaryEntry.onlineDailyHours) ? summaryEntry.onlineDailyHours.map(Number) : [],
       borderColor: boardColor.wakeupBorder,
       backgroundColor: boardColor.wakeupFill,
-      pointBackgroundColor: boardColor.wakeupBorder,
-      pointBorderColor: '#ffffff',
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      borderWidth: 3,
-      tension: 0.28,
-      fill: false,
+      borderWidth: 1,
+      borderRadius: 6,
+      maxBarThickness: 20,
       boardId: boardId,
     });
     datasets.push({
@@ -449,14 +445,9 @@ function updateEventSummaryChart() {
       data: Array.isArray(summaryEntry.standbyDailyHours) ? summaryEntry.standbyDailyHours.map(Number) : [],
       borderColor: boardColor.standbyBorder,
       backgroundColor: boardColor.standbyFill,
-      pointBackgroundColor: boardColor.standbyBorder,
-      pointBorderColor: '#ffffff',
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      borderWidth: 2,
-      tension: 0.28,
-      borderDash: [6, 4],
-      fill: false,
+      borderWidth: 1,
+      borderRadius: 6,
+      maxBarThickness: 20,
       boardId: boardId,
     });
   });

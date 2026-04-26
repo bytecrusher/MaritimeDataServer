@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
 $var_dbName = $var_dbUserName = $var_dbPassword = $pdo = $rtn = null;
 $var_dbHostName = "localhost";
 if (isset($_POST["action"])) {
@@ -12,6 +13,7 @@ if (isset($_POST["action"])) {
     $pdo = testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword);
     if ($pdo != false) {
       $filename = __DIR__ . '/database.sql';
+      $importError = false;
 
       // Temporary variable, used to store current query
       $templine = '';
@@ -37,33 +39,36 @@ if (isset($_POST["action"])) {
                 $error_msg = $error_msg . "error.<br/>";
               }
               $rtn = array("error"=>"true", "error_text"=>$error_msg);
+              $importError = true;
               break;
             }
             $templine = '';
           }
         }
       }
-      
-      $configDir = dirname(__FILE__, 2) . '/../config';
-      if (!is_dir($configDir)) {
-        mkdir($configDir, 0775, true);
-      }
-      $path = $configDir . '/config.json';
-      if (!file_exists($path)) {
-        touch($path);
-      }
 
-      $jsonString = file_get_contents($path);
-      $jsonData = json_decode($jsonString, true);
-      $jsonData['dbHost'] = $var_dbHostName;
-      $jsonData['dbName'] = $var_dbName;
-      $jsonData['dbUser'] = $var_dbUserName;
-      $jsonData['dbPassword'] = $var_dbPassword;
-      $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
-      // Write in the file
-      $fp = fopen($path, 'w');
-      fwrite($fp, $jsonString);
-      fclose($fp);
+      if (!$importError) {
+        $configDir = dirname(__FILE__, 2) . '/../config';
+        if (!is_dir($configDir)) {
+          mkdir($configDir, 0775, true);
+        }
+        $path = $configDir . '/config.json';
+        if (!file_exists($path)) {
+          touch($path);
+        }
+
+        $jsonString = file_get_contents($path);
+        $jsonData = json_decode($jsonString, true);
+        if (!is_array($jsonData)) {
+          $jsonData = array();
+        }
+        $jsonData['dbHost'] = $var_dbHostName;
+        $jsonData['dbName'] = $var_dbName;
+        $jsonData['dbUser'] = $var_dbUserName;
+        $jsonData['dbPassword'] = $var_dbPassword;
+        $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
+        file_put_contents($path, $jsonString);
+      }
 
     } else {
       $rtn = array("error"=>"true", "error_text"=>$error_msg);
@@ -84,7 +89,7 @@ if (isset($_POST["action"])) {
 function testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword) {
     global $success_msg, $error_msg, $pdo;
     try {
-      $pdo = new PDO("mysql:host=" . $var_dbHostName . ";dbname=" . $var_dbName, $var_dbUserName, $var_dbPassword);
+      $pdo = new PDO("mysql:host=" . $var_dbHostName . ";dbname=" . $var_dbName . ";charset=utf8mb4", $var_dbUserName, $var_dbPassword);
       if ($pdo != null) {
         $success_msg = "Successful connected to Database.";
       }

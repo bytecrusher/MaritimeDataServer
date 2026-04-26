@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo htmlspecialchars(configuration::$applicationName ?: 'MDS - Maritime Data Server', ENT_QUOTES, 'UTF-8'); ?></title>
+    <link rel="icon" type="image/x-icon" href="<?php echo htmlspecialchars(mds_route_path('favicon.ico'), ENT_QUOTES, 'UTF-8'); ?>">
     <?php
       $config = new configuration();
       include(__DIR__ . "/includes.php");

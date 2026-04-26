@@ -260,27 +260,20 @@ class user implements JsonSerializable
   * Get all of my Board by user id.
   */
   public function getMyBoardsAll() {
-    if (!$this->userObj->id == null) {
-      $pdo = dbConfig::getInstance();
-      $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = " . $this->userObj->id . " ORDER BY id");
-      $result = $myBoards->execute();
-      $myBoards2 = $myBoards->fetchAll(PDO::FETCH_ASSOC);
-      return $myBoards2;
+    if ($this->userObj->id !== null) {
+      return dbGetData::getBoardsByOwnerId($this->userObj->id);
     }
+    return array();
   }
 
   /*
   * Get all Board (only for admin).
   */
   public function getAllBoardsAdmin() {
-    //if (!$this->userObj->id == null) {
     if(($this->userObj->userGroupAdmin == 1) ) {
-      $pdo = dbConfig::getInstance();
-      $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE 1 ORDER BY id");
-      $result = $myBoards->execute();
-      $myBoards2 = $myBoards->fetchAll(PDO::FETCH_ASSOC);
-      return $myBoards2;
+      return dbGetData::getAllBoards();
     }
+    return array();
   }
 
   public function jsonSerialize(): mixed

@@ -5,6 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Install script</title>
+  <link rel="icon" type="image/x-icon" href="<?php echo htmlspecialchars(mds_route_path('favicon.ico'), ENT_QUOTES, 'UTF-8'); ?>">
 
   <?php
     require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
@@ -12,6 +13,36 @@
   ?>
 
   <style>
+    :root {
+      --mds-radius: 1.1rem;
+      --mds-border: rgba(15, 23, 42, 0.08);
+      --mds-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
+    }
+    body {
+      background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.09), transparent 28%),
+        linear-gradient(180deg, #f3f6fb 0%, #eef2f7 100%);
+      color: #0f172a;
+    }
+    .main-container {
+      width: min(1100px, calc(100% - 24px));
+      margin: 0 auto 1.25rem;
+    }
+    .navbar.mds-navbar {
+      width: min(1100px, calc(100% - 24px));
+      margin: 0.7rem auto 0.9rem;
+      border-radius: var(--mds-radius);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.96) 0%, rgba(31, 41, 55, 0.96) 100%) !important;
+      box-shadow: var(--mds-shadow);
+    }
+    .install-shell {
+      padding: 1.25rem;
+      border-radius: 1rem;
+      border: 1px solid var(--mds-border);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    }
     #pageMessages {
     position: fixed;
     bottom: 15px;
@@ -42,7 +73,7 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
     <div class="container-fluid">
       <a class="navbar-brand" href="<?php echo htmlspecialchars(mds_route_path('index.php'), ENT_QUOTES, 'UTF-8'); ?>"><i class="bi bi-speedometer logo"> </i> Mausel Industries</a>
       <div id="navbar" class="navbar-collapse collapse">
@@ -89,7 +120,7 @@
     </div>
   </div>
 
-  <div class="container main-container">
+  <div class="container main-container install-shell">
   <h1>Install MDS</h1>
     
     <!-- Nav tabs -->
@@ -125,7 +156,7 @@
           In this step the DB will be prepared for operating on the server.<br>
           First create a database and a user with write privileges in your DB admin panel.
           <div>
-            <form class="navbar-form navbar-right" action="install_db.php" method="post">
+            <form class="navbar-form navbar-right" action="#" method="post" onsubmit="return false;">
               <div class="form-group row">
                 <label for="dbHostName" class="col-sm-4 col-form-label">Database Hostname</label>
                 <div class="col-sm-4">
@@ -231,26 +262,38 @@
   </div>
 
 <script>
-  $('.btnNext').click(function() {
-  const currentTab = $('.nav-tabs .active').attr('id');
-  if (currentTab === "database") {
-    returnVal = write_db();
+  function showNextInstallTab() {
     const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
-    const nextTab = new bootstrap.Tab(nextTabLinkEl);
-    nextTab.show();    
-  } else if (currentTab === "adminUser") {
-    returnVal = apiPostCreateAdmin();
-    if (returnVal) {
-      const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
-      const nextTab = new bootstrap.Tab(nextTabLinkEl);
-      nextTab.show();
+    if (!nextTabLinkEl) {
+      return;
     }
-  } else {
-    const nextTabLinkEl = $('.nav-tabs .active').closest('li').next('li').find('div')[0];
     const nextTab = new bootstrap.Tab(nextTabLinkEl);
     nextTab.show();
   }
-});
+
+  function setInstallBusy(isBusy) {
+    const installActions = $('.btnNext, .btnPrevious, button[name="action"]');
+    installActions.prop('disabled', isBusy);
+    installActions.toggleClass('disabled', isBusy);
+  }
+
+  $('.btnNext').click(async function() {
+    const currentTab = $('.nav-tabs .active').attr('id');
+
+    if (currentTab === "database") {
+      const returnVal = await write_db();
+      if (returnVal) {
+        showNextInstallTab();
+      }
+    } else if (currentTab === "adminUser") {
+      const returnVal = await apiPostCreateAdmin();
+      if (returnVal) {
+        showNextInstallTab();
+      }
+    } else {
+      showNextInstallTab();
+    }
+  });
 
 $('.btnPrevious').click(function() {
   const prevTabLinkEl = $('.nav-tabs .active').closest('li').prev('li').find('div')[0];
@@ -270,87 +313,95 @@ nameField.addEventListener("invalid", () => {
   nameField.setCustomValidity("Please fill in your First Name.");
 });
 
-function check_db() { 
-  action = "testdb";
-  myReturn = api_post_db(action);
-  return myReturn;
+async function check_db() {
+  return api_post_db("testdb");
 }
 
-function write_db() { 
-  action = "savedb";
-  return api_post_db(action);
+async function write_db() {
+  return api_post_db("savedb");
 }
 
-function api_post_db(action) {
+async function api_post_db(action) {
   if ( ($("#dbHostName").val() != "") && ($("#dbName").val() != "") && ($("#dbUserName").val() != "") && ($("#dbPassword").val() != "") ) {
-    console.log("dbName nicht leer");
-    dbHostName = $("#dbHostName").val();
-    dbName = $("#dbName").val();
-    dbUserName = $("#dbUserName").val();
-    dbPassword = $("#dbPassword").val();
-    let text;
-    var obj;
-    myReturnVal = null;
+    const dbHostName = $("#dbHostName").val();
+    const dbName = $("#dbName").val();
+    const dbUserName = $("#dbUserName").val();
+    const dbPassword = $("#dbPassword").val();
 
-    $.ajax({
-      method: "POST",
-      async: false,
-      url: "api_checkDbConnection.php",
-      data: { action: action, dbHostName: dbHostName, dbName: dbName, dbUserName: dbUserName, dbPassword: dbPassword }
-    })
-    .done(function( response ) {
-      text = response;
-      obj = JSON.parse(text);
-      if(obj["error"] === "true"){
-        createAlert('Something went wrong',obj["error_text"],'danger',true,true,'pageMessages');
-        myReturnVal = false;
-      } else if (obj["error"] === "false"){
-        createAlert('Nice Work!',obj["success_text"],'success',true,true,'pageMessages');
-        myReturnVal = true;
+    setInstallBusy(true);
+    try {
+      const response = await $.ajax({
+        method: "POST",
+        dataType: "json",
+        url: "api_checkDbConnection.php",
+        data: { action: action, dbHostName: dbHostName, dbName: dbName, dbUserName: dbUserName, dbPassword: dbPassword }
+      });
+
+      if(response["error"] === "true"){
+        createAlert('Something went wrong',response["error_text"],'danger',true,true,'pageMessages');
+        return false;
       }
-    });
+
+      if (response["error"] === "false"){
+        createAlert('Nice Work!',response["success_text"],'success',true,true,'pageMessages');
+        return true;
+      }
+
+      createAlert('Something went wrong','Unexpected response from the server.','danger',true,true,'pageMessages');
+      return false;
+    } catch (error) {
+      createAlert('Something went wrong','The request could not be completed. Please try again.','danger',true,true,'pageMessages');
+      return false;
+    } finally {
+      setInstallBusy(false);
+    }
   } else {
     createAlert('At least one input missing.','Please fill out all necessary fields.','danger',true,true,'pageMessages');
-    myReturnVal = false;
+    return false;
   }
-  return myReturnVal;
 }
 
-function apiPostCreateAdmin() {
-  action = "createadmin";
-  myReturnVal = null;
+async function apiPostCreateAdmin() {
   if ( ($("#firstName").val() != "") && ($("#lastName").val() != "") && ($("#email").val() != "") && ($("#password").val() != "") && ($("#password2").val() != "") && ($("#md5secretString").val() != "") ) {
-    firstName = $("#firstName").val();
-    lastName = $("#lastName").val();
-    email = $("#email").val();
-    password = $("#password").val();
-    password2 = $("#password2").val();
-    apiKey = $("#apiKey").val();
-    md5secretString = $("#md5secretString").val();
-    $.ajax({
-      method: "POST",
-      async: false,
-      url: "api_createAdmin.php",
-      data: { action: action, firstName: firstName, lastName: lastName, email: email, password: password, password2: password2, apiKey: apiKey, md5secretString: md5secretString, demoMode: false }
-    })
-    .done(function( response ) {
-      text = response;
-      obj = JSON.parse(text);
-      if(obj["error"] === "true"){
-        createAlert('Something went wrong',obj["error_text"],'danger',true,true,'pageMessages');
-        myReturnVal = false;
-      } else if (obj["error"] === "false"){
-        createAlert('Nice Work!',obj["success_text"],'success',true,true,'pageMessages');
-        myReturnVal = true;
-      } else {
-        createAlert('Great.','Great.','success',true,true,'pageMessages');
+    const firstName = $("#firstName").val();
+    const lastName = $("#lastName").val();
+    const email = $("#email").val();
+    const password = $("#password").val();
+    const password2 = $("#password2").val();
+    const apiKey = $("#apiKey").val();
+    const md5secretString = $("#md5secretString").val();
+
+    setInstallBusy(true);
+    try {
+      const response = await $.ajax({
+        method: "POST",
+        dataType: "json",
+        url: "api_createAdmin.php",
+        data: { action: "createadmin", firstName: firstName, lastName: lastName, email: email, password: password, password2: password2, apiKey: apiKey, md5secretString: md5secretString, demoMode: false }
+      });
+
+      if(response["error"] === "true"){
+        createAlert('Something went wrong',response["error_text"],'danger',true,true,'pageMessages');
+        return false;
       }
-    });
+
+      if (response["error"] === "false"){
+        createAlert('Nice Work!',response["success_text"],'success',true,true,'pageMessages');
+        return true;
+      }
+
+      createAlert('Something went wrong','Unexpected response from the server.','danger',true,true,'pageMessages');
+      return false;
+    } catch (error) {
+      createAlert('Something went wrong','The request could not be completed. Please try again.','danger',true,true,'pageMessages');
+      return false;
+    } finally {
+      setInstallBusy(false);
+    }
   } else {
     createAlert('At least one input missing.','Please fill out all necessary fields.','danger',true,true,'pageMessages');
-    myReturnVal = false;
+    return false;
   }
-  return myReturnVal;
 }
 
 function createAlert(summary, details, severity, dismissible, autoDismiss, appendToId) {

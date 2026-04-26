@@ -9,6 +9,7 @@ $mapGpsData = isset($mapGpsData) && is_array($mapGpsData) ? $mapGpsData : array(
 
 <script>
 var map = null;
+var mapMarkersLayer = null;
 var internalMapData = {
   boardNames: <?php echo json_encode($mapBoardNames, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>,
   gpsData: <?php echo json_encode($mapGpsData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
@@ -53,53 +54,29 @@ function initInternalMap() {
 
   hideMapFallback();
 
-  if (map != null) {
-    map.off();
-    map.remove();
-    map = null;
-  }
-
   try {
-    map = L.map('map');
+    if (map == null) {
+      map = L.map('map', {
+        preferCanvas: true
+      });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+    }
 
-    const icons = [
-      new L.Icon({
-        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-green.png',
-        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      }),
-      new L.Icon({
-        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-blue.png',
-        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      }),
-      new L.Icon({
-        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-orange.png',
-        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      }),
-      new L.Icon({
-        iconUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-icon-red.png',
-        shadowUrl: 'https://raw.githubusercontent.com/sheiun/leaflet-color-number-markers/main/dist/img/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      })
+    if (mapMarkersLayer != null) {
+      mapMarkersLayer.clearLayers();
+    } else {
+      mapMarkersLayer = L.layerGroup().addTo(map);
+    }
+
+    const markerColors = [
+      '#16a34a',
+      '#2563eb',
+      '#f59e0b',
+      '#dc2626'
     ];
 
     const bounds = [];
@@ -108,7 +85,7 @@ function initInternalMap() {
     boardIds.forEach(function(boardId) {
       const points = internalMapData.gpsData[boardId] || [];
       const boardName = internalMapData.boardNames[boardId] || ('Board ' + boardId);
-      const layerGroup = new L.LayerGroup().addTo(map);
+      const markerColor = markerColors[iconCounter % markerColors.length];
 
       points.forEach(function(point) {
         const lat = parseFloat(point.value1);
@@ -119,9 +96,14 @@ function initInternalMap() {
         }
 
         bounds.push([lat, lng]);
-        layerGroup.addLayer(
-          L.marker([lat, lng], {icon: icons[iconCounter % icons.length]})
-            .bindPopup('<b>' + boardName + '</b><br>Timestamp: ' + point.reading_time)
+        mapMarkersLayer.addLayer(
+          L.circleMarker([lat, lng], {
+            radius: 7,
+            weight: 2,
+            color: '#ffffff',
+            fillColor: markerColor,
+            fillOpacity: 0.95
+          }).bindPopup('<b>' + boardName + '</b><br>Timestamp: ' + point.reading_time)
         );
       });
 
