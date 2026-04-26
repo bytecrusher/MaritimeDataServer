@@ -2,13 +2,12 @@
   session_start();
   require_once dirname(__DIR__) . "/bootstrap/app.php";
   require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
+  require_once dirname(__DIR__) . "/app/Application/SensorFormPageService.php";
   require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
   require_once dirname(__DIR__) . "/app/Application/dbUpdateData.php";
 
-  if (isset($_SESSION['userObj'])) {
-    $currentUser = unserialize($_SESSION['userObj']);
-  } else {
-    $currentUser = false;
+  $currentUser = SensorFormPageService::resolveCurrentUserFromSession();
+  if (!$currentUser) {
     header("Location: ./index.php");    // if user not logged in
     die();
   }
@@ -74,9 +73,12 @@
 <?php
 }
 
-  if (isset($_GET['modal'])) {
-    $mySingleSensorChannelConfig=(myFunctions::getSensorChannelConfig($_GET['id'], $_GET['channel']));
-  }
+  $sensorPageData = SensorFormPageService::buildPageData($_GET['id'] ?? 0, $_GET['channel'] ?? null, isset($_GET['modal']));
+  $SensorConfig = $sensorPageData['sensorConfig'];
+  $SensorChannelConfig = $sensorPageData['sensorChannels'];
+  $SensorType = $sensorPageData['sensorType'];
+  $AllSensorTypes = $sensorPageData['allSensorTypes'];
+  $mySingleSensorChannelConfig = $sensorPageData['singleChannelConfig'];
 ?>
 </div>
 
@@ -84,13 +86,7 @@
 <div class="container main-container">
 <div class="modal-body">
   
-    <?php
-      $SensorConfig=(myFunctions::getSensorConfig($_GET['id']));
-      $SensorChannelConfig=(myFunctions::getSensorChannelsConfig($_GET['id']));
-      $SensorType = myFunctions::getSensorType($SensorConfig['typId']);
-      // Get sensor type data
-      $AllSensorTypes =(myFunctions::getAllSensorType());
-    ?>
+    <?php ?>
           <div class="input-group mb-3">
             <span class="input-group-text" style="width: 50%">id</span>
             <input type='text' readonly class='col col-sm-4 form-control' style="background:#e9ecef" id='id' name='id' value='<?=$SensorConfig['id'];?>'>
@@ -252,6 +248,43 @@
               <div class='input-group mt-3'>
                 <span class='input-group-text' for="GaugeNormalAreaColor" style='width: 50%'>Normal Area Color</span>
                 <input type="color" class="form-control form-control-color" id="GaugeNormalAreaColor" name="GaugeNormalAreaColor" value="<?php echo $mySingleSensorChannelConfig['GaugeNormalAreaColor'] ?>" title="Choose your color">
+              </div>
+
+              <div class='input-group mt-3'>
+                <span class='input-group-text' style='width: 50%'>Gauge Style</span>
+                <select class='form-select' id='GaugeStyle' name='GaugeStyle'>
+                  <?php
+                    $currentGaugeStyle = $mySingleSensorChannelConfig['GaugeStyle'] ?? 'classic';
+                    $gaugeStyles = array('classic' => 'Classic', 'minimal' => 'Minimal', 'bold' => 'Bold');
+                    foreach ($gaugeStyles as $gaugeStyleValue => $gaugeStyleLabel) {
+                      $selected = $currentGaugeStyle === $gaugeStyleValue ? 'selected' : '';
+                      echo "<option value='" . htmlspecialchars($gaugeStyleValue, ENT_QUOTES, 'UTF-8') . "' $selected>" . htmlspecialchars($gaugeStyleLabel, ENT_QUOTES, 'UTF-8') . "</option>";
+                    }
+                  ?>
+                </select>
+              </div>
+            </fieldset>
+
+            <fieldset class="border p-2 mySensorsFieldset">
+              <legend class="float-none w-auto mySensorsFieldsetLegend">Critical Alert</legend>
+              <div class='input-group mt-3 mb-3'>
+                <span class='input-group-text' style='width: 50%'>Enable E-Mail alert</span>
+                <label style="width: 50%;">
+                  <div class="form-control">
+                    <?php $alertEnabled = isset($mySingleSensorChannelConfig['AlertEnabled']) && (int)$mySingleSensorChannelConfig['AlertEnabled'] === 1; ?>
+                    <input class='col col-sm-4 form-check-input' type='checkbox' id='AlertEnabled' name='AlertEnabled' value='1' <?php if ($alertEnabled) { echo 'checked'; } ?>>
+                  </div>
+                </label>
+              </div>
+
+              <div class='input-group mb-3'>
+                <span class='input-group-text' style='width: 50%'>Alert below value</span>
+                <input type='number' class='col col-sm-4 form-control' id='AlertLowValue' name='AlertLowValue' size='7' step='0.1' value='<?php echo htmlspecialchars((string)($mySingleSensorChannelConfig['AlertLowValue'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>'>
+              </div>
+
+              <div class='input-group mb-3'>
+                <span class='input-group-text' style='width: 50%'>Alert above value</span>
+                <input type='number' class='col col-sm-4 form-control' id='AlertHighValue' name='AlertHighValue' size='7' step='0.1' value='<?php echo htmlspecialchars((string)($mySingleSensorChannelConfig['AlertHighValue'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>'>
               </div>
             </fieldset>
 

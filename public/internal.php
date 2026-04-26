@@ -28,229 +28,14 @@
   $boardObjsArray = $pageData['boardObjsArray'];
   $mapBoardNames = $pageData['mapPayload']['boardNames'];
   $mapGpsData = $pageData['mapPayload']['gpsData'];
+  $eventChartSensors = $pageData['eventPayload']['chartSensors'];
+  $eventTimelineBoards = $pageData['eventPayload']['timelineBoards'];
+  $eventTimelineSummaryLabels = $pageData['eventPayload']['summaryLabels'];
+  $eventTimelineSummary = $pageData['eventPayload']['summary'];
   $dashboardUpdateIntervalMs = $pageData['dashboardUpdateIntervalMs'];
   $varDemoMode = $pageData['demoMode'];
   $showInstallAlert = $pageData['showInstallAlert'];
   $hasBoards = $pageData['hasBoards'];
-  $eventChartSensors = array();
-  $eventTimelineBoards = array();
-  $eventTimelineSummaryLabels = array();
-  $eventTimelineSummary = array();
-  $eventTimelineSummaryBuckets = array();
-  $eventWindowStart = new DateTimeImmutable('today -6 days');
-  $eventWindowEnd = new DateTimeImmutable('now');
-  for ($eventOffset = 0; $eventOffset < 7; $eventOffset++) {
-    $eventDay = $eventWindowStart->modify('+' . $eventOffset . ' days');
-    $eventTimelineSummaryLabels[] = $eventDay->format('d.m.');
-    $eventTimelineSummaryBuckets[] = $eventDay->format('Y-m-d');
-  }
-  foreach ($boardObjsArray as $eventBoardObj) {
-    $eventBoardSensors = myFunctions::getAllSensorsOfBoard($eventBoardObj->getId());
-    if (!is_array($eventBoardSensors)) {
-      continue;
-    }
-    foreach ($eventBoardSensors as $eventSensor) {
-      if (($eventSensor['sensorTypesName'] ?? null) !== 'WakeupStan') {
-        continue;
-      }
-      $eventChartSensors[] = array(
-        'sensorId' => (int)$eventSensor['id'],
-        'boardId' => (int)$eventBoardObj->getId(),
-        'boardName' => $eventBoardObj->getName(),
-        'sensorName' => $eventSensor['name'] ?? 'WakeupStan',
-        'sensorTypeName' => $eventSensor['sensorTypesName'] ?? 'WakeupStan',
-      );
-
-      $eventRows = myFunctions::getLatestSensorData((int)$eventSensor['id'], 200);
-      if (!is_array($eventRows)) {
-        continue;
-      }
-      foreach ($eventRows as $eventRow) {
-        $eventTimelineBoards[(int)$eventBoardObj->getId()]['boardId'] = (int)$eventBoardObj->getId();
-        $eventTimelineBoards[(int)$eventBoardObj->getId()]['boardName'] = $eventBoardObj->getName();
-        $eventTimelineBoards[(int)$eventBoardObj->getId()]['events'] = $eventTimelineBoards[(int)$eventBoardObj->getId()]['events'] ?? array();
-
-        foreach (array(
-          array('label' => $eventRow['value1'] ?? null, 'time' => $eventRow['value2'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? '')),
-          array('label' => $eventRow['value3'] ?? null, 'time' => $eventRow['value4'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? ''))
-        ) as $eventPair) {
-          if (!mds_is_event_label($eventPair['label'])) {
-            continue;
-          }
-          $normalizedEvent = mds_normalize_event_label($eventPair['label']);
-          $eventTimelineBoards[(int)$eventBoardObj->getId()]['events'][] = array(
-            'label' => $normalizedEvent['label'],
-            'stateClass' => $normalizedEvent['stateClass'],
-            'rawLabel' => trim((string)$eventPair['label']),
-            'timestamp' => mds_is_event_timestamp($eventPair['time']) ? trim((string)$eventPair['time']) : trim((string)$eventPair['fallback']),
-            'fallbackTimestamp' => trim((string)$eventPair['fallback']),
-            'sensorName' => $eventSensor['name'] ?? 'WakeupStan',
-            'readingTime' => $eventRow['reading_time'] ?? null,
-          );
-        }
-      }
-    }
-  }
-  foreach ($eventTimelineBoards as &$eventTimelineBoard) {
-    if (empty($eventTimelineBoard['events'])) {
-      continue;
-    }
-    $eventDurationSummary = mds_build_event_duration_summary(
-      $eventTimelineBoard['events'],
-      $eventTimelineSummaryBuckets,
-      $eventWindowStart,
-      $eventWindowEnd
-    );
-    usort($eventTimelineBoard['events'], function ($leftEvent, $rightEvent) {
-      $leftTime = strtotime((string)($leftEvent['readingTime'] ?? '')) ?: 0;
-      $rightTime = strtotime((string)($rightEvent['readingTime'] ?? '')) ?: 0;
-      return $rightTime <=> $leftTime;
-    });
-    $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 40);
-    $eventTimelineSummary[] = array(
-      'boardId' => (int)$eventTimelineBoard['boardId'],
-      'boardName' => $eventTimelineBoard['boardName'],
-      'onlineHoursTotal' => $eventDurationSummary['onlineHoursTotal'],
-      'standbyHoursTotal' => $eventDurationSummary['standbyHoursTotal'],
-      'onlineDailyHours' => $eventDurationSummary['onlineDailyHours'],
-      'standbyDailyHours' => $eventDurationSummary['standbyDailyHours'],
-    );
-  }
-  unset($eventTimelineBoard);
-
-  function mds_is_event_label($value)
-  {
-    if ($value === null) {
-      return false;
-    }
-
-    $trimmedValue = trim((string)$value);
-    if ($trimmedValue === '') {
-      return false;
-    }
-
-    return !is_numeric($trimmedValue);
-  }
-
-  function mds_is_event_timestamp($value)
-  {
-    if ($value === null) {
-      return false;
-    }
-
-    return preg_match('/^\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}:\d{2}$/', trim((string)$value)) === 1;
-  }
-
-  function mds_normalize_event_label($value)
-  {
-    $rawValue = trim((string)$value);
-    $normalizedValue = mb_strtolower($rawValue);
-    if (str_contains($normalizedValue, 'sleep') || str_contains($normalizedValue, 'standby')) {
-      return array('label' => 'Standby', 'stateClass' => 'is-standby');
-    }
-    if (str_contains($normalizedValue, 'wake')) {
-      return array('label' => 'Wakeup', 'stateClass' => 'is-wakeup');
-    }
-    return array('label' => $rawValue, 'stateClass' => 'is-other');
-  }
-
-  function mds_parse_event_datetime($eventEntry)
-  {
-    if (!empty($eventEntry['timestamp'])) {
-      $timestampDate = DateTimeImmutable::createFromFormat('d.m.Y H:i:s', (string)$eventEntry['timestamp']);
-      if ($timestampDate instanceof DateTimeImmutable) {
-        return $timestampDate;
-      }
-      $timestampDate = DateTime::createFromFormat('d.m.Y H:i:s', (string)$eventEntry['timestamp']);
-      if ($timestampDate instanceof DateTime) {
-        return DateTimeImmutable::createFromMutable($timestampDate);
-      }
-    }
-
-    if (!empty($eventEntry['readingTime'])) {
-      try {
-        return new DateTimeImmutable((string)$eventEntry['readingTime']);
-      } catch (Exception $exception) {
-        return null;
-      }
-    }
-
-    return null;
-  }
-
-  function mds_build_event_duration_summary($eventEntries, $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
-  {
-    $onlineDailyHours = array_fill(0, count($bucketDates), 0.0);
-    $standbyDailyHours = array_fill(0, count($bucketDates), 0.0);
-    $normalizedEvents = array();
-
-    foreach ($eventEntries as $eventEntry) {
-      $eventDateTime = mds_parse_event_datetime($eventEntry);
-      if (!$eventDateTime instanceof DateTimeImmutable) {
-        continue;
-      }
-      $stateClass = $eventEntry['stateClass'] ?? '';
-      if (!in_array($stateClass, array('is-wakeup', 'is-standby'), true)) {
-        continue;
-      }
-      $normalizedEvents[] = array(
-        'stateClass' => $stateClass,
-        'dateTime' => $eventDateTime,
-      );
-    }
-
-    usort($normalizedEvents, function ($leftEvent, $rightEvent) {
-      return $leftEvent['dateTime']->getTimestamp() <=> $rightEvent['dateTime']->getTimestamp();
-    });
-
-    $eventCount = count($normalizedEvents);
-    for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
-      $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
-      $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
-      $segmentEnd = ($eventIndex + 1 < $eventCount) ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
-
-      if ($segmentEnd <= $windowStart || $segmentStart >= $windowEnd || $segmentEnd <= $segmentStart) {
-        continue;
-      }
-
-      if ($segmentStart < $windowStart) {
-        $segmentStart = $windowStart;
-      }
-      if ($segmentEnd > $windowEnd) {
-        $segmentEnd = $windowEnd;
-      }
-
-      foreach ($bucketDates as $bucketIndex => $bucketDate) {
-        $bucketStart = new DateTimeImmutable($bucketDate . ' 00:00:00');
-        $bucketEnd = $bucketStart->modify('+1 day');
-        if ($bucketEnd > $windowEnd) {
-          $bucketEnd = $windowEnd;
-        }
-
-        $overlapStart = ($segmentStart > $bucketStart) ? $segmentStart : $bucketStart;
-        $overlapEnd = ($segmentEnd < $bucketEnd) ? $segmentEnd : $bucketEnd;
-        $overlapSeconds = $overlapEnd->getTimestamp() - $overlapStart->getTimestamp();
-
-        if ($overlapSeconds <= 0) {
-          continue;
-        }
-
-        $overlapHours = round($overlapSeconds / 3600, 2);
-        if ($segmentState === 'is-wakeup') {
-          $onlineDailyHours[$bucketIndex] += $overlapHours;
-        } elseif ($segmentState === 'is-standby') {
-          $standbyDailyHours[$bucketIndex] += $overlapHours;
-        }
-      }
-    }
-
-    return array(
-      'onlineHoursTotal' => round(array_sum($onlineDailyHours), 2),
-      'standbyHoursTotal' => round(array_sum($standbyDailyHours), 2),
-      'onlineDailyHours' => array_map(function ($hours) { return round($hours, 2); }, $onlineDailyHours),
-      'standbyDailyHours' => array_map(function ($hours) { return round($hours, 2); }, $standbyDailyHours),
-    );
-  }
 
   include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
 ?>
@@ -536,6 +321,20 @@
     max-height: 170px;
     margin: 0 auto;
     overflow: visible;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-minimal .gauge .dial {
+    stroke-width: 5;
+    stroke: rgba(148, 163, 184, 0.45);
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-minimal .gauge .value {
+    stroke-width: 7;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-bold .gauge .dial {
+    stroke-width: 9;
+    stroke: rgba(148, 163, 184, 0.35);
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-bold .gauge .value {
+    stroke-width: 12;
   }
   .dashboard-gauge-meta {
     display: flex;
@@ -1013,6 +812,7 @@
                             data-high-threshold="<?php echo $SensorChannelConfigSingle['GaugeRedAreaHighValue']; ?>"
                             data-high-color="<?php echo htmlspecialchars($SensorChannelConfigSingle['GaugeRedAreaHighColor'], ENT_QUOTES, 'UTF-8'); ?>"
                             data-normal-color="<?php echo htmlspecialchars($SensorChannelConfigSingle['GaugeNormalAreaColor'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-gauge-style="<?php echo htmlspecialchars($SensorChannelConfigSingle['GaugeStyle'] ?? 'classic', ENT_QUOTES, 'UTF-8'); ?>"
                           >
                             <div class="dashboard-gauge-top">
                               <div class="dashboard-gauge-headline">

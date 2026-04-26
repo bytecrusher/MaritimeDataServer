@@ -11,6 +11,23 @@ require_once(__DIR__ . "/../Domain/User/user.class.php");
 require_once(__DIR__ . "/../Infrastructure/Logging/writeToLogFunction.func.php");
 
 class dbUpdateData {
+  private static function normalizeAlertSettings(array $post)
+  {
+    $alertEnabled = isset($post['AlertEnabled']) ? 1 : 0;
+    $alertLowValue = isset($post['AlertLowValue']) && $post['AlertLowValue'] !== '' ? $post['AlertLowValue'] : null;
+    $alertHighValue = isset($post['AlertHighValue']) && $post['AlertHighValue'] !== '' ? $post['AlertHighValue'] : null;
+    if (!$alertEnabled) {
+      $alertLowValue = null;
+      $alertHighValue = null;
+    }
+
+    return array(
+      'alertEnabled' => $alertEnabled,
+      'alertLowValue' => $alertLowValue,
+      'alertHighValue' => $alertHighValue,
+      'gaugeStyle' => $post['GaugeStyle'] ?? 'classic',
+    );
+  }
   /**
   * Update User Data.
   * @return bool — TRUE on success or FALSE on failure.
@@ -448,6 +465,7 @@ class dbUpdateData {
     $pdo = dbConfig::getInstance();
     $onDashboardVar = isset($post['onDashboard']) ? 1 : 0;
     $channelNr = (int)($post['channel'] ?? 1);
+    $alertSettings = self::normalizeAlertSettings($post);
     try {
       $statementSensor = $pdo->prepare("UPDATE sensorConfig SET name=?, description=?, locationOfMeasurement=?, onDashboard=? WHERE id=?");
       $statementSensor->execute(array(
@@ -458,7 +476,7 @@ class dbUpdateData {
         $post['id']
       ));
 
-      $statementChannel = $pdo->prepare("UPDATE sensorChannelConfig SET name=?, GaugeMinValue=?, GaugeMaxValue=?, GaugeRedAreaLowValue=?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?, GaugeNormalAreaColor=?, onDashboard=?, ChartColor=? WHERE sensorConfigId=? AND channelNr=?");
+      $statementChannel = $pdo->prepare("UPDATE sensorChannelConfig SET name=?, GaugeMinValue=?, GaugeMaxValue=?, GaugeRedAreaLowValue=?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?, GaugeNormalAreaColor=?, GaugeStyle=?, AlertEnabled=?, AlertLowValue=?, AlertHighValue=?, onDashboard=?, ChartColor=? WHERE sensorConfigId=? AND channelNr=?");
       return $statementChannel->execute(array(
         $post['nameValue' . $channelNr] ?? ($post['nameValue'] ?? $post['name']),
         $post['Value' . $channelNr . 'GaugeMinValue'] ?? $post['GaugeMinValue'],
@@ -468,6 +486,10 @@ class dbUpdateData {
         $post['Value' . $channelNr . 'GaugeRedAreaHighValue'] ?? $post['GaugeRedAreaHighValue'],
         $post['Value' . $channelNr . 'GaugeRedAreaHighColor'] ?? $post['GaugeRedAreaHighColor'],
         $post['Value' . $channelNr . 'GaugeNormalAreaColor'] ?? $post['GaugeNormalAreaColor'],
+        $alertSettings['gaugeStyle'],
+        $alertSettings['alertEnabled'],
+        $alertSettings['alertLowValue'],
+        $alertSettings['alertHighValue'],
         $onDashboardVar,
         $post['ChartColor'],
         $post['id'],
@@ -492,9 +514,10 @@ class dbUpdateData {
     if (!isset($post['onDashboard'])) {
       $onDashboardVar = 0;
     }
+    $alertSettings = self::normalizeAlertSettings($post);
     try {
-      $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET name=?, GaugeMinValue=?, GaugeMaxValue=?, GaugeRedAreaLowValue=?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?,  GaugeNormalAreaColor =?, onDashboard=?, ChartColor=? WHERE sensorConfigId=? AND channelNr=?");
-      return $statement2->execute(array($post['nameValue'], $post['GaugeMinValue'], $post['GaugeMaxValue'], $post['GaugeRedAreaLowValue'], $post['GaugeRedAreaLowColor'], $post['GaugeRedAreaHighValue'], $post['GaugeRedAreaHighColor'], $post['GaugeNormalAreaColor'], $onDashboardVar, $post['ChartColor'], $post['id'], $post['channel']));
+      $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET name=?, GaugeMinValue=?, GaugeMaxValue=?, GaugeRedAreaLowValue=?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?, GaugeNormalAreaColor=?, GaugeStyle=?, AlertEnabled=?, AlertLowValue=?, AlertHighValue=?, onDashboard=?, ChartColor=? WHERE sensorConfigId=? AND channelNr=?");
+      return $statement2->execute(array($post['nameValue'], $post['GaugeMinValue'], $post['GaugeMaxValue'], $post['GaugeRedAreaLowValue'], $post['GaugeRedAreaLowColor'], $post['GaugeRedAreaHighValue'], $post['GaugeRedAreaHighColor'], $post['GaugeNormalAreaColor'], $alertSettings['gaugeStyle'], $alertSettings['alertEnabled'], $alertSettings['alertLowValue'], $alertSettings['alertHighValue'], $onDashboardVar, $post['ChartColor'], $post['id'], $post['channel']));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);

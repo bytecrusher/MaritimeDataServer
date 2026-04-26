@@ -14,7 +14,7 @@ You will find the **MDC** documentation under **https://github.com/bytecrusher/M
 The **Maritime Data Server** is a web application that stores data and display it to the user.
 It requires a MySQL database for storing the data and a web server with PHP support. To display the data some HTML, CSS and JS is used.
 The **MDS** can display the data (that come from sensors) in graph/gauges or charts.
-Also it is possible to configure boards and sensors, or add new boards to a user account.
+Also it is possible to configure boards and sensors, add new boards to a user account and send notification emails for offline boards or critical sensor values.
 
 ## Description
 The server is organized in a
@@ -43,32 +43,43 @@ For the frontend the user needs to login. Now the user is able to do some config
 - **docu_donotdeploy** folder contains data and images for documentation.
 - **public**
      - preferred web root for web server configuration
-- **src**
-     - public web root and legacy-compatible entrypoints
-     - **frontend** the frontend files for this web project
-          - **api** api files for requests from JS.
-          - **common** common files like "header" and "footer".
-          - **css** stylesheets
-          - **func** legacy wrappers that forward to the new app structure
-          - **img** images for pages, i.e. board images.
-          - **js** javascript files.
-          - **register** Files for new user registering.
-     - **install** scripts to install and prepare sql DB, create the tables and the admin user.
-     - **node_modules** (maybe not exist right now, because it will be created after running npm)
-     - **otafirmware** contains OTA files for update ESP.
-     - **receiver** functions for receiving Data from MDCs.
+- **tools**
+     - maintenance scripts, notifications and helper tools
 - **var**
      - **log** runtime log files
 
 
 #### Installation
-Copy all **MDS** files contained in the "src" folder to your htdocs dir.
+Copy the project to your hosting or deployment target and configure your web server to use the `public/` directory as the web root.
 Create a new database (for example with phpmyadmin) and create a new user with write privileges to this database.
 Open **http://yourdomain/** in your browser and step through the installation steps.
 Enter all necessary informations and fill out the text boxes.
 After install is finished, remove the dir named "install" (for security reasons).
 
 Now the **MDS** is available under **http://yourdomain/**
+
+#### Notifications
+
+MDS can send notification emails when:
+- a board stays offline longer than its configured offline timer
+- a sensor channel exceeds or falls below a configured critical threshold
+
+The notification worker is:
+
+```text
+php tools/maintenance/sendmail.php
+```
+
+This script should be executed regularly by cron.
+
+#### Gauge Styles
+
+Per sensor channel you can choose a gauge style in `formSensors.php`.
+
+Currently available:
+- `classic`
+- `minimal`
+- `bold`
 
 ![MDS Dashboard](docu_donotdeploy/images/MDS_Dashboard.png)
 ![MDS Graph](docu_donotdeploy/images/MDS_Graph.png)

@@ -492,11 +492,15 @@ class myFunctions {
       $defaultValuesPerChannel['GaugeMaxValue'] = 20;
       $defaultValuesPerChannel['GaugeRedAreaLowValue'] = 8;
       $defaultValuesPerChannel['GaugeRedAreaLowColor'] = $red;
-      $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
-      $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
-      $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
-      $defaultValuesPerChannel['onDashboard'] = 1;
-      $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
+        $defaultValuesPerChannel['GaugeRedAreaHighValue'] = 16;
+        $defaultValuesPerChannel['GaugeRedAreaHighColor'] = $red;
+        $defaultValuesPerChannel['GaugeNormalAreaColor'] = $green;
+        $defaultValuesPerChannel['GaugeStyle'] = 'classic';
+        $defaultValuesPerChannel['AlertEnabled'] = 0;
+        $defaultValuesPerChannel['AlertLowValue'] = null;
+        $defaultValuesPerChannel['AlertHighValue'] = null;
+        $defaultValuesPerChannel['onDashboard'] = 1;
+        $defaultValuesPerChannel['ChartColor'] = RandomColor::one();
       array_push($defaultValuesPerChannelArray, $defaultValuesPerChannel);
 
       $defaultValuesPerChannel['name'] = "ADC2";
@@ -847,8 +851,8 @@ class myFunctions {
 
       foreach($defaultValuesPerChannelArray as $defaultValuesPerChannelSingle) {
         try {
-          $statement2 = $pdo->prepare("INSERT INTO sensorChannelConfig  SET sensorConfigId=?, name=?, description=?, channelNr=?, locationOfMeasurement=?, GaugeMinValue=?, GaugeMaxValue=?,  GaugeRedAreaLowValue =?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?, GaugeNormalAreaColor=?, onDashboard=?, ChartColor=?");
-          $statement2->execute(array($neue_id, $defaultValuesPerChannelSingle['name'], $defaultValuesPerChannelSingle['description'], $defaultValuesPerChannelSingle['channelNr'], $defaultValuesPerChannelSingle['locationOfMeasurement'],  $defaultValuesPerChannelSingle['GaugeMinValue'], $defaultValuesPerChannelSingle['GaugeMaxValue'],  $defaultValuesPerChannelSingle['GaugeRedAreaLowValue'], $defaultValuesPerChannelSingle['GaugeRedAreaLowColor'], $defaultValuesPerChannelSingle['GaugeRedAreaHighValue'], $defaultValuesPerChannelSingle['GaugeRedAreaHighColor'], $defaultValuesPerChannelSingle['GaugeNormalAreaColor'], $defaultValuesPerChannelSingle['onDashboard'], $defaultValuesPerChannelSingle['ChartColor']));
+          $statement2 = $pdo->prepare("INSERT INTO sensorChannelConfig  SET sensorConfigId=?, name=?, description=?, channelNr=?, locationOfMeasurement=?, GaugeMinValue=?, GaugeMaxValue=?,  GaugeRedAreaLowValue =?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?, GaugeNormalAreaColor=?, GaugeStyle=?, AlertEnabled=?, AlertLowValue=?, AlertHighValue=?, onDashboard=?, ChartColor=?");
+          $statement2->execute(array($neue_id, $defaultValuesPerChannelSingle['name'], $defaultValuesPerChannelSingle['description'], $defaultValuesPerChannelSingle['channelNr'], $defaultValuesPerChannelSingle['locationOfMeasurement'],  $defaultValuesPerChannelSingle['GaugeMinValue'], $defaultValuesPerChannelSingle['GaugeMaxValue'],  $defaultValuesPerChannelSingle['GaugeRedAreaLowValue'], $defaultValuesPerChannelSingle['GaugeRedAreaLowColor'], $defaultValuesPerChannelSingle['GaugeRedAreaHighValue'], $defaultValuesPerChannelSingle['GaugeRedAreaHighColor'], $defaultValuesPerChannelSingle['GaugeNormalAreaColor'], $defaultValuesPerChannelSingle['GaugeStyle'] ?? 'classic', $defaultValuesPerChannelSingle['AlertEnabled'] ?? 0, $defaultValuesPerChannelSingle['AlertLowValue'] ?? null, $defaultValuesPerChannelSingle['AlertHighValue'] ?? null, $defaultValuesPerChannelSingle['onDashboard'], $defaultValuesPerChannelSingle['ChartColor']));
         } catch (PDOException $e) {
           writeToLogFunction::write_to_log("Error: sensorChannelConfig not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
           writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);

@@ -28,19 +28,25 @@ function initializeDashboardCards() {
     const lowColor = card.dataset.lowColor || '#dc2626';
     const highColor = card.dataset.highColor || '#dc2626';
     const normalColor = card.dataset.normalColor || '#16a34a';
+    const gaugeStyle = card.dataset.gaugeStyle || 'classic';
 
     if (!gaugeMount || !gaugeKey || !sensorId) {
       return;
     }
 
+    card.classList.add('dashboard-gauge-style-' + gaugeStyle);
+
+    const gaugeStyleConfig = getGaugeStyleConfig(gaugeStyle);
+
     const gaugeInstance = Gauge(gaugeMount, {
       min: minValue,
       max: maxValue,
-      dialStartAngle: 180,
-      dialEndAngle: 0,
+      dialStartAngle: gaugeStyleConfig.dialStartAngle,
+      dialEndAngle: gaugeStyleConfig.dialEndAngle,
       value: Number.isFinite(gaugeValue) ? gaugeValue : minValue,
-      viewBox: '0 0 100 57',
+      viewBox: gaugeStyleConfig.viewBox,
       id: gaugeKey,
+      gaugeClass: gaugeStyleConfig.gaugeClass,
       color: function (value) {
         if (value < lowThreshold) {
           return lowColor;
@@ -71,6 +77,33 @@ function initializeDashboardCards() {
     };
     gaugesArrayHelperBig.push(chartMetadata);
   });
+}
+
+function getGaugeStyleConfig(gaugeStyle) {
+  switch (gaugeStyle) {
+    case 'minimal':
+      return {
+        dialStartAngle: 180,
+        dialEndAngle: 0,
+        viewBox: '0 0 100 57',
+        gaugeClass: 'gauge gauge-style-minimal',
+      };
+    case 'bold':
+      return {
+        dialStartAngle: 200,
+        dialEndAngle: -20,
+        viewBox: '0 0 100 62',
+        gaugeClass: 'gauge gauge-style-bold',
+      };
+    case 'classic':
+    default:
+      return {
+        dialStartAngle: 180,
+        dialEndAngle: 0,
+        viewBox: '0 0 100 57',
+        gaugeClass: 'gauge gauge-style-classic',
+      };
+  }
 }
 
 function initializeDashboardToolbar() {

@@ -93,6 +93,12 @@ CREATE TABLE `sensorChannelConfig` (
   `GaugeRedAreaHighValue` int NOT NULL DEFAULT '15',
   `GaugeRedAreaHighColor` text NOT NULL,
   `GaugeNormalAreaColor` text NOT NULL,
+  `GaugeStyle` varchar(20) NOT NULL DEFAULT 'classic',
+  `AlertEnabled` tinyint NOT NULL DEFAULT '0',
+  `AlertLowValue` decimal(12,4) DEFAULT NULL,
+  `AlertHighValue` decimal(12,4) DEFAULT NULL,
+  `AlertState` varchar(20) DEFAULT NULL,
+  `LastAlertSentAt` timestamp NULL DEFAULT NULL,
   `DashboardOrderNr` int DEFAULT '1',
   `onDashboard` tinyint NOT NULL DEFAULT '1',
   `ChartColor` text NOT NULL

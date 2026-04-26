@@ -8,6 +8,7 @@ Diese Datei dokumentiert die aktuell aktiven HTTP-Schnittstellen des Maritime Da
 - Browser-APIs des Dashboards
 - OTA-Firmware-Update fuer ESP32
 - Simulator fuer Test-Uplinks
+- automatische E-Mail-Benachrichtigungen
 
 Maschinenlesbare API-Beschreibung:
 
@@ -44,6 +45,13 @@ Die wichtigsten oeffentlichen Endpunkte sind:
   - ESP32-OTA-Update-Endpunkt
 - `GET|POST /tools/simulator/index.php`
   - TTN-Simulator-Oberflaeche
+
+Die wichtigsten nicht-oeffentlichen Wartungspfade sind:
+
+- `php tools/maintenance/sendmail.php`
+  - verarbeitet Offline- und Sensor-Schwellwert-Benachrichtigungen
+- `php tools/maintenance/checkBoardOnline.php`
+  - einfacher CLI-Check fuer Board-Online-Status
 
 
 ## TTN Integration
@@ -286,6 +294,91 @@ Verhalten bei neuen oder unvollstaendig provisionierten Boards:
 - das Board selbst kann ueber `board.macAddress` automatisch angelegt werden
 - ein fehlender `sensorConfig`-Eintrag wird nur dann automatisch erzeugt, wenn der Sensortyp eindeutig erkennbar ist
 - nur `macAddress` plus rohe Werte ohne Typ-/Namenshinweis reicht fuer ein sicheres Auto-Provisioning nicht aus
+
+
+## Benachrichtigungen
+
+### Offline-Benachrichtigungen
+
+Offline-Mails werden ueber diesen Wartungspfad verarbeitet:
+
+```text
+php tools/maintenance/sendmail.php
+```
+
+Voraussetzungen:
+
+- `sendEmails = 1` in `config/config.json`
+- `systemEmailAddress` oder `adminEmailAddress` gesetzt
+- der Board-Besitzer hat `receive_notifications = 1`
+- das Board hat:
+  - `alarmOnUnavailable = 1`
+  - `offlineDataTimer > 0`
+
+Ablauf:
+
+1. Das Script prueft Boards mit Besitzer und aktivierter Benachrichtigung.
+2. Wenn ein Board laenger offline ist als `offlineDataTimer`, wird eine Mail an den Besitzer verschickt.
+3. `boardConfig.alreadyNotified` wird auf `1` gesetzt.
+4. Sobald wieder Daten ueber `/ingest/receivejson.php` ankommen, setzt MDS den Zustand wieder zurueck.
+
+### Kritische Sensorwerte
+
+Sensor-Kanaele koennen ebenfalls automatische E-Mail-Warnungen ausloesen.
+
+Die Konfiguration erfolgt pro Kanal in `formSensors.php`:
+
+- `AlertEnabled`
+- `AlertLowValue`
+- `AlertHighValue`
+
+Verhalten:
+
+- unterschreitet der aktuelle Kanalwert `AlertLowValue`, wird ein `low`-Alert ausgeloest
+- ueberschreitet der aktuelle Kanalwert `AlertHighValue`, wird ein `high`-Alert ausgeloest
+- wiederholte Mails fuer denselben Zustand werden unterdrueckt, solange `AlertState` gleich bleibt
+- wenn der Wert wieder in den Normalbereich faellt, wird `AlertState` zurueckgesetzt
+
+Die neuen DB-Felder dazu liegen in `sensorChannelConfig`:
+
+- `GaugeStyle`
+- `AlertEnabled`
+- `AlertLowValue`
+- `AlertHighValue`
+- `AlertState`
+- `LastAlertSentAt`
+
+Migration:
+
+- [docs/db_design/migrations/2026-04-26_notification_and_gauge_style.sql](/Users/guntmar/Documents/Docker/MDS/mds_from_workdir/public_html/maritimedataserver/docs/db_design/migrations/2026-04-26_notification_and_gauge_style.sql:1)
+
+
+## Dashboard-Gauges
+
+### Gauge-Stile
+
+Pro Sensor-Kanal kann in `formSensors.php` ein Gauge-Stil gewaehlt werden.
+
+Aktuell unterstuetzte Stile:
+
+- `classic`
+- `minimal`
+- `bold`
+
+Die Auswahl wird in `sensorChannelConfig.GaugeStyle` gespeichert und beim Dashboard-Rendering in `public/internal.php` und `public/assets/js/dashboard.js` ausgewertet.
+
+### Kritische Bereiche vs. Benachrichtigungen
+
+Die Gauge-Farbbereiche und die Mail-Schwellwerte sind bewusst getrennt:
+
+- Gauge-Bereiche:
+  - `GaugeRedAreaLowValue`
+  - `GaugeRedAreaHighValue`
+- Mail-Schwellwerte:
+  - `AlertLowValue`
+  - `AlertHighValue`
+
+Damit kann ein Wert optisch frueh auffaellig markiert werden, ohne sofort eine E-Mail auszuloesen.
 
 ### Validierung
 
