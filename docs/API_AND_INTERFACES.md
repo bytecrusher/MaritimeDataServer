@@ -52,6 +52,8 @@ Die wichtigsten nicht-oeffentlichen Wartungspfade sind:
   - verarbeitet Offline- und Sensor-Schwellwert-Benachrichtigungen
 - `php tools/maintenance/checkBoardOnline.php`
   - einfacher CLI-Check fuer Board-Online-Status
+- `var/status/notification_status.json`
+  - letzter Status des Benachrichtigungsjobs mit Summen und Zeitstempeln
 
 
 ## TTN Integration
@@ -311,6 +313,7 @@ Voraussetzungen:
 - `sendEmails = 1` in `config/config.json`
 - `systemEmailAddress` oder `adminEmailAddress` gesetzt
 - der Board-Besitzer hat `receive_notifications = 1`
+- der Board-Besitzer hat `receive_offline_notifications = 1`
 - das Board hat:
   - `alarmOnUnavailable = 1`
   - `offlineDataTimer > 0`
@@ -338,6 +341,7 @@ Verhalten:
 - ueberschreitet der aktuelle Kanalwert `AlertHighValue`, wird ein `high`-Alert ausgeloest
 - wiederholte Mails fuer denselben Zustand werden unterdrueckt, solange `AlertState` gleich bleibt
 - wenn der Wert wieder in den Normalbereich faellt, wird `AlertState` zurueckgesetzt
+- der Benutzer muss sowohl `receive_notifications = 1` als auch `receive_sensor_notifications = 1` aktiviert haben
 
 Die neuen DB-Felder dazu liegen in `sensorChannelConfig`:
 
@@ -364,6 +368,10 @@ Aktuell unterstuetzte Stile:
 - `classic`
 - `minimal`
 - `bold`
+- `arc`
+- `ring`
+- `clock`
+- `industrial`
 
 Die Auswahl wird in `sensorChannelConfig.GaugeStyle` gespeichert und beim Dashboard-Rendering in `public/internal.php` und `public/assets/js/dashboard.js` ausgewertet.
 

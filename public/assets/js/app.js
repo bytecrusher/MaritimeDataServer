@@ -31,6 +31,7 @@ $(document).ready(async function(){
   InitialSetupChart();
   initializeChartBoardFilters();
   initializeEventTimeline();
+  const defaultChartMaxValues = getDefaultChartMaxValues();
   // TODO: Check, how to add values with timestamp (currently it begins from the left to add values, indepented from the timestampt).
 
   for (let i in gaugesArrayHelperBig) {
@@ -39,13 +40,13 @@ $(document).ready(async function(){
     var borderColor = randomColor;
 
     if ( (gaugesArrayHelperBig[i]["typename"] == "DS18B20") || (gaugesArrayHelperBig[i]["NameOfSensors"] == "BME280.Temp") ) {
-      addDataToChart(window.myChart, 'temperature', gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
-      addLabelsToChart(window.myChart, gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+      addDataToChart(window.myChart, 'temperature', gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
+      addLabelsToChart(window.myChart, gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
     }
 
     if (gaugesArrayHelperBig[i]["typename"] == "ADC") {
-      addDataToChart(window.myChart2, 'adc', gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
-      addLabelsToChart(window.myChart2, gaugesArrayHelperBig[i]["sensorId"], 200, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+      addDataToChart(window.myChart2, 'adc', gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
+      addLabelsToChart(window.myChart2, gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
     }
 
     if ( (gaugesArrayHelperBig[i]["typename"] != "DS18B20") && (gaugesArrayHelperBig[i]["NameOfSensors"] != "BME280.Temp") && (gaugesArrayHelperBig[i]["typename"] != "ADC")) {
@@ -55,11 +56,25 @@ $(document).ready(async function(){
       sensorname = gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"];
       sensorChannel = gaugesArrayHelperBig[i]["channelNr"];
 
-      addDataToChart(window.myChart3, 'other', varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname, sensorChannel-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
-      addLabelsToChart(window.myChart3, varSensorId, 200, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+      addDataToChart(window.myChart3, 'other', varSensorId, defaultChartMaxValues, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname, sensorChannel-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
+      addLabelsToChart(window.myChart3, varSensorId, defaultChartMaxValues, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
     }
   }
 });
+
+function getDefaultChartMaxValues() {
+  const preferredChartWindowDays = Number.parseInt(window.preferredChartWindowDays || '7', 10);
+  if (preferredChartWindowDays <= 1) {
+    return 50;
+  }
+  if (preferredChartWindowDays <= 7) {
+    return 200;
+  }
+  if (preferredChartWindowDays <= 14) {
+    return 400;
+  }
+  return 800;
+}
 
 function addDataToChart(destinationChart, chartKey, varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor, sensorname, sensorChannel, boardId, boardName) {
   if (varSensorId != null) {

@@ -228,14 +228,60 @@ class dbUpdateData {
   */
   public static function updateUserReceiveNotifications($post, $userId) {
     $pdo = dbConfig::getInstance();
-    $varReceiveNotifications = ($post['receiveNotifications']);
+    $varReceiveNotifications = isset($post['receiveNotifications']) ? (int)$post['receiveNotifications'] : 0;
+    $varReceiveOfflineNotifications = isset($post['receiveOfflineNotifications']) ? (int)$post['receiveOfflineNotifications'] : 0;
+    $varReceiveSensorNotifications = isset($post['receiveSensorNotifications']) ? (int)$post['receiveSensorNotifications'] : 0;
     try {
-      $statement = $pdo->prepare("UPDATE users SET receive_notifications = :receive_notifications WHERE id = :userId");
-      return $statement->execute(array('receive_notifications' => $varReceiveNotifications, 'userId' => $userId ));
+      $statement = $pdo->prepare(
+        "UPDATE users
+         SET receive_notifications = :receive_notifications,
+             receive_offline_notifications = :receive_offline_notifications,
+             receive_sensor_notifications = :receive_sensor_notifications
+         WHERE id = :userId"
+      );
+      return $statement->execute(array(
+        'receive_notifications' => $varReceiveNotifications,
+        'receive_offline_notifications' => $varReceiveOfflineNotifications,
+        'receive_sensor_notifications' => $varReceiveSensorNotifications,
+        'userId' => $userId
+      ));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: User  ReceiveNotifications in DB not successfully updated for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
       throw new Exception('User ReceiveNotifications in DB not successfully updated.');
+    }
+  }
+
+  public static function updateUserDashboardPreferences($post, $userId) {
+    $pdo = dbConfig::getInstance();
+    $dashboardUpdateInterval = isset($post['updateInterval']) ? (int)$post['updateInterval'] : 15;
+    $dashboardOnlineOnly = isset($post['dashboardOnlineOnly']) ? 1 : 0;
+    $preferredChartWindowDays = isset($post['preferredChartWindowDays']) ? (int)$post['preferredChartWindowDays'] : 7;
+    if ($dashboardUpdateInterval < 1) {
+      $dashboardUpdateInterval = 1;
+    }
+    if (!in_array($preferredChartWindowDays, array(1, 7, 14, 30), true)) {
+      $preferredChartWindowDays = 7;
+    }
+
+    try {
+      $statement = $pdo->prepare(
+        "UPDATE users
+         SET dashboardUpdateInterval = :dashboardUpdateInterval,
+             dashboardOnlineOnly = :dashboardOnlineOnly,
+             preferredChartWindowDays = :preferredChartWindowDays
+         WHERE id = :userId"
+      );
+      return $statement->execute(array(
+        'dashboardUpdateInterval' => $dashboardUpdateInterval,
+        'dashboardOnlineOnly' => $dashboardOnlineOnly,
+        'preferredChartWindowDays' => $preferredChartWindowDays,
+        'userId' => $userId
+      ));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: User dashboard preferences in DB not successfully updated for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('User dashboard preferences in DB not successfully updated.');
     }
   }
 

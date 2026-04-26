@@ -12,6 +12,7 @@ Thumbs.db
 ######################
 *.log
 *.csv
+var/status/*.json
 node_modules/*
 
 otafirmware/*

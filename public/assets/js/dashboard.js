@@ -41,6 +41,7 @@ function initializeDashboardCards() {
     const gaugeInstance = Gauge(gaugeMount, {
       min: minValue,
       max: maxValue,
+      dialRadius: gaugeStyleConfig.dialRadius,
       dialStartAngle: gaugeStyleConfig.dialStartAngle,
       dialEndAngle: gaugeStyleConfig.dialEndAngle,
       value: Number.isFinite(gaugeValue) ? gaugeValue : minValue,
@@ -83,6 +84,7 @@ function getGaugeStyleConfig(gaugeStyle) {
   switch (gaugeStyle) {
     case 'minimal':
       return {
+        dialRadius: 40,
         dialStartAngle: 180,
         dialEndAngle: 0,
         viewBox: '0 0 100 57',
@@ -90,14 +92,48 @@ function getGaugeStyleConfig(gaugeStyle) {
       };
     case 'bold':
       return {
+        dialRadius: 40,
         dialStartAngle: 200,
         dialEndAngle: -20,
         viewBox: '0 0 100 62',
         gaugeClass: 'gauge gauge-style-bold',
       };
+    case 'arc':
+      return {
+        dialRadius: 40,
+        dialStartAngle: 220,
+        dialEndAngle: -40,
+        viewBox: '0 0 100 70',
+        gaugeClass: 'gauge gauge-style-arc',
+      };
+    case 'ring':
+      return {
+        dialRadius: 40,
+        dialStartAngle: 225,
+        dialEndAngle: -45,
+        viewBox: '0 0 100 100',
+        gaugeClass: 'gauge gauge-style-ring',
+      };
+    case 'clock':
+      return {
+        dialRadius: 40,
+        dialStartAngle: 269,
+        dialEndAngle: -89,
+        viewBox: '0 0 100 100',
+        gaugeClass: 'gauge gauge-style-clock',
+      };
+    case 'industrial':
+      return {
+        dialRadius: 40,
+        dialStartAngle: 240,
+        dialEndAngle: -60,
+        viewBox: '0 0 100 86',
+        gaugeClass: 'gauge gauge-style-industrial',
+      };
     case 'classic':
     default:
       return {
+        dialRadius: 40,
         dialStartAngle: 180,
         dialEndAngle: 0,
         viewBox: '0 0 100 57',
@@ -112,6 +148,7 @@ function initializeDashboardToolbar() {
     return;
   }
 
+  toggleDashboardOnlineOnly(onlineToggle.checked);
   onlineToggle.addEventListener('change', function () {
     toggleDashboardOnlineOnly(onlineToggle.checked);
   });

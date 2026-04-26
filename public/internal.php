@@ -33,6 +33,8 @@
   $eventTimelineSummaryLabels = $pageData['eventPayload']['summaryLabels'];
   $eventTimelineSummary = $pageData['eventPayload']['summary'];
   $dashboardUpdateIntervalMs = $pageData['dashboardUpdateIntervalMs'];
+  $dashboardOnlineOnlyDefault = $pageData['dashboardOnlineOnlyDefault'];
+  $preferredChartWindowDays = $pageData['preferredChartWindowDays'];
   $varDemoMode = $pageData['demoMode'];
   $showInstallAlert = $pageData['showInstallAlert'];
   $hasBoards = $pageData['hasBoards'];
@@ -335,6 +337,75 @@
   }
   .dashboard-gauge-card.dashboard-gauge-style-bold .gauge .value {
     stroke-width: 12;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-arc .dashboard-gauge-visual,
+  .dashboard-gauge-card.dashboard-gauge-style-industrial .dashboard-gauge-visual {
+    min-height: 190px;
+    height: 190px;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-ring .dashboard-gauge-visual,
+  .dashboard-gauge-card.dashboard-gauge-style-clock .dashboard-gauge-visual {
+    min-height: 220px;
+    height: 220px;
+    position: relative;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-arc .gauge .dial {
+    stroke-width: 4;
+    stroke: rgba(59, 130, 246, 0.18);
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-arc .gauge .value {
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-ring .gauge .dial,
+  .dashboard-gauge-card.dashboard-gauge-style-clock .gauge .dial {
+    stroke-width: 6;
+    stroke: rgba(148, 163, 184, 0.28);
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-ring .gauge .value,
+  .dashboard-gauge-card.dashboard-gauge-style-clock .gauge .value {
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-ring .gauge,
+  .dashboard-gauge-card.dashboard-gauge-style-clock .gauge {
+    max-width: 220px;
+    max-height: 220px;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-clock .dashboard-gauge-visual::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at center, transparent 0 56%, rgba(15, 23, 42, 0.05) 56% 57%, transparent 57% 100%),
+      repeating-conic-gradient(from -90deg, rgba(15, 23, 42, 0.22) 0deg 1.5deg, transparent 1.5deg 30deg);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-clock .dashboard-gauge-visual::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.7);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-industrial {
+    background: linear-gradient(180deg, #e2e8f0 0%, #d7e0eb 100%);
+    border-color: rgba(71, 85, 105, 0.24);
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-industrial .gauge .dial {
+    stroke-width: 7;
+    stroke: rgba(71, 85, 105, 0.32);
+  }
+  .dashboard-gauge-card.dashboard-gauge-style-industrial .gauge .value {
+    stroke-width: 10;
+    stroke-linecap: butt;
   }
   .dashboard-gauge-meta {
     display: flex;
@@ -672,6 +743,7 @@
   }
 
   var DashboardUpdateInterval = <?php echo $dashboardUpdateIntervalMs; ?>;
+  window.preferredChartWindowDays = <?php echo (int)$preferredChartWindowDays; ?>;
   setInterval(function() {
     // run every 30 seconds
     updateGauges();
@@ -740,7 +812,7 @@
             </div>
             <div class="dashboard-toolbar-meta">
               <div class="form-check form-switch m-0">
-                <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle">
+                <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle" <?php if ((int)$dashboardOnlineOnlyDefault === 1) { echo 'checked'; } ?>>
                 <label class="form-check-label" for="dashboard-online-only-toggle">Nur Online-Devices</label>
               </div>
             </div>
@@ -910,8 +982,9 @@
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
                 <div>
+                  <?php $eventWindowTitle = (int)$preferredChartWindowDays === 1 ? 'letzten 24 Stunden' : ('letzten ' . (int)$preferredChartWindowDays . ' Tage'); ?>
                   <h3>ESP Ereignisse</h3>
-                  <p>Zeigt den zeitlichen Verlauf der letzten Woche, wie lange ein Device online oder im Standby war.</p>
+                  <p>Zeigt den zeitlichen Verlauf der <?php echo htmlspecialchars($eventWindowTitle, ENT_QUOTES, 'UTF-8'); ?>, wie lange ein Device online oder im Standby war.</p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                   <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="events">Alle anzeigen</button>
@@ -922,8 +995,9 @@
               <div class="chart-panel-surface mb-4">
                 <div class="tab-section-title mb-3">
                   <div>
-                    <h4 class="mb-1">Verlauf der letzten 7 Tage</h4>
-                    <p>Pro Tag siehst du die Summe in Stunden, die ein Device online oder im Standby war.</p>
+                    <h4 class="mb-1">Verlauf der <?php echo htmlspecialchars($eventWindowTitle, ENT_QUOTES, 'UTF-8'); ?></h4>
+                    <?php $windowLabel = $eventWindowTitle; ?>
+                    <p>Pro Tag siehst du die Summe in Stunden, die ein Device online oder im Standby war, fuer die <?php echo htmlspecialchars($windowLabel, ENT_QUOTES, 'UTF-8'); ?>.</p>
                   </div>
                 </div>
                 <div class="event-summary-chart-shell">

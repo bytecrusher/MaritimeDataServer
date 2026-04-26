@@ -255,7 +255,15 @@
                 <select class='form-select' id='GaugeStyle' name='GaugeStyle'>
                   <?php
                     $currentGaugeStyle = $mySingleSensorChannelConfig['GaugeStyle'] ?? 'classic';
-                    $gaugeStyles = array('classic' => 'Classic', 'minimal' => 'Minimal', 'bold' => 'Bold');
+                    $gaugeStyles = array(
+                      'classic' => 'Classic',
+                      'minimal' => 'Minimal',
+                      'bold' => 'Bold',
+                      'arc' => 'Arc',
+                      'ring' => 'Ring',
+                      'clock' => 'Clock',
+                      'industrial' => 'Industrial'
+                    );
                     foreach ($gaugeStyles as $gaugeStyleValue => $gaugeStyleLabel) {
                       $selected = $currentGaugeStyle === $gaugeStyleValue ? 'selected' : '';
                       echo "<option value='" . htmlspecialchars($gaugeStyleValue, ENT_QUOTES, 'UTF-8') . "' $selected>" . htmlspecialchars($gaugeStyleLabel, ENT_QUOTES, 'UTF-8') . "</option>";

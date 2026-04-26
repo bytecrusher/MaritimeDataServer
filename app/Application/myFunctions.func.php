@@ -838,6 +838,7 @@ class myFunctions {
     }
 
     if ($valuesDefined == true) {
+      $defaultGaugeStyle = configuration::$defaultGaugeStyle ?: 'classic';
       try {
         $statement = $pdo->prepare("INSERT INTO sensorConfig (boardId, typId, name," .
         "NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?)");
@@ -850,6 +851,7 @@ class myFunctions {
       }
 
       foreach($defaultValuesPerChannelArray as $defaultValuesPerChannelSingle) {
+        $defaultValuesPerChannelSingle['GaugeStyle'] = $defaultValuesPerChannelSingle['GaugeStyle'] ?? $defaultGaugeStyle;
         try {
           $statement2 = $pdo->prepare("INSERT INTO sensorChannelConfig  SET sensorConfigId=?, name=?, description=?, channelNr=?, locationOfMeasurement=?, GaugeMinValue=?, GaugeMaxValue=?,  GaugeRedAreaLowValue =?, GaugeRedAreaLowColor=?, GaugeRedAreaHighValue=?, GaugeRedAreaHighColor=?, GaugeNormalAreaColor=?, GaugeStyle=?, AlertEnabled=?, AlertLowValue=?, AlertHighValue=?, onDashboard=?, ChartColor=?");
           $statement2->execute(array($neue_id, $defaultValuesPerChannelSingle['name'], $defaultValuesPerChannelSingle['description'], $defaultValuesPerChannelSingle['channelNr'], $defaultValuesPerChannelSingle['locationOfMeasurement'],  $defaultValuesPerChannelSingle['GaugeMinValue'], $defaultValuesPerChannelSingle['GaugeMaxValue'],  $defaultValuesPerChannelSingle['GaugeRedAreaLowValue'], $defaultValuesPerChannelSingle['GaugeRedAreaLowColor'], $defaultValuesPerChannelSingle['GaugeRedAreaHighValue'], $defaultValuesPerChannelSingle['GaugeRedAreaHighColor'], $defaultValuesPerChannelSingle['GaugeNormalAreaColor'], $defaultValuesPerChannelSingle['GaugeStyle'] ?? 'classic', $defaultValuesPerChannelSingle['AlertEnabled'] ?? 0, $defaultValuesPerChannelSingle['AlertLowValue'] ?? null, $defaultValuesPerChannelSingle['AlertHighValue'] ?? null, $defaultValuesPerChannelSingle['onDashboard'], $defaultValuesPerChannelSingle['ChartColor']));

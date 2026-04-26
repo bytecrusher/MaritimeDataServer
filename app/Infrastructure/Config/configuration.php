@@ -27,6 +27,9 @@ class configuration {
     static $systemEmailAddress = null;
     static $applicationName = null;
     static $ttnWebhookSecret = null;
+    static $defaultGaugeStyle = null;
+    static $defaultDashboardOnlineOnly = null;
+    static $defaultChartWindowDays = null;
     
     function __construct() {
         $projectRoot = dirname(__FILE__, 4);
@@ -130,6 +133,21 @@ class configuration {
                 self::$ttnWebhookSecret = (string)$jsonData['ttnWebhookSecret'];
             }
 
+            self::$defaultGaugeStyle = 'classic';
+            if (array_key_exists('defaultGaugeStyle', $jsonData) && is_string($jsonData['defaultGaugeStyle']) && $jsonData['defaultGaugeStyle'] !== '') {
+                self::$defaultGaugeStyle = $jsonData['defaultGaugeStyle'];
+            }
+
+            self::$defaultDashboardOnlineOnly = '0';
+            if (array_key_exists('defaultDashboardOnlineOnly', $jsonData)) {
+                self::$defaultDashboardOnlineOnly = (string)$jsonData['defaultDashboardOnlineOnly'];
+            }
+
+            self::$defaultChartWindowDays = '7';
+            if (array_key_exists('defaultChartWindowDays', $jsonData) && is_numeric($jsonData['defaultChartWindowDays'])) {
+                self::$defaultChartWindowDays = (string)$jsonData['defaultChartWindowDays'];
+            }
+
             self::$config_exist = true;
         } else {
             $path = false;
@@ -142,6 +160,15 @@ class configuration {
         try {
             $projectRoot = dirname(__FILE__, 4);
             $modernConfigDir = $projectRoot . '/config';
+            $allowedGaugeStyles = array('classic', 'minimal', 'bold', 'arc', 'ring', 'clock', 'industrial');
+            $defaultGaugeStyle = $post['defaultGaugeStyle'] ?? 'classic';
+            if (!in_array($defaultGaugeStyle, $allowedGaugeStyles, true)) {
+                $defaultGaugeStyle = 'classic';
+            }
+            $defaultChartWindowDays = isset($post['defaultChartWindowDays']) ? (int)$post['defaultChartWindowDays'] : 7;
+            if (!in_array($defaultChartWindowDays, array(1, 7, 14, 30), true)) {
+                $defaultChartWindowDays = 7;
+            }
             if (!is_dir($modernConfigDir)) {
                 mkdir($modernConfigDir, 0775, true);
             }
@@ -151,15 +178,24 @@ class configuration {
             self::$sendEmails = $post['sendEmails'];
             self::$systemEmailAddress = $post['systemEmailAddress'];
             self::$applicationName = $post['applicationName'];
+            self::$defaultGaugeStyle = $defaultGaugeStyle;
+            self::$defaultDashboardOnlineOnly = $post['defaultDashboardOnlineOnly'] ?? '0';
+            self::$defaultChartWindowDays = (string)$defaultChartWindowDays;
             $path = $modernConfigDir . '/config.json';
-            $jsonString = file_get_contents($path);
-            $jsonData = json_decode($jsonString, true);
+            $jsonString = file_exists($path) ? file_get_contents($path) : false;
+            $jsonData = $jsonString !== false ? json_decode($jsonString, true) : array();
+            if (!is_array($jsonData)) {
+                $jsonData = array();
+            }
             $jsonData['apiKey'] = $post['apiKey'];
             $jsonData['demoMode'] = $post['demoMode'];
             $jsonData['ShowQrCode'] = $post['ShowQrCode'];
             $jsonData['sendEmails'] = $post['sendEmails'];
             $jsonData['systemEmailAddress'] = $post['systemEmailAddress'];
             $jsonData['applicationName'] = $post['applicationName'];
+            $jsonData['defaultGaugeStyle'] = self::$defaultGaugeStyle;
+            $jsonData['defaultDashboardOnlineOnly'] = self::$defaultDashboardOnlineOnly;
+            $jsonData['defaultChartWindowDays'] = self::$defaultChartWindowDays;
             $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
             // Write in the file
             $fp = fopen($path, 'w');

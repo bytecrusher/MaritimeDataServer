@@ -37,13 +37,19 @@ class InternalPageService
             $myBoardsIdList = array();
         }
         $boardObjsArray = self::buildBoardObjects($myBoardsIdList);
+        $preferredChartWindowDays = (int) ($currentUser->getPreferredChartWindowDays() ?: $config::$defaultChartWindowDays);
+        if ($preferredChartWindowDays < 1) {
+            $preferredChartWindowDays = 7;
+        }
 
         return array(
             'myBoardsIdList' => $myBoardsIdList,
             'boardObjsArray' => $boardObjsArray,
             'mapPayload' => self::buildMapPayload($currentUser),
-            'eventPayload' => self::buildEventPayload($boardObjsArray),
+            'eventPayload' => self::buildEventPayload($boardObjsArray, $preferredChartWindowDays),
             'dashboardUpdateIntervalMs' => max(1000, (int) $currentUser->getDashboardUpdateInterval() * 10000),
+            'dashboardOnlineOnlyDefault' => (int) ($currentUser->getDashboardOnlineOnly() ?? $config::$defaultDashboardOnlineOnly),
+            'preferredChartWindowDays' => $preferredChartWindowDays,
             'demoMode' => (bool) $config::$demoMode,
             'showInstallAlert' => ((int) $currentUser->getUserGroupAdmin() === 1) && is_dir(__DIR__ . '/../../public/install'),
             'hasBoards' => !empty($myBoardsIdList),
@@ -91,17 +97,18 @@ class InternalPageService
         );
     }
 
-    private static function buildEventPayload(array $boardObjsArray)
+    private static function buildEventPayload(array $boardObjsArray, $windowDays = 7)
     {
         $eventChartSensors = array();
         $eventTimelineBoards = array();
         $eventTimelineSummaryLabels = array();
         $eventTimelineSummary = array();
         $eventTimelineSummaryBuckets = array();
-        $eventWindowStart = new DateTimeImmutable('today -6 days');
+        $windowDays = max(1, (int) $windowDays);
+        $eventWindowStart = new DateTimeImmutable('today -' . ($windowDays - 1) . ' days');
         $eventWindowEnd = new DateTimeImmutable('now');
 
-        for ($eventOffset = 0; $eventOffset < 7; $eventOffset++) {
+        for ($eventOffset = 0; $eventOffset < $windowDays; $eventOffset++) {
             $eventDay = $eventWindowStart->modify('+' . $eventOffset . ' days');
             $eventTimelineSummaryLabels[] = $eventDay->format('d.m.');
             $eventTimelineSummaryBuckets[] = $eventDay->format('Y-m-d');

@@ -294,8 +294,10 @@ class user implements JsonSerializable
 
   public function setDashboardUpdateInterval($post) {
     try {
-      $updateUserReturn = dbUpdateData::updateUserDashboardUpdateInterval($post, $this->userObj->id);
-      $this->userObj->dashboardUpdateInterval = $post['updateInterval'];
+      $updateUserReturn = dbUpdateData::updateUserDashboardPreferences($post, $this->userObj->id);
+      $this->userObj->dashboardUpdateInterval = (int)$post['updateInterval'];
+      $this->userObj->dashboardOnlineOnly = isset($post['dashboardOnlineOnly']) ? 1 : 0;
+      $this->userObj->preferredChartWindowDays = isset($post['preferredChartWindowDays']) ? (int)$post['preferredChartWindowDays'] : 7;
     } catch (Exception $e) {
       throw new Exception('Dashboard Update Interval not saved.');
     }
@@ -308,10 +310,40 @@ class user implements JsonSerializable
   public function setReceiveNotifications($post) {
     try {
       $updateUserReturn = dbUpdateData::updateUserReceiveNotifications($post, $this->userObj->id);
-      $this->userObj->receive_notifications = $post['receiveNotifications'];
+      $this->userObj->receive_notifications = isset($post['receiveNotifications']) ? (int)$post['receiveNotifications'] : 0;
+      $this->userObj->receive_offline_notifications = isset($post['receiveOfflineNotifications']) ? (int)$post['receiveOfflineNotifications'] : 0;
+      $this->userObj->receive_sensor_notifications = isset($post['receiveSensorNotifications']) ? (int)$post['receiveSensorNotifications'] : 0;
     } catch (Exception $e) {
       throw new Exception('Dashboard Update receiveNotifications not saved.');
     }
     //return $this->userObj->receive_notifications;
+  }
+
+  public function getReceiveOfflineNotifications() {
+    if (!property_exists($this->userObj, 'receive_offline_notifications')) {
+      return $this->userObj->receive_notifications ?? 0;
+    }
+    return $this->userObj->receive_offline_notifications;
+  }
+
+  public function getReceiveSensorNotifications() {
+    if (!property_exists($this->userObj, 'receive_sensor_notifications')) {
+      return $this->userObj->receive_notifications ?? 0;
+    }
+    return $this->userObj->receive_sensor_notifications;
+  }
+
+  public function getDashboardOnlineOnly() {
+    if (!property_exists($this->userObj, 'dashboardOnlineOnly')) {
+      return 0;
+    }
+    return $this->userObj->dashboardOnlineOnly;
+  }
+
+  public function getPreferredChartWindowDays() {
+    if (!property_exists($this->userObj, 'preferredChartWindowDays')) {
+      return 7;
+    }
+    return $this->userObj->preferredChartWindowDays;
   }
 }

@@ -2,6 +2,7 @@
 
 require_once(__DIR__ . '/InternalPageService.php');
 require_once(__DIR__ . '/dbUpdateData.php');
+require_once(__DIR__ . '/NotificationService.php');
 require_once(__DIR__ . '/../Infrastructure/Logging/writeToLogFunction.func.php');
 
 class SettingsPageService
@@ -35,9 +36,9 @@ class SettingsPageService
             try {
                 $userObj->setDashboardUpdateInterval($post);
                 $_SESSION['userObj'] = serialize($userObj);
-                $result['success_msg'] = 'Dashboard Update Interval successfully saved.';
+                $result['success_msg'] = 'Dashboard settings successfully saved.';
             } catch (Exception $e) {
-                $result['error_msg'] = 'Dashboard Update Interval not saved.';
+                $result['error_msg'] = 'Dashboard settings not saved.';
                 self::logException($result['error_msg'], $e);
             }
         } elseif ($save === 'users') {
@@ -68,6 +69,19 @@ class SettingsPageService
             } catch (Exception $e) {
                 $result['error_msg'] = $e->getMessage();
                 self::logException('Server settings not saved.', $e);
+            }
+        } elseif ($save === 'testMailUser') {
+            if (NotificationService::sendTestEmail($userObj->getEmail(), $config, 'user-settings')) {
+                $result['success_msg'] = 'Test email sent to your user address.';
+            } else {
+                $result['error_msg'] = 'Test email could not be sent.';
+            }
+        } elseif ($save === 'testMailSystem') {
+            $targetEmail = trim((string)($config::$systemEmailAddress ?: $config::$adminEmailAddress ?: $userObj->getEmail()));
+            if (NotificationService::sendTestEmail($targetEmail, $config, 'admin-settings')) {
+                $result['success_msg'] = 'System test email sent.';
+            } else {
+                $result['error_msg'] = 'System test email could not be sent.';
             }
         }
 
@@ -104,6 +118,8 @@ class SettingsPageService
     {
         $isAdmin = ((int) $userObj->getUserGroupAdmin() === 1);
 
+        $notificationOverview = NotificationService::getNotificationStatusOverview($userObj->getId(), $isAdmin);
+
         return array(
             'demoMode' => (bool) $config::$demoMode,
             'showQrCode' => $config::$ShowQrCode,
@@ -115,6 +131,7 @@ class SettingsPageService
             'timeZones' => self::getTimeZoneList(),
             'currentLogContent' => self::getCurrentLogContent(),
             'isAdmin' => $isAdmin,
+            'notificationOverview' => $notificationOverview,
         );
     }
 

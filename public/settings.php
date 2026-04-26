@@ -45,6 +45,10 @@ $allUsers = $pageData['allUsers'];
 $timeZones = $pageData['timeZones'];
 $currentLogContent = $pageData['currentLogContent'];
 $isAdmin = $pageData['isAdmin'];
+$notificationOverview = $pageData['notificationOverview'];
+$notificationJobStatus = $notificationOverview['jobStatus'] ?? null;
+$offlineBoardOverview = $notificationOverview['offlineBoards'] ?? array();
+$activeSensorAlertsOverview = $notificationOverview['activeSensorAlerts'] ?? array();
 
 include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>
@@ -118,6 +122,58 @@ th.rotated-text > div > span {
     </script>
   <?php } ?>
   <div>
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <h5 class="card-title mb-2">Notification status</h5>
+            <?php if ($notificationJobStatus) { ?>
+              <div><strong>Last job status:</strong> <?php echo htmlspecialchars($notificationJobStatus['status'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong>Started:</strong> <?php echo htmlspecialchars($notificationJobStatus['startedAt'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong>Finished:</strong> <?php echo htmlspecialchars($notificationJobStatus['finishedAt'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong>Offline mails:</strong> <?php echo htmlspecialchars((string)($notificationJobStatus['offlineSent'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong>Sensor mails:</strong> <?php echo htmlspecialchars((string)($notificationJobStatus['sensorAlertsSent'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></div>
+            <?php } else { ?>
+              <div class="text-muted">No notification job status available yet.</div>
+            <?php } ?>
+          </div>
+          <div class="col-md-4">
+            <h5 class="card-title mb-2">Offline boards</h5>
+            <div><strong>Configured:</strong> <?php echo count($offlineBoardOverview); ?></div>
+            <?php if (!empty($offlineBoardOverview)) { ?>
+              <div class="small text-muted mt-2">
+                <?php
+                  $offlinePreview = array_slice($offlineBoardOverview, 0, 3);
+                  foreach ($offlinePreview as $offlineBoard) {
+                    echo htmlspecialchars(($offlineBoard['name'] ?: $offlineBoard['macAddress']) . ' (' . (int)$offlineBoard['offlineDataTimer'] . ' min)', ENT_QUOTES, 'UTF-8') . '<br>';
+                  }
+                ?>
+              </div>
+            <?php } ?>
+          </div>
+          <div class="col-md-4">
+            <h5 class="card-title mb-2">Sensor alerts</h5>
+            <div><strong>Configured channels:</strong> <?php echo count($activeSensorAlertsOverview); ?></div>
+            <?php
+              $activeAlertsOnly = array_filter($activeSensorAlertsOverview, function ($channel) {
+                return !empty($channel['AlertState']);
+              });
+            ?>
+            <div><strong>Currently active:</strong> <?php echo count($activeAlertsOnly); ?></div>
+            <?php if (!empty($activeAlertsOnly)) { ?>
+              <div class="small text-muted mt-2">
+                <?php
+                  $activeAlertsPreview = array_slice(array_values($activeAlertsOnly), 0, 3);
+                  foreach ($activeAlertsPreview as $activeAlert) {
+                    echo htmlspecialchars(($activeAlert['boardName'] ?: '- unnamed -') . ' / ' . ($activeAlert['name'] ?: ('Channel ' . $activeAlert['channelNr'])) . ' [' . $activeAlert['AlertState'] . ']', ENT_QUOTES, 'UTF-8') . '<br>';
+                  }
+                ?>
+              </div>
+            <?php } ?>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" role="tablist">
       <li class="nav-item" role="presentation"><a class="nav-link active" href="#data" role="tab" data-bs-toggle="tab">Personal data</a></li>
@@ -184,25 +240,31 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <?php
-                if ($userObj->getReceiveNotifications()) {
-                ?>
-                  <div class="col col-sm-2">Receive notifications?</div>
-                  <label class="col col-sm-4">
-                      <input type='hidden' class='form-check-input' id='receiveNotifications' name='receiveNotifications' value='0'>
-                      <input type='checkbox' class='form-check-input' id='receiveNotifications' name='receiveNotifications' checked=true value='1'>
-                  </label>
-                <?php
-                } else {
-                ?>
-                  <div class="col col-sm-2">Receive notifications?</div>
-                  <label class="col col-sm-4">
-                      <input type='hidden' class='form-check-input' id='receiveNotifications' name='receiveNotifications' checked=true value='0'>
-                      <input type='checkbox' class='form-check-input' id='receiveNotifications' name='receiveNotifications' value='1'>
-                  </label>
-                <?php
-                }
-              ?>
+              <div class="col col-sm-2">Receive notifications?</div>
+              <label class="col col-sm-4">
+                <input type='hidden' class='form-check-input' name='receiveNotifications' value='0'>
+                <input type='checkbox' class='form-check-input' id='receiveNotifications' name='receiveNotifications' value='1' <?php if ($userObj->getReceiveNotifications()) { echo 'checked'; } ?>>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="row">
+              <div class="col col-sm-2">Offline alerts?</div>
+              <label class="col col-sm-4">
+                <input type='hidden' class='form-check-input' name='receiveOfflineNotifications' value='0'>
+                <input type='checkbox' class='form-check-input' id='receiveOfflineNotifications' name='receiveOfflineNotifications' value='1' <?php if ($userObj->getReceiveOfflineNotifications()) { echo 'checked'; } ?>>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="row">
+              <div class="col col-sm-2">Sensor alerts?</div>
+              <label class="col col-sm-4">
+                <input type='hidden' class='form-check-input' name='receiveSensorNotifications' value='0'>
+                <input type='checkbox' class='form-check-input' id='receiveSensorNotifications' name='receiveSensorNotifications' value='1' <?php if ($userObj->getReceiveSensorNotifications()) { echo 'checked'; } ?>>
+              </label>
             </div>
           </div>
 
@@ -210,6 +272,7 @@ th.rotated-text > div > span {
             <div class="row">
               <div class="col-sm-offset-2 col-sm-10">
               <button type="submit" class="btn btn-primary">Save</button>
+              <a href="?save=testMailUser" class="btn btn-outline-secondary ms-2">Send test mail</a>
               </div>
             </div>
           </div>
@@ -413,6 +476,31 @@ th.rotated-text > div > span {
                   <input class="form-control" id="inputUpdateInterval" name="updateInterval" type="number" value="<?php echo htmlspecialchars((string)$userObj->getDashboardUpdateInterval(), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
                 </div>
+            </div>
+
+            <div class="form-group">
+              <div class="row">
+                <div class="col col-sm-2">Only online devices by default</div>
+                <label class="col col-sm-4">
+                  <input type='hidden' class='form-check-input' name='dashboardOnlineOnly' value='0'>
+                  <input type='checkbox' class='form-check-input' id='dashboardOnlineOnly' name='dashboardOnlineOnly' value='1' <?php if ((int)$userObj->getDashboardOnlineOnly() === 1) { echo 'checked'; } ?>>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="row">
+                <label for="preferredChartWindowDays" class="col-sm-2 control-label">Default chart range</label>
+                <div class="col-sm-4">
+                  <?php $preferredChartWindowDays = (int)$userObj->getPreferredChartWindowDays(); ?>
+                  <select class="form-select" id="preferredChartWindowDays" name="preferredChartWindowDays">
+                    <option value="1" <?php if ($preferredChartWindowDays === 1) { echo 'selected'; } ?>>Last 24 hours</option>
+                    <option value="7" <?php if ($preferredChartWindowDays === 7) { echo 'selected'; } ?>>Last 7 days</option>
+                    <option value="14" <?php if ($preferredChartWindowDays === 14) { echo 'selected'; } ?>>Last 14 days</option>
+                    <option value="30" <?php if ($preferredChartWindowDays === 30) { echo 'selected'; } ?>>Last 30 days</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div class="form-group">
@@ -709,9 +797,70 @@ th.rotated-text > div > span {
             </div>
           </div>
 
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="defaultGaugeStyle" class="col col-sm-2 control-label">Default Gauge Style:</label>
+                <div class="col col-sm-4">
+                  <select class="form-select" id="defaultGaugeStyle" name="defaultGaugeStyle">
+                    <?php
+                      $defaultGaugeStyles = array(
+                        'classic' => 'Classic',
+                        'minimal' => 'Minimal',
+                        'bold' => 'Bold',
+                        'arc' => 'Arc',
+                        'ring' => 'Ring',
+                        'clock' => 'Clock',
+                        'industrial' => 'Industrial'
+                      );
+                      $selectedDefaultGaugeStyle = $config::$defaultGaugeStyle ?? 'classic';
+                      foreach ($defaultGaugeStyles as $defaultGaugeStyleValue => $defaultGaugeStyleLabel) {
+                        $selected = $selectedDefaultGaugeStyle === $defaultGaugeStyleValue ? 'selected' : '';
+                        echo "<option value='" . htmlspecialchars($defaultGaugeStyleValue, ENT_QUOTES, 'UTF-8') . "' $selected>" . htmlspecialchars($defaultGaugeStyleLabel, ENT_QUOTES, 'UTF-8') . "</option>";
+                      }
+                    ?>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <div class="col col-sm-2">
+                  Dashboard default:
+                </div>
+                <label class="col col-sm-4">
+                    <input type='hidden' class='form-check-input' id='defaultDashboardOnlineOnly' name='defaultDashboardOnlineOnly' value='0'>
+                    <input type='checkbox' class='form-check-input' id='defaultDashboardOnlineOnly' name='defaultDashboardOnlineOnly' value='1' <?php if ((string)$config::$defaultDashboardOnlineOnly === '1') { echo 'checked'; } ?>>
+                    <span class="ms-2">Only online devices by default</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="defaultChartWindowDays" class="col col-sm-2 control-label">Default chart range:</label>
+                <div class="col col-sm-4">
+                  <select class="form-select" id="defaultChartWindowDays" name="defaultChartWindowDays">
+                    <?php $selectedDefaultChartWindowDays = (string)($config::$defaultChartWindowDays ?? '7'); ?>
+                    <option value="1" <?php if ($selectedDefaultChartWindowDays === '1') { echo 'selected'; } ?>>Last 24 hours</option>
+                    <option value="7" <?php if ($selectedDefaultChartWindowDays === '7') { echo 'selected'; } ?>>Last 7 days</option>
+                    <option value="14" <?php if ($selectedDefaultChartWindowDays === '14') { echo 'selected'; } ?>>Last 14 days</option>
+                    <option value="30" <?php if ($selectedDefaultChartWindowDays === '30') { echo 'selected'; } ?>>Last 30 days</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
             <div class="col col-sm-offset-2 col-sm-10">
               <button type="submit" class="btn btn-primary">Save</button>
+              <a href="?save=testMailSystem" class="btn btn-outline-secondary ms-2">Send system test mail</a>
             </div>
           </div>
         </form>

@@ -87,6 +87,24 @@ if (isset($_POST["action"])) {
     $jsonData['apiKey'] = $var_apiKey;
     $jsonData['md5secretString'] = $var_md5secretString;
     $jsonData['demoMode'] = $var_demoMode;
+    if (!isset($jsonData['applicationName']) || trim((string)$jsonData['applicationName']) === '') {
+      $jsonData['applicationName'] = 'Maritime Data Server';
+    }
+    if (!isset($jsonData['systemEmailAddress']) || trim((string)$jsonData['systemEmailAddress']) === '') {
+      $jsonData['systemEmailAddress'] = $var_email;
+    }
+    if (!isset($jsonData['sendEmails'])) {
+      $jsonData['sendEmails'] = '0';
+    }
+    if (!isset($jsonData['defaultGaugeStyle'])) {
+      $jsonData['defaultGaugeStyle'] = 'classic';
+    }
+    if (!isset($jsonData['defaultDashboardOnlineOnly'])) {
+      $jsonData['defaultDashboardOnlineOnly'] = '0';
+    }
+    if (!isset($jsonData['defaultChartWindowDays'])) {
+      $jsonData['defaultChartWindowDays'] = '7';
+    }
     $jsonData['installFinished'] = true;
     $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
     file_put_contents($path, $jsonString);

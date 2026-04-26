@@ -64,6 +64,19 @@ MDS can send notification emails when:
 - a board stays offline longer than its configured offline timer
 - a sensor channel exceeds or falls below a configured critical threshold
 
+Users can configure separately:
+- general notification opt-in
+- offline board notifications
+- sensor threshold notifications
+
+Admins can configure in `Settings -> Server Setting`:
+- system sender address
+- application name
+- global email sending on/off
+- default gauge style for newly created sensor channels
+- default dashboard online-only behavior
+- default chart range
+
 The notification worker is:
 
 ```text
@@ -71,6 +84,14 @@ php tools/maintenance/sendmail.php
 ```
 
 This script should be executed regularly by cron.
+
+The job writes its latest execution status to:
+
+```text
+var/status/notification_status.json
+```
+
+This status is also shown in `Settings`.
 
 #### Gauge Styles
 
@@ -80,6 +101,12 @@ Currently available:
 - `classic`
 - `minimal`
 - `bold`
+- `arc`
+- `ring`
+- `clock`
+- `industrial`
+
+The `clock` style is a more circular, dial-like variant intended for a more instrument-like dashboard appearance.
 
 ![MDS Dashboard](docu_donotdeploy/images/MDS_Dashboard.png)
 ![MDS Graph](docu_donotdeploy/images/MDS_Graph.png)
