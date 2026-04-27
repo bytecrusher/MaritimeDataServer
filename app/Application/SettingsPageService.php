@@ -3,6 +3,7 @@
 require_once(__DIR__ . '/InternalPageService.php');
 require_once(__DIR__ . '/dbUpdateData.php');
 require_once(__DIR__ . '/NotificationService.php');
+require_once(__DIR__ . '/../Infrastructure/Database/dbConfig.func.php');
 require_once(__DIR__ . '/../Infrastructure/Logging/writeToLogFunction.func.php');
 
 class SettingsPageService
@@ -132,6 +133,65 @@ class SettingsPageService
             'currentLogContent' => self::getCurrentLogContent(),
             'isAdmin' => $isAdmin,
             'notificationOverview' => $notificationOverview,
+        );
+    }
+
+    public static function buildPrivacyExportData($userObj)
+    {
+        $pdo = dbConfig::getInstance();
+        $userId = (int)$userObj->getId();
+        $boards = $userObj->getMyBoardsAll();
+        $boardIds = array();
+        foreach ($boards as $board) {
+            if (isset($board['id'])) {
+                $boardIds[] = (int)$board['id'];
+            }
+        }
+
+        $sensorConfigs = array();
+        $sensorData = array();
+
+        if (!empty($boardIds)) {
+            $placeholders = implode(', ', array_fill(0, count($boardIds), '?'));
+
+            $statement = $pdo->prepare(
+                "SELECT sensorConfig.*, sensorTypes.name AS sensorTypeName
+                 FROM sensorConfig
+                 LEFT JOIN sensorTypes ON sensorTypes.id = sensorConfig.typId
+                 WHERE sensorConfig.boardId IN ($placeholders)
+                 ORDER BY sensorConfig.boardId, sensorConfig.id"
+            );
+            $statement->execute($boardIds);
+            $sensorConfigs = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+            $statement = $pdo->prepare(
+                "SELECT sensorData.*, sensorConfig.boardId
+                 FROM sensorData
+                 INNER JOIN sensorConfig ON sensorConfig.id = sensorData.sensorId
+                 WHERE sensorConfig.boardId IN ($placeholders)
+                 ORDER BY sensorData.id DESC"
+            );
+            $statement->execute($boardIds);
+            $sensorData = $statement->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return array(
+            'exportedAt' => gmdate('c'),
+            'user' => array(
+                'id' => $userId,
+                'email' => $userObj->getEmail(),
+                'firstName' => $userObj->getFirstName(),
+                'lastName' => $userObj->getLastName(),
+                'timezone' => $userObj->getTimezone(),
+                'receiveNotifications' => (int)$userObj->getReceiveNotifications(),
+                'receiveOfflineNotifications' => (int)$userObj->getReceiveOfflineNotifications(),
+                'receiveSensorNotifications' => (int)$userObj->getReceiveSensorNotifications(),
+                'dashboardOnlineOnly' => (int)$userObj->getDashboardOnlineOnly(),
+                'preferredChartWindowDays' => (int)$userObj->getPreferredChartWindowDays(),
+            ),
+            'boards' => $boards,
+            'sensorConfig' => $sensorConfigs,
+            'sensorData' => $sensorData,
         );
     }
 

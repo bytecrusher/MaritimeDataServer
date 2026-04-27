@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once dirname(__DIR__, 3) . "/bootstrap/app.php";
+mds_start_session();
 header('Content-Type: application/json');
 
 require_once(__DIR__ . "/../../Application/dbUpdateData.php");

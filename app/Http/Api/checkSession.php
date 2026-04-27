@@ -1,6 +1,7 @@
 <?php
 // Check if Session exist and user is logged in.
-session_start();
+require_once dirname(__DIR__, 3) . "/bootstrap/app.php";
+mds_start_session();
 header('Content-Type: application/json');
 
 if (isset($_SESSION['userId']) && ((int)$_SESSION['userId'] > 0)) {

@@ -67,8 +67,7 @@ class user implements JsonSerializable
           $neuer_securityToken = myFunctions::random_string();
           $insert = self::$pdo->prepare("UPDATE securityTokens SET securityToken = :securityToken WHERE identifier = :identifier");
           $insert->execute(array('securityToken' => sha1($neuer_securityToken), 'identifier' => $identifier));
-          setcookie("identifier", $identifier, time() + (3600 * 24 * 365));
-          setcookie("securityToken", $neuer_securityToken, time() + (3600 * 24 * 365));
+          mds_set_remember_login_cookies($identifier, $neuer_securityToken);
           //Log in the user
           $_SESSION['userId'] = $securityToken_row['userId'];
         }

@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__) . "/bootstrap/app.php";
+mds_start_session();
 require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__) . "/app/Application/dbUpdateData.php";
 //require_once(__DIR__ . "/../../configuration.php");
@@ -73,7 +74,6 @@ if (count($_POST) > 0) {
 <html>
 <head>
 <?php
-	session_start();
 	require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
 	include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
 ?>

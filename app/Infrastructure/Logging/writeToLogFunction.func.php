@@ -175,7 +175,7 @@ class writeToLogFunction
             $context['requestUri'] = $_SERVER['REQUEST_URI'];
         }
         if (isset($_SERVER['REMOTE_ADDR'])) {
-            $context['remoteAddr'] = $_SERVER['REMOTE_ADDR'];
+            $context['remoteAddr'] = self::maskRemoteAddress((string)$_SERVER['REMOTE_ADDR']);
         }
 
         return $context;
@@ -206,6 +206,26 @@ class writeToLogFunction
         }
 
         return print_r($value, true);
+    }
+
+    private static function maskRemoteAddress($ipAddress)
+    {
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $parts = explode('.', $ipAddress);
+            $parts[3] = '0';
+            return implode('.', $parts);
+        }
+
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $parts = explode(':', $ipAddress);
+            $maskedParts = array_slice($parts, 0, 4);
+            while (count($maskedParts) < 8) {
+                $maskedParts[] = '0000';
+            }
+            return implode(':', $maskedParts);
+        }
+
+        return $ipAddress;
     }
 }
 

@@ -12,8 +12,19 @@
     "sendEmails": "0",
     "applicationName": "Maritime Data Server",
     "systemEmailAddress": "noreply@yourdomain.de",
+    "privacyContactEmail": "privacy@yourdomain.de",
+    "imprintCompanyName": "Your Company Name",
+    "imprintAddress": "Street 1\n12345 City\nGermany",
+    "imprintEmail": "legal@yourdomain.de",
+    "imprintPhone": "+49 0000 000000",
     "defaultGaugeStyle": "classic",
     "defaultDashboardOnlineOnly": "0",
     "defaultChartWindowDays": "7",
-    "ttnWebhookSecret": "optional_shared_secret_for_ttn_webhook"
+    "ttnWebhookSecret": "optional_shared_secret_for_ttn_webhook",
+    "logRetentionDays": "90",
+    "passwordResetRetentionDays": "30",
+    "telemetryRetentionDays": "365",
+    "gpsRetentionDays": "90",
+    "ttnDebugRetentionDays": "30",
+    "securityTokenRetentionDays": "45"
 }

@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__) . "/bootstrap/app.php";
+mds_start_session();
 require_once dirname(__DIR__) . "/app/Application/dbUpdateData.php";
 
 if (! empty($_GET["id"])) {
@@ -17,9 +18,8 @@ if (! empty($_GET["id"])) {
 <html>
 <head>
 <?php
-	session_start();
-	require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
-	include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
+		require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
+		include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
 ?>
 <div class="container main-container registration-form">
 <h1>Register</h1>

@@ -339,8 +339,7 @@ class dbUpdateData {
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
       throw new Exception('insertSecurityToken not inserted successfully.');
     }
-    setcookie("identifier",$identifier,time()+(3600*24*365)); //Valid for 1 year
-    setcookie("securityToken",$securityToken,time()+(3600*24*365)); //Valid for 1 year
+    mds_set_remember_login_cookies($identifier, $securityToken);
     //return true;
     return $securityToken;
   }

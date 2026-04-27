@@ -30,6 +30,17 @@ class configuration {
     static $defaultGaugeStyle = null;
     static $defaultDashboardOnlineOnly = null;
     static $defaultChartWindowDays = null;
+    static $privacyContactEmail = null;
+    static $logRetentionDays = null;
+    static $passwordResetRetentionDays = null;
+    static $telemetryRetentionDays = null;
+    static $gpsRetentionDays = null;
+    static $ttnDebugRetentionDays = null;
+    static $securityTokenRetentionDays = null;
+    static $imprintCompanyName = null;
+    static $imprintAddress = null;
+    static $imprintEmail = null;
+    static $imprintPhone = null;
     
     function __construct() {
         $projectRoot = dirname(__FILE__, 4);
@@ -148,6 +159,49 @@ class configuration {
                 self::$defaultChartWindowDays = (string)$jsonData['defaultChartWindowDays'];
             }
 
+            self::$privacyContactEmail = '';
+            if (array_key_exists('privacyContactEmail', $jsonData)) {
+                self::$privacyContactEmail = (string)$jsonData['privacyContactEmail'];
+            }
+            if (self::$privacyContactEmail === '') {
+                self::$privacyContactEmail = (string)(self::$adminEmailAddress ?: self::$systemEmailAddress);
+            }
+
+            self::$logRetentionDays = '90';
+            if (array_key_exists('logRetentionDays', $jsonData) && is_numeric($jsonData['logRetentionDays'])) {
+                self::$logRetentionDays = (string)max(1, (int)$jsonData['logRetentionDays']);
+            }
+
+            self::$passwordResetRetentionDays = '30';
+            if (array_key_exists('passwordResetRetentionDays', $jsonData) && is_numeric($jsonData['passwordResetRetentionDays'])) {
+                self::$passwordResetRetentionDays = (string)max(1, (int)$jsonData['passwordResetRetentionDays']);
+            }
+
+            self::$telemetryRetentionDays = '365';
+            if (array_key_exists('telemetryRetentionDays', $jsonData) && is_numeric($jsonData['telemetryRetentionDays'])) {
+                self::$telemetryRetentionDays = (string)max(1, (int)$jsonData['telemetryRetentionDays']);
+            }
+
+            self::$gpsRetentionDays = '90';
+            if (array_key_exists('gpsRetentionDays', $jsonData) && is_numeric($jsonData['gpsRetentionDays'])) {
+                self::$gpsRetentionDays = (string)max(1, (int)$jsonData['gpsRetentionDays']);
+            }
+
+            self::$ttnDebugRetentionDays = '30';
+            if (array_key_exists('ttnDebugRetentionDays', $jsonData) && is_numeric($jsonData['ttnDebugRetentionDays'])) {
+                self::$ttnDebugRetentionDays = (string)max(1, (int)$jsonData['ttnDebugRetentionDays']);
+            }
+
+            self::$securityTokenRetentionDays = '45';
+            if (array_key_exists('securityTokenRetentionDays', $jsonData) && is_numeric($jsonData['securityTokenRetentionDays'])) {
+                self::$securityTokenRetentionDays = (string)max(1, (int)$jsonData['securityTokenRetentionDays']);
+            }
+
+            self::$imprintCompanyName = (string)($jsonData['imprintCompanyName'] ?? self::$applicationName ?? '');
+            self::$imprintAddress = (string)($jsonData['imprintAddress'] ?? '');
+            self::$imprintEmail = (string)($jsonData['imprintEmail'] ?? self::$adminEmailAddress ?? self::$systemEmailAddress ?? '');
+            self::$imprintPhone = (string)($jsonData['imprintPhone'] ?? '');
+
             self::$config_exist = true;
         } else {
             $path = false;
@@ -181,6 +235,17 @@ class configuration {
             self::$defaultGaugeStyle = $defaultGaugeStyle;
             self::$defaultDashboardOnlineOnly = $post['defaultDashboardOnlineOnly'] ?? '0';
             self::$defaultChartWindowDays = (string)$defaultChartWindowDays;
+            self::$privacyContactEmail = trim((string)($post['privacyContactEmail'] ?? self::$privacyContactEmail));
+            self::$logRetentionDays = (string)max(1, (int)($post['logRetentionDays'] ?? self::$logRetentionDays ?: 90));
+            self::$passwordResetRetentionDays = (string)max(1, (int)($post['passwordResetRetentionDays'] ?? self::$passwordResetRetentionDays ?: 30));
+            self::$telemetryRetentionDays = (string)max(1, (int)($post['telemetryRetentionDays'] ?? self::$telemetryRetentionDays ?: 365));
+            self::$gpsRetentionDays = (string)max(1, (int)($post['gpsRetentionDays'] ?? self::$gpsRetentionDays ?: 90));
+            self::$ttnDebugRetentionDays = (string)max(1, (int)($post['ttnDebugRetentionDays'] ?? self::$ttnDebugRetentionDays ?: 30));
+            self::$securityTokenRetentionDays = (string)max(1, (int)($post['securityTokenRetentionDays'] ?? self::$securityTokenRetentionDays ?: 45));
+            self::$imprintCompanyName = trim((string)($post['imprintCompanyName'] ?? self::$imprintCompanyName));
+            self::$imprintAddress = trim((string)($post['imprintAddress'] ?? self::$imprintAddress));
+            self::$imprintEmail = trim((string)($post['imprintEmail'] ?? self::$imprintEmail));
+            self::$imprintPhone = trim((string)($post['imprintPhone'] ?? self::$imprintPhone));
             $path = $modernConfigDir . '/config.json';
             $jsonString = file_exists($path) ? file_get_contents($path) : false;
             $jsonData = $jsonString !== false ? json_decode($jsonString, true) : array();
@@ -196,6 +261,17 @@ class configuration {
             $jsonData['defaultGaugeStyle'] = self::$defaultGaugeStyle;
             $jsonData['defaultDashboardOnlineOnly'] = self::$defaultDashboardOnlineOnly;
             $jsonData['defaultChartWindowDays'] = self::$defaultChartWindowDays;
+            $jsonData['privacyContactEmail'] = self::$privacyContactEmail;
+            $jsonData['logRetentionDays'] = self::$logRetentionDays;
+            $jsonData['passwordResetRetentionDays'] = self::$passwordResetRetentionDays;
+            $jsonData['telemetryRetentionDays'] = self::$telemetryRetentionDays;
+            $jsonData['gpsRetentionDays'] = self::$gpsRetentionDays;
+            $jsonData['ttnDebugRetentionDays'] = self::$ttnDebugRetentionDays;
+            $jsonData['securityTokenRetentionDays'] = self::$securityTokenRetentionDays;
+            $jsonData['imprintCompanyName'] = self::$imprintCompanyName;
+            $jsonData['imprintAddress'] = self::$imprintAddress;
+            $jsonData['imprintEmail'] = self::$imprintEmail;
+            $jsonData['imprintPhone'] = self::$imprintPhone;
             $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
             // Write in the file
             $fp = fopen($path, 'w');

@@ -1,13 +1,11 @@
 <?php
-session_start();
+require_once dirname(__DIR__) . "/bootstrap/app.php";
+mds_start_session();
 session_destroy();
 unset($_SESSION['userId']);
 
 //Remove Cookies
-setcookie("identifier","",time()-(3600*24*365));
-setcookie("securityToken","",time()-(3600*24*365));
-
-require_once dirname(__DIR__) . "/bootstrap/app.php";
+mds_clear_remember_login_cookies();
 require_once dirname(__DIR__) . "/app/Infrastructure/Database/dbConfig.func.php";
 require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
 

@@ -5,8 +5,8 @@
   */
   // Note: add the option to define virtual sensor groups for visual grouping.
 
-  session_start();
   require_once dirname(__DIR__) . "/bootstrap/app.php";
+  mds_start_session();
   require_once dirname(__DIR__) . "/app/Infrastructure/Database/dbConfig.func.php";
   require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
   require_once dirname(__DIR__) . "/app/Application/InternalPageService.php";

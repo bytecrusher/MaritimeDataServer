@@ -1,6 +1,6 @@
 <?php
-session_start();
 require_once dirname(__DIR__) . "/bootstrap/app.php";
+mds_start_session();
 require_once dirname(__DIR__) . "/app/Infrastructure/Database/dbConfig.func.php";
 require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
@@ -65,7 +65,7 @@ include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
   <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
   <div class="checkbox">
     <label>
-    <input type="checkbox" value="remember-me" name="angemeldet_bleiben" value="1" checked> remember login
+    <input type="checkbox" value="remember-me" name="angemeldet_bleiben" value="1"> remember login for 30 days
     </label>
   </div>
   <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>

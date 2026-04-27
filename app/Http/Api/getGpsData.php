@@ -2,7 +2,8 @@
 /*
 *   Collects all GPS from a specific board.
 */
-session_start();
+require_once dirname(__DIR__, 3) . "/bootstrap/app.php";
+mds_start_session();
 header('Content-Type: application/json');
 require_once(__DIR__ . "/../../Application/myFunctions.func.php");
 $aResult = array();

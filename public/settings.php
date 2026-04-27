@@ -5,8 +5,8 @@
  * @license: TBD
  */
 
-session_start();
 require_once dirname(__DIR__) . "/bootstrap/app.php";
+mds_start_session();
 require_once dirname(__DIR__) . "/app/Infrastructure/Database/dbConfig.func.php";
 require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__) . "/app/Application/SettingsPageService.php";
@@ -181,6 +181,7 @@ th.rotated-text > div > span {
       <li class="nav-item" role="presentation"><a class="nav-link" href="#password" role="tab" data-bs-toggle="tab">Password</a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab">My Boards</a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#confDashboard" role="tab" data-bs-toggle="tab">Dashboard</a></li>
+      <li class="nav-item" role="presentation"><a class="nav-link" href="#privacy" role="tab" data-bs-toggle="tab">Privacy</a></li>
       <?php
         if($isAdmin) {
         ?>
@@ -514,8 +515,25 @@ th.rotated-text > div > span {
         </div>
       </div>
 
-      
-
+      <div role="tabpanel" class="tab-pane" id="privacy">
+        <div class="panel panel-default p-3">
+          <h4 class="mb-3">Privacy tools</h4>
+          <p class="text-muted">
+            Review the current privacy notes for this installation and download the data currently stored for your account.
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="<?php echo htmlspecialchars(mds_route_path('privacy.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-secondary">Open privacy page</a>
+            <a href="<?php echo htmlspecialchars(mds_route_path('privacy_export.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-primary">Download my personal data</a>
+          </div>
+          <p class="small text-muted mt-3 mb-0">
+            The export includes your profile, owned boards, sensor configuration and stored sensor data assigned to those boards.
+          </p>
+          <p class="small text-muted mt-2 mb-0">
+            Requests for correction, deletion or objection should currently be handled via the configured privacy contact:
+            <?php echo htmlspecialchars((string)($config::$privacyContactEmail ?: $config::$adminEmailAddress ?: $config::$systemEmailAddress ?: 'not configured'), ENT_QUOTES, 'UTF-8'); ?>
+          </p>
+        </div>
+      </div>
 
       <div role="tabpanel" class="tab-pane" id="allBoards">
       <form action="?save=allBoards" method="post" class="form-horizontal">
@@ -800,6 +818,61 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
+                <label for="privacyContactEmail" class="col col-sm-2 control-label">Privacy contact email:</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="privacyContactEmail" name="privacyContactEmail" type="email" value="<?php echo htmlspecialchars((string)$config::$privacyContactEmail, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="imprintCompanyName" class="col col-sm-2 control-label">Imprint company / owner:</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="imprintCompanyName" name="imprintCompanyName" type="text" value="<?php echo htmlspecialchars((string)$config::$imprintCompanyName, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="imprintAddress" class="col col-sm-2 control-label">Imprint address:</label>
+                <div class="col col-sm-4">
+                  <textarea class="form-control" id="imprintAddress" name="imprintAddress" rows="3"><?php echo htmlspecialchars((string)$config::$imprintAddress, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="imprintEmail" class="col col-sm-2 control-label">Imprint email:</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="imprintEmail" name="imprintEmail" type="email" value="<?php echo htmlspecialchars((string)$config::$imprintEmail, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="imprintPhone" class="col col-sm-2 control-label">Imprint phone:</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="imprintPhone" name="imprintPhone" type="text" value="<?php echo htmlspecialchars((string)$config::$imprintPhone, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
                 <label for="defaultGaugeStyle" class="col col-sm-2 control-label">Default Gauge Style:</label>
                 <div class="col col-sm-4">
                   <select class="form-select" id="defaultGaugeStyle" name="defaultGaugeStyle">
@@ -852,6 +925,72 @@ th.rotated-text > div > span {
                     <option value="14" <?php if ($selectedDefaultChartWindowDays === '14') { echo 'selected'; } ?>>Last 14 days</option>
                     <option value="30" <?php if ($selectedDefaultChartWindowDays === '30') { echo 'selected'; } ?>>Last 30 days</option>
                   </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="logRetentionDays" class="col col-sm-2 control-label">Log retention (days):</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="logRetentionDays" name="logRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$logRetentionDays ?? '90'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="passwordResetRetentionDays" class="col col-sm-2 control-label">Reset-code retention (days):</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="passwordResetRetentionDays" name="passwordResetRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$passwordResetRetentionDays ?? '30'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="telemetryRetentionDays" class="col col-sm-2 control-label">Telemetry retention (days):</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="telemetryRetentionDays" name="telemetryRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$telemetryRetentionDays ?? '365'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="gpsRetentionDays" class="col col-sm-2 control-label">GPS retention (days):</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="gpsRetentionDays" name="gpsRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$gpsRetentionDays ?? '90'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="ttnDebugRetentionDays" class="col col-sm-2 control-label">TTN debug retention (days):</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="ttnDebugRetentionDays" name="ttnDebugRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$ttnDebugRetentionDays ?? '30'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="securityTokenRetentionDays" class="col col-sm-2 control-label">Remember-login token retention (days):</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="securityTokenRetentionDays" name="securityTokenRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$securityTokenRetentionDays ?? '45'), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
               </div>
             </div>

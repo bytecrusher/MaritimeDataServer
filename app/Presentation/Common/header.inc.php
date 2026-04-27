@@ -196,7 +196,7 @@
                 <td><a class="btn btn-primary" href="<?php echo htmlspecialchars(mds_route_path('register.php'), ENT_QUOTES, 'UTF-8'); ?>" role="button">Register now</a></td>
               </tr>
               <tr>
-                <td><label style="margin-bottom: 0px; font-weight: normal;"><input type="checkbox" name="angemeldet_bleiben" value="remember-me" title="Angemeldet bleiben" checked="checked" style="margin: 0; vertical-align: middle;" /> <small>remember login </small></label></td>
+                <td><label style="margin-bottom: 0px; font-weight: normal;"><input type="checkbox" name="angemeldet_bleiben" value="remember-me" title="Angemeldet bleiben" style="margin: 0; vertical-align: middle;" /> <small>remember login for 30 days</small></label></td>
                 <td><small><a href="<?php echo htmlspecialchars(mds_route_path('resetPassword.php'), ENT_QUOTES, 'UTF-8'); ?>">Reset Password</a></small></td>
                 <td></td>
               </tr>
@@ -210,6 +210,8 @@
         <ul class="nav navbar-nav mr-auto navbar-right">
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('internal.php'), ENT_QUOTES, 'UTF-8'); ?>">My Sensors</a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('settings.php'), ENT_QUOTES, 'UTF-8'); ?>">Settings</a></li>
+          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('privacy.php'), ENT_QUOTES, 'UTF-8'); ?>">Privacy</a></li>
+          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('imprint.php'), ENT_QUOTES, 'UTF-8'); ?>">Imprint</a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('logout.php'), ENT_QUOTES, 'UTF-8'); ?>">Logout</a></li>
           <li class="nav-item container mds-qr-slot">
             <?php

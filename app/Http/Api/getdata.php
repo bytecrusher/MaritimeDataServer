@@ -1,7 +1,8 @@
 <?php
 // Get data from DB for display in JS.
 header('Content-Type: application/json');
-session_start();
+require_once dirname(__DIR__, 3) . "/bootstrap/app.php";
+mds_start_session();
 
 require_once(__DIR__ . "/../../Application/myFunctions.func.php");
 require_once(__DIR__ . "/../../Domain/Board/get_data.php");

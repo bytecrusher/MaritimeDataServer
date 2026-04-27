@@ -16,6 +16,25 @@ It requires a MySQL database for storing the data and a web server with PHP supp
 The **MDS** can display the data (that come from sensors) in graph/gauges or charts.
 Also it is possible to configure boards and sensors, add new boards to a user account and send notification emails for offline boards or critical sensor values.
 
+## Privacy and data protection
+
+MDS processes user account data, device identifiers, telemetry, optional GPS locations and technical logs. The project therefore requires a deployment-specific privacy review before production use.
+
+Helpful project files:
+
+- privacy page: `public/privacy.php`
+- imprint page: `public/imprint.php`
+- user data export: `public/privacy_export.php`
+- privacy cleanup job: `tools/maintenance/privacy_cleanup.php`
+- checklist: `docs/PRIVACY_CHECKLIST.md`
+
+Recommended recurring jobs:
+
+```text
+php tools/maintenance/sendmail.php
+php tools/maintenance/privacy_cleanup.php
+```
+
 ## Description
 The server is organized in a
      - backend (API for receiving data from MDC (collector) and TTN, send emails) and a
