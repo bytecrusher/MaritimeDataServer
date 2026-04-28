@@ -10,6 +10,18 @@ require_once dirname(__DIR__) . "/app/Infrastructure/Logging/writeToLogFunction.
 
 $error_msg = "";
 if(isset($_POST['email']) && isset($_POST['password'])) {
+  if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+    $error_msg = "<div class='alert alert-danger' role='alert'>The form session has expired. Please try again.</div>";
+  } else {
+  $rateLimit = mds_rate_limit_attempt(
+    'login',
+    strtolower(trim((string)($_POST['email'] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+    5,
+    900
+  );
+  if (!$rateLimit['allowed']) {
+    $error_msg = "<div class='alert alert-danger' role='alert'>Too many login attempts. Please try again later.</div>";
+  } else {
   $email = $_POST['email'];
   $password = $_POST['password'];
   $userObj = new user($email);
@@ -33,14 +45,16 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
           header("location: internal.php");
           exit;
         } else {
-          $error_msg =  "<div class='alert alert-danger' role='alert'>E-Mail or Password wrong.</div>";
+          $error_msg =  "<div class='alert alert-danger' role='alert'>Login failed.</div>";
         }
       } else {
-        $error_msg =  "<div class='alert alert-danger' role='alert'>Account not activated yet.</div>";
+        $error_msg =  "<div class='alert alert-danger' role='alert'>Login failed.</div>";
       }
     } else {
-      $error_msg =  "<div class='alert alert-danger' role='alert'>User does not exist.</div>";
+      $error_msg =  "<div class='alert alert-danger' role='alert'>Login failed.</div>";
     }
+  }
+  }
   }
 }
 
@@ -52,6 +66,7 @@ include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>
 <div class="container small-container-330 form-signin">
   <form action="login.php" method="post">
+  <?php echo mds_csrf_input(); ?>
   <h2 class="form-signin-heading">Login</h2>
 
   <?php

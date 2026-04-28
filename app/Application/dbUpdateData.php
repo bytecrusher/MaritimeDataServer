@@ -120,11 +120,13 @@ class dbUpdateData {
   public static function updateUserPasswordCode($passwordCode, $userId) {
     $pdo = dbConfig::getInstance();
     $expFormat = mktime(date("H"), date("i"), date("s"), date("m") ,date("d")+1, date("Y"));
-		$myDate = date("Y-m-d H:i:s",$expFormat);
+			$myDate = date("Y-m-d H:i:s",$expFormat);
     try {
       // TODO rename passwordCodeTime into passwordCodeExpireTime
       $statement = $pdo->prepare("UPDATE users SET passwordCode = :passwordCode, passwordCodeTime = :myDate WHERE id = :userId");
-      return $statement->execute(array('passwordCode' => $passwordCode, 'myDate' => $myDate, 'userId' => $userId));
+      $passwordCodeValue = ($passwordCode === null || $passwordCode === '') ? null : hash('sha256', (string)$passwordCode);
+      $passwordCodeTimeValue = $passwordCodeValue === null ? null : $myDate;
+      return $statement->execute(array('passwordCode' => $passwordCodeValue, 'myDate' => $passwordCodeTimeValue, 'userId' => $userId));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: User Password reset not successfully saved for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
@@ -140,11 +142,8 @@ class dbUpdateData {
   public static function readUserPasswordCode($passwordCode, $userId) {
     $pdo = dbConfig::getInstance();
     try {
-      $statement = $pdo->prepare("SELECT * FROM users WHERE id = :userId && passwordCode = :passwordCode");
-      //$sensortyps = $pdo->prepare("SELECT boardConfig.*, users.email FROM boardConfig, users WHERE offlineDataTimer != 0 && alreadyNotified = 0 && ownerUserId = users.id");
-      //return $statement->execute(array('passwordCode' => sha1($passwordCode), 'userId' => $userId));
-      //return $statement->execute(array('passwordCode' => $passwordCode, 'userId' => $userId));
-      $statement->execute(array('passwordCode' => $passwordCode, 'userId' => $userId));
+      $statement = $pdo->prepare("SELECT * FROM users WHERE id = :userId AND (passwordCode = :passwordCodeHash OR passwordCode = :passwordCodeLegacy)");
+      $statement->execute(array('passwordCodeHash' => hash('sha256', (string)$passwordCode), 'passwordCodeLegacy' => $passwordCode, 'userId' => $userId));
       //$sensortyps->execute();
       //$SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
       return $statement->fetch(PDO::FETCH_ASSOC);

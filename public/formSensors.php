@@ -13,6 +13,17 @@
   }
 
   if (isset($_POST['submit_formSensors'])) {
+    if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+      $error_msg = "The form session has expired. Please reload the page and try again.";
+      ?>
+      <div class="alert alert-danger">
+        <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
+        <?php echo $error_msg; ?>
+      </div>
+      <?php
+      die();
+    }
+
     if (!isset($_POST['modal'])) {
       try {
         $updateSensorReturn = dbUpdateData::updateSensor($_POST);
@@ -83,6 +94,7 @@
 </div>
 
 <form method='post' action='formSensors.php#confSensors' class='form-horizontal mt-3'>
+<?php echo mds_csrf_input(); ?>
 <div class="container main-container">
 <div class="modal-body">
   

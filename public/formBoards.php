@@ -13,6 +13,11 @@
     die();
   }
 
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && !mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+    header("Location: settings.php#confBoards");
+    die();
+  }
+
   try {
     $pageData = BoardFormPageService::buildPageData($currentUser, $_GET['id'] ?? 0);
   } catch (Throwable $e) {
@@ -52,6 +57,7 @@
   <div class="tab-content">
     <div role="tabpanel" class="tab-pane active" id="board">
       <form method='post' action='settings.php#confBoards' class='form-horizontal col-sm-offset-2 col-sm-9'>
+      <?php echo mds_csrf_input(); ?>
 
       <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">id</span>

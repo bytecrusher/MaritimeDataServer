@@ -21,14 +21,16 @@ if (!$userObj) {
   exit();
 }
 
-if(isset($_GET['save'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+  $error_msg = 'The form session has expired. Please reload the page and try again.';
+} elseif(isset($_GET['save'])) {
   $saveResult = SettingsPageService::handleSettingsSave($userObj, $config, $_GET['save'], $_POST);
   $userObj = $saveResult['userObj'];
   $success_msg = $saveResult['success_msg'];
   $error_msg = $saveResult['error_msg'];
 }
 
-if (isset($_POST['submit_formBoards']) || isset($_POST['submit_formBoards_remove'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error_msg) && (isset($_POST['submit_formBoards']) || isset($_POST['submit_formBoards_remove']))) {
   $boardResult = SettingsPageService::handleBoardFormSubmission($_POST);
   $success_msg = $boardResult['success_msg'] ?? $success_msg ?? null;
   $error_msg = $boardResult['error_msg'] ?? $error_msg ?? null;
@@ -198,6 +200,7 @@ th.rotated-text > div > span {
     <div class="tab-content" style="background: white">
       <div role="tabpanel" class="tab-pane active" id="data">
         <form action="?save=personal_data" method="post" class="form-horizontal">
+          <?php echo mds_csrf_input(); ?>
           <div class="form-group">
             <div class="row">
               <label for="inputFirstName" class="col-sm-2 control-label">First name</label>
@@ -273,7 +276,7 @@ th.rotated-text > div > span {
             <div class="row">
               <div class="col-sm-offset-2 col-sm-10">
               <button type="submit" class="btn btn-primary">Save</button>
-              <a href="?save=testMailUser" class="btn btn-outline-secondary ms-2">Send test mail</a>
+              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailUser">Send test mail</button>
               </div>
             </div>
           </div>
@@ -284,6 +287,7 @@ th.rotated-text > div > span {
       <div role="tabpanel" class="tab-pane" id="email">
         <p style="margin-bottom: 0px; margin-top: 1rem;">To change your email address, please enter your current password and the new email address.</p>
         <form action="?save=email" method="post" class="form-horizontal">
+          <?php echo mds_csrf_input(); ?>
           <div class="form-group">
             <div class="row">
               <label for="inputPasswordForValidation" class="col-sm-2 control-label">Password</label>
@@ -325,6 +329,7 @@ th.rotated-text > div > span {
       <div role="tabpanel" class="tab-pane" id="password">
         <p style="margin-bottom: 0px; margin-top: 1rem;">To change your password, please enter your current password and the new password.</p>
         <form action="?save=password" method="post" class="form-horizontal">
+          <?php echo mds_csrf_input(); ?>
           <div class="form-group">
             <div class="row">
               <label for="inputPassword" class="col-sm-2 control-label">Old Password</label>
@@ -443,6 +448,7 @@ th.rotated-text > div > span {
         <div class="modal-dialog">
           <div class="modal-content">
             <form class="row g-3" action="?save=addNewUserToBoard" method="post" class="form-horizontal">
+              <?php echo mds_csrf_input(); ?>
               <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">Add new Board</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -470,6 +476,7 @@ th.rotated-text > div > span {
       <div role="tabpanel" class="tab-pane" id="confDashboard">
         <div class="panel panel-default">
           <form action="?save=dashboard_data" method="post" class="form-horizontal">
+            <?php echo mds_csrf_input(); ?>
             <div class="form-group">
               <div class="row">
                 <label for="inputUpdateInterval" class="col-sm-2 control-label">Update interval (in Minutes) (tbd)</label>
@@ -537,6 +544,7 @@ th.rotated-text > div > span {
 
       <div role="tabpanel" class="tab-pane" id="allBoards">
       <form action="?save=allBoards" method="post" class="form-horizontal">
+        <?php echo mds_csrf_input(); ?>
         <div class="container-fluid border mb-2">
         <span>toggle columns:</span>
           <div class="form-check form-switch d-inline-block pe-4">
@@ -629,6 +637,7 @@ th.rotated-text > div > span {
       <div role="tabpanel" class="tab-pane" id="users">
         <p style="margin-bottom: 0px; margin-top: 1rem;">To change and activate Users.</p>
         <form action="?save=users" method="post" class="form-horizontal">
+          <?php echo mds_csrf_input(); ?>
           <div class="panel panel-default">
           <table class="table">
           <tr>
@@ -694,6 +703,7 @@ th.rotated-text > div > span {
       <!-- Modification of Server Setting -->
       <div role="tabpanel" class="tab-pane" id="serverSetting">
         <form action="?save=serverSetting" method="post" class="form-horizontal">
+          <?php echo mds_csrf_input(); ?>
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
@@ -999,7 +1009,7 @@ th.rotated-text > div > span {
           <div class="form-group">
             <div class="col col-sm-offset-2 col-sm-10">
               <button type="submit" class="btn btn-primary">Save</button>
-              <a href="?save=testMailSystem" class="btn btn-outline-secondary ms-2">Send system test mail</a>
+              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailSystem">Send system test mail</button>
             </div>
           </div>
         </form>

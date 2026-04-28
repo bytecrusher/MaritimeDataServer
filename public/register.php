@@ -9,9 +9,28 @@ $config = new configuration();
 $var_AdminEmailAddress = $config::$adminEmailAddress;
 
 if (count($_POST) > 0) {
+    if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $message = "The form session has expired. Please reload the page and try again.";
+        $type = "error";
+    }
+    if (!isset($message)) {
+        $rateLimit = mds_rate_limit_attempt(
+            'register',
+            strtolower(trim((string)($_POST["userEmail"] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+            5,
+            3600
+        );
+        if (!$rateLimit['allowed']) {
+            $message = "Too many registration attempts. Please try again later.";
+            $type = "error";
+        }
+    }
     /* Form Required Field Validation */
     foreach ($_POST as $key => $value) {
-        if (empty($_POST[$key])) {
+        if ($key === 'csrf_token' || $key === 'terms') {
+            continue;
+        }
+        if (!isset($message) && empty($_POST[$key])) {
             $message = ucwords($key) . " field is required";
             $type = "error";
             break;
@@ -104,6 +123,7 @@ if (count($_POST) > 0) {
         </div>
         <?php } else { ?>
         <form name="frmRegistration" method="post" action="">
+            <?php echo mds_csrf_input(); ?>
             <h2>User Activation Email</h2>
             <div class="form-group">
                 <label for="firstName">First name:</label>
