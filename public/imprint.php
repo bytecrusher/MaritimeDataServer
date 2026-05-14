@@ -8,6 +8,7 @@ $companyName = trim((string)($config::$imprintCompanyName ?: $config::$applicati
 $address = trim((string)$config::$imprintAddress);
 $email = trim((string)$config::$imprintEmail);
 $phone = trim((string)$config::$imprintPhone);
+$isGerman = mds_current_language() === 'de';
 
 include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>
@@ -15,32 +16,32 @@ include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 <div class="container-xl main-container">
   <section class="card shadow-sm border-0 mb-4">
     <div class="card-body p-4 p-lg-5">
-      <h1 class="mb-4">Impressum</h1>
+      <h1 class="mb-4"><?php echo htmlspecialchars(mds_t('imprint.title'), ENT_QUOTES, 'UTF-8'); ?></h1>
 
       <div class="row g-4">
         <div class="col-lg-6">
-          <h3 class="h5">Angaben gemaess § 5 TMG</h3>
+          <h3 class="h5"><?php echo htmlspecialchars($isGerman ? 'Angaben gemaess § 5 TMG' : 'Legal information', ENT_QUOTES, 'UTF-8'); ?></h3>
           <p class="mb-0">
-            <?php echo htmlspecialchars($companyName !== '' ? $companyName : 'Bitte im Betrieb hinterlegen', ENT_QUOTES, 'UTF-8'); ?><br>
+            <?php echo htmlspecialchars($companyName !== '' ? $companyName : ($isGerman ? 'Bitte im Betrieb hinterlegen' : 'Please configure for production use'), ENT_QUOTES, 'UTF-8'); ?><br>
             <?php if ($address !== '') { ?>
               <?php echo nl2br(htmlspecialchars($address, ENT_QUOTES, 'UTF-8')); ?>
             <?php } else { ?>
-              Bitte Anschrift im Betrieb hinterlegen.
+              <?php echo htmlspecialchars($isGerman ? 'Bitte Anschrift im Betrieb hinterlegen.' : 'Please configure the address for production use.', ENT_QUOTES, 'UTF-8'); ?>
             <?php } ?>
           </p>
         </div>
 
         <div class="col-lg-6">
-          <h3 class="h5">Kontakt</h3>
+          <h3 class="h5"><?php echo htmlspecialchars($isGerman ? 'Kontakt' : 'Contact', ENT_QUOTES, 'UTF-8'); ?></h3>
           <p class="mb-0">
             <?php if ($email !== '') { ?>
               E-Mail:
               <a href="mailto:<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?></a><br>
             <?php } else { ?>
-              E-Mail bitte im Betrieb hinterlegen.<br>
+              <?php echo htmlspecialchars($isGerman ? 'E-Mail bitte im Betrieb hinterlegen.' : 'Please configure the e-mail address for production use.', ENT_QUOTES, 'UTF-8'); ?><br>
             <?php } ?>
             <?php if ($phone !== '') { ?>
-              Telefon: <?php echo htmlspecialchars($phone, ENT_QUOTES, 'UTF-8'); ?>
+              <?php echo htmlspecialchars($isGerman ? 'Telefon' : 'Phone', ENT_QUOTES, 'UTF-8'); ?>: <?php echo htmlspecialchars($phone, ENT_QUOTES, 'UTF-8'); ?>
             <?php } ?>
           </p>
         </div>
@@ -48,9 +49,11 @@ include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 
       <hr class="my-4">
 
-      <h3 class="h5">Hinweis</h3>
+      <h3 class="h5"><?php echo htmlspecialchars($isGerman ? 'Hinweis' : 'Note', ENT_QUOTES, 'UTF-8'); ?></h3>
       <p class="mb-0 text-muted">
-        Diese Seite stellt nur die technisch eingebundenen Impressumsdaten bereit. Je nach Einsatzszenario koennen weitere Pflichtangaben notwendig sein.
+        <?php echo htmlspecialchars($isGerman
+          ? 'Diese Seite stellt nur die technisch eingebundenen Impressumsdaten bereit. Je nach Einsatzszenario koennen weitere Pflichtangaben notwendig sein.'
+          : 'This page displays the legal information configured for this installation. Depending on the deployment scenario, additional mandatory information may be required.', ENT_QUOTES, 'UTF-8'); ?>
       </p>
     </div>
   </section>

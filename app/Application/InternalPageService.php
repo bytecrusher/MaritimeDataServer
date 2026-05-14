@@ -13,6 +13,7 @@ class InternalPageService
             if (is_array($sessionUserData) && !empty($sessionUserData['email'])) {
                 $currentUser = new user($sessionUserData['email']);
                 $_SESSION['userObj'] = serialize($currentUser);
+                mds_set_current_language($currentUser->getLanguage());
                 return $currentUser;
             }
         }
@@ -24,6 +25,7 @@ class InternalPageService
         $sessionUserObj = @unserialize($_SESSION['userObj'], ['allowed_classes' => ['user']]);
         if ($sessionUserObj instanceof user) {
             $_SESSION['userId'] = $sessionUserObj->getId();
+            mds_set_current_language($sessionUserObj->getLanguage());
             return $sessionUserObj;
         }
 

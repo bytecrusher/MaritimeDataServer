@@ -219,6 +219,7 @@ CREATE TABLE `users` (
   `passwordCodeTime` date DEFAULT NULL,
   `dashboardUpdateInterval` int NOT NULL DEFAULT '15',
   `Timezone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Europe/Berlin',
+  `language` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'en',
   `receive_notifications` tinyint NOT NULL DEFAULT '0',
   `receive_offline_notifications` tinyint NOT NULL DEFAULT '0',
   `receive_sensor_notifications` tinyint NOT NULL DEFAULT '0',

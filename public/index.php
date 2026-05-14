@@ -11,28 +11,28 @@ include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";    //
 ?>
 <div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;">
   <div class="container">
-    <h1>Welcome to MDS (Maritime Data Server)</h1>
+    <h1><?php echo htmlspecialchars(mds_t('home.title'), ENT_QUOTES, 'UTF-8'); ?></h1>
   </div>
 </div>
 
 <div class="container">
   <div class="row">
     <div class="col-md-6">
-      <h2>About</h2>
-      <p>MDS (Maritime Data Server) is used to store and visualize sensor data (temperature, voltage,...) that was send from a small devices.</p>
-      <p>My first data collector is an ESP32 with several sensors (DS18B20).</p>
-      <p>The ESP32 sends the data via WiFi and/or LoRa to the MDS.</p>
+      <h2><?php echo htmlspecialchars(mds_t('home.about'), ENT_QUOTES, 'UTF-8'); ?></h2>
+      <p><?php echo htmlspecialchars(mds_t('home.about_text'), ENT_QUOTES, 'UTF-8'); ?></p>
+      <p><?php echo htmlspecialchars(mds_t('home.collector_text'), ENT_QUOTES, 'UTF-8'); ?></p>
+      <p><?php echo htmlspecialchars(mds_t('home.transfer_text'), ENT_QUOTES, 'UTF-8'); ?></p>
       <ul>
-        <li>Accessing to personal dashboard after registration.</li>
-        <li>Graphical representation of your sensor data.</li>
-        <li>Sends messages via e-mail and telegram if a defined limit value is exceeded or not reached (function comes later).</li>
-        <li>Responsive web design perfect for PC, tablet and mobile devices.</li>
+        <li><?php echo htmlspecialchars(mds_t('home.feature_dashboard'), ENT_QUOTES, 'UTF-8'); ?></li>
+        <li><?php echo htmlspecialchars(mds_t('home.feature_charts'), ENT_QUOTES, 'UTF-8'); ?></li>
+        <li><?php echo htmlspecialchars(mds_t('home.feature_alerts'), ENT_QUOTES, 'UTF-8'); ?></li>
+        <li><?php echo htmlspecialchars(mds_t('home.feature_responsive'), ENT_QUOTES, 'UTF-8'); ?></li>
       </ul>
     </div>
     <div class="col-md-6">
-      <h2>Documentation</h2>
-      <p>After your account registration, your MDC module (Maritime Data Collector, LoRa boat monitor or other ESP32 device) needs to be linked to your account.</p>
-      <p>The module can then be configured.</p>
+      <h2><?php echo htmlspecialchars(mds_t('home.documentation'), ENT_QUOTES, 'UTF-8'); ?></h2>
+      <p><?php echo htmlspecialchars(mds_t('home.documentation_text'), ENT_QUOTES, 'UTF-8'); ?></p>
+      <p><?php echo htmlspecialchars(mds_t('home.configuration_text'), ENT_QUOTES, 'UTF-8'); ?></p>
    </div>
   </div>
 </div>

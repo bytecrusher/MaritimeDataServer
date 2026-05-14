@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="<?php echo htmlspecialchars(mds_current_language(), ENT_QUOTES, 'UTF-8'); ?>">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -28,7 +28,7 @@
           header("Location: " . $publicInstallPath);
           exit();
         } else {
-          echo ("Config file and install folder not found. Please reinstall.");
+          echo htmlspecialchars(mds_t('header.install_missing'), ENT_QUOTES, 'UTF-8');
           exit();
         }
       }
@@ -189,16 +189,16 @@
               <tr>
                 <td>
                   <div class="input-group">
-                    <input class="form-control" placeholder="E-Mail" name="email" type="email" required>
+                    <input class="form-control" placeholder="<?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?>" name="email" type="email" required>
                   </div>
                 </td>
-                <td><input class="form-control" placeholder="Password" name="password" type="password" value="" required></td>
-                <td><button type="submit" class="btn btn-success">Login</button></td>
-                <td><a class="btn btn-primary" href="<?php echo htmlspecialchars(mds_route_path('register.php'), ENT_QUOTES, 'UTF-8'); ?>" role="button">Register now</a></td>
+                <td><input class="form-control" placeholder="<?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?>" name="password" type="password" value="" required></td>
+                <td><button type="submit" class="btn btn-success"><?php echo htmlspecialchars(mds_t('common.login'), ENT_QUOTES, 'UTF-8'); ?></button></td>
+                <td><a class="btn btn-primary" href="<?php echo htmlspecialchars(mds_route_path('register.php'), ENT_QUOTES, 'UTF-8'); ?>" role="button"><?php echo htmlspecialchars(mds_t('nav.register_now'), ENT_QUOTES, 'UTF-8'); ?></a></td>
               </tr>
               <tr>
-                <td><label style="margin-bottom: 0px; font-weight: normal;"><input type="checkbox" name="angemeldet_bleiben" value="remember-me" title="Angemeldet bleiben" style="margin: 0; vertical-align: middle;" /> <small>remember login for 30 days</small></label></td>
-                <td><small><a href="<?php echo htmlspecialchars(mds_route_path('resetPassword.php'), ENT_QUOTES, 'UTF-8'); ?>">Reset Password</a></small></td>
+                <td><label style="margin-bottom: 0px; font-weight: normal;"><input type="checkbox" name="angemeldet_bleiben" value="remember-me" title="<?php echo htmlspecialchars(mds_t('nav.remember_login'), ENT_QUOTES, 'UTF-8'); ?>" style="margin: 0; vertical-align: middle;" /> <small><?php echo htmlspecialchars(mds_t('nav.remember_login'), ENT_QUOTES, 'UTF-8'); ?></small></label></td>
+                <td><small><a href="<?php echo htmlspecialchars(mds_route_path('resetPassword.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.reset_password'), ENT_QUOTES, 'UTF-8'); ?></a></small></td>
                 <td></td>
               </tr>
             </tbody>
@@ -209,11 +209,9 @@
     <?php elseif (basename($_SERVER['PHP_SELF']) != "login.php") : ?>
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav mr-auto navbar-right">
-          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('internal.php'), ENT_QUOTES, 'UTF-8'); ?>">My Sensors</a></li>
-          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('settings.php'), ENT_QUOTES, 'UTF-8'); ?>">Settings</a></li>
-          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('privacy.php'), ENT_QUOTES, 'UTF-8'); ?>">Privacy</a></li>
-          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('imprint.php'), ENT_QUOTES, 'UTF-8'); ?>">Imprint</a></li>
-          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('logout.php'), ENT_QUOTES, 'UTF-8'); ?>">Logout</a></li>
+          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('internal.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.my_sensors'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('settings.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.settings'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('logout.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.logout'), ENT_QUOTES, 'UTF-8'); ?></a></li>
           <li class="nav-item container mds-qr-slot">
             <?php
               if ($config::$ShowQrCode == "1") {

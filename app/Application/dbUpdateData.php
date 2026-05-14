@@ -28,6 +28,24 @@ class dbUpdateData {
       'gaugeStyle' => $post['GaugeStyle'] ?? 'classic',
     );
   }
+
+  private static function tableColumnExists(PDO $pdo, $tableName, $columnName)
+  {
+    $statement = $pdo->prepare(
+      "SELECT COUNT(*) AS columnCount
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = :tableName
+         AND COLUMN_NAME = :columnName"
+    );
+    $statement->execute(array(
+      'tableName' => $tableName,
+      'columnName' => $columnName,
+    ));
+    $row = $statement->fetch(PDO::FETCH_ASSOC);
+    return ((int)($row['columnCount'] ?? 0) > 0);
+  }
+
   /**
   * Update User Data.
   * @return bool — TRUE on success or FALSE on failure.
@@ -74,6 +92,20 @@ class dbUpdateData {
       }
     }
   }
+
+  public static function updateUserLanguage($language, $userId) {
+    $pdo = dbConfig::getInstance();
+    $language = mds_normalize_language($language);
+    try {
+      $statement = $pdo->prepare("UPDATE users SET language = :language, updatedAt=NOW() WHERE id = :userId");
+      return $statement->execute(array('language' => $language, 'userId' => $userId ));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Language not successfully saved for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Language not successfully saved.');
+    }
+  }
+
 
   /**
   * Update User Email Address.
@@ -231,19 +263,32 @@ class dbUpdateData {
     $varReceiveOfflineNotifications = isset($post['receiveOfflineNotifications']) ? (int)$post['receiveOfflineNotifications'] : 0;
     $varReceiveSensorNotifications = isset($post['receiveSensorNotifications']) ? (int)$post['receiveSensorNotifications'] : 0;
     try {
-      $statement = $pdo->prepare(
-        "UPDATE users
-         SET receive_notifications = :receive_notifications,
-             receive_offline_notifications = :receive_offline_notifications,
-             receive_sensor_notifications = :receive_sensor_notifications
-         WHERE id = :userId"
-      );
-      return $statement->execute(array(
+      $setClauses = array("receive_notifications = :receive_notifications");
+      $params = array(
         'receive_notifications' => $varReceiveNotifications,
-        'receive_offline_notifications' => $varReceiveOfflineNotifications,
-        'receive_sensor_notifications' => $varReceiveSensorNotifications,
-        'userId' => $userId
-      ));
+        'userId' => $userId,
+      );
+
+      if (self::tableColumnExists($pdo, 'users', 'receive_offline_notifications')) {
+        $setClauses[] = "receive_offline_notifications = :receive_offline_notifications";
+        $params['receive_offline_notifications'] = $varReceiveOfflineNotifications;
+      }
+
+      if (self::tableColumnExists($pdo, 'users', 'receive_sensor_notifications')) {
+        $setClauses[] = "receive_sensor_notifications = :receive_sensor_notifications";
+        $params['receive_sensor_notifications'] = $varReceiveSensorNotifications;
+      }
+
+      if (count($setClauses) < 3) {
+        writeToLogFunction::warning(
+          'Notification preference save is using legacy users schema. Run notification_and_gauge_style_idempotent migration.',
+          $_SERVER["SCRIPT_FILENAME"],
+          array('userId' => $userId, 'updatedColumns' => $setClauses)
+        );
+      }
+
+      $statement = $pdo->prepare("UPDATE users SET " . implode(', ', $setClauses) . " WHERE id = :userId");
+      return $statement->execute($params);
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: User  ReceiveNotifications in DB not successfully updated for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);

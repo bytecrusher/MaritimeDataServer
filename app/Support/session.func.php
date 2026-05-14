@@ -62,7 +62,13 @@ function mds_start_session()
     ini_set('session.cookie_secure', mds_is_https_request() ? '1' : '0');
     ini_set('session.cookie_samesite', 'Lax');
 
-    session_set_cookie_params(mds_cookie_options(0, 'Lax'));
+    session_set_cookie_params(array(
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => mds_is_https_request(),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ));
     session_start();
 }
 

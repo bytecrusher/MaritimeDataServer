@@ -7,10 +7,10 @@ if (! empty($_GET["id"])) {
     $result = dbUpdateData::activateUserStatus($_GET["id"]);
 
     if ($result) {
-        $message = "Your account is activated.";
+        $message = mds_current_language() === 'de' ? "Dein Account ist aktiviert." : "Your account is activated.";
         $type = "success";
     } else {
-        $message = "problem in account activation (is already active?).";
+        $message = mds_current_language() === 'de' ? "Problem bei der Account-Aktivierung (ist der Account bereits aktiv?)." : "Problem in account activation (is it already active?).";
         $type = "error";
     }
 }
@@ -22,9 +22,9 @@ if (! empty($_GET["id"])) {
 		include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
 ?>
 <div class="container main-container registration-form">
-<h1>Register</h1>
+<h1><?php echo htmlspecialchars(mds_t('register.submit'), ENT_QUOTES, 'UTF-8'); ?></h1>
 
-<title>User Activation</title>
+<title><?php echo htmlspecialchars(mds_t('register.heading'), ENT_QUOTES, 'UTF-8'); ?></title>
 <link rel="stylesheet" type="text/css" href="<?php echo htmlspecialchars(mds_asset_path('css/style.css'), ENT_QUOTES, 'UTF-8'); ?>" />
 </head>
 <body>

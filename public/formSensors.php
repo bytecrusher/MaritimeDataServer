@@ -14,7 +14,7 @@
 
   if (isset($_POST['submit_formSensors'])) {
     if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
-      $error_msg = "The form session has expired. Please reload the page and try again.";
+      $error_msg = mds_t('login.csrf');
       ?>
       <div class="alert alert-danger">
         <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
@@ -27,13 +27,13 @@
     if (!isset($_POST['modal'])) {
       try {
         $updateSensorReturn = dbUpdateData::updateSensor($_POST);
-        $success_msg = "Board changes saved.";
+        $success_msg = mds_t('form.sensor.saved');
         $newURL = "formBoards.php?id=" . $_POST['macAddress'];
         header('Location: '.$newURL);
         // ToDo: send error or success mgs to header.
         $_GET = $_POST;
       } catch (Exception $e) {
-				$error_msg = "Error while saving changes to sensors.";
+				$error_msg = mds_t('form.sensor.save_error');
         ?>
         <div class="alert alert-danger">
           <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
@@ -45,12 +45,12 @@
     } else {
       try {
         $updateSensorReturn = dbUpdateData::updateSensorChannelModal($_POST);
-        $success_msg = "Board changes saved.";
+        $success_msg = mds_t('form.sensor.saved');
         header("Location: internal.php");
         $_GET = $_POST;
         // ToDo: send error or success mgs to header.
       } catch (Exception $e) {
-				$error_msg = "Error while saving changes to sensors.";
+				$error_msg = mds_t('form.sensor.save_error');
         ?>
         <div class="alert alert-danger">
 			    <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
@@ -65,7 +65,7 @@
       ?>
         <div class='jumbotron' style='padding: 1rem 1rem; margin-bottom: 1rem;'>
           <div class='container'>
-            <h1>Edit sensor</h1>
+            <h1><?php echo htmlspecialchars(mds_t('form.sensor.edit'), ENT_QUOTES, 'UTF-8'); ?></h1>
           </div>
         </div>
       <?php
@@ -79,7 +79,7 @@
 } else {
 ?>
   <div class='modal-header'>
-  <h5 class='modal-title' id='exampleModalLabel'>Edit Sensor</h5>
+  <h5 class='modal-title' id='exampleModalLabel'><?php echo htmlspecialchars(mds_t('form.sensor.edit'), ENT_QUOTES, 'UTF-8'); ?></h5>
   <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
 <?php
 }
@@ -116,7 +116,7 @@
           ?>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">ID Mac Address</span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></span>
             <input type='text' class='col col-sm-4 form-control' style="background:#e9ecef" id='macAddress' name='macAddress' value='<?=$SensorConfig['boardId'];?>'>
           </div>
 
@@ -124,7 +124,7 @@
             if ($SensorType['hasAddress'] == 1) {
               ?>
               <div class='input-group mb-3'>
-                <span class='input-group-text' style='width: 50%'>Sensor Address (I2C)</span>
+                <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.sensor_address'), ENT_QUOTES, 'UTF-8'); ?> (I2C)</span>
                 <input type='text' class='col col-sm-4 form-control' id='sensorId' name='sensorId' value='<?php echo( $SensorConfig['sensorAddress']) ?>'>
               </div>
 
@@ -133,17 +133,17 @@
           ?>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">Name</span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></span>
             <input type='text' class='col col-sm-4 form-control' id='name' name='name' value='<?=$SensorConfig['name'];?>'>
           </div>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">Description</span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></span>
             <input type='text' class='col col-sm-4 form-control' id='description' name='description' value='<?=$SensorConfig['description'];?>'>
           </div>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">Typ</span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('form.sensor.sensor_type'), ENT_QUOTES, 'UTF-8'); ?></span>
             <select class='col col-sm-4 form-select' aria-label='Default select example' name='typId' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
           </div>
 
@@ -161,7 +161,7 @@
           </div>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">Location</span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></span>
             <input type='text' class='col col-sm-4 form-control' id='locationOfMeasurement' name='locationOfMeasurement' value='<?=$SensorConfig['locationOfMeasurement'];?>'>
           </div>
 
@@ -171,14 +171,14 @@
               //echo ($singleSensorChannelConfig['name']);
               ?>
               <fieldset class="border p-2 mb-3 mySensorsFieldset">
-                <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel <?php echo $singleSensorChannelConfig['channelNr']; ?></legend>
+                <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('form.sensor.value'), ENT_QUOTES, 'UTF-8'); ?> / <?php echo htmlspecialchars(mds_t('form.sensor.channel'), ENT_QUOTES, 'UTF-8'); ?> <?php echo $singleSensorChannelConfig['channelNr']; ?></legend>
                 <div class='input-group mb-3'>
-                  <span class='input-group-text' style='width: 50%'>Name</span>
+                  <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></span>
                   <input type='text' class='col col-sm-4 form-control' id='nameValue<?php echo $singleSensorChannelConfig['channelNr'] ?>' name='nameValue<?php echo $singleSensorChannelConfig['channelNr'] ?>' value='<?php echo $singleSensorChannelConfig['name'] ?>'>
                 </div>
 
                 <div class='input-group mt-3'>
-                  <span class='input-group-text' style='width: 50%'>on Dashboard</span>
+                  <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.show_dashboard'), ENT_QUOTES, 'UTF-8'); ?></span>
                   <label style="width: 50%;">
                     <div class="form-control">
                       <?php
@@ -202,7 +202,7 @@
           ?>
 
           <fieldset class="border p-2 mb-3 mySensorsFieldset" >
-            <legend  class="float-none w-auto mySensorsFieldsetLegend">Value / Channel <?php 
+            <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('form.sensor.value'), ENT_QUOTES, 'UTF-8'); ?> / <?php echo htmlspecialchars(mds_t('form.sensor.channel'), ENT_QUOTES, 'UTF-8'); ?> <?php
               if (isset($_GET['channel'])) {
                 echo $_GET['channel'];
               } else {
@@ -210,60 +210,60 @@
               }
               ?></legend >
             <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'>Channel</span>
+              <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.channel'), ENT_QUOTES, 'UTF-8'); ?></span>
               <input type='text' class='col col-sm-4 form-control' id='channel' name='channel' value='<?php echo $_GET['channel'] ?>'>
             </div>
 
             <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'>Name</span>
+              <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></span>
               <input type='text' class='col col-sm-4 form-control' id='nameValue' name='nameValue' value='<?php echo $mySingleSensorChannelConfig['name'] ?>'>
             </div>
 
             <fieldset class="border p-2 mySensorsFieldset">
-              <legend  class="float-none w-auto mySensorsFieldsetLegend">Gauge</legend>
+              <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('form.sensor.gauge'), ENT_QUOTES, 'UTF-8'); ?></legend>
               <div class='input-group mb-3'>
-                <span class='input-group-text' style='width: 50%'>MinValue</span>
+                <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.min_value'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <input type='number' class='col col-sm-4 form-control' id='GaugeMinValue' name='GaugeMinValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeMinValue'] ?>'>
               </div>
 
               <div class='input-group'>
-                <span class='input-group-text' style='width: 50%'>MaxValue</span>
+                <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.max_value'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <input type='number' class='col col-sm-4 form-control' id='GaugeMaxValue' name='GaugeMaxValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeMaxValue'] ?>'>
               </div>
 
               <fieldset class="border p-2">
-                <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area Low</legend>
+                <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('form.sensor.red_area_low'), ENT_QUOTES, 'UTF-8'); ?></legend>
                 <div class='input-group mb-3'>
-                  <span class='input-group-text' style='width: 50%'>Value</span>
+                  <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('common.value'), ENT_QUOTES, 'UTF-8'); ?></span>
                   <input type='number' class='col col-sm-4 form-control' id='GaugeRedAreaLowValue' name='GaugeRedAreaLowValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaLowValue'] ?>'>
                 </div>
 
                 <div class='input-group'>
-                  <span class='input-group-text' for="GaugeRedAreaLowColor" style='width: 50%'>Color</span>
+                  <span class='input-group-text' for="GaugeRedAreaLowColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.color'), ENT_QUOTES, 'UTF-8'); ?></span>
                   <input type="color" class="form-control form-control-color" id="GaugeRedAreaLowColor" name="GaugeRedAreaLowColor" value="<?php echo $mySingleSensorChannelConfig['GaugeRedAreaLowColor'] ?>" title="Choose your color">
                 </div>
               </fieldset>
 
               <fieldset class="border p-2">
-                <legend  class="float-none w-auto mySensorsFieldsetLegend">Red Area High</legend>
+                <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('form.sensor.red_area_high'), ENT_QUOTES, 'UTF-8'); ?></legend>
                 <div class='input-group mb-3'>
-                  <span class='input-group-text' style='width: 50%'>Value</span>
+                  <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('common.value'), ENT_QUOTES, 'UTF-8'); ?></span>
                   <input type='number' class='col col-sm-4 form-control' id='GaugeRedAreaHighValue' name='GaugeRedAreaHighValue' size='7' step='0.1' value='<?php echo $mySingleSensorChannelConfig['GaugeRedAreaHighValue'] ?>'>
                 </div>
 
                 <div class='input-group'>
-                  <span class='input-group-text' for="GaugeRedAreaHighColor" style='width: 50%'>Color</span>
+                  <span class='input-group-text' for="GaugeRedAreaHighColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.color'), ENT_QUOTES, 'UTF-8'); ?></span>
                   <input type="color" class="form-control form-control-color" id="GaugeRedAreaHighColor" name="GaugeRedAreaHighColor" value="<?php echo $mySingleSensorChannelConfig['GaugeRedAreaHighColor'] ?>" title="Choose your color">
                 </div>
               </fieldset>
 
               <div class='input-group mt-3'>
-                <span class='input-group-text' for="GaugeNormalAreaColor" style='width: 50%'>Normal Area Color</span>
+                <span class='input-group-text' for="GaugeNormalAreaColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.normal_area_color'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <input type="color" class="form-control form-control-color" id="GaugeNormalAreaColor" name="GaugeNormalAreaColor" value="<?php echo $mySingleSensorChannelConfig['GaugeNormalAreaColor'] ?>" title="Choose your color">
               </div>
 
               <div class='input-group mt-3'>
-                <span class='input-group-text' style='width: 50%'>Gauge Style</span>
+                <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.gauge_style'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <select class='form-select' id='GaugeStyle' name='GaugeStyle'>
                   <?php
                     $currentGaugeStyle = $mySingleSensorChannelConfig['GaugeStyle'] ?? 'classic';
@@ -286,9 +286,9 @@
             </fieldset>
 
             <fieldset class="border p-2 mySensorsFieldset">
-              <legend class="float-none w-auto mySensorsFieldsetLegend">Critical Alert</legend>
+              <legend class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('form.sensor.critical_alert'), ENT_QUOTES, 'UTF-8'); ?></legend>
               <div class='input-group mt-3 mb-3'>
-                <span class='input-group-text' style='width: 50%'>Enable E-Mail alert</span>
+                <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.enable_email_alert'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <label style="width: 50%;">
                   <div class="form-control">
                     <?php $alertEnabled = isset($mySingleSensorChannelConfig['AlertEnabled']) && (int)$mySingleSensorChannelConfig['AlertEnabled'] === 1; ?>
@@ -298,26 +298,26 @@
               </div>
 
               <div class='input-group mb-3'>
-                <span class='input-group-text' style='width: 50%'>Alert below value</span>
+                <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.alert_below'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <input type='number' class='col col-sm-4 form-control' id='AlertLowValue' name='AlertLowValue' size='7' step='0.1' value='<?php echo htmlspecialchars((string)($mySingleSensorChannelConfig['AlertLowValue'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>'>
               </div>
 
               <div class='input-group mb-3'>
-                <span class='input-group-text' style='width: 50%'>Alert above value</span>
+                <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.alert_above'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <input type='number' class='col col-sm-4 form-control' id='AlertHighValue' name='AlertHighValue' size='7' step='0.1' value='<?php echo htmlspecialchars((string)($mySingleSensorChannelConfig['AlertHighValue'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>'>
               </div>
             </fieldset>
 
             <fieldset class="border p-2 mySensorsFieldset">
-              <legend  class="float-none w-auto mySensorsFieldsetLegend">Charts</legend>
+              <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('internal.charts'), ENT_QUOTES, 'UTF-8'); ?></legend>
               <div class='input-group'>
-                <span class='input-group-text' for="ChartColor" style='width: 50%'>Chart Color</span>
+                <span class='input-group-text' for="ChartColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.chart_color'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <input type="color" class="form-control form-control-color" id="ChartColor" name="ChartColor" value="<?php echo $mySingleSensorChannelConfig['ChartColor'] ?>" title="Choose your color">
               </div>
             </fieldset>
 
             <div class='input-group mt-3 mb-3'>
-              <span class='input-group-text' style='width: 50%'>show on Dashboard</span>
+              <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.show_dashboard'), ENT_QUOTES, 'UTF-8'); ?></span>
               <label style="width: 50%;">
                 <div class="form-control">
                   <?php
@@ -336,7 +336,7 @@
             </div>
 
             <div class='input-group mt-3 mb-3'>
-              <span class='input-group-text' style='width: 50%'>DashboardOrderNr</span>
+              <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.dashboard_order'), ENT_QUOTES, 'UTF-8'); ?></span>
               <input type='text' class='col col-sm-4 form-control' id='DashboardOrderNr' name='DashboardOrderNr' value='<?php echo $mySingleSensorChannelConfig['DashboardOrderNr'] ?>' <?php if (isset($_GET['modal'])) { echo("disabled"); } ?>>
             </div>
           </fieldset >
@@ -347,7 +347,7 @@
           if (!isset($_GET['modal'])) {
           ?>
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">Nr of used Sensors</span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('form.sensor.used_sensors'), ENT_QUOTES, 'UTF-8'); ?></span>
             <label style="width: 50%;">
               <div class='form-control'>
                 <input type='text' class='col col-sm-4 form-control' id='NrOfUsedSensors' name='NrOfUsedSensors' value='<?php echo $SensorConfig['NrOfUsedSensors'] ?>'>
@@ -356,7 +356,7 @@
           </div>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%">on Dashboard</span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('form.sensor.show_dashboard'), ENT_QUOTES, 'UTF-8'); ?></span>
             <label style="width: 50%;">
               <div class='form-control'>
               <?php
@@ -386,16 +386,16 @@
     if (!isset($_GET['modal'])) {
     ?>
       <?php if ($backBoardId !== null) { ?>
-        <a class='col col-sm-2 m-1 btn btn-primary' href='formBoards.php?id=<?php echo (int)$backBoardId ?>' role='button'>Back</a>
+        <a class='col col-sm-2 m-1 btn btn-primary' href='formBoards.php?id=<?php echo (int)$backBoardId ?>' role='button'><?php echo htmlspecialchars(mds_t('common.back'), ENT_QUOTES, 'UTF-8'); ?></a>
       <?php } ?>
     <?php
     } else {
     ?>
-      <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+      <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'><?php echo htmlspecialchars(mds_t('common.close'), ENT_QUOTES, 'UTF-8'); ?></button>
     <?php
     }
   ?>
-  <input type='submit' class='btn btn-primary' id='submit_formSensors' name='submit_formSensors' value='Save' >
+  <input type='submit' class='btn btn-primary' id='submit_formSensors' name='submit_formSensors' value='<?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?>' >
 </div>
 </div>
 </form>

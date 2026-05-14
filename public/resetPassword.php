@@ -15,12 +15,12 @@ require_once dirname(__DIR__) . "/app/Infrastructure/Logging/writeToLogFunction.
 $config  = new configuration();
 ?>
 <div class="container small-container-330">
-	<h2>Reset password</h2>
+	<h2><?php echo htmlspecialchars(mds_t('reset.title'), ENT_QUOTES, 'UTF-8'); ?></h2>
 	<?php
 		$showForm = true;
 		if (isset($_GET['send'])) {
 			if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
-				$error = "<b>The form session has expired. Please try again.</b>";
+				$error = "<b>" . htmlspecialchars(mds_t('login.csrf'), ENT_QUOTES, 'UTF-8') . "</b>";
 			} else if (!isset($_POST['email']) || empty($_POST['email'])) {
 				$error = "<b>Please enter your mail address.</b>";
 			} else {
@@ -90,16 +90,16 @@ $config  = new configuration();
 					<form method="post" action="" name="update">
 					<input type="hidden" name="action" value="update" />
 					<br /><br />
-					<label><strong>Enter New Password:</strong></label><br />
+					<label><strong><?php echo htmlspecialchars(mds_t('reset.new_password'), ENT_QUOTES, 'UTF-8'); ?>:</strong></label><br />
 					<input type="password" name="pass1" maxlength="15" required />
 					<br /><br />
-					<label><strong>Re-Enter New Password:</strong></label><br />
+						<label><strong><?php echo htmlspecialchars(mds_t('reset.new_password_repeat'), ENT_QUOTES, 'UTF-8'); ?>:</strong></label><br />
 						<input type="password" name="pass2" maxlength="15" required/>
 						<br /><br />
 						<input type="hidden" name="userId" value="<?php echo $userId;?>"/>
 						<input type="hidden" name="code" value="<?php echo htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>"/>
 						<?php echo mds_csrf_input(); ?>
-						<input type="submit" value="Reset Password" />
+						<input type="submit" value="<?php echo htmlspecialchars(mds_t('reset.submit'), ENT_QUOTES, 'UTF-8'); ?>" />
 						</form>
 					<?php
 				}else{
@@ -164,10 +164,10 @@ $config  = new configuration();
 		?>
 			<form action="?send=1" method="post">
 				<?php echo mds_csrf_input(); ?>
-				<label for="inputEmail">E-Mail</label>
-			<input class="form-control" placeholder="E-Mail" name="email" type="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email'], ENT_QUOTES, 'UTF-8') : ''; ?>" required>
+				<label for="inputEmail"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></label>
+			<input class="form-control" placeholder="<?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?>" name="email" type="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email'], ENT_QUOTES, 'UTF-8') : ''; ?>" required>
 			<br>
-			<input class="btn btn-lg btn-primary btn-block" type="submit" value="new password">
+			<input class="btn btn-lg btn-primary btn-block" type="submit" value="<?php echo htmlspecialchars(mds_t('reset.submit'), ENT_QUOTES, 'UTF-8'); ?>">
 		</form>
 	<?php
 	endif; //Endif von if($showForm)

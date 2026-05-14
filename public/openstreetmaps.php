@@ -43,12 +43,12 @@ function initInternalMap() {
 
   const boardIds = Object.keys(internalMapData.gpsData || {});
   if (boardIds.length === 0) {
-    renderMapFallback('Keine GPS-Daten fuer die Karte vorhanden.');
+    renderMapFallback(<?php echo json_encode(mds_t('internal.map_no_gps'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>);
     return;
   }
 
   if (typeof L === 'undefined') {
-    renderMapFallback('Leaflet konnte nicht geladen werden. Bitte Seite neu laden.');
+    renderMapFallback(<?php echo json_encode(mds_t('internal.map_leaflet_missing'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>);
     return;
   }
 
@@ -103,7 +103,7 @@ function initInternalMap() {
             color: '#ffffff',
             fillColor: markerColor,
             fillOpacity: 0.95
-          }).bindPopup('<b>' + boardName + '</b><br>Timestamp: ' + point.reading_time)
+          }).bindPopup('<b>' + boardName + '</b><br><?php echo htmlspecialchars(mds_t('internal.map_timestamp'), ENT_QUOTES, 'UTF-8'); ?>: ' + point.reading_time)
         );
       });
 
@@ -114,7 +114,7 @@ function initInternalMap() {
       map.fitBounds(bounds, {padding: [20, 20]});
     } else {
       map.setView([53.017585, 8.885182], 13);
-      renderMapFallback('GPS-Daten sind vorhanden, konnten aber nicht gezeichnet werden.');
+      renderMapFallback(<?php echo json_encode(mds_t('internal.map_invalid_gps'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>);
     }
 
     window.setTimeout(function() {
@@ -122,7 +122,7 @@ function initInternalMap() {
     }, 250);
   } catch (error) {
     console.error(error);
-    renderMapFallback('Fehler beim Aufbau der Karte: ' + error.message);
+    renderMapFallback(<?php echo json_encode(mds_t('internal.map_error_prefix'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?> + ' ' + error.message);
   }
 }
 

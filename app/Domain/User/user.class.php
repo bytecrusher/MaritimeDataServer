@@ -189,6 +189,19 @@ class user implements JsonSerializable
     }
   }
 
+  public function setLanguage($post)
+  {
+    try {
+      $language = mds_normalize_language($post['language'] ?? 'en');
+      $updateUserReturn = dbUpdateData::updateUserLanguage($language, $this->userObj->id);
+      $this->userObj->language = $language;
+      mds_set_current_language($language);
+      return $updateUserReturn;
+    } catch (Exception $e) {
+      throw new Exception('Language not saved.');
+    }
+  }
+
   /**
   * Set the Password of the current User.
   * @return $Password of the user
@@ -344,5 +357,12 @@ class user implements JsonSerializable
       return 7;
     }
     return $this->userObj->preferredChartWindowDays;
+  }
+
+  public function getLanguage() {
+    if (!property_exists($this->userObj, 'language')) {
+      return 'en';
+    }
+    return mds_normalize_language($this->userObj->language);
   }
 }

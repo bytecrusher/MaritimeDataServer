@@ -35,6 +35,22 @@ php tools/maintenance/sendmail.php
 php tools/maintenance/privacy_cleanup.php
 ```
 
+## Localization
+
+Logged-in users can choose their UI language under `Settings -> Personal data`.
+The current implementation supports:
+
+- English (`en`)
+- German (`de`)
+
+Existing installations need to run:
+
+```text
+docs/db_design/migrations/2026-05-14_user_language.sql
+```
+
+The language is stored on the `users.language` column and is applied to the main app pages, navigation, tabs and common sub pages.
+
 ## Description
 The server is organized in a
      - backend (API for receiving data from MDC (collector) and TTN, send emails) and a

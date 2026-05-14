@@ -13,7 +13,7 @@ include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>
 
 <div class="container main-container">
-The logout was successful. <a href="login.php">Back to login.</a>.
+<?php echo htmlspecialchars(mds_t('logout.success'), ENT_QUOTES, 'UTF-8'); ?> <a href="login.php"><?php echo htmlspecialchars(mds_t('logout.back'), ENT_QUOTES, 'UTF-8'); ?></a>
 </div>
 <?php
 include_once dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php";

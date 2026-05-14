@@ -22,7 +22,7 @@ if (!$userObj) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
-  $error_msg = 'The form session has expired. Please reload the page and try again.';
+  $error_msg = mds_t('login.csrf');
 } elseif(isset($_GET['save'])) {
   $saveResult = SettingsPageService::handleSettingsSave($userObj, $config, $_GET['save'], $_POST);
   $userObj = $saveResult['userObj'];
@@ -51,6 +51,7 @@ $notificationOverview = $pageData['notificationOverview'];
 $notificationJobStatus = $notificationOverview['jobStatus'] ?? null;
 $offlineBoardOverview = $notificationOverview['offlineBoards'] ?? array();
 $activeSensorAlertsOverview = $notificationOverview['activeSensorAlerts'] ?? array();
+$migrationStatus = $pageData['migrationStatus'] ?? array();
 
 include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>
@@ -80,7 +81,7 @@ th.rotated-text > div > span {
 
 <div class="jumbotron" style="padding: 1rem 1rem;">
   <div class="container">
-    <h1>Settings</h1>
+    <h1><?php echo htmlspecialchars(mds_t('settings.title'), ENT_QUOTES, 'UTF-8'); ?></h1>
   </div>
 </div>
 <div class="container-xl main-container">
@@ -128,20 +129,20 @@ th.rotated-text > div > span {
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-4">
-            <h5 class="card-title mb-2">Notification status</h5>
+            <h5 class="card-title mb-2"><?php echo htmlspecialchars(mds_t('settings.notification_status'), ENT_QUOTES, 'UTF-8'); ?></h5>
             <?php if ($notificationJobStatus) { ?>
-              <div><strong>Last job status:</strong> <?php echo htmlspecialchars($notificationJobStatus['status'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
-              <div><strong>Started:</strong> <?php echo htmlspecialchars($notificationJobStatus['startedAt'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
-              <div><strong>Finished:</strong> <?php echo htmlspecialchars($notificationJobStatus['finishedAt'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
-              <div><strong>Offline mails:</strong> <?php echo htmlspecialchars((string)($notificationJobStatus['offlineSent'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></div>
-              <div><strong>Sensor mails:</strong> <?php echo htmlspecialchars((string)($notificationJobStatus['sensorAlertsSent'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong><?php echo htmlspecialchars(mds_t('settings.last_job_status'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo htmlspecialchars($notificationJobStatus['status'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong><?php echo htmlspecialchars(mds_t('settings.started'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo htmlspecialchars($notificationJobStatus['startedAt'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong><?php echo htmlspecialchars(mds_t('settings.finished'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo htmlspecialchars($notificationJobStatus['finishedAt'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong><?php echo htmlspecialchars(mds_t('settings.offline_mails'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo htmlspecialchars((string)($notificationJobStatus['offlineSent'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></div>
+              <div><strong><?php echo htmlspecialchars(mds_t('settings.sensor_mails'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo htmlspecialchars((string)($notificationJobStatus['sensorAlertsSent'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></div>
             <?php } else { ?>
-              <div class="text-muted">No notification job status available yet.</div>
+              <div class="text-muted"><?php echo htmlspecialchars(mds_t('settings.no_notification_status'), ENT_QUOTES, 'UTF-8'); ?></div>
             <?php } ?>
           </div>
           <div class="col-md-4">
-            <h5 class="card-title mb-2">Offline boards</h5>
-            <div><strong>Configured:</strong> <?php echo count($offlineBoardOverview); ?></div>
+            <h5 class="card-title mb-2"><?php echo htmlspecialchars(mds_t('settings.offline_boards'), ENT_QUOTES, 'UTF-8'); ?></h5>
+            <div><strong><?php echo htmlspecialchars(mds_t('settings.configured'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo count($offlineBoardOverview); ?></div>
             <?php if (!empty($offlineBoardOverview)) { ?>
               <div class="small text-muted mt-2">
                 <?php
@@ -154,14 +155,14 @@ th.rotated-text > div > span {
             <?php } ?>
           </div>
           <div class="col-md-4">
-            <h5 class="card-title mb-2">Sensor alerts</h5>
-            <div><strong>Configured channels:</strong> <?php echo count($activeSensorAlertsOverview); ?></div>
+            <h5 class="card-title mb-2"><?php echo htmlspecialchars(mds_t('settings.sensor_alerts'), ENT_QUOTES, 'UTF-8'); ?></h5>
+            <div><strong><?php echo htmlspecialchars(mds_t('settings.configured_channels'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo count($activeSensorAlertsOverview); ?></div>
             <?php
               $activeAlertsOnly = array_filter($activeSensorAlertsOverview, function ($channel) {
                 return !empty($channel['AlertState']);
               });
             ?>
-            <div><strong>Currently active:</strong> <?php echo count($activeAlertsOnly); ?></div>
+            <div><strong><?php echo htmlspecialchars(mds_t('settings.currently_active'), ENT_QUOTES, 'UTF-8'); ?>:</strong> <?php echo count($activeAlertsOnly); ?></div>
             <?php if (!empty($activeAlertsOnly)) { ?>
               <div class="small text-muted mt-2">
                 <?php
@@ -178,19 +179,20 @@ th.rotated-text > div > span {
     </div>
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" role="tablist">
-      <li class="nav-item" role="presentation"><a class="nav-link active" href="#data" role="tab" data-bs-toggle="tab">Personal data</a></li>
-      <li class="nav-item" role="presentation"><a class="nav-link" href="#email" role="tab" data-bs-toggle="tab">E-Mail</a></li>
-      <li class="nav-item" role="presentation"><a class="nav-link" href="#password" role="tab" data-bs-toggle="tab">Password</a></li>
-      <li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab">My Boards</a></li>
-      <li class="nav-item" role="presentation"><a class="nav-link" href="#confDashboard" role="tab" data-bs-toggle="tab">Dashboard</a></li>
-      <li class="nav-item" role="presentation"><a class="nav-link" href="#privacy" role="tab" data-bs-toggle="tab">Privacy</a></li>
+      <li class="nav-item" role="presentation"><a class="nav-link active" href="#data" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('settings.personal_data'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+      <li class="nav-item" role="presentation"><a class="nav-link" href="#email" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+      <li class="nav-item" role="presentation"><a class="nav-link" href="#password" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+      <li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('settings.my_boards'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+      <li class="nav-item" role="presentation"><a class="nav-link" href="#confDashboard" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('settings.dashboard'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+      <li class="nav-item" role="presentation"><a class="nav-link" href="#privacy" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('nav.privacy'), ENT_QUOTES, 'UTF-8'); ?></a></li>
       <?php
         if($isAdmin) {
         ?>
-          <li class='nav-item' role='presentation'><a class='nav-link' href='#allBoards' role='tab' data-bs-toggle='tab'>All Boards</a></li>
-          <li class='nav-item' role='presentation'><a class='nav-link' href='#users' role='tab' data-bs-toggle='tab'>Users</a></li>
-          <li class='nav-item' role='presentation'><a class='nav-link' href='#serverSetting' role='tab' data-bs-toggle='tab'>Server Setting</a></li>
-          <li class='nav-item' role='presentation'><a class='nav-link' href='#log' role='tab' data-bs-toggle='tab'>Log</a></li>
+          <li class='nav-item' role='presentation'><a class='nav-link' href='#allBoards' role='tab' data-bs-toggle='tab'><?php echo htmlspecialchars(mds_t('settings.all_boards'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class='nav-item' role='presentation'><a class='nav-link' href='#users' role='tab' data-bs-toggle='tab'><?php echo htmlspecialchars(mds_t('settings.users'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class='nav-item' role='presentation'><a class='nav-link' href='#serverSetting' role='tab' data-bs-toggle='tab'><?php echo htmlspecialchars(mds_t('settings.server'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class='nav-item' role='presentation'><a class='nav-link' href='#migration' role='tab' data-bs-toggle='tab'><?php echo htmlspecialchars(mds_t('settings.migration'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class='nav-item' role='presentation'><a class='nav-link' href='#log' role='tab' data-bs-toggle='tab'><?php echo htmlspecialchars(mds_t('settings.log'), ENT_QUOTES, 'UTF-8'); ?></a></li>
         <?php
         }
       ?>
@@ -203,7 +205,7 @@ th.rotated-text > div > span {
           <?php echo mds_csrf_input(); ?>
           <div class="form-group">
             <div class="row">
-              <label for="inputFirstName" class="col-sm-2 control-label">First name</label>
+              <label for="inputFirstName" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.first_name'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputFirstName" name="firstName" type="text" value="<?php echo htmlspecialchars($userObj->getFirstName(), ENT_QUOTES, 'UTF-8'); ?>" required>
               </div>
@@ -212,7 +214,7 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <label for="inputLastname" class="col-sm-2 control-label">Last name</label>
+              <label for="inputLastname" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.last_name'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputLastname" name="lastName" type="text" value="<?php echo htmlspecialchars($userObj->getLastName(), ENT_QUOTES, 'UTF-8'); ?>" required>
               </div>
@@ -221,11 +223,11 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <label for="inputTimezone" class="col-sm-2 control-label">Timezone</label>
+              <label for="inputTimezone" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.timezone'), ENT_QUOTES, 'UTF-8'); ?></label>
               <?php $userTimezone = htmlspecialchars($userObj->getTimezone() ?? "", ENT_QUOTES, 'UTF-8'); ?>
               <div class="col-sm-4">
               <select class="form-select" aria-label="Default select example" id="inputTimezone" name="Timezone">
-                <option value="0">Please, select your timezone</option>
+                <option value="0"><?php echo htmlspecialchars(mds_t('settings.select_timezone'), ENT_QUOTES, 'UTF-8'); ?></option>
                 <?php foreach($timeZones as $t) { ?>
                   <?php if($t['zone'] == $userTimezone ) { ?>
                     <option value="<?php print $t['zone'] ?>" selected>
@@ -244,7 +246,20 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <div class="col col-sm-2">Receive notifications?</div>
+              <label for="inputLanguage" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('common.language'), ENT_QUOTES, 'UTF-8'); ?></label>
+              <div class="col-sm-4">
+                <?php $userLanguage = $userObj->getLanguage(); ?>
+                <select class="form-select" id="inputLanguage" name="language">
+                  <option value="en" <?php if ($userLanguage === 'en') { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('language.english'), ENT_QUOTES, 'UTF-8'); ?></option>
+                  <option value="de" <?php if ($userLanguage === 'de') { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('language.german'), ENT_QUOTES, 'UTF-8'); ?></option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="row">
+              <div class="col col-sm-2"><?php echo htmlspecialchars(mds_t('settings.receive_notifications'), ENT_QUOTES, 'UTF-8'); ?></div>
               <label class="col col-sm-4">
                 <input type='hidden' class='form-check-input' name='receiveNotifications' value='0'>
                 <input type='checkbox' class='form-check-input' id='receiveNotifications' name='receiveNotifications' value='1' <?php if ($userObj->getReceiveNotifications()) { echo 'checked'; } ?>>
@@ -254,7 +269,7 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <div class="col col-sm-2">Offline alerts?</div>
+              <div class="col col-sm-2"><?php echo htmlspecialchars(mds_t('settings.offline_alerts'), ENT_QUOTES, 'UTF-8'); ?></div>
               <label class="col col-sm-4">
                 <input type='hidden' class='form-check-input' name='receiveOfflineNotifications' value='0'>
                 <input type='checkbox' class='form-check-input' id='receiveOfflineNotifications' name='receiveOfflineNotifications' value='1' <?php if ($userObj->getReceiveOfflineNotifications()) { echo 'checked'; } ?>>
@@ -264,7 +279,7 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <div class="col col-sm-2">Sensor alerts?</div>
+              <div class="col col-sm-2"><?php echo htmlspecialchars(mds_t('settings.sensor_alerts_question'), ENT_QUOTES, 'UTF-8'); ?></div>
               <label class="col col-sm-4">
                 <input type='hidden' class='form-check-input' name='receiveSensorNotifications' value='0'>
                 <input type='checkbox' class='form-check-input' id='receiveSensorNotifications' name='receiveSensorNotifications' value='1' <?php if ($userObj->getReceiveSensorNotifications()) { echo 'checked'; } ?>>
@@ -275,8 +290,8 @@ th.rotated-text > div > span {
           <div class="form-group">
             <div class="row">
               <div class="col-sm-offset-2 col-sm-10">
-              <button type="submit" class="btn btn-primary">Save</button>
-              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailUser">Send test mail</button>
+              <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
+              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailUser"><?php echo htmlspecialchars(mds_t('settings.send_test_mail'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
             </div>
           </div>
@@ -285,12 +300,12 @@ th.rotated-text > div > span {
 
       <!-- change of email address -->
       <div role="tabpanel" class="tab-pane" id="email">
-        <p style="margin-bottom: 0px; margin-top: 1rem;">To change your email address, please enter your current password and the new email address.</p>
+        <p style="margin-bottom: 0px; margin-top: 1rem;"><?php echo htmlspecialchars(mds_t('settings.change_email_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
         <form action="?save=email" method="post" class="form-horizontal">
           <?php echo mds_csrf_input(); ?>
           <div class="form-group">
             <div class="row">
-              <label for="inputPasswordForValidation" class="col-sm-2 control-label">Password</label>
+              <label for="inputPasswordForValidation" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputPasswordForValidation" name="password" type="password" required>
               </div>
@@ -299,7 +314,7 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <label for="inputEmail" class="col-sm-2 control-label">E-Mail</label>
+              <label for="inputEmail" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputEmail" name="email" type="email" value="<?php echo htmlspecialchars($userObj->getEmail(), ENT_QUOTES, 'UTF-8'); ?>" required>
               </div>
@@ -308,7 +323,7 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <label for="inputEmail2" class="col-sm-2 control-label">E-Mail (repeat)</label>
+              <label for="inputEmail2" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.email_repeat'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputEmail2" name="email2" type="email"  required>
               </div>
@@ -318,7 +333,7 @@ th.rotated-text > div > span {
           <div class="form-group">
             <div class="row">
               <div class="col-sm-offset-2 col-sm-10">
-              <button type="submit" class="btn btn-primary">Save</button>
+              <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
             </div>
           </div>
@@ -327,12 +342,12 @@ th.rotated-text > div > span {
 
       <!-- change password -->
       <div role="tabpanel" class="tab-pane" id="password">
-        <p style="margin-bottom: 0px; margin-top: 1rem;">To change your password, please enter your current password and the new password.</p>
+        <p style="margin-bottom: 0px; margin-top: 1rem;"><?php echo htmlspecialchars(mds_t('settings.change_password_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
         <form action="?save=password" method="post" class="form-horizontal">
           <?php echo mds_csrf_input(); ?>
           <div class="form-group">
             <div class="row">
-              <label for="inputPassword" class="col-sm-2 control-label">Old Password</label>
+              <label for="inputPassword" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.old_password'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputPasswordOld" name="passwordOld" type="password" required>
               </div>
@@ -341,7 +356,7 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <label for="inputPasswordNew" class="col-sm-2 control-label">New password</label>
+              <label for="inputPasswordNew" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.new_password'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputPasswordNew" name="passwordNew" type="password" required>
               </div>
@@ -350,7 +365,7 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="row">
-              <label for="inputPasswordNew2" class="col-sm-2 control-label">New password (repeat)</label>
+              <label for="inputPasswordNew2" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.new_password_repeat'), ENT_QUOTES, 'UTF-8'); ?></label>
               <div class="col-sm-4">
                 <input class="form-control" id="inputPasswordNew" name="passwordNew2" type="password"  required>
               </div>
@@ -360,7 +375,7 @@ th.rotated-text > div > span {
           <div class="form-group">
             <div class="row">
               <div class="col-sm-offset-2 col-sm-10">
-              <button type="submit" class="btn btn-primary">Save</button>
+              <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
             </div>
           </div>
@@ -370,28 +385,28 @@ th.rotated-text > div > span {
       <!-- Configure the user's boards -->
       <div role="tabpanel" class="tab-pane" id="confBoards">
         <div class="container-fluid border mb-2">
-        <span>toggle columns:</span>
+        <span><?php echo htmlspecialchars(mds_t('settings.toggle_columns'), ENT_QUOTES, 'UTF-8'); ?></span>
           <div class="form-check form-switch d-inline-block pe-4">
             <label for="inlineCheckbox1" class="form-check-label">id</label>
             <input id="inlineCheckbox1" value="toggleDisplayId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
           <div class="form-check form-switch d-inline-block pe-4">
-            <label for="inlineCheckbox2" class="form-check-label">Mac address</label>
+            <label for="inlineCheckbox2" class="form-check-label"><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></label>
             <input id="inlineCheckbox2" value="toggleDisplayMacAddress" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
 
           <div class="form-check form-switch d-inline-block pe-4">
-            <label for="inlineCheckbox3" class="form-check-label">Location</label>
+            <label for="inlineCheckbox3" class="form-check-label"><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></label>
             <input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
 
           <div class="form-check form-switch d-inline-block pe-4">
-            <label for="inlineCheckbox4" class="form-check-label">TTN id</label>
+            <label for="inlineCheckbox4" class="form-check-label"><?php echo htmlspecialchars(mds_t('settings.ttn_id'), ENT_QUOTES, 'UTF-8'); ?></label>
             <input id="inlineCheckbox4" value="toggleDisplayTtnDevId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
 
           <div class="form-check form-check-inline">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">Add new Board</button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"><?php echo htmlspecialchars(mds_t('settings.add_new_board'), ENT_QUOTES, 'UTF-8'); ?></button>
           </div>
 
         </div>
@@ -400,14 +415,14 @@ th.rotated-text > div > span {
           <thead>
           <tr>
             <th class='toggleDisplayId'>id</th>
-            <th class='toggleDisplayMacAddress '><div><span>Mac address</span></div></th>
-            <th>Name</th>
-            <th class="toggleDisplayLocation">Location</th>
-            <th>Description</th>
-            <th class="toggleDisplayTtnDevId">TTN dev id</th>
-            <th class=' rotated-text'><div><span>Sensors</span></div></th>
-            <th class=' rotated-text'><div><span>Alarm</span></div></th>
-            <th class=' rotated-text'><div><span>Details</span></div></th>
+            <th class='toggleDisplayMacAddress '><div><span><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
+            <th><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th class="toggleDisplayLocation"><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th class="toggleDisplayTtnDevId"><?php echo htmlspecialchars(mds_t('settings.ttn_dev_id'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th class=' rotated-text'><div><span><?php echo htmlspecialchars(mds_t('common.sensors'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
+            <th class=' rotated-text'><div><span><?php echo htmlspecialchars(mds_t('form.board.alarm_unavailable'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
+            <th class=' rotated-text'><div><span><?php echo htmlspecialchars(mds_t('common.details'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
           </tr>
           </thead>
           <tbody>
@@ -450,21 +465,21 @@ th.rotated-text > div > span {
             <form class="row g-3" action="?save=addNewUserToBoard" method="post" class="form-horizontal">
               <?php echo mds_csrf_input(); ?>
               <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Add new Board</h5>
+                <h5 class="modal-title" id="exampleModalLabel"><?php echo htmlspecialchars(mds_t('settings.add_new_board'), ENT_QUOTES, 'UTF-8'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
                 <div class="input-group mb-3">
                   <select class="form-select input-group-text" aria-label="Default select example" id="valueType" name="valueType">
-                    <option value="ttn" selected>TTN dev id</option>
-                    <option value="mac">Mac Address</option>
+                    <option value="ttn" selected><?php echo htmlspecialchars(mds_t('settings.ttn_dev_id'), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option value="mac"><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></option>
                   </select>
-                  <input type="text" class="form-control" placeholder="Enter Value" aria-label="Value" aria-describedby="macAddress" name="inputValue" id="inputValue" required>
+                  <input type="text" class="form-control" placeholder="<?php echo htmlspecialchars(mds_t('settings.enter_value'), ENT_QUOTES, 'UTF-8'); ?>" aria-label="<?php echo htmlspecialchars(mds_t('common.value'), ENT_QUOTES, 'UTF-8'); ?>" aria-describedby="macAddress" name="inputValue" id="inputValue" required>
                 </div>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo htmlspecialchars(mds_t('common.close'), ENT_QUOTES, 'UTF-8'); ?></button>
+                <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('settings.save_changes'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
             </form>
           </div>
@@ -479,7 +494,7 @@ th.rotated-text > div > span {
             <?php echo mds_csrf_input(); ?>
             <div class="form-group">
               <div class="row">
-                <label for="inputUpdateInterval" class="col-sm-2 control-label">Update interval (in Minutes) (tbd)</label>
+                <label for="inputUpdateInterval" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.update_interval'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col-sm-4">
                   <input class="form-control" id="inputUpdateInterval" name="updateInterval" type="number" value="<?php echo htmlspecialchars((string)$userObj->getDashboardUpdateInterval(), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
@@ -488,7 +503,7 @@ th.rotated-text > div > span {
 
             <div class="form-group">
               <div class="row">
-                <div class="col col-sm-2">Only online devices by default</div>
+                <div class="col col-sm-2"><?php echo htmlspecialchars(mds_t('settings.only_online_default'), ENT_QUOTES, 'UTF-8'); ?></div>
                 <label class="col col-sm-4">
                   <input type='hidden' class='form-check-input' name='dashboardOnlineOnly' value='0'>
                   <input type='checkbox' class='form-check-input' id='dashboardOnlineOnly' name='dashboardOnlineOnly' value='1' <?php if ((int)$userObj->getDashboardOnlineOnly() === 1) { echo 'checked'; } ?>>
@@ -498,14 +513,14 @@ th.rotated-text > div > span {
 
             <div class="form-group">
               <div class="row">
-                <label for="preferredChartWindowDays" class="col-sm-2 control-label">Default chart range</label>
+                <label for="preferredChartWindowDays" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.default_chart_range'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col-sm-4">
                   <?php $preferredChartWindowDays = (int)$userObj->getPreferredChartWindowDays(); ?>
                   <select class="form-select" id="preferredChartWindowDays" name="preferredChartWindowDays">
-                    <option value="1" <?php if ($preferredChartWindowDays === 1) { echo 'selected'; } ?>>Last 24 hours</option>
-                    <option value="7" <?php if ($preferredChartWindowDays === 7) { echo 'selected'; } ?>>Last 7 days</option>
-                    <option value="14" <?php if ($preferredChartWindowDays === 14) { echo 'selected'; } ?>>Last 14 days</option>
-                    <option value="30" <?php if ($preferredChartWindowDays === 30) { echo 'selected'; } ?>>Last 30 days</option>
+                    <option value="1" <?php if ($preferredChartWindowDays === 1) { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_24_hours'), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option value="7" <?php if ($preferredChartWindowDays === 7) { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_days', array(7)), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option value="14" <?php if ($preferredChartWindowDays === 14) { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_days', array(14)), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option value="30" <?php if ($preferredChartWindowDays === 30) { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_days', array(30)), ENT_QUOTES, 'UTF-8'); ?></option>
                   </select>
                 </div>
               </div>
@@ -514,7 +529,7 @@ th.rotated-text > div > span {
             <div class="form-group">
               <div class="row">
                 <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
                 </div>
               </div>
             </div>
@@ -524,20 +539,20 @@ th.rotated-text > div > span {
 
       <div role="tabpanel" class="tab-pane" id="privacy">
         <div class="panel panel-default p-3">
-          <h4 class="mb-3">Privacy tools</h4>
+          <h4 class="mb-3"><?php echo htmlspecialchars(mds_t('settings.privacy_tools'), ENT_QUOTES, 'UTF-8'); ?></h4>
           <p class="text-muted">
-            Review the current privacy notes for this installation and download the data currently stored for your account.
+            <?php echo htmlspecialchars(mds_t('settings.privacy_review_text'), ENT_QUOTES, 'UTF-8'); ?>
           </p>
           <div class="d-flex flex-wrap gap-2">
-            <a href="<?php echo htmlspecialchars(mds_route_path('privacy.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-secondary">Open privacy page</a>
-            <a href="<?php echo htmlspecialchars(mds_route_path('privacy_export.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-primary">Download my personal data</a>
+            <a href="<?php echo htmlspecialchars(mds_route_path('privacy.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-secondary"><?php echo htmlspecialchars(mds_t('settings.open_privacy_page'), ENT_QUOTES, 'UTF-8'); ?></a>
+            <a href="<?php echo htmlspecialchars(mds_route_path('privacy_export.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('settings.download_my_data'), ENT_QUOTES, 'UTF-8'); ?></a>
           </div>
           <p class="small text-muted mt-3 mb-0">
-            The export includes your profile, owned boards, sensor configuration and stored sensor data assigned to those boards.
+            <?php echo htmlspecialchars(mds_t('settings.privacy_export_text'), ENT_QUOTES, 'UTF-8'); ?>
           </p>
           <p class="small text-muted mt-2 mb-0">
-            Requests for correction, deletion or objection should currently be handled via the configured privacy contact:
-            <?php echo htmlspecialchars((string)($config::$privacyContactEmail ?: $config::$adminEmailAddress ?: $config::$systemEmailAddress ?: 'not configured'), ENT_QUOTES, 'UTF-8'); ?>
+            <?php echo htmlspecialchars(mds_t('settings.privacy_contact_text'), ENT_QUOTES, 'UTF-8'); ?>
+            <?php echo htmlspecialchars((string)($config::$privacyContactEmail ?: $config::$adminEmailAddress ?: $config::$systemEmailAddress ?: mds_t('settings.not_configured')), ENT_QUOTES, 'UTF-8'); ?>
           </p>
         </div>
       </div>
@@ -546,27 +561,27 @@ th.rotated-text > div > span {
       <form action="?save=allBoards" method="post" class="form-horizontal">
         <?php echo mds_csrf_input(); ?>
         <div class="container-fluid border mb-2">
-        <span>toggle columns:</span>
+        <span><?php echo htmlspecialchars(mds_t('settings.toggle_columns'), ENT_QUOTES, 'UTF-8'); ?></span>
           <div class="form-check form-switch d-inline-block pe-4">
             <label for="inlineCheckbox1" class="form-check-label">id</label>
             <input id="inlineCheckbox1" value="toggleDisplayId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
           <div class="form-check form-switch d-inline-block pe-4">
-            <label for="inlineCheckbox2" class="form-check-label">Mac address</label>
+            <label for="inlineCheckbox2" class="form-check-label"><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></label>
             <input id="inlineCheckbox2" value="toggleDisplayMacAddress" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
 
           <div class="form-check form-switch d-inline-block pe-4">
-            <label for="inlineCheckbox3" class="form-check-label">Location</label>
+            <label for="inlineCheckbox3" class="form-check-label"><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></label>
             <input id="inlineCheckbox3" value="toggleDisplayLocation" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
 
           <div class="form-check form-switch d-inline-block pe-4">
-            <label for="inlineCheckbox4" class="form-check-label">TTN App id</label>
+            <label for="inlineCheckbox4" class="form-check-label"><?php echo htmlspecialchars(mds_t('settings.ttn_app_id'), ENT_QUOTES, 'UTF-8'); ?></label>
             <input id="inlineCheckbox4" value="toggleDisplayTtnAppId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
           <div class="form-check form-switch d-inline-block pe-4">
-            <label for="inlineCheckbox5" class="form-check-label">TTN Dev id</label>
+            <label for="inlineCheckbox5" class="form-check-label"><?php echo htmlspecialchars(mds_t('settings.ttn_dev_id'), ENT_QUOTES, 'UTF-8'); ?></label>
             <input id="inlineCheckbox5" value="toggleDisplayTtnDevId" class="form-check-input myToggleButton" type="checkbox" checked data-size="small">
           </div>
 
@@ -576,16 +591,16 @@ th.rotated-text > div > span {
           <thead>
           <tr>
             <th class='toggleDisplayId'>id</th>
-            <th class='toggleDisplayMacAddress '><div><span>Mac address</span></div></th>
-            <th><div><span>owner User</span></div></th>
-            <th>Name</th>
-            <th class="toggleDisplayLocation">Location</th>
-            <th>Description</th>
-            <th class="toggleDisplayTtnAppId">TTN App id</th>
-            <th class="toggleDisplayTtnDevId">TTN dev id</th>
-            <th class='rotated-text'><div><span>Sensors</span></div></th>
-            <th class='rotated-text'><div><span>Alarm</span></div></th>
-            <th class='rotated-text'><div><span>Details</span></div></th>
+            <th class='toggleDisplayMacAddress '><div><span><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
+            <th><div><span><?php echo htmlspecialchars(mds_t('settings.owner_user'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
+            <th><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th class="toggleDisplayLocation"><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th class="toggleDisplayTtnAppId"><?php echo htmlspecialchars(mds_t('settings.ttn_app_id'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th class="toggleDisplayTtnDevId"><?php echo htmlspecialchars(mds_t('settings.ttn_dev_id'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th class='rotated-text'><div><span><?php echo htmlspecialchars(mds_t('common.sensors'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
+            <th class='rotated-text'><div><span><?php echo htmlspecialchars(mds_t('form.board.alarm_unavailable'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
+            <th class='rotated-text'><div><span><?php echo htmlspecialchars(mds_t('common.details'), ENT_QUOTES, 'UTF-8'); ?></span></div></th>
           </tr>
           </thead>
           <tbody>
@@ -626,7 +641,7 @@ th.rotated-text > div > span {
         </div>
         <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
             </div>
           </div>
         </form>
@@ -635,13 +650,13 @@ th.rotated-text > div > span {
 
       <!-- Modification of other users -->
       <div role="tabpanel" class="tab-pane" id="users">
-        <p style="margin-bottom: 0px; margin-top: 1rem;">To change and activate Users.</p>
+        <p style="margin-bottom: 0px; margin-top: 1rem;"><?php echo htmlspecialchars(mds_t('settings.users_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
         <form action="?save=users" method="post" class="form-horizontal">
           <?php echo mds_csrf_input(); ?>
           <div class="panel panel-default">
           <table class="table">
           <tr>
-            <th>#</th><th>Active</th><th>First name</th><th>Last name</th><th>E-Mail</th><th>Admin</th>
+            <th>#</th><th><?php echo htmlspecialchars(mds_t('common.active'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('settings.first_name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('settings.last_name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.admin'), ENT_QUOTES, 'UTF-8'); ?></th>
           </tr>
           <?php
           if($isAdmin) {
@@ -694,7 +709,7 @@ th.rotated-text > div > span {
           </div>
           <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
             </div>
           </div>
         </form>
@@ -711,7 +726,7 @@ th.rotated-text > div > span {
               if ($varDemoMode) {
               ?>
                 <div class="col col-sm-2">
-                  Demo mode</div>
+                  <?php echo htmlspecialchars(mds_t('settings.demo_mode'), ENT_QUOTES, 'UTF-8'); ?></div>
                 <label class="col col-sm-4">
                     <input type='hidden' class='form-check-input' id='demoMode' name='demoMode' value='0'>
                     <input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' checked=true value='1'>
@@ -720,7 +735,7 @@ th.rotated-text > div > span {
               } else {
               ?>
                 <div class="col col-sm-2">
-                  Demo mode</div>
+                  <?php echo htmlspecialchars(mds_t('settings.demo_mode'), ENT_QUOTES, 'UTF-8'); ?></div>
                 <label class="col col-sm-4">
                     <input type='hidden' class='form-check-input' id='demoMode' name='demoMode' checked=true value='0'>
                     <input type='checkbox' class='form-check-input' id='demoMode' name='demoMode' value='1'>
@@ -738,7 +753,7 @@ th.rotated-text > div > span {
               if ($varShowQrCode) {
               ?>
                 <div class="col col-sm-2">
-                  Show QR Code
+                  <?php echo htmlspecialchars(mds_t('settings.show_qr_code'), ENT_QUOTES, 'UTF-8'); ?>
                 </div>
                 <label class="col col-sm-4">
                     <input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' value='0'>
@@ -748,7 +763,7 @@ th.rotated-text > div > span {
               } else {
               ?>
                 <div class="col col-sm-2">
-                  Show QR Code
+                  <?php echo htmlspecialchars(mds_t('settings.show_qr_code'), ENT_QUOTES, 'UTF-8'); ?>
                 </div>
                 <label class="col col-sm-4">
                     <input type='hidden' class='form-check-input' id='ShowQrCode' name='ShowQrCode' checked=true value='0'>
@@ -780,7 +795,7 @@ th.rotated-text > div > span {
               if ($varSend_emails) {
               ?>
                 <div class="col col-sm-2">
-                Send emails:
+                <?php echo htmlspecialchars(mds_t('settings.send_emails'), ENT_QUOTES, 'UTF-8'); ?>:
                 </div>
                 <label class="col col-sm-4">
                     <input type='hidden' class='form-check-input' id='sendEmails' name='sendEmails' value='0'>
@@ -790,7 +805,7 @@ th.rotated-text > div > span {
               } else {
               ?>
                 <div class="col col-sm-2">
-                Send emails:
+                <?php echo htmlspecialchars(mds_t('settings.send_emails'), ENT_QUOTES, 'UTF-8'); ?>:
                 </div>
                 <label class="col col-sm-4">
                     <input type='hidden' class='form-check-input' id='sendEmails' name='sendEmails' checked=true value='0'>
@@ -806,7 +821,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="systemEmailAddress" class="col col-sm-2 control-label">System Email Address (sender):</label>
+                <label for="systemEmailAddress" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.system_email_sender'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="systemEmailAddress" name="systemEmailAddress" type="text" value="<?php echo $config::$systemEmailAddress; ?>" required>
                 </div>
@@ -817,7 +832,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="applicationName" class="col col-sm-2 control-label">Application Name:</label>
+                <label for="applicationName" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.application_name'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="applicationName" name="applicationName" type="text" value="<?php echo $config::$applicationName; ?>" required>
                 </div>
@@ -828,7 +843,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="privacyContactEmail" class="col col-sm-2 control-label">Privacy contact email:</label>
+                <label for="privacyContactEmail" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.privacy_contact_email'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="privacyContactEmail" name="privacyContactEmail" type="email" value="<?php echo htmlspecialchars((string)$config::$privacyContactEmail, ENT_QUOTES, 'UTF-8'); ?>">
                 </div>
@@ -839,7 +854,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="imprintCompanyName" class="col col-sm-2 control-label">Imprint company / owner:</label>
+                <label for="imprintCompanyName" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.imprint_company'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="imprintCompanyName" name="imprintCompanyName" type="text" value="<?php echo htmlspecialchars((string)$config::$imprintCompanyName, ENT_QUOTES, 'UTF-8'); ?>">
                 </div>
@@ -850,7 +865,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="imprintAddress" class="col col-sm-2 control-label">Imprint address:</label>
+                <label for="imprintAddress" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.imprint_address'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <textarea class="form-control" id="imprintAddress" name="imprintAddress" rows="3"><?php echo htmlspecialchars((string)$config::$imprintAddress, ENT_QUOTES, 'UTF-8'); ?></textarea>
                 </div>
@@ -861,7 +876,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="imprintEmail" class="col col-sm-2 control-label">Imprint email:</label>
+                <label for="imprintEmail" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.imprint_email'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="imprintEmail" name="imprintEmail" type="email" value="<?php echo htmlspecialchars((string)$config::$imprintEmail, ENT_QUOTES, 'UTF-8'); ?>">
                 </div>
@@ -872,7 +887,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="imprintPhone" class="col col-sm-2 control-label">Imprint phone:</label>
+                <label for="imprintPhone" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.imprint_phone'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="imprintPhone" name="imprintPhone" type="text" value="<?php echo htmlspecialchars((string)$config::$imprintPhone, ENT_QUOTES, 'UTF-8'); ?>">
                 </div>
@@ -883,7 +898,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="defaultGaugeStyle" class="col col-sm-2 control-label">Default Gauge Style:</label>
+                <label for="defaultGaugeStyle" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.default_gauge_style'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <select class="form-select" id="defaultGaugeStyle" name="defaultGaugeStyle">
                     <?php
@@ -912,12 +927,12 @@ th.rotated-text > div > span {
             <div class="form-group">
               <div class="row">
                 <div class="col col-sm-2">
-                  Dashboard default:
+                  <?php echo htmlspecialchars(mds_t('settings.dashboard_default'), ENT_QUOTES, 'UTF-8'); ?>
                 </div>
                 <label class="col col-sm-4">
                     <input type='hidden' class='form-check-input' id='defaultDashboardOnlineOnly' name='defaultDashboardOnlineOnly' value='0'>
                     <input type='checkbox' class='form-check-input' id='defaultDashboardOnlineOnly' name='defaultDashboardOnlineOnly' value='1' <?php if ((string)$config::$defaultDashboardOnlineOnly === '1') { echo 'checked'; } ?>>
-                    <span class="ms-2">Only online devices by default</span>
+                    <span class="ms-2"><?php echo htmlspecialchars(mds_t('settings.only_online_default'), ENT_QUOTES, 'UTF-8'); ?></span>
                 </label>
               </div>
             </div>
@@ -926,14 +941,14 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="defaultChartWindowDays" class="col col-sm-2 control-label">Default chart range:</label>
+                <label for="defaultChartWindowDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.default_chart_range'), ENT_QUOTES, 'UTF-8'); ?>:</label>
                 <div class="col col-sm-4">
                   <select class="form-select" id="defaultChartWindowDays" name="defaultChartWindowDays">
                     <?php $selectedDefaultChartWindowDays = (string)($config::$defaultChartWindowDays ?? '7'); ?>
-                    <option value="1" <?php if ($selectedDefaultChartWindowDays === '1') { echo 'selected'; } ?>>Last 24 hours</option>
-                    <option value="7" <?php if ($selectedDefaultChartWindowDays === '7') { echo 'selected'; } ?>>Last 7 days</option>
-                    <option value="14" <?php if ($selectedDefaultChartWindowDays === '14') { echo 'selected'; } ?>>Last 14 days</option>
-                    <option value="30" <?php if ($selectedDefaultChartWindowDays === '30') { echo 'selected'; } ?>>Last 30 days</option>
+                    <option value="1" <?php if ($selectedDefaultChartWindowDays === '1') { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_24_hours'), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option value="7" <?php if ($selectedDefaultChartWindowDays === '7') { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_days', array(7)), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option value="14" <?php if ($selectedDefaultChartWindowDays === '14') { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_days', array(14)), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option value="30" <?php if ($selectedDefaultChartWindowDays === '30') { echo 'selected'; } ?>><?php echo htmlspecialchars(mds_t('settings.last_days', array(30)), ENT_QUOTES, 'UTF-8'); ?></option>
                   </select>
                 </div>
               </div>
@@ -943,7 +958,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="logRetentionDays" class="col col-sm-2 control-label">Log retention (days):</label>
+                <label for="logRetentionDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.log_retention_days'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="logRetentionDays" name="logRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$logRetentionDays ?? '90'), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
@@ -954,7 +969,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="passwordResetRetentionDays" class="col col-sm-2 control-label">Reset-code retention (days):</label>
+                <label for="passwordResetRetentionDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.reset_code_retention_days'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="passwordResetRetentionDays" name="passwordResetRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$passwordResetRetentionDays ?? '30'), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
@@ -965,7 +980,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="telemetryRetentionDays" class="col col-sm-2 control-label">Telemetry retention (days):</label>
+                <label for="telemetryRetentionDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.telemetry_retention_days'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="telemetryRetentionDays" name="telemetryRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$telemetryRetentionDays ?? '365'), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
@@ -976,7 +991,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="gpsRetentionDays" class="col col-sm-2 control-label">GPS retention (days):</label>
+                <label for="gpsRetentionDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.gps_retention_days'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="gpsRetentionDays" name="gpsRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$gpsRetentionDays ?? '90'), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
@@ -987,7 +1002,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="ttnDebugRetentionDays" class="col col-sm-2 control-label">TTN debug retention (days):</label>
+                <label for="ttnDebugRetentionDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.ttn_debug_retention_days'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="ttnDebugRetentionDays" name="ttnDebugRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$ttnDebugRetentionDays ?? '30'), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
@@ -998,7 +1013,7 @@ th.rotated-text > div > span {
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
-                <label for="securityTokenRetentionDays" class="col col-sm-2 control-label">Remember-login token retention (days):</label>
+                <label for="securityTokenRetentionDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.security_token_retention_days'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="securityTokenRetentionDays" name="securityTokenRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$securityTokenRetentionDays ?? '45'), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </div>
@@ -1008,16 +1023,64 @@ th.rotated-text > div > span {
 
           <div class="form-group">
             <div class="col col-sm-offset-2 col-sm-10">
-              <button type="submit" class="btn btn-primary">Save</button>
-              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailSystem">Send system test mail</button>
+              <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
+              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailSystem"><?php echo htmlspecialchars(mds_t('settings.system_test_mail'), ENT_QUOTES, 'UTF-8'); ?></button>
             </div>
           </div>
         </form>
       </div>
 
+      <div role="tabpanel" class="tab-pane" id="migration">
+        <?php if (!empty($migrationStatus)) { ?>
+          <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
+                <div>
+                  <h5 class="card-title mb-1"><?php echo htmlspecialchars(mds_t('settings.migration_status'), ENT_QUOTES, 'UTF-8'); ?></h5>
+                  <div class="text-muted small"><?php echo htmlspecialchars(mds_t('settings.migration_status_text'), ENT_QUOTES, 'UTF-8'); ?></div>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th><?php echo htmlspecialchars(mds_t('common.status'), ENT_QUOTES, 'UTF-8'); ?></th>
+                      <th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th>
+                      <th><?php echo htmlspecialchars(mds_t('settings.migration_file'), ENT_QUOTES, 'UTF-8'); ?></th>
+                      <th><?php echo htmlspecialchars(mds_t('settings.migration_missing_checks'), ENT_QUOTES, 'UTF-8'); ?></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($migrationStatus as $migrationStatusRow) { ?>
+                      <tr>
+                        <td>
+                          <?php if (!empty($migrationStatusRow['applied'])) { ?>
+                            <span class="badge bg-success"><?php echo htmlspecialchars(mds_t('settings.migration_applied'), ENT_QUOTES, 'UTF-8'); ?></span>
+                          <?php } else { ?>
+                            <span class="badge bg-warning text-dark"><?php echo htmlspecialchars(mds_t('settings.migration_missing'), ENT_QUOTES, 'UTF-8'); ?></span>
+                          <?php } ?>
+                        </td>
+                        <td><?php echo htmlspecialchars((string)$migrationStatusRow['label'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><code><?php echo htmlspecialchars((string)$migrationStatusRow['file'], ENT_QUOTES, 'UTF-8'); ?></code></td>
+                        <td>
+                          <?php
+                            $missingChecks = $migrationStatusRow['missingChecks'] ?? array();
+                            echo htmlspecialchars(empty($missingChecks) ? '-' : implode(', ', $missingChecks), ENT_QUOTES, 'UTF-8');
+                          ?>
+                        </td>
+                      </tr>
+                    <?php } ?>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        <?php } ?>
+      </div>
+
       <!-- Modification of Log -->
       <div role="tabpanel" class="tab-pane" id="log">
-        <div class="panel panel-default p-2">The log file of the current month will be displayed.</div>
+        <div class="panel panel-default p-2"><?php echo htmlspecialchars(mds_t('settings.log_hint'), ENT_QUOTES, 'UTF-8'); ?></div>
         <div class="panel panel-default p-2">
           <?php
             echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>' . htmlspecialchars($currentLogContent) . '</textarea>';

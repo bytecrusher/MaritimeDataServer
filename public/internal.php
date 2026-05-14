@@ -744,6 +744,16 @@
 
   var DashboardUpdateInterval = <?php echo $dashboardUpdateIntervalMs; ?>;
   window.preferredChartWindowDays = <?php echo (int)$preferredChartWindowDays; ?>;
+  window.mdsI18n = <?php echo json_encode(array(
+    'onlyThis' => mds_t('js.only_this'),
+    'noEvents' => mds_t('js.no_events'),
+    'hoursPerDay' => mds_t('js.hours_per_day'),
+    'noSelectedEvents' => mds_t('js.no_selected_events'),
+    'onlineSuffix' => mds_t('js.online_suffix'),
+    'standbySuffix' => mds_t('js.standby_suffix'),
+    'sensorOrderSaved' => mds_t('js.sensor_order_saved'),
+    'sensorOrderFailed' => mds_t('js.sensor_order_failed'),
+  ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   setInterval(function() {
     // run every 30 seconds
     updateGauges();
@@ -752,23 +762,23 @@
 
   <div class="main-container">
   <div class="internal-hero">
-      <h1>Welcome <?php echo htmlspecialchars($currentUser->getFirstName(), ENT_QUOTES, 'UTF-8'); ?>
+      <h1><?php echo htmlspecialchars(mds_t('internal.welcome'), ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($currentUser->getFirstName(), ENT_QUOTES, 'UTF-8'); ?>
       <?php
       if (configuration::$demoMode) {
-        echo htmlspecialchars("  (Demo mode)", ENT_QUOTES, 'UTF-8');
+        echo htmlspecialchars("  (" . mds_t('internal.demo_mode') . ")", ENT_QUOTES, 'UTF-8');
       }
       ?></h1>
-      <p>Live-Uebersicht fuer Devices, Sensoren und eingehende Telemetrie.</p>
+      <p><?php echo htmlspecialchars(mds_t('internal.hero_text'), ENT_QUOTES, 'UTF-8'); ?></p>
   </div>
   <div class="container" style="padding: 0px">
     <div id="alert-container">
       <?php
         if($showInstallAlert) {
-          echo "<div class='mds-alert alert-dismissible' role='alert'><div><strong>Deployment Hinweis</strong><p>Please remember to remove the \"install\" directory before production use.</p></div><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
+          echo "<div class='mds-alert alert-dismissible' role='alert'><div><strong>" . htmlspecialchars(mds_t('internal.deployment_notice'), ENT_QUOTES, 'UTF-8') . "</strong><p>" . htmlspecialchars(mds_t('internal.remove_install'), ENT_QUOTES, 'UTF-8') . "</p></div><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
         }
 
         if (!$hasBoards) {
-          echo "<div class='mds-alert' role='alert'><div><strong>No board added</strong><p>Please add a board first so dashboard, charts and map can display data.</p></div></div>";
+          echo "<div class='mds-alert' role='alert'><div><strong>" . htmlspecialchars(mds_t('internal.no_board_title'), ENT_QUOTES, 'UTF-8') . "</strong><p>" . htmlspecialchars(mds_t('internal.no_board_text'), ENT_QUOTES, 'UTF-8') . "</p></div></div>";
         }
         ?>
     </div>
@@ -776,21 +786,21 @@
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" id="internalTabs" role="tablist">
       <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab">Dashboard</a>
+        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab"><?php echo htmlspecialchars(mds_t('internal.dashboard'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#charts" role="tab">Charts</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#charts" role="tab"><?php echo htmlspecialchars(mds_t('internal.charts'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#boards" role="tab">Boards</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#boards" role="tab"><?php echo htmlspecialchars(mds_t('common.boards'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab">Map</a>
+        <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab"><?php echo htmlspecialchars(mds_t('internal.map'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <?php
         if($currentUser->getUserGroupAdmin() == 1 ) {
       ?>
-        <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab'>Debug</a></li>
+        <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab'><?php echo htmlspecialchars(mds_t('internal.debug'), ENT_QUOTES, 'UTF-8'); ?></a></li>
         <?php
         }
         ?>
@@ -807,13 +817,13 @@
         <div class="dashboard-shell">
           <div class="dashboard-toolbar">
             <div class="dashboard-toolbar-meta">
-              <span class="dashboard-stat-pill"><strong><?php echo count($boardObjsArray); ?></strong> Devices</span>
-              <span class="dashboard-stat-pill"><strong><?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</strong> Refresh</span>
+              <span class="dashboard-stat-pill"><strong><?php echo count($boardObjsArray); ?></strong> <?php echo htmlspecialchars(mds_t('common.devices'), ENT_QUOTES, 'UTF-8'); ?></span>
+              <span class="dashboard-stat-pill"><strong><?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</strong> <?php echo htmlspecialchars(mds_t('common.refresh'), ENT_QUOTES, 'UTF-8'); ?></span>
             </div>
             <div class="dashboard-toolbar-meta">
               <div class="form-check form-switch m-0">
                 <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle" <?php if ((int)$dashboardOnlineOnlyDefault === 1) { echo 'checked'; } ?>>
-                <label class="form-check-label" for="dashboard-online-only-toggle">Nur Online-Devices</label>
+                <label class="form-check-label" for="dashboard-online-only-toggle"><?php echo htmlspecialchars(mds_t('internal.only_online_devices'), ENT_QUOTES, 'UTF-8'); ?></label>
               </div>
             </div>
           </div>
@@ -832,20 +842,20 @@
                         <h3><?php echo htmlspecialchars($singleRowmyboard->getName(), ENT_QUOTES, 'UTF-8'); ?></h3>
                         <div class="dashboard-board-subtitle"><?php echo htmlspecialchars($singleRowmyboard->getMacAddress(), ENT_QUOTES, 'UTF-8'); ?></div>
                         <div class="dashboard-board-summary">
-                          <span>Update alle <?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</span>
-                          <span>Offline-Timer: <?php echo (int)$singleRowmyboard->getOfflineDataTimer(); ?> min</span>
+                          <span><?php echo htmlspecialchars(mds_t('internal.update_every', array((int)$dashboardUpdateIntervalMs / 1000)), ENT_QUOTES, 'UTF-8'); ?></span>
+                          <span><?php echo htmlspecialchars(mds_t('internal.offline_timer', array((int)$singleRowmyboard->getOfflineDataTimer())), ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
                       </div>
                       <div class="dashboard-board-badges">
-                        <span class="badge <?php echo $deviceOnline ? 'bg-success' : 'bg-danger'; ?>"><?php echo $deviceOnline ? 'Online' : 'Offline'; ?></span>
-                        <span class="badge text-bg-light"><?php echo is_array($mySensors2) ? count($mySensors2) : 0; ?> Sensoren</span>
+                        <span class="badge <?php echo $deviceOnline ? 'bg-success' : 'bg-danger'; ?>"><?php echo htmlspecialchars($deviceOnline ? mds_t('common.online') : mds_t('common.offline'), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span class="badge text-bg-light"><?php echo is_array($mySensors2) ? count($mySensors2) : 0; ?> <?php echo htmlspecialchars(mds_t('common.sensors'), ENT_QUOTES, 'UTF-8'); ?></span>
                       </div>
                     </div>
                     <div class="card-block dashboard-board-gauges" id="gaugescontainer<?php echo $singleRowmyboard->getId() ?>">
                 <?php
                 if ($mySensors2 == null) {
                   ?>
-                    <div class='dashboard-empty-state'>Dieses Device hat noch keine Dashboard-Sensoren.</div>
+                    <div class='dashboard-empty-state'><?php echo htmlspecialchars(mds_t('internal.no_dashboard_sensors'), ENT_QUOTES, 'UTF-8'); ?></div>
                   <?php
                 }
                 if ($mySensors2 != null) {
@@ -913,7 +923,7 @@
                 }
                 if ($boardGaugeCount === 0) {
                   ?>
-                    <div class='dashboard-empty-state'>Aktuell gibt es fuer dieses Device keine numerischen Dashboard-Werte.</div>
+                    <div class='dashboard-empty-state'><?php echo htmlspecialchars(mds_t('internal.no_numeric_values'), ENT_QUOTES, 'UTF-8'); ?></div>
                   <?php
                 }
                 ?>
@@ -940,12 +950,12 @@
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
                 <div>
-                  <h3>Temperaturen</h3>
-                  <p>Temperaturkurven pro Device vergleichen und gezielt ein- oder ausblenden.</p>
+                  <h3><?php echo htmlspecialchars(mds_t('internal.temperature_title'), ENT_QUOTES, 'UTF-8'); ?></h3>
+                  <p><?php echo htmlspecialchars(mds_t('internal.temperature_text'), ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
-                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="temperature">Alle anzeigen</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="temperature">Alle ausblenden</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="temperature"><?php echo htmlspecialchars(mds_t('common.show_all'), ENT_QUOTES, 'UTF-8'); ?></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="temperature"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
               </div>
               <div id="chart-device-filter-temperature" class="d-flex flex-wrap gap-3 mb-2"></div>
@@ -954,12 +964,12 @@
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
                 <div>
-                  <h3>ADC / Spannungen</h3>
-                  <p>Spannungen, Pegel und analoge Kanaele pro Device direkt gegeneinander lesen.</p>
+                  <h3><?php echo htmlspecialchars(mds_t('internal.adc_title'), ENT_QUOTES, 'UTF-8'); ?></h3>
+                  <p><?php echo htmlspecialchars(mds_t('internal.adc_text'), ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
-                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="adc">Alle anzeigen</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="adc">Alle ausblenden</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="adc"><?php echo htmlspecialchars(mds_t('common.show_all'), ENT_QUOTES, 'UTF-8'); ?></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="adc"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
               </div>
               <div id="chart-device-filter-adc" class="d-flex flex-wrap gap-3 mb-2"></div>
@@ -968,12 +978,12 @@
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
                 <div>
-                  <h3>Weitere Sensoren</h3>
-                  <p>Alle restlichen Sensortypen in einer gemeinsamen Vergleichsansicht.</p>
+                  <h3><?php echo htmlspecialchars(mds_t('internal.other_sensors_title'), ENT_QUOTES, 'UTF-8'); ?></h3>
+                  <p><?php echo htmlspecialchars(mds_t('internal.other_sensors_text'), ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
-                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="other">Alle anzeigen</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="other">Alle ausblenden</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="other"><?php echo htmlspecialchars(mds_t('common.show_all'), ENT_QUOTES, 'UTF-8'); ?></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="other"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
               </div>
               <div id="chart-device-filter-other" class="d-flex flex-wrap gap-3 mb-2"></div>
@@ -982,22 +992,22 @@
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
                 <div>
-                  <?php $eventWindowTitle = (int)$preferredChartWindowDays === 1 ? 'letzten 24 Stunden' : ('letzten ' . (int)$preferredChartWindowDays . ' Tage'); ?>
-                  <h3>ESP Ereignisse</h3>
-                  <p>Zeigt den zeitlichen Verlauf der <?php echo htmlspecialchars($eventWindowTitle, ENT_QUOTES, 'UTF-8'); ?>, wie lange ein Device online oder im Standby war.</p>
+                  <?php $eventWindowTitle = (int)$preferredChartWindowDays === 1 ? mds_t('internal.last_24_hours') : mds_t('internal.last_days', array((int)$preferredChartWindowDays)); ?>
+                  <h3><?php echo htmlspecialchars(mds_t('internal.esp_events'), ENT_QUOTES, 'UTF-8'); ?></h3>
+                  <p><?php echo htmlspecialchars(mds_t('internal.esp_events_text', array($eventWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
-                  <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="events">Alle anzeigen</button>
-                  <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="events">Alle ausblenden</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary chart-show-all-devices" data-chart-key="events"><?php echo htmlspecialchars(mds_t('common.show_all'), ENT_QUOTES, 'UTF-8'); ?></button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="events"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
                 </div>
               </div>
               <div id="chart-device-filter-events" class="d-flex flex-wrap gap-3 mb-3"></div>
               <div class="chart-panel-surface mb-4">
                 <div class="tab-section-title mb-3">
                   <div>
-                    <h4 class="mb-1">Verlauf der <?php echo htmlspecialchars($eventWindowTitle, ENT_QUOTES, 'UTF-8'); ?></h4>
+                    <h4 class="mb-1"><?php echo htmlspecialchars(mds_t('internal.event_history', array($eventWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></h4>
                     <?php $windowLabel = $eventWindowTitle; ?>
-                    <p>Pro Tag siehst du die Summe in Stunden, die ein Device online oder im Standby war, fuer die <?php echo htmlspecialchars($windowLabel, ENT_QUOTES, 'UTF-8'); ?>.</p>
+                    <p><?php echo htmlspecialchars(mds_t('internal.event_history_text', array($windowLabel)), ENT_QUOTES, 'UTF-8'); ?></p>
                   </div>
                 </div>
                 <div class="event-summary-chart-shell">
@@ -1005,19 +1015,19 @@
                 </div>
               </div>
               <details class="event-detail-disclosure mt-4">
-                <summary>Detailverlauf</summary>
+                <summary><?php echo htmlspecialchars(mds_t('internal.detail_history'), ENT_QUOTES, 'UTF-8'); ?></summary>
                 <div class="event-detail-body">
-                  <p class="text-muted mb-3">Die letzten einzelnen Wakeup- und Standby-Ereignisse pro Device.</p>
+                  <p class="text-muted mb-3"><?php echo htmlspecialchars(mds_t('internal.detail_history_text'), ENT_QUOTES, 'UTF-8'); ?></p>
                   <div id="event-timeline-container" class="d-flex flex-column gap-3" data-server-rendered="1">
                     <?php if (empty($eventTimelineBoards)) { ?>
-                      <div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>
+                      <div class="event-timeline-empty"><?php echo htmlspecialchars(mds_t('internal.no_events'), ENT_QUOTES, 'UTF-8'); ?></div>
                     <?php } else { ?>
                       <?php foreach ($eventTimelineBoards as $eventTimelineBoard) { ?>
                         <section class="event-timeline-board" data-event-board-id="<?php echo (int)$eventTimelineBoard['boardId']; ?>">
                           <div class="event-timeline-head">
                             <div>
                               <strong><?php echo htmlspecialchars($eventTimelineBoard['boardName'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
-                              <span><?php echo count($eventTimelineBoard['events']); ?> Ereignisse im Verlauf</span>
+                              <span><?php echo htmlspecialchars(mds_t('internal.events_in_history', array(count($eventTimelineBoard['events']))), ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
                           </div>
                           <ol class="event-timeline-list">
@@ -1036,10 +1046,10 @@
                                         $detailParts[] = $eventTimelineEntry['sensorName'];
                                       }
                                       if (!empty($eventTimelineEntry['rawLabel']) && $eventTimelineEntry['rawLabel'] !== $eventTimelineEntry['label']) {
-                                        $detailParts[] = 'Rohwert: ' . $eventTimelineEntry['rawLabel'];
+                                        $detailParts[] = (mds_current_language() === 'de' ? 'Rohwert: ' : 'Raw value: ') . $eventTimelineEntry['rawLabel'];
                                       }
                                       if (!empty($eventTimelineEntry['fallbackTimestamp']) && $eventTimelineEntry['fallbackTimestamp'] !== $eventTimelineEntry['timestamp']) {
-                                        $detailParts[] = 'Datensatz: ' . $eventTimelineEntry['fallbackTimestamp'];
+                                        $detailParts[] = (mds_current_language() === 'de' ? 'Datensatz: ' : 'Record: ') . $eventTimelineEntry['fallbackTimestamp'];
                                       }
                                       echo htmlspecialchars(implode(' · ', $detailParts), ENT_QUOTES, 'UTF-8');
                                     ?>
@@ -1065,8 +1075,8 @@
             <div class="tab-section-card">
               <div class="tab-section-title">
                 <div>
-                  <h3>Boards</h3>
-                  <p>Status, Uebertragungsweg und Zuordnung deiner registrierten Devices.</p>
+                  <h3><?php echo htmlspecialchars(mds_t('common.boards'), ENT_QUOTES, 'UTF-8'); ?></h3>
+                  <p><?php echo htmlspecialchars(mds_t('internal.boards_text'), ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
               </div>
               <div class="board-overview-list">
@@ -1079,7 +1089,7 @@
               if ($mySensors2 == null) {
                 ?>
                   <div class='container mt-2'>
-                    <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
+                    <span class='badge bg-danger mr-2' style='width: 55px;'><?php echo htmlspecialchars(mds_t('common.offline'), ENT_QUOTES, 'UTF-8'); ?></span>
                     <span class='control-label' style='padding-left: 5px'><?php echo $singleBoardObj->getName(); ?> (<?php echo $singleBoardObj->getMacAddress(); ?>)</span>
                   </div>
                 <?php
@@ -1118,7 +1128,7 @@
                 if ($boardOnlineStatus) {
                 ?>
                   <div class='board-overview-badges'>
-                  <span class='badge bg-success mr-2' style='width: 55px;'>Online</span>
+                  <span class='badge bg-success mr-2' style='width: 55px;'><?php echo htmlspecialchars(mds_t('common.online'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <?php
                   if ($transmissionPath == 1) {
                     ?>
@@ -1134,7 +1144,7 @@
                 } else {
                 ?>
                   <div class='board-overview-badges'>
-                  <span class='badge bg-danger mr-2' style='width: 55px;'>Offline</span>
+                  <span class='badge bg-danger mr-2' style='width: 55px;'><?php echo htmlspecialchars(mds_t('common.offline'), ENT_QUOTES, 'UTF-8'); ?></span>
                 <?php
                 }
                 ?>
@@ -1155,12 +1165,12 @@
         <div class="tab-section-card mt-3">
           <div class="tab-section-title">
             <div>
-              <h3>Debug</h3>
-              <p>Rohdaten aus `ttnDataLoraBoatMonitor` fuer Analyse und Fehlersuche.</p>
+              <h3><?php echo htmlspecialchars(mds_t('internal.debug'), ENT_QUOTES, 'UTF-8'); ?></h3>
+              <p><?php echo htmlspecialchars(mds_t('internal.debug_text'), ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
           </div>
           <div class="p-2 d-flex flex-column gap-2" id="chart-container-debug">
-            <p class="mb-0 text-muted">Alle TTN-Rohdaten aus `ttnDataLoraBoatMonitor`. Horizontal und vertikal scrollbar.</p>
+            <p class="mb-0 text-muted"><?php echo htmlspecialchars(mds_t('internal.debug_table_text'), ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
         <?php
             include_once dirname(__DIR__) . "/app/Http/Webhooks/TTN/index.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
@@ -1226,7 +1236,7 @@
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");
-                    g.innerHTML = "Sensor order saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                    g.innerHTML = (window.mdsI18n?.sensorOrderSaved || "Sensor order saved.") + "<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
                     const bsAlert = new bootstrap.Alert(g);
                     // Dismiss time out
                     setTimeout(() => {
@@ -1241,7 +1251,7 @@
                     g = document.createElement('div');
                     g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                     g.setAttribute("role", "alert");
-                    g.innerHTML = "Sensor order not saved.<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                    g.innerHTML = (window.mdsI18n?.sensorOrderFailed || "Sensor order not saved.") + "<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
                     const bsAlert = new bootstrap.Alert(g);
                     // Dismiss time out
                     setTimeout(() => {

@@ -9,6 +9,7 @@ if (file_exists($vendorAutoload)) {
 
 require_once $projectRoot . '/app/Infrastructure/Logging/writeToLogFunction.func.php';
 require_once $projectRoot . '/app/Support/session.func.php';
+require_once $projectRoot . '/app/Support/i18n.func.php';
 mds_enforce_https_if_possible();
 require_once $projectRoot . '/app/Infrastructure/Config/configuration.php';
 require_once $projectRoot . '/app/Support/url_helpers.php';

@@ -8,6 +8,7 @@
  *  Modified by: Guntmar Höche 2023-04-05
  */
 
+require_once(dirname(__DIR__, 4) . '/bootstrap/app.php');
 require_once(dirname(__DIR__, 3) . '/Infrastructure/Database/dbGetData.php');
 
 $debugRows = dbGetData::getRecentTtnDebugRows(30);
@@ -23,7 +24,7 @@ if ($row_cnt > 0) {
 
     echo "<div class='debug-table-shell'><table id='ttnvalues' class='table table-sm table-striped table-hover align-middle mb-0' style='" . $show_table . "'>" .
             "<thead><tr>" .
-                "<th>Time</th>" .
+                "<th>" . htmlspecialchars(mds_t('internal.map_timestamp'), ENT_QUOTES, 'UTF-8') . "</th>" .
                 "<th>TTN Dev ID</th>" .
                 "<th>Counter</th>" .
                 "<th>Value1 (Temp &deg;C)</th>" .
@@ -73,7 +74,7 @@ if ($row_cnt > 0) {
             }
         }
 } else {
-	echo  "<div class='alert alert-danger' role='alert'>No Data received.</div>";
+	echo  "<div class='alert alert-danger' role='alert'>" . htmlspecialchars(mds_t('internal.debug_no_data'), ENT_QUOTES, 'UTF-8') . "</div>";
 }
 ?>
 </tbody>

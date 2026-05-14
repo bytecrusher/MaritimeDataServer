@@ -455,6 +455,14 @@ class NotificationService
     private static function getActiveSensorAlertOverview($userId, $isAdmin)
     {
         $pdo = dbConfig::getInstance();
+        if (!self::sensorAlertColumnsExist($pdo)) {
+            writeToLogFunction::warning(
+                'Sensor alert overview skipped because notification migration columns are missing.',
+                __FILE__
+            );
+            return array();
+        }
+
         $sql = "SELECT
                     sensorChannelConfig.id,
                     sensorChannelConfig.sensorConfigId,
@@ -482,6 +490,38 @@ class NotificationService
         $statement = $pdo->prepare($sql);
         $statement->execute($params);
         return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private static function sensorAlertColumnsExist(PDO $pdo)
+    {
+        static $columnsExist = null;
+        if ($columnsExist !== null) {
+            return $columnsExist;
+        }
+
+        try {
+            $statement = $pdo->prepare(
+                "SELECT COUNT(*) AS existingColumns
+                 FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = 'sensorChannelConfig'
+                   AND COLUMN_NAME IN (
+                     'AlertEnabled',
+                     'AlertLowValue',
+                     'AlertHighValue',
+                     'AlertState',
+                     'LastAlertSentAt'
+                   )"
+            );
+            $statement->execute();
+            $row = $statement->fetch(PDO::FETCH_ASSOC);
+            $columnsExist = ((int)($row['existingColumns'] ?? 0) === 5);
+        } catch (Throwable $e) {
+            $columnsExist = false;
+            writeToLogFunction::exception($e, __FILE__);
+        }
+
+        return $columnsExist;
     }
 
     private static function writeJobStatus(array $status)

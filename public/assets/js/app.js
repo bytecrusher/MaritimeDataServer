@@ -17,6 +17,10 @@ const chartBoardVisibility = {
   events: new Map(),
 };
 
+function mdsLabel(key, fallback) {
+  return (window.mdsI18n && window.mdsI18n[key]) ? window.mdsI18n[key] : fallback;
+}
+
 //function sleep(ms) {
 //  return new Promise(resolve => setTimeout(resolve, ms));
 //}
@@ -199,7 +203,7 @@ function initializeChartBoardFilters() {
       soloButton.className = 'btn btn-sm btn-link p-0 text-decoration-none';
       soloButton.dataset.boardId = boardId;
       soloButton.dataset.chartKey = chartKey;
-      soloButton.textContent = 'Nur dieses';
+      soloButton.textContent = mdsLabel('onlyThis', 'Only this');
       soloButton.addEventListener('click', function () {
         setOnlyChartBoardVisible(chartKey, boardId);
       });
@@ -309,7 +313,7 @@ function initializeEventTimeline() {
   }
 
   if (!Array.isArray(window.eventChartSensors) || window.eventChartSensors.length === 0) {
-    eventTimelineContainer.innerHTML = '<div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>';
+    eventTimelineContainer.innerHTML = '<div class="event-timeline-empty">' + mdsLabel('noEvents', 'No wakeup or standby events available yet.') + '</div>';
     return;
   }
 }
@@ -330,7 +334,7 @@ function initializeEventSummaryChart() {
   if (eventSummaryData.length === 0) {
     const container = eventSummaryCanvas.parentElement;
     if (container) {
-      container.innerHTML = '<div class="event-timeline-empty">Noch keine Wakeup- oder Standby-Ereignisse vorhanden.</div>';
+      container.innerHTML = '<div class="event-timeline-empty">' + mdsLabel('noEvents', 'No wakeup or standby events available yet.') + '</div>';
     }
     return;
   }
@@ -396,7 +400,7 @@ function initializeEventSummaryChart() {
           },
           title: {
             display: true,
-            text: 'Stunden pro Tag',
+            text: mdsLabel('hoursPerDay', 'Hours per day'),
             color: '#475569',
           }
         }
@@ -428,7 +432,7 @@ function updateEventSummaryChart() {
     if (eventSummaryShell && !emptyState) {
       emptyState = document.createElement('div');
       emptyState.className = 'event-timeline-empty is-chart-empty';
-      emptyState.textContent = 'Für die aktuell ausgewählten Devices liegen keine ESP-Ereignisse vor.';
+      emptyState.textContent = mdsLabel('noSelectedEvents', 'No ESP events are available for the currently selected devices.');
       eventSummaryShell.appendChild(emptyState);
     }
     if (emptyState) {
@@ -446,7 +450,7 @@ function updateEventSummaryChart() {
     const boardId = String(summaryEntry.boardId);
     const boardColor = getEventSeriesColor(boardId);
     datasets.push({
-      label: summaryEntry.boardName + ' Online',
+      label: summaryEntry.boardName + ' ' + mdsLabel('onlineSuffix', 'Online'),
       data: Array.isArray(summaryEntry.onlineDailyHours) ? summaryEntry.onlineDailyHours.map(Number) : [],
       borderColor: boardColor.wakeupBorder,
       backgroundColor: boardColor.wakeupFill,
@@ -456,7 +460,7 @@ function updateEventSummaryChart() {
       boardId: boardId,
     });
     datasets.push({
-      label: summaryEntry.boardName + ' Standby',
+      label: summaryEntry.boardName + ' ' + mdsLabel('standbySuffix', 'Standby'),
       data: Array.isArray(summaryEntry.standbyDailyHours) ? summaryEntry.standbyDailyHours.map(Number) : [],
       borderColor: boardColor.standbyBorder,
       backgroundColor: boardColor.standbyFill,
@@ -546,7 +550,7 @@ function updateEventTimelineVisibility() {
     if (!emptyState) {
       emptyState = document.createElement('div');
       emptyState.className = 'event-timeline-empty is-filter-empty';
-      emptyState.textContent = 'Für die aktuell ausgewählten Devices liegen keine ESP-Ereignisse vor.';
+      emptyState.textContent = mdsLabel('noSelectedEvents', 'No ESP events are available for the currently selected devices.');
       eventTimelineContainer.appendChild(emptyState);
     }
     emptyState.hidden = false;

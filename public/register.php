@@ -10,7 +10,7 @@ $var_AdminEmailAddress = $config::$adminEmailAddress;
 
 if (count($_POST) > 0) {
     if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
-        $message = "The form session has expired. Please reload the page and try again.";
+        $message = mds_t('login.csrf');
         $type = "error";
     }
     if (!isset($message)) {
@@ -21,7 +21,7 @@ if (count($_POST) > 0) {
             3600
         );
         if (!$rateLimit['allowed']) {
-            $message = "Too many registration attempts. Please try again later.";
+            $message = mds_t('register.too_many');
             $type = "error";
         }
     }
@@ -96,7 +96,7 @@ if (count($_POST) > 0) {
 	require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
 	include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
 ?>
-<title>User Registration</title>
+<title><?php echo htmlspecialchars(mds_t('register.title'), ENT_QUOTES, 'UTF-8'); ?></title>
 <style>
 .gender-radio {
     width: auto;
@@ -124,33 +124,32 @@ if (count($_POST) > 0) {
         <?php } else { ?>
         <form name="frmRegistration" method="post" action="">
             <?php echo mds_csrf_input(); ?>
-            <h2>User Activation Email</h2>
+            <h2><?php echo htmlspecialchars(mds_t('register.heading'), ENT_QUOTES, 'UTF-8'); ?></h2>
             <div class="form-group">
-                <label for="firstName">First name:</label>
+                <label for="firstName"><?php echo htmlspecialchars(mds_t('register.first_name'), ENT_QUOTES, 'UTF-8'); ?>:</label>
                 <input type="text" id="firstName" size="40" maxlength="250" name="firstName" class="form-control" required value="<?php if(isset($_POST['firstName'])) echo $_POST['firstName']; ?>">
             </div>
             <div class="form-group">
-                <label for="lastName">Last name:</label>
+                <label for="lastName"><?php echo htmlspecialchars(mds_t('register.last_name'), ENT_QUOTES, 'UTF-8'); ?>:</label>
                 <input type="text" id="lastName" size="40" maxlength="250" name="lastName" class="form-control" required value="<?php if(isset($_POST['lastName'])) echo $_POST['lastName']; ?>">
             </div>
             <div class="form-group">
-                <label for="password">Password:</label>
+                <label for="password"><?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?>:</label>
                 <input type="password" id="password" size="40"  maxlength="250" name="password" class="form-control" required value="">
             </div>
             <div class="form-group">
-                <label for="confirm_password">Password repeat:</label>
+                <label for="confirm_password"><?php echo htmlspecialchars(mds_t('register.password_repeat'), ENT_QUOTES, 'UTF-8'); ?>:</label>
                 <input type="password" id="confirm_password" size="40" maxlength="250" name="confirm_password" class="form-control" required value="">
             </div>
             <div class="form-group">
-                <label for="userEmail">E-Mail:</label>
+                <label for="userEmail"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?>:</label>
                 <input type="email" id="userEmail" size="40" maxlength="250" name="userEmail" class="form-control" required value="<?php if(isset($_POST['userEmail'])) echo $_POST['userEmail']; ?>">
             </div>
             <div class="form-group">
-                <input type="checkbox" name="terms"> I accept Terms and
-                Conditions
+                <input type="checkbox" name="terms"> <?php echo htmlspecialchars(mds_t('register.accept_terms'), ENT_QUOTES, 'UTF-8'); ?>
             </div>
             <div class="form-group mt-2">
-                <button type="submit" class="btn btn-lg btn-primary btn-block" name="submit" id="btn-submit" value="Register" onclick="showLoader();">Register</button>
+                <button type="submit" class="btn btn-lg btn-primary btn-block" name="submit" id="btn-submit" value="Register" onclick="showLoader();"><?php echo htmlspecialchars(mds_t('register.submit'), ENT_QUOTES, 'UTF-8'); ?></button>
             </div>
             <div id="loader-icon" class="loader">
                 <img src="register/loader.gif" />

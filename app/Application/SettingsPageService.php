@@ -24,10 +24,11 @@ class SettingsPageService
         if ($save === 'personal_data') {
             self::runUserSetter($userObj, 'setName', $post, 'setName not saved.', $result);
             self::runUserSetter($userObj, 'setUserTimeZone', $post, 'setUserTimeZone not saved.', $result);
+            self::runUserSetter($userObj, 'setLanguage', $post, 'setLanguage not saved.', $result);
             self::runUserSetter($userObj, 'setReceiveNotifications', $post, 'setReceiveNotifications not saved.', $result);
             $_SESSION['userObj'] = serialize($userObj);
             if (empty($result['error_msg'])) {
-                $result['success_msg'] = 'User Data successfully saved.';
+                $result['success_msg'] = mds_t('settings.saved_user');
             }
         } elseif ($save === 'email') {
             self::handleEmailSave($userObj, $post, $result);
@@ -37,7 +38,7 @@ class SettingsPageService
             try {
                 $userObj->setDashboardUpdateInterval($post);
                 $_SESSION['userObj'] = serialize($userObj);
-                $result['success_msg'] = 'Dashboard settings successfully saved.';
+                $result['success_msg'] = mds_t('settings.saved_dashboard');
             } catch (Exception $e) {
                 $result['error_msg'] = 'Dashboard settings not saved.';
                 self::logException($result['error_msg'], $e);
@@ -66,7 +67,7 @@ class SettingsPageService
         } elseif ($save === 'serverSetting') {
             try {
                 $config->saveServerSettings($post);
-                $result['success_msg'] = 'Server settings saved.';
+                $result['success_msg'] = mds_t('settings.saved_server');
             } catch (Exception $e) {
                 $result['error_msg'] = $e->getMessage();
                 self::logException('Server settings not saved.', $e);
@@ -119,7 +120,18 @@ class SettingsPageService
     {
         $isAdmin = ((int) $userObj->getUserGroupAdmin() === 1);
 
-        $notificationOverview = NotificationService::getNotificationStatusOverview($userObj->getId(), $isAdmin);
+        try {
+            $notificationOverview = NotificationService::getNotificationStatusOverview($userObj->getId(), $isAdmin);
+        } catch (Throwable $e) {
+            writeToLogFunction::exception($e, __FILE__, array(
+                'message' => 'Notification overview could not be loaded on settings page.',
+            ));
+            $notificationOverview = array(
+                'jobStatus' => null,
+                'offlineBoards' => array(),
+                'activeSensorAlerts' => array(),
+            );
+        }
 
         return array(
             'demoMode' => (bool) $config::$demoMode,
@@ -133,7 +145,182 @@ class SettingsPageService
             'currentLogContent' => self::getCurrentLogContent(),
             'isAdmin' => $isAdmin,
             'notificationOverview' => $notificationOverview,
+            'migrationStatus' => self::buildMigrationStatus(),
         );
+    }
+
+    public static function buildMigrationStatus()
+    {
+        $pdo = dbConfig::getInstance();
+        $migrations = array(
+            array(
+                'file' => 'docs/db_design/migrations/2026-04-25_schema_hardening.sql',
+                'label' => 'Schema hardening / text sensor data',
+                'checks' => array(
+                    array('type' => 'column_type', 'table' => 'sensorData', 'column' => 'value1', 'contains' => 'varchar(255)'),
+                    array('type' => 'index', 'table' => 'sensorData', 'index' => 'idx_sensorData_sensorId_reading_time'),
+                    array('type' => 'index', 'table' => 'boardConfig', 'index' => 'idx_boardConfig_ttnAppId_ttnDevId'),
+                    array('type' => 'index', 'table' => 'sensorConfig', 'index' => 'idx_sensorConfig_boardId_typId_name'),
+                ),
+            ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-04-25_data_cleanup.sql',
+                'label' => 'Data cleanup / wakeup event normalization',
+                'checks' => array(
+                    array('type' => 'no_rows', 'table' => 'securityTokens', 'where' => "`userId` = 0 OR `securityToken` = ''"),
+                    array('type' => 'no_rows', 'table' => 'users', 'where' => "`lastName` = 'HÃ¶che'"),
+                    array('type' => 'no_rows', 'table' => 'sensorTypes', 'where' => "`name` = 'GPS' AND `description` = 'Coorinates'"),
+                    array('type' => 'row_absent_or_value', 'table' => 'sensorTypes', 'whereColumn' => 'name', 'whereValue' => 'WakeupStan', 'column' => 'description', 'expected' => 'Wakeup / standby event'),
+                    array('type' => 'no_rows', 'table' => 'sensorConfig', 'where' => "`name` = 'Wakeup unknown'"),
+                ),
+            ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-04-26_notification_and_gauge_style_idempotent.sql',
+                'label' => 'Notifications and gauge styles',
+                'checks' => array(
+                    array('type' => 'column', 'table' => 'sensorChannelConfig', 'column' => 'GaugeStyle'),
+                    array('type' => 'column', 'table' => 'sensorChannelConfig', 'column' => 'AlertEnabled'),
+                    array('type' => 'column', 'table' => 'sensorChannelConfig', 'column' => 'AlertLowValue'),
+                    array('type' => 'column', 'table' => 'sensorChannelConfig', 'column' => 'AlertHighValue'),
+                    array('type' => 'column', 'table' => 'sensorChannelConfig', 'column' => 'AlertState'),
+                    array('type' => 'column', 'table' => 'sensorChannelConfig', 'column' => 'LastAlertSentAt'),
+                    array('type' => 'column', 'table' => 'users', 'column' => 'receive_offline_notifications'),
+                    array('type' => 'column', 'table' => 'users', 'column' => 'receive_sensor_notifications'),
+                    array('type' => 'column', 'table' => 'users', 'column' => 'dashboardOnlineOnly'),
+                    array('type' => 'column', 'table' => 'users', 'column' => 'preferredChartWindowDays'),
+                ),
+            ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-05-14_user_language.sql',
+                'label' => 'User language setting',
+                'checks' => array(
+                    array('type' => 'column', 'table' => 'users', 'column' => 'language'),
+                ),
+            ),
+        );
+
+        foreach ($migrations as $migrationIndex => $migration) {
+            $missingChecks = array();
+            foreach ($migration['checks'] as $check) {
+                if (!self::migrationCheckPassed($pdo, $check)) {
+                    $missingChecks[] = self::describeMigrationCheck($check);
+                }
+            }
+
+            $migrations[$migrationIndex]['applied'] = empty($missingChecks);
+            $migrations[$migrationIndex]['missingChecks'] = $missingChecks;
+        }
+
+        return $migrations;
+    }
+
+    private static function migrationCheckPassed(PDO $pdo, array $check)
+    {
+        try {
+            if ($check['type'] === 'table') {
+                $statement = $pdo->prepare(
+                    "SELECT COUNT(*) AS matchCount
+                     FROM INFORMATION_SCHEMA.TABLES
+                     WHERE TABLE_SCHEMA = DATABASE()
+                       AND TABLE_NAME = :tableName"
+                );
+                $statement->execute(array('tableName' => $check['table']));
+                $row = $statement->fetch(PDO::FETCH_ASSOC);
+                return ((int)($row['matchCount'] ?? 0) > 0);
+            }
+
+            if ($check['type'] === 'column' || $check['type'] === 'column_type') {
+                $statement = $pdo->prepare(
+                    "SELECT COLUMN_TYPE
+                     FROM INFORMATION_SCHEMA.COLUMNS
+                     WHERE TABLE_SCHEMA = DATABASE()
+                       AND TABLE_NAME = :tableName
+                       AND COLUMN_NAME = :columnName"
+                );
+                $statement->execute(array('tableName' => $check['table'], 'columnName' => $check['column']));
+                $row = $statement->fetch(PDO::FETCH_ASSOC);
+                if (!$row) {
+                    return false;
+                }
+                if ($check['type'] === 'column_type') {
+                    return str_contains(strtolower((string)$row['COLUMN_TYPE']), strtolower((string)$check['contains']));
+                }
+                return true;
+            }
+
+            if ($check['type'] === 'index') {
+                $statement = $pdo->prepare(
+                    "SELECT COUNT(*) AS matchCount
+                     FROM INFORMATION_SCHEMA.STATISTICS
+                     WHERE TABLE_SCHEMA = DATABASE()
+                       AND TABLE_NAME = :tableName
+                       AND INDEX_NAME = :indexName"
+                );
+                $statement->execute(array('tableName' => $check['table'], 'indexName' => $check['index']));
+                $row = $statement->fetch(PDO::FETCH_ASSOC);
+                return ((int)($row['matchCount'] ?? 0) > 0);
+            }
+
+            if ($check['type'] === 'row_value') {
+                if (!preg_match('/^[A-Za-z0-9_]+$/', $check['table'] . $check['whereColumn'] . $check['column'])) {
+                    return false;
+                }
+                $sql = "SELECT `" . $check['column'] . "` AS checkValue FROM `" . $check['table'] . "` WHERE `" . $check['whereColumn'] . "` = :whereValue LIMIT 1";
+                $statement = $pdo->prepare($sql);
+                $statement->execute(array('whereValue' => $check['whereValue']));
+                $row = $statement->fetch(PDO::FETCH_ASSOC);
+                return $row && (string)$row['checkValue'] === (string)$check['expected'];
+            }
+
+            if ($check['type'] === 'row_absent_or_value') {
+                if (!preg_match('/^[A-Za-z0-9_]+$/', $check['table'] . $check['whereColumn'] . $check['column'])) {
+                    return false;
+                }
+                $sql = "SELECT `" . $check['column'] . "` AS checkValue FROM `" . $check['table'] . "` WHERE `" . $check['whereColumn'] . "` = :whereValue LIMIT 1";
+                $statement = $pdo->prepare($sql);
+                $statement->execute(array('whereValue' => $check['whereValue']));
+                $row = $statement->fetch(PDO::FETCH_ASSOC);
+                return !$row || (string)$row['checkValue'] === (string)$check['expected'];
+            }
+
+            if ($check['type'] === 'no_rows') {
+                if (!preg_match('/^[A-Za-z0-9_]+$/', $check['table'])) {
+                    return false;
+                }
+                $statement = $pdo->query("SELECT COUNT(*) AS badRows FROM `" . $check['table'] . "` WHERE " . $check['where']);
+                $row = $statement->fetch(PDO::FETCH_ASSOC);
+                return ((int)($row['badRows'] ?? 0) === 0);
+            }
+        } catch (Throwable $e) {
+            writeToLogFunction::exception($e, __FILE__, array('migrationCheck' => $check));
+            return false;
+        }
+
+        return false;
+    }
+
+    private static function describeMigrationCheck(array $check)
+    {
+        if ($check['type'] === 'table') {
+            return 'table ' . $check['table'];
+        }
+        if ($check['type'] === 'column' || $check['type'] === 'column_type') {
+            return 'column ' . $check['table'] . '.' . $check['column'];
+        }
+        if ($check['type'] === 'index') {
+            return 'index ' . $check['table'] . '.' . $check['index'];
+        }
+        if ($check['type'] === 'row_value') {
+            return 'data check ' . $check['table'] . '.' . $check['column'];
+        }
+        if ($check['type'] === 'row_absent_or_value') {
+            return 'data check ' . $check['table'] . '.' . $check['column'];
+        }
+        if ($check['type'] === 'no_rows') {
+            return 'cleanup check ' . $check['table'];
+        }
+
+        return 'unknown check';
     }
 
     public static function buildPrivacyExportData($userObj)
@@ -188,6 +375,7 @@ class SettingsPageService
                 'receiveSensorNotifications' => (int)$userObj->getReceiveSensorNotifications(),
                 'dashboardOnlineOnly' => (int)$userObj->getDashboardOnlineOnly(),
                 'preferredChartWindowDays' => (int)$userObj->getPreferredChartWindowDays(),
+                'language' => $userObj->getLanguage(),
             ),
             'boards' => $boards,
             'sensorConfig' => $sensorConfigs,
