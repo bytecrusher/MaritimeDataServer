@@ -1,0 +1,13 @@
+Options -Indexes
+DirectoryIndex public/index.php index.php
+
+RewriteEngine On
+
+RewriteRule ^(?:app|bootstrap|config|docs|tools|var|vendor)(?:/|$) - [F,L]
+
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+RewriteRule ^(.*)$ public/$1 [L]
+
+RewriteRule ^$ public/index.php [L]
