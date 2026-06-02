@@ -36,20 +36,20 @@ jobs:
       - name: Validate deployment secrets
         env:
           NETCUP_SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
-          NETCUP_SSH_HOST: ${{ secrets.NETCUP_SSH_HOST }}
-          NETCUP_SSH_USER: ${{ secrets.NETCUP_SSH_USER }}
+          NETCUP_SSH_HOST: ${{ vars.NETCUP_SSH_HOST || secrets.NETCUP_SSH_HOST }}
+          NETCUP_SSH_USER: ${{ vars.NETCUP_SSH_USER || secrets.NETCUP_SSH_USER }}
         run: |
           test -n "$NETCUP_SSH_PRIVATE_KEY" || { echo "Missing secret: NETCUP_SSH_PRIVATE_KEY"; exit 1; }
-          test -n "$NETCUP_SSH_HOST" || { echo "Missing secret: NETCUP_SSH_HOST"; exit 1; }
-          test -n "$NETCUP_SSH_USER" || { echo "Missing secret: NETCUP_SSH_USER"; exit 1; }
+          test -n "$NETCUP_SSH_HOST" || { echo "Missing variable or secret: NETCUP_SSH_HOST"; exit 1; }
+          test -n "$NETCUP_SSH_USER" || { echo "Missing variable or secret: NETCUP_SSH_USER"; exit 1; }
 
       - name: Deploy via rsync over SSH
         uses: easingthemes/ssh-deploy@v5.1.0
         with:
           SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.NETCUP_SSH_HOST }}
-          REMOTE_USER: ${{ secrets.NETCUP_SSH_USER }}
-          REMOTE_PORT: ${{ secrets.NETCUP_SSH_PORT || '22' }}
+          REMOTE_HOST: ${{ vars.NETCUP_SSH_HOST || secrets.NETCUP_SSH_HOST }}
+          REMOTE_USER: ${{ vars.NETCUP_SSH_USER || secrets.NETCUP_SSH_USER }}
+          REMOTE_PORT: ${{ vars.NETCUP_SSH_PORT || secrets.NETCUP_SSH_PORT || '22' }}
           SOURCE: ./
           TARGET: ${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}
           ARGS: -rlgoDzvc --delete
@@ -73,7 +73,7 @@ jobs:
             cd "${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}"
             mkdir -p var/log var/status var/ota
             chmod 755 var var/log var/status var/ota
-            PHP_BINARY="${{ secrets.DEPLOY_PHP_BINARY || '/opt/plesk/php/8.3/bin/php' }}"
+            PHP_BINARY="${{ vars.DEPLOY_PHP_BINARY || secrets.DEPLOY_PHP_BINARY || '/opt/plesk/php/8.3/bin/php' }}"
             if [ -x "$PHP_BINARY" ]; then
               find app bootstrap config public tools -name '*.php' -print0 | xargs -0 -n1 "$PHP_BINARY" -l
             else
