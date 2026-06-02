@@ -39,6 +39,35 @@
   $showInstallAlert = $pageData['showInstallAlert'];
   $hasBoards = $pageData['hasBoards'];
 
+  if (!function_exists('mds_format_internal_duration')) {
+    function mds_format_internal_duration($seconds)
+    {
+      $seconds = max(0, (int)$seconds);
+      if ($seconds > 0 && $seconds < 60) {
+        return '< 1 min';
+      }
+
+      $minutes = (int)round($seconds / 60);
+      $days = intdiv($minutes, 1440);
+      $minutes -= $days * 1440;
+      $hours = intdiv($minutes, 60);
+      $minutes -= $hours * 60;
+
+      $parts = array();
+      if ($days > 0) {
+        $parts[] = $days . ' d';
+      }
+      if ($hours > 0) {
+        $parts[] = $hours . ' h';
+      }
+      if ($minutes > 0 || empty($parts)) {
+        $parts[] = $minutes . ' min';
+      }
+
+      return implode(' ', $parts);
+    }
+  }
+
   include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
 ?>
 <link rel="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
@@ -1044,6 +1073,11 @@
                                       $detailParts = array();
                                       if (!empty($eventTimelineEntry['sensorName'])) {
                                         $detailParts[] = $eventTimelineEntry['sensorName'];
+                                      }
+                                      if (isset($eventTimelineEntry['durationSeconds']) && $eventTimelineEntry['durationSeconds'] !== null) {
+                                        $detailParts[] = mds_t('internal.event_duration', array(mds_format_internal_duration($eventTimelineEntry['durationSeconds'])));
+                                      } elseif (!empty($eventTimelineEntry['durationOpen'])) {
+                                        $detailParts[] = mds_t('internal.event_duration_open');
                                       }
                                       if (!empty($eventTimelineEntry['rawLabel']) && $eventTimelineEntry['rawLabel'] !== $eventTimelineEntry['label']) {
                                         $detailParts[] = (mds_current_language() === 'de' ? 'Rohwert: ' : 'Raw value: ') . $eventTimelineEntry['rawLabel'];

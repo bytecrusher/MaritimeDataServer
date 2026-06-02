@@ -194,6 +194,7 @@ class InternalPageService
                 return $rightTime <=> $leftTime;
             });
 
+            $eventTimelineBoard['events'] = self::addEventDurationDetails($eventTimelineBoard['events'], $eventWindowEnd);
             $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 40);
             $eventTimelineSummary[] = array(
                 'boardId' => (int)$eventTimelineBoard['boardId'],
@@ -274,11 +275,43 @@ class InternalPageService
         return null;
     }
 
+    private static function addEventDurationDetails(array $events, DateTimeImmutable $windowEnd)
+    {
+        $eventCount = count($events);
+        for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
+            $events[$eventIndex]['durationSeconds'] = null;
+            $events[$eventIndex]['durationOpen'] = false;
+
+            $eventStart = self::parseEventDatetime($events[$eventIndex]);
+            if (!$eventStart instanceof DateTimeImmutable) {
+                continue;
+            }
+
+            if ($eventIndex === 0) {
+                if (($events[$eventIndex]['stateClass'] ?? '') === 'is-wakeup') {
+                    $events[$eventIndex]['durationOpen'] = true;
+                    continue;
+                }
+                $eventEnd = $windowEnd;
+            } else {
+                $eventEnd = self::parseEventDatetime($events[$eventIndex - 1]);
+            }
+
+            if (!$eventEnd instanceof DateTimeImmutable || $eventEnd <= $eventStart) {
+                continue;
+            }
+
+            $events[$eventIndex]['durationSeconds'] = $eventEnd->getTimestamp() - $eventStart->getTimestamp();
+        }
+
+        return $events;
+    }
+
     private static function buildEventDurationSummary($eventEntries, $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
     {
         $onlineDailyHours = array_fill(0, count($bucketDates), 0.0);
         $standbyDailyHours = array_fill(0, count($bucketDates), 0.0);
-        $normalizedEvents = array();
+        $normalizedEventMap = array();
 
         foreach ($eventEntries as $eventEntry) {
             $eventDateTime = self::parseEventDatetime($eventEntry);
@@ -289,21 +322,36 @@ class InternalPageService
             if (!in_array($stateClass, array('is-wakeup', 'is-standby'), true)) {
                 continue;
             }
-            $normalizedEvents[] = array(
+            $eventKey = $eventDateTime->getTimestamp() . '|' . $stateClass;
+            $normalizedEventMap[$eventKey] = array(
                 'stateClass' => $stateClass,
                 'dateTime' => $eventDateTime,
             );
         }
 
+        $normalizedEvents = array_values($normalizedEventMap);
         usort($normalizedEvents, function ($leftEvent, $rightEvent) {
-            return $leftEvent['dateTime']->getTimestamp() <=> $rightEvent['dateTime']->getTimestamp();
+            $leftTime = $leftEvent['dateTime']->getTimestamp();
+            $rightTime = $rightEvent['dateTime']->getTimestamp();
+
+            if ($leftTime === $rightTime) {
+                return strcmp($leftEvent['stateClass'], $rightEvent['stateClass']);
+            }
+
+            return $leftTime <=> $rightTime;
         });
 
         $eventCount = count($normalizedEvents);
         for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
             $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
             $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
-            $segmentEnd = ($eventIndex + 1 < $eventCount) ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
+            $hasNextEvent = ($eventIndex + 1 < $eventCount);
+
+            if ($segmentState === 'is-wakeup' && !$hasNextEvent) {
+                continue;
+            }
+
+            $segmentEnd = $hasNextEvent ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
 
             if ($segmentEnd <= $windowStart || $segmentStart >= $windowEnd || $segmentEnd <= $segmentStart) {
                 continue;
