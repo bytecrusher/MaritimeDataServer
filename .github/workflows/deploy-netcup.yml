@@ -36,14 +36,14 @@ jobs:
       - name: Deploy via rsync over SSH
         uses: easingthemes/ssh-deploy@v5.1.0
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.NETCUP_SSH_HOST }}
-          REMOTE_USER: ${{ secrets.NETCUP_SSH_USER }}
-          REMOTE_PORT: ${{ secrets.NETCUP_SSH_PORT || '22' }}
-          SOURCE: ./
-          TARGET: ${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}
-          ARGS: -rlgoDzvc --delete
-          EXCLUDE: >-
+          sshPrivateKey: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
+          remoteHost: ${{ secrets.NETCUP_SSH_HOST }}
+          remoteUser: ${{ secrets.NETCUP_SSH_USER }}
+          remotePort: ${{ secrets.NETCUP_SSH_PORT || '22' }}
+          source: ./
+          target: ${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}
+          args: -rlgoDzvc --delete
+          exclude: >-
             .git/,
             .github/,
             .DS_Store,
@@ -59,7 +59,7 @@ jobs:
             var/log/*,
             var/status/*.json,
             var/ota/*
-          SCRIPT_AFTER: |
+          scriptAfter: |
             cd "${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}"
             mkdir -p var/log var/status var/ota
             chmod 755 var var/log var/status var/ota
