@@ -19,7 +19,7 @@ These values can be configured as repository variables or repository secrets:
 
 - `NETCUP_DEPLOY_PATH`: deployment target directory. If unset, the workflow uses `/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/`.
 - `NETCUP_SSH_PORT`: SSH port, defaults to `22`
-- `DEPLOY_PHP_BINARY`: PHP binary on the hosting server, defaults to `/opt/plesk/php/8.3/bin/php`
+- `DEPLOY_PHP_BINARY`: preferred PHP binary on the hosting server. If it is not executable, the workflow falls back to common Plesk PHP paths and `php` from `PATH`.
 
 The web server root should point to the `public/` directory below this target path.
 

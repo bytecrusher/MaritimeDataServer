@@ -102,10 +102,24 @@ jobs:
           mkdir -p var/log var/status var/ota
           chmod 755 var var/log var/status var/ota
 
-          if [ -x "$PHP_BINARY" ]; then
-            find app bootstrap config public tools -name '*.php' -print0 | xargs -0 -n1 "$PHP_BINARY" -l
-          else
-            echo "Configured PHP binary is not executable: $PHP_BINARY"
+          PHP_CANDIDATES="$PHP_BINARY /opt/plesk/php/8.3/bin/php /opt/plesk/php/8.2/bin/php /opt/plesk/php/8.1/bin/php /usr/bin/php php"
+          RESOLVED_PHP_BINARY=""
+          for PHP_CANDIDATE in $PHP_CANDIDATES; do
+            if command -v "$PHP_CANDIDATE" >/dev/null 2>&1; then
+              RESOLVED_PHP_BINARY="$(command -v "$PHP_CANDIDATE")"
+              break
+            fi
+            if [ -x "$PHP_CANDIDATE" ]; then
+              RESOLVED_PHP_BINARY="$PHP_CANDIDATE"
+              break
+            fi
+          done
+
+          if [ -z "$RESOLVED_PHP_BINARY" ]; then
+            echo "No executable PHP binary found. Checked: $PHP_CANDIDATES"
             exit 1
           fi
+
+          echo "Using PHP binary: $RESOLVED_PHP_BINARY"
+          find app bootstrap config public tools -name '*.php' -print0 | xargs -0 -n1 "$RESOLVED_PHP_BINARY" -l
           REMOTE_DEPLOY
