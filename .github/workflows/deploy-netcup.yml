@@ -35,7 +35,7 @@ jobs:
 
       - name: Deploy via rsync over SSH
         uses: easingthemes/ssh-deploy@v5.1.0
-        env:
+        with:
           SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
           REMOTE_HOST: ${{ secrets.NETCUP_SSH_HOST }}
           REMOTE_USER: ${{ secrets.NETCUP_SSH_USER }}
