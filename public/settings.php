@@ -1039,6 +1039,21 @@ th.rotated-text > div > span {
                   <h5 class="card-title mb-1"><?php echo htmlspecialchars(mds_t('settings.migration_status'), ENT_QUOTES, 'UTF-8'); ?></h5>
                   <div class="text-muted small"><?php echo htmlspecialchars(mds_t('settings.migration_status_text'), ENT_QUOTES, 'UTF-8'); ?></div>
                 </div>
+                <?php
+                  $hasOpenMigrationActions = false;
+                  foreach ($migrationStatus as $migrationStatusButtonRow) {
+                    if (empty($migrationStatusButtonRow['applied'])) {
+                      $hasOpenMigrationActions = true;
+                      break;
+                    }
+                  }
+                ?>
+                <form action="?save=runAutomaticMigrations" method="post" class="m-0">
+                  <?php echo mds_csrf_input(); ?>
+                  <button type="submit" class="btn btn-primary btn-sm" <?php if (!$hasOpenMigrationActions) { echo 'disabled'; } ?>>
+                    <?php echo htmlspecialchars(mds_t('settings.migration_run_actions'), ENT_QUOTES, 'UTF-8'); ?>
+                  </button>
+                </form>
               </div>
               <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
@@ -1082,9 +1097,28 @@ th.rotated-text > div > span {
       <div role="tabpanel" class="tab-pane" id="log">
         <div class="panel panel-default p-2"><?php echo htmlspecialchars(mds_t('settings.log_hint'), ENT_QUOTES, 'UTF-8'); ?></div>
         <div class="panel panel-default p-2">
-          <?php
-            echo '<textarea style="height: 400px; width: 100%; font-family: revert;" readonly>' . htmlspecialchars($currentLogContent) . '</textarea>';
-          ?>
+          <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+            <span class="text-muted small"><?php echo htmlspecialchars(mds_t('settings.log_filter'), ENT_QUOTES, 'UTF-8'); ?></span>
+            <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="<?php echo htmlspecialchars(mds_t('settings.log_filter'), ENT_QUOTES, 'UTF-8'); ?>">
+              <?php
+                $logLevelFilters = array(
+                  'ALL' => mds_t('settings.log_filter_all'),
+                  'INFO' => 'Info',
+                  'WARNING' => 'Warning',
+                  'ERROR' => 'Error',
+                  'EXCEPTION' => 'Exception',
+                  'DEBUG' => 'Debug',
+                );
+                foreach ($logLevelFilters as $logLevelValue => $logLevelLabel) {
+                  $inputId = 'log-filter-' . strtolower($logLevelValue);
+              ?>
+                <input type="radio" class="btn-check" name="logLevelFilter" id="<?php echo htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo htmlspecialchars($logLevelValue, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" <?php if ($logLevelValue === 'ALL') { echo 'checked'; } ?>>
+                <label class="btn btn-outline-secondary" for="<?php echo htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($logLevelLabel, ENT_QUOTES, 'UTF-8'); ?></label>
+              <?php } ?>
+            </div>
+            <span id="log-filter-count" class="text-muted small"></span>
+          </div>
+          <textarea id="settings-log-content" style="height: 400px; width: 100%; font-family: monospace;" readonly><?php echo htmlspecialchars($currentLogContent); ?></textarea>
         </div>
       </div>
     </div>
@@ -1110,6 +1144,34 @@ th.rotated-text > div > span {
       }
     })
   })
+
+  $(function() {
+    var rawLogContent = <?php echo json_encode((string)$currentLogContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    var logTextarea = $('#settings-log-content');
+    var logCount = $('#log-filter-count');
+
+    function applyLogFilter(level) {
+      var logLines = rawLogContent.split(/\r?\n/);
+      var filteredLines = logLines;
+
+      if (level !== 'ALL') {
+        filteredLines = logLines.filter(function(line) {
+          return line.indexOf('[' + level + ']') !== -1;
+        });
+      }
+
+      logTextarea.val(filteredLines.join('\n'));
+      logCount.text(filteredLines.filter(function(line) {
+        return line.trim() !== '';
+      }).length + ' ' + <?php echo json_encode(mds_t('settings.log_filter_entries'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>);
+    }
+
+    $('input[name="logLevelFilter"]').on('change', function() {
+      applyLogFilter($(this).val());
+    });
+
+    applyLogFilter('ALL');
+  });
 </script>
 <?php
 include_once dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php";

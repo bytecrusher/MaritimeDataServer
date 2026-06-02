@@ -85,6 +85,17 @@ class SettingsPageService
             } else {
                 $result['error_msg'] = 'System test email could not be sent.';
             }
+        } elseif ($save === 'runAutomaticMigrations') {
+            try {
+                $migrationResult = self::runAutomaticMigrationActions($userObj);
+                $result['success_msg'] = mds_t(
+                    'settings.migration_actions_success',
+                    array((int)$migrationResult['executedActions'])
+                );
+            } catch (Throwable $e) {
+                $result['error_msg'] = mds_t('settings.migration_actions_error') . ' ' . $e->getMessage();
+                self::logException('Automatic migration actions failed.', $e);
+            }
         }
 
         return $result;
@@ -152,12 +163,32 @@ class SettingsPageService
     public static function buildMigrationStatus()
     {
         $pdo = dbConfig::getInstance();
-        $migrations = array(
+        $migrations = self::getMigrationDefinitions();
+
+        foreach ($migrations as $migrationIndex => $migration) {
+            $missingChecks = array();
+            foreach ($migration['checks'] as $check) {
+                if (!self::migrationCheckPassed($pdo, $check)) {
+                    $missingChecks[] = self::describeMigrationCheck($check);
+                }
+            }
+
+            $migrations[$migrationIndex]['applied'] = empty($missingChecks);
+            $migrations[$migrationIndex]['missingChecks'] = $missingChecks;
+        }
+
+        return $migrations;
+    }
+
+    private static function getMigrationDefinitions()
+    {
+        return array(
             array(
                 'file' => 'docs/db_design/migrations/2026-04-25_schema_hardening.sql',
                 'label' => 'Schema hardening / text sensor data',
                 'checks' => array(
                     array('type' => 'column_type', 'table' => 'sensorData', 'column' => 'value1', 'contains' => 'varchar(255)'),
+                    array('type' => 'index', 'table' => 'securityTokens', 'index' => 'idx_securityTokens_userId_createdAt'),
                     array('type' => 'index', 'table' => 'sensorData', 'index' => 'idx_sensorData_sensorId_reading_time'),
                     array('type' => 'index', 'table' => 'boardConfig', 'index' => 'idx_boardConfig_ttnAppId_ttnDevId'),
                     array('type' => 'index', 'table' => 'sensorConfig', 'index' => 'idx_sensorConfig_boardId_typId_name'),
@@ -198,20 +229,177 @@ class SettingsPageService
                 ),
             ),
         );
+    }
 
-        foreach ($migrations as $migrationIndex => $migration) {
-            $missingChecks = array();
-            foreach ($migration['checks'] as $check) {
-                if (!self::migrationCheckPassed($pdo, $check)) {
-                    $missingChecks[] = self::describeMigrationCheck($check);
-                }
-            }
-
-            $migrations[$migrationIndex]['applied'] = empty($missingChecks);
-            $migrations[$migrationIndex]['missingChecks'] = $missingChecks;
+    public static function runAutomaticMigrationActions($userObj)
+    {
+        if ((int)$userObj->getUserGroupAdmin() !== 1) {
+            throw new RuntimeException('Admin permissions required.');
         }
 
-        return $migrations;
+        $pdo = dbConfig::getInstance();
+        $executedActions = 0;
+        $migrations = self::getMigrationDefinitions();
+
+        if (!self::migrationDefinitionPassed($pdo, $migrations[0])) {
+            $executedActions += self::runSchemaHardeningActions($pdo);
+        }
+        if (!self::migrationDefinitionPassed($pdo, $migrations[1])) {
+            $executedActions += self::runDataCleanupActions($pdo);
+        }
+        if (!self::migrationDefinitionPassed($pdo, $migrations[2])) {
+            $executedActions += self::runNotificationAndGaugeActions($pdo);
+        }
+        if (!self::migrationDefinitionPassed($pdo, $migrations[3])) {
+            $executedActions += self::runLanguageMigrationActions($pdo);
+        }
+
+        writeToLogFunction::write_to_log(
+            'Automatic migration actions finished. Executed actions: ' . $executedActions,
+            __FILE__
+        );
+
+        return array('executedActions' => $executedActions);
+    }
+
+    private static function migrationDefinitionPassed(PDO $pdo, array $migration)
+    {
+        foreach ($migration['checks'] as $check) {
+            if (!self::migrationCheckPassed($pdo, $check)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function runSchemaHardeningActions(PDO $pdo)
+    {
+        $actions = 0;
+
+        $schemaStatements = array(
+            "ALTER TABLE `sensorData` MODIFY `value1` varchar(255) NOT NULL",
+            "ALTER TABLE `sensorData` MODIFY `value2` varchar(255) DEFAULT NULL",
+            "ALTER TABLE `sensorData` MODIFY `value3` varchar(255) DEFAULT NULL",
+            "ALTER TABLE `sensorData` MODIFY `value4` varchar(255) DEFAULT NULL",
+        );
+
+        if (!self::migrationCheckPassed($pdo, array('type' => 'column_type', 'table' => 'sensorData', 'column' => 'value1', 'contains' => 'varchar(255)'))) {
+            foreach ($schemaStatements as $statement) {
+                self::executeMigrationStatement($pdo, $statement);
+                $actions++;
+            }
+        }
+
+        $actions += self::addIndexIfMissing($pdo, 'securityTokens', 'idx_securityTokens_userId_createdAt', '`userId`, `createdAt`');
+        $actions += self::addIndexIfMissing($pdo, 'sensorData', 'idx_sensorData_sensorId_reading_time', '`sensorId`, `reading_time`');
+        $actions += self::addIndexIfMissing($pdo, 'boardConfig', 'idx_boardConfig_ttnAppId_ttnDevId', '`ttnAppId`, `ttnDevId`');
+        $actions += self::addIndexIfMissing($pdo, 'sensorConfig', 'idx_sensorConfig_boardId_typId_name', '`boardId`, `typId`, `name`');
+
+        return $actions;
+    }
+
+    private static function runDataCleanupActions(PDO $pdo)
+    {
+        $actions = 0;
+
+        self::executeMigrationStatement($pdo, "CREATE TABLE IF NOT EXISTS `migration_backup_invalid_securityTokens_20260425` LIKE `securityTokens`");
+        $actions++;
+
+        self::executeMigrationStatement(
+            $pdo,
+            "INSERT INTO `migration_backup_invalid_securityTokens_20260425`
+             SELECT `securityTokens`.*
+             FROM `securityTokens`
+             LEFT JOIN `migration_backup_invalid_securityTokens_20260425` backupTokens
+               ON backupTokens.`id` = `securityTokens`.`id`
+             WHERE (`securityTokens`.`userId` = 0 OR `securityTokens`.`securityToken` = '')
+               AND backupTokens.`id` IS NULL"
+        );
+        $actions++;
+
+        $cleanupStatements = array(
+            "DELETE FROM `securityTokens` WHERE `userId` = 0 OR `securityToken` = ''",
+            "UPDATE `boardConfig` SET `location` = NULLIF(TRIM(`location`), ''), `description` = NULLIF(TRIM(`description`), ''), `firmwareVersion` = NULLIF(TRIM(`firmwareVersion`), ''), `ttnAppId` = NULLIF(TRIM(`ttnAppId`), ''), `ttnDevId` = NULLIF(TRIM(`ttnDevId`), '')",
+            "UPDATE `sensorConfig` SET `sensorAddress` = NULLIF(TRIM(`sensorAddress`), ''), `description` = NULLIF(TRIM(`description`), ''), `locationOfMeasurement` = NULLIF(TRIM(`locationOfMeasurement`), '')",
+            "UPDATE `sensorChannelConfig` SET `name` = NULLIF(TRIM(`name`), ''), `description` = NULLIF(TRIM(`description`), ''), `locationOfMeasurement` = NULLIF(TRIM(`locationOfMeasurement`), '')",
+            "UPDATE `users` SET `lastName` = 'Höche' WHERE `lastName` = 'HÃ¶che'",
+            "UPDATE `sensorTypes` SET `description` = 'Coordinates' WHERE `name` = 'GPS' AND `description` = 'Coorinates'",
+            "UPDATE `sensorTypes` SET `siUnitVal1` = '', `siUnitVal2` = '', `siUnitVal3` = '', `siUnitVal4` = '', `description` = 'Wakeup / standby event', `MaxNrOfValues` = CASE WHEN `MaxNrOfValues` < 4 THEN 4 ELSE `MaxNrOfValues` END WHERE `name` = 'WakeupStan'",
+            "UPDATE `sensorConfig` SET `name` = 'Standby enter' WHERE `name` = 'Wakeup unknown' AND `typId` = (SELECT `id` FROM (SELECT `id` FROM `sensorTypes` WHERE `name` = 'WakeupStan' LIMIT 1) AS `wakeuptype`)",
+            "UPDATE `sensorChannelConfig` SET `name` = CASE `channelNr` WHEN 1 THEN 'Value1' WHEN 2 THEN 'Value2' WHEN 3 THEN 'Value3' WHEN 4 THEN 'Value4' ELSE `name` END, `description` = CASE `channelNr` WHEN 1 THEN 'Event value 1' WHEN 2 THEN 'Event value 2' WHEN 3 THEN 'Event value 3' WHEN 4 THEN 'Event value 4' ELSE `description` END, `onDashboard` = 0 WHERE `sensorConfigId` IN (SELECT `id` FROM (SELECT `id` FROM `sensorConfig` WHERE `typId` = (SELECT `id` FROM `sensorTypes` WHERE `name` = 'WakeupStan' LIMIT 1)) AS `wakeupsensors`)",
+        );
+
+        foreach ($cleanupStatements as $statement) {
+            self::executeMigrationStatement($pdo, $statement);
+            $actions++;
+        }
+
+        return $actions;
+    }
+
+    private static function runNotificationAndGaugeActions(PDO $pdo)
+    {
+        $actions = 0;
+
+        $actions += self::addColumnIfMissing($pdo, 'sensorChannelConfig', 'GaugeStyle', "`GaugeStyle` varchar(20) NOT NULL DEFAULT 'classic' AFTER `GaugeNormalAreaColor`");
+        $actions += self::addColumnIfMissing($pdo, 'sensorChannelConfig', 'AlertEnabled', "`AlertEnabled` tinyint NOT NULL DEFAULT '0' AFTER `GaugeStyle`");
+        $actions += self::addColumnIfMissing($pdo, 'sensorChannelConfig', 'AlertLowValue', "`AlertLowValue` decimal(12,4) DEFAULT NULL AFTER `AlertEnabled`");
+        $actions += self::addColumnIfMissing($pdo, 'sensorChannelConfig', 'AlertHighValue', "`AlertHighValue` decimal(12,4) DEFAULT NULL AFTER `AlertLowValue`");
+        $actions += self::addColumnIfMissing($pdo, 'sensorChannelConfig', 'AlertState', "`AlertState` varchar(20) DEFAULT NULL AFTER `AlertHighValue`");
+        $actions += self::addColumnIfMissing($pdo, 'sensorChannelConfig', 'LastAlertSentAt', "`LastAlertSentAt` timestamp NULL DEFAULT NULL AFTER `AlertState`");
+        $actions += self::addColumnIfMissing($pdo, 'users', 'receive_offline_notifications', "`receive_offline_notifications` tinyint NOT NULL DEFAULT '0' AFTER `receive_notifications`");
+        $actions += self::addColumnIfMissing($pdo, 'users', 'receive_sensor_notifications', "`receive_sensor_notifications` tinyint NOT NULL DEFAULT '0' AFTER `receive_offline_notifications`");
+        $actions += self::addColumnIfMissing($pdo, 'users', 'dashboardOnlineOnly', "`dashboardOnlineOnly` tinyint NOT NULL DEFAULT '0' AFTER `receive_sensor_notifications`");
+        $actions += self::addColumnIfMissing($pdo, 'users', 'preferredChartWindowDays', "`preferredChartWindowDays` int NOT NULL DEFAULT '7' AFTER `dashboardOnlineOnly`");
+
+        if (
+            self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'receive_offline_notifications')) &&
+            self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'receive_sensor_notifications'))
+        ) {
+            self::executeMigrationStatement($pdo, "UPDATE `users` SET `receive_offline_notifications` = `receive_notifications` WHERE COALESCE(`receive_offline_notifications`, 0) = 0");
+            self::executeMigrationStatement($pdo, "UPDATE `users` SET `receive_sensor_notifications` = `receive_notifications` WHERE COALESCE(`receive_sensor_notifications`, 0) = 0");
+            $actions += 2;
+        }
+
+        return $actions;
+    }
+
+    private static function runLanguageMigrationActions(PDO $pdo)
+    {
+        $actions = self::addColumnIfMissing($pdo, 'users', 'language', "`language` varchar(5) NOT NULL DEFAULT 'en' AFTER `Timezone`");
+
+        if (self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'language'))) {
+            self::executeMigrationStatement($pdo, "UPDATE `users` SET `language` = 'en' WHERE `language` IS NULL OR `language` = ''");
+            $actions++;
+        }
+
+        return $actions;
+    }
+
+    private static function addColumnIfMissing(PDO $pdo, $tableName, $columnName, $columnDefinition)
+    {
+        if (self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => $tableName, 'column' => $columnName))) {
+            return 0;
+        }
+
+        self::executeMigrationStatement($pdo, "ALTER TABLE `" . $tableName . "` ADD COLUMN " . $columnDefinition);
+        return 1;
+    }
+
+    private static function addIndexIfMissing(PDO $pdo, $tableName, $indexName, $indexColumns)
+    {
+        if (self::migrationCheckPassed($pdo, array('type' => 'index', 'table' => $tableName, 'index' => $indexName))) {
+            return 0;
+        }
+
+        self::executeMigrationStatement($pdo, "ALTER TABLE `" . $tableName . "` ADD INDEX `" . $indexName . "` (" . $indexColumns . ")");
+        return 1;
+    }
+
+    private static function executeMigrationStatement(PDO $pdo, $sql)
+    {
+        $pdo->exec($sql);
     }
 
     private static function migrationCheckPassed(PDO $pdo, array $check)
