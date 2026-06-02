@@ -43,40 +43,69 @@ jobs:
           test -n "$NETCUP_SSH_HOST" || { echo "Missing variable or secret: NETCUP_SSH_HOST"; exit 1; }
           test -n "$NETCUP_SSH_USER" || { echo "Missing variable or secret: NETCUP_SSH_USER"; exit 1; }
 
-      - name: Deploy via rsync over SSH
-        uses: easingthemes/ssh-deploy@v5.1.0
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ vars.NETCUP_SSH_HOST || secrets.NETCUP_SSH_HOST }}
-          REMOTE_USER: ${{ vars.NETCUP_SSH_USER || secrets.NETCUP_SSH_USER }}
-          REMOTE_PORT: ${{ vars.NETCUP_SSH_PORT || secrets.NETCUP_SSH_PORT || '22' }}
-          SOURCE: ./
-          TARGET: ${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}
-          ARGS: -rlgoDzvc --delete
-          EXCLUDE: >-
-            .git/,
-            .github/,
-            .DS_Store,
-            .env,
-            config.json,
-            config/config.json,
-            .aider*,
-            .aider-desk/,
-            .vscode/,
-            docu_donotdeploy/,
-            docs/db_design/*.sql,
-            node_modules/,
-            var/log/*,
-            var/status/*.json,
-            var/ota/*
-          SCRIPT_AFTER: |
-            cd "${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}"
-            mkdir -p var/log var/status var/ota
-            chmod 755 var var/log var/status var/ota
-            PHP_BINARY="${{ vars.DEPLOY_PHP_BINARY || secrets.DEPLOY_PHP_BINARY || '/opt/plesk/php/8.3/bin/php' }}"
-            if [ -x "$PHP_BINARY" ]; then
-              find app bootstrap config public tools -name '*.php' -print0 | xargs -0 -n1 "$PHP_BINARY" -l
-            else
-              echo "Configured PHP binary is not executable: $PHP_BINARY"
-              exit 1
-            fi
+      - name: Prepare SSH key
+        env:
+          NETCUP_SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
+          NETCUP_SSH_HOST: ${{ vars.NETCUP_SSH_HOST || secrets.NETCUP_SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$NETCUP_SSH_PRIVATE_KEY" > ~/.ssh/netcup_deploy_key
+          chmod 600 ~/.ssh/netcup_deploy_key
+          ssh-keyscan -p "${{ vars.NETCUP_SSH_PORT || secrets.NETCUP_SSH_PORT || '22' }}" "$NETCUP_SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Package deployment archive
+        run: |
+          tar \
+            --exclude='./.git' \
+            --exclude='./.github' \
+            --exclude='./.DS_Store' \
+            --exclude='./.env' \
+            --exclude='./config.json' \
+            --exclude='./config/config.json' \
+            --exclude='./.aider*' \
+            --exclude='./.aider-desk' \
+            --exclude='./.vscode' \
+            --exclude='./docu_donotdeploy' \
+            --exclude='./docs/db_design/*.sql' \
+            --exclude='./node_modules' \
+            --exclude='./var/log/*' \
+            --exclude='./var/status/*.json' \
+            --exclude='./var/ota/*' \
+            -czf /tmp/mds-git-deploy.tar.gz .
+
+      - name: Deploy via scp over SSH
+        env:
+          NETCUP_SSH_HOST: ${{ vars.NETCUP_SSH_HOST || secrets.NETCUP_SSH_HOST }}
+          NETCUP_SSH_USER: ${{ vars.NETCUP_SSH_USER || secrets.NETCUP_SSH_USER }}
+          NETCUP_SSH_PORT: ${{ vars.NETCUP_SSH_PORT || secrets.NETCUP_SSH_PORT || '22' }}
+          NETCUP_DEPLOY_PATH: ${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}
+          DEPLOY_PHP_BINARY: ${{ vars.DEPLOY_PHP_BINARY || secrets.DEPLOY_PHP_BINARY || '/opt/plesk/php/8.3/bin/php' }}
+        run: |
+          scp -P "$NETCUP_SSH_PORT" -i ~/.ssh/netcup_deploy_key /tmp/mds-git-deploy.tar.gz "$NETCUP_SSH_USER@$NETCUP_SSH_HOST:/tmp/mds-git-deploy.tar.gz"
+          ssh -p "$NETCUP_SSH_PORT" -i ~/.ssh/netcup_deploy_key "$NETCUP_SSH_USER@$NETCUP_SSH_HOST" "DEPLOY_PATH='$NETCUP_DEPLOY_PATH' PHP_BINARY='$DEPLOY_PHP_BINARY' bash -s" <<'REMOTE_DEPLOY'
+          set -euo pipefail
+          mkdir -p "$DEPLOY_PATH"
+          cd "$DEPLOY_PATH"
+
+          find . -mindepth 1 \( \
+            -path './.env' -o \
+            -path './config.json' -o \
+            -path './config' -o \
+            -path './config/config.json' -o \
+            -path './var' -o \
+            -path './var/*' \
+          \) -prune -o -exec rm -rf {} +
+
+          tar -xzf /tmp/mds-git-deploy.tar.gz -C "$DEPLOY_PATH"
+          rm -f /tmp/mds-git-deploy.tar.gz
+
+          mkdir -p var/log var/status var/ota
+          chmod 755 var var/log var/status var/ota
+
+          if [ -x "$PHP_BINARY" ]; then
+            find app bootstrap config public tools -name '*.php' -print0 | xargs -0 -n1 "$PHP_BINARY" -l
+          else
+            echo "Configured PHP binary is not executable: $PHP_BINARY"
+            exit 1
+          fi
+          REMOTE_DEPLOY

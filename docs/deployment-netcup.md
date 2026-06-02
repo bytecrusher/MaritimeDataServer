@@ -28,6 +28,7 @@ The web server root should point to the `public/` directory below this target pa
 - Runs automatically on pushes to `development`.
 - Can also be started manually via `Actions > Deploy to Netcup mds-git > Run workflow`.
 - Installs Composer production dependencies in GitHub Actions before upload.
-- Uses rsync over SSH and deletes files on the server that no longer exist in the repository.
+- Uses `tar`, `scp` and `ssh`; server-side `rsync` is not required.
+- Deletes deployed application files on the server that no longer exist in the repository while preserving runtime configuration and data.
 - Runs a PHP syntax check on the server with `DEPLOY_PHP_BINARY` after upload.
 - Keeps runtime data out of deployment: `.env`, `config.json`, `config/config.json`, SQL dumps, logs, status JSON files and OTA runtime files are excluded.
