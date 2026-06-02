@@ -1,6 +1,10 @@
 Options -Indexes
 DirectoryIndex public/index.php index.php
 
+<IfModule mod_passenger.c>
+PassengerEnabled off
+</IfModule>
+
 RewriteEngine On
 
 RewriteRule ^(?:app|bootstrap|config|docs|tools|var|vendor)(?:/|$) - [F,L]

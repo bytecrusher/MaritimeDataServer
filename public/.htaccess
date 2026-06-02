@@ -1,5 +1,9 @@
 DirectoryIndex index.php
 
+<IfModule mod_passenger.c>
+PassengerEnabled off
+</IfModule>
+
 RewriteEngine On
 
 RewriteRule ^frontend/func/ - [F,L]
