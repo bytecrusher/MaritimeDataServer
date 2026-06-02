@@ -182,8 +182,15 @@ class InternalPageService
             );
 
             usort($eventTimelineBoard['events'], function ($leftEvent, $rightEvent) {
-                $leftTime = strtotime((string)($leftEvent['readingTime'] ?? '')) ?: 0;
-                $rightTime = strtotime((string)($rightEvent['readingTime'] ?? '')) ?: 0;
+                $leftDateTime = self::parseEventDatetime($leftEvent);
+                $rightDateTime = self::parseEventDatetime($rightEvent);
+                $leftTime = $leftDateTime instanceof DateTimeImmutable ? $leftDateTime->getTimestamp() : 0;
+                $rightTime = $rightDateTime instanceof DateTimeImmutable ? $rightDateTime->getTimestamp() : 0;
+
+                if ($rightTime === $leftTime) {
+                    return strcmp((string)($rightEvent['readingTime'] ?? ''), (string)($leftEvent['readingTime'] ?? ''));
+                }
+
                 return $rightTime <=> $leftTime;
             });
 
