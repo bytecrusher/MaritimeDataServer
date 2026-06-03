@@ -47,11 +47,12 @@ jobs:
         env:
           NETCUP_SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
           NETCUP_SSH_HOST: ${{ vars.NETCUP_SSH_HOST || secrets.NETCUP_SSH_HOST }}
+          NETCUP_SSH_PORT: ${{ vars.NETCUP_SSH_PORT || secrets.NETCUP_SSH_PORT || '22' }}
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "$NETCUP_SSH_PRIVATE_KEY" > ~/.ssh/netcup_deploy_key
           chmod 600 ~/.ssh/netcup_deploy_key
-          ssh-keyscan -p "${{ vars.NETCUP_SSH_PORT || secrets.NETCUP_SSH_PORT || '22' }}" "$NETCUP_SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$NETCUP_SSH_PORT" "$NETCUP_SSH_HOST" >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed; SSH will use StrictHostKeyChecking=accept-new."
 
       - name: Package deployment archive
         run: |
@@ -81,8 +82,9 @@ jobs:
           NETCUP_DEPLOY_PATH: ${{ vars.NETCUP_DEPLOY_PATH || secrets.NETCUP_DEPLOY_PATH || '/var/www/vhosts/hosting157867.a2eee.netcup.net/httpdocs/mds-git.derguntmar.de/' }}
           DEPLOY_PHP_BINARY: ${{ vars.DEPLOY_PHP_BINARY || secrets.DEPLOY_PHP_BINARY || '/opt/plesk/php/8.3/bin/php' }}
         run: |
-          scp -P "$NETCUP_SSH_PORT" -i ~/.ssh/netcup_deploy_key /tmp/mds-git-deploy.tar.gz "$NETCUP_SSH_USER@$NETCUP_SSH_HOST:/tmp/mds-git-deploy.tar.gz"
-          ssh -p "$NETCUP_SSH_PORT" -i ~/.ssh/netcup_deploy_key "$NETCUP_SSH_USER@$NETCUP_SSH_HOST" "DEPLOY_PATH='$NETCUP_DEPLOY_PATH' PHP_BINARY='$DEPLOY_PHP_BINARY' bash -s" <<'REMOTE_DEPLOY'
+          SSH_OPTS="-o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          scp -P "$NETCUP_SSH_PORT" -i ~/.ssh/netcup_deploy_key $SSH_OPTS /tmp/mds-git-deploy.tar.gz "$NETCUP_SSH_USER@$NETCUP_SSH_HOST:/tmp/mds-git-deploy.tar.gz"
+          ssh -p "$NETCUP_SSH_PORT" -i ~/.ssh/netcup_deploy_key $SSH_OPTS "$NETCUP_SSH_USER@$NETCUP_SSH_HOST" "DEPLOY_PATH='$NETCUP_DEPLOY_PATH' PHP_BINARY='$DEPLOY_PHP_BINARY' bash -s" <<'REMOTE_DEPLOY'
           set -euo pipefail
           mkdir -p "$DEPLOY_PATH"
           cd "$DEPLOY_PATH"

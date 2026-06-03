@@ -27,7 +27,15 @@ function mds_public_path(string $path = ''): string
 
 function mds_asset_path(string $path = ''): string
 {
-    return mds_public_path('assets/' . mds_trim_slashes($path));
+    $assetPath = 'assets/' . mds_trim_slashes($path);
+    $url = mds_public_path($assetPath);
+    $filePath = dirname(__DIR__, 2) . '/public/' . $assetPath;
+
+    if (is_file($filePath)) {
+        return $url . '?v=' . filemtime($filePath);
+    }
+
+    return $url;
 }
 
 function mds_route_path(string $path = ''): string
