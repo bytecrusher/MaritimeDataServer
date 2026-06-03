@@ -528,6 +528,23 @@ th.rotated-text > div > span {
 
             <div class="form-group">
               <div class="row">
+                <label for="eventTimelineWindowHours" class="col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.event_timeline_window'), ENT_QUOTES, 'UTF-8'); ?></label>
+                <div class="col-sm-4">
+                  <?php $eventTimelineWindowHours = (int)$userObj->getEventTimelineWindowHours(); ?>
+                  <select class="form-select" id="eventTimelineWindowHours" name="eventTimelineWindowHours">
+                    <?php foreach (array(3, 6, 12, 24, 48, 72) as $timelineWindowOption) { ?>
+                      <option value="<?php echo $timelineWindowOption; ?>" <?php if ($eventTimelineWindowHours === $timelineWindowOption) { echo 'selected'; } ?>>
+                        <?php echo htmlspecialchars(mds_t('settings.last_hours', array($timelineWindowOption)), ENT_QUOTES, 'UTF-8'); ?>
+                      </option>
+                    <?php } ?>
+                  </select>
+                  <div class="form-text"><?php echo htmlspecialchars(mds_t('settings.event_timeline_window_hint'), ENT_QUOTES, 'UTF-8'); ?></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="row">
                 <div class="col-sm-offset-2 col-sm-10">
                 <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
                 </div>

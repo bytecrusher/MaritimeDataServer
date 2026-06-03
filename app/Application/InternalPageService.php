@@ -43,15 +43,17 @@ class InternalPageService
         if ($preferredChartWindowDays < 1) {
             $preferredChartWindowDays = 7;
         }
+        $eventTimelineWindowHours = self::normalizeEventTimelineWindowHours($currentUser->getEventTimelineWindowHours() ?? 24);
 
         return array(
             'myBoardsIdList' => $myBoardsIdList,
             'boardObjsArray' => $boardObjsArray,
             'mapPayload' => self::buildMapPayload($currentUser),
-            'eventPayload' => self::buildEventPayload($boardObjsArray, $preferredChartWindowDays),
+            'eventPayload' => self::buildEventPayload($boardObjsArray, $preferredChartWindowDays, $eventTimelineWindowHours),
             'dashboardUpdateIntervalMs' => max(1000, (int) $currentUser->getDashboardUpdateInterval() * 10000),
             'dashboardOnlineOnlyDefault' => (int) ($currentUser->getDashboardOnlineOnly() ?? $config::$defaultDashboardOnlineOnly),
             'preferredChartWindowDays' => $preferredChartWindowDays,
+            'eventTimelineWindowHours' => $eventTimelineWindowHours,
             'demoMode' => (bool) $config::$demoMode,
             'showInstallAlert' => ((int) $currentUser->getUserGroupAdmin() === 1) && is_dir(__DIR__ . '/../../public/install'),
             'hasBoards' => !empty($myBoardsIdList),
@@ -99,7 +101,7 @@ class InternalPageService
         );
     }
 
-    private static function buildEventPayload(array $boardObjsArray, $windowDays = 7)
+    private static function buildEventPayload(array $boardObjsArray, $windowDays = 7, $timelineWindowHours = 24)
     {
         $eventChartSensors = array();
         $eventTimelineBoards = array();
@@ -108,9 +110,10 @@ class InternalPageService
         $eventTimelineSummaryBuckets = array();
         $eventTimelineLast24h = array();
         $windowDays = max(1, (int) $windowDays);
+        $timelineWindowHours = self::normalizeEventTimelineWindowHours($timelineWindowHours);
         $eventWindowStart = new DateTimeImmutable('today -' . ($windowDays - 1) . ' days');
         $eventWindowEnd = new DateTimeImmutable('now');
-        $eventLast24hStart = $eventWindowEnd->modify('-24 hours');
+        $eventTimelineStart = $eventWindowEnd->modify('-' . $timelineWindowHours . ' hours');
 
         for ($eventOffset = 0; $eventOffset < $windowDays; $eventOffset++) {
             $eventDay = $eventWindowStart->modify('+' . $eventOffset . ' days');
@@ -137,7 +140,7 @@ class InternalPageService
                     'sensorTypeName' => $eventSensor['sensorTypesName'] ?? 'WakeupStan',
                 );
 
-                $eventRows = myFunctions::getLatestSensorData((int)$eventSensor['id'], self::eventRowLimitForWindow($windowDays));
+                $eventRows = myFunctions::getLatestSensorData((int)$eventSensor['id'], self::eventRowLimitForWindow($windowDays, $timelineWindowHours));
                 if (!is_array($eventRows)) {
                     continue;
                 }
@@ -170,7 +173,7 @@ class InternalPageService
                 $eventWindowEnd
             );
 
-            $eventTimelineLast24h[] = self::buildEventTimelineChartData($eventTimelineBoard, $eventLast24hStart, $eventWindowEnd);
+            $eventTimelineLast24h[] = self::buildEventTimelineChartData($eventTimelineBoard, $eventTimelineStart, $eventWindowEnd);
             $eventTimelineBoard['events'] = self::sortEventsDescending($eventTimelineBoard['events']);
             $eventTimelineBoard['events'] = self::addEventDurationDetails($eventTimelineBoard['events'], $eventWindowEnd);
             $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 80);
@@ -191,12 +194,20 @@ class InternalPageService
             'summaryLabels' => $eventTimelineSummaryLabels,
             'summary' => $eventTimelineSummary,
             'last24hTimeline' => $eventTimelineLast24h,
+            'timelineWindowHours' => $timelineWindowHours,
         );
     }
 
-    private static function eventRowLimitForWindow($windowDays)
+    private static function normalizeEventTimelineWindowHours($hours)
     {
-        return min(3000, max(500, ((int)$windowDays + 1) * 150));
+        $hours = (int)$hours;
+        return in_array($hours, array(3, 6, 12, 24, 48, 72), true) ? $hours : 24;
+    }
+
+    private static function eventRowLimitForWindow($windowDays, $timelineWindowHours = 24)
+    {
+        $effectiveDays = max((int)$windowDays, (int)ceil(self::normalizeEventTimelineWindowHours($timelineWindowHours) / 24) + 1);
+        return min(3000, max(500, ($effectiveDays + 1) * 150));
     }
 
     private static function buildEventEntriesFromRows(array $eventRows, $sensorName)
@@ -386,6 +397,23 @@ class InternalPageService
     private static function buildEventTimelineChartData(array $eventTimelineBoard, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
     {
         $points = array();
+        $timelineEvents = self::eventsAscendingForDuration($eventTimelineBoard['events'] ?? array());
+        $timelineSummary = self::buildEventWindowSummary($eventTimelineBoard['events'] ?? array(), $windowStart, $windowEnd);
+        $activeStateAtWindowStart = null;
+        $activeLabelAtWindowStart = '';
+
+        foreach ($timelineEvents as $timelineEvent) {
+            if ($timelineEvent['dateTime'] <= $windowStart) {
+                $activeStateAtWindowStart = $timelineEvent['stateClass'];
+                $activeLabelAtWindowStart = $activeStateAtWindowStart === 'is-wakeup' ? 'Wakeup' : 'Standby';
+                continue;
+            }
+            break;
+        }
+
+        if ($activeStateAtWindowStart !== null) {
+            $points[] = self::buildEventTimelinePoint($windowStart, $activeStateAtWindowStart, $activeLabelAtWindowStart);
+        }
 
         foreach (($eventTimelineBoard['events'] ?? array()) as $eventEntry) {
             $eventDateTime = self::parseEventDatetime($eventEntry);
@@ -401,29 +429,106 @@ class InternalPageService
                 continue;
             }
 
-            $points[] = array(
-                'x' => $eventDateTime->format(DateTimeInterface::ATOM),
-                'y' => $stateClass === 'is-wakeup' ? 1 : 0,
-                'label' => $eventEntry['label'] ?? '',
-                'timestamp' => $eventEntry['timestamp'] ?? $eventDateTime->format('d.m.Y H:i:s'),
+            $points[] = self::buildEventTimelinePoint($eventDateTime, $stateClass, $eventEntry['label'] ?? '');
+        }
+
+        if (!empty($points)) {
+            $lastPoint = $points[count($points) - 1];
+            $points[] = self::buildEventTimelinePoint(
+                $windowEnd,
+                ((int)$lastPoint['y'] === 1) ? 'is-wakeup' : 'is-standby',
+                ((int)$lastPoint['y'] === 1) ? 'Wakeup' : 'Standby'
             );
         }
 
-        usort($points, function ($leftPoint, $rightPoint) {
-            return strcmp((string)$leftPoint['x'], (string)$rightPoint['x']);
-        });
+        $points = self::deduplicateEventTimelinePoints($points);
 
         return array(
             'boardId' => (int)($eventTimelineBoard['boardId'] ?? 0),
             'boardName' => (string)($eventTimelineBoard['boardName'] ?? ''),
             'points' => $points,
+            'onlineHours' => $timelineSummary['onlineHours'],
+            'standbyHours' => $timelineSummary['standbyHours'],
+            'windowHours' => $timelineSummary['windowHours'],
+            'onlinePercent' => $timelineSummary['onlinePercent'],
+            'standbyPercent' => $timelineSummary['standbyPercent'],
         );
     }
 
-    private static function buildEventDurationSummary($eventEntries, $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    private static function deduplicateEventTimelinePoints(array $points)
     {
-        $onlineDailyHours = array_fill(0, count($bucketDates), 0.0);
-        $standbyDailyHours = array_fill(0, count($bucketDates), 0.0);
+        $deduplicatedPoints = array();
+        foreach ($points as $point) {
+            $pointKey = (string)($point['x'] ?? '') . '|' . (string)($point['y'] ?? '');
+            $deduplicatedPoints[$pointKey] = $point;
+        }
+
+        $deduplicatedPoints = array_values($deduplicatedPoints);
+        usort($deduplicatedPoints, function ($leftPoint, $rightPoint) {
+            return strcmp((string)$leftPoint['x'], (string)$rightPoint['x']);
+        });
+
+        return $deduplicatedPoints;
+    }
+
+    private static function buildEventTimelinePoint(DateTimeImmutable $eventDateTime, $stateClass, $label)
+    {
+        return array(
+            'x' => $eventDateTime->format(DateTimeInterface::ATOM),
+            'y' => $stateClass === 'is-wakeup' ? 1 : 0,
+            'label' => $label,
+            'timestamp' => $eventDateTime->format('d.m.Y H:i:s'),
+        );
+    }
+
+    private static function buildEventWindowSummary(array $eventEntries, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    {
+        $onlineSeconds = 0;
+        $standbySeconds = 0;
+        $normalizedEvents = self::eventsAscendingForDuration($eventEntries);
+        $eventCount = count($normalizedEvents);
+
+        for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
+            $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
+            $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
+            $segmentEnd = ($eventIndex + 1 < $eventCount) ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
+
+            if ($segmentEnd <= $windowStart || $segmentStart >= $windowEnd || $segmentEnd <= $segmentStart) {
+                continue;
+            }
+
+            if ($segmentStart < $windowStart) {
+                $segmentStart = $windowStart;
+            }
+            if ($segmentEnd > $windowEnd) {
+                $segmentEnd = $windowEnd;
+            }
+
+            $overlapSeconds = $segmentEnd->getTimestamp() - $segmentStart->getTimestamp();
+            if ($overlapSeconds <= 0) {
+                continue;
+            }
+
+            if ($segmentState === 'is-wakeup') {
+                $onlineSeconds += $overlapSeconds;
+            } elseif ($segmentState === 'is-standby') {
+                $standbySeconds += $overlapSeconds;
+            }
+        }
+
+        $windowSeconds = max(1, $windowEnd->getTimestamp() - $windowStart->getTimestamp());
+
+        return array(
+            'onlineHours' => round($onlineSeconds / 3600, 2),
+            'standbyHours' => round($standbySeconds / 3600, 2),
+            'windowHours' => round($windowSeconds / 3600, 2),
+            'onlinePercent' => round(($onlineSeconds / $windowSeconds) * 100, 1),
+            'standbyPercent' => round(($standbySeconds / $windowSeconds) * 100, 1),
+        );
+    }
+
+    private static function eventsAscendingForDuration(array $eventEntries)
+    {
         $normalizedEventMap = array();
 
         foreach ($eventEntries as $eventEntry) {
@@ -453,6 +558,15 @@ class InternalPageService
 
             return $leftTime <=> $rightTime;
         });
+
+        return $normalizedEvents;
+    }
+
+    private static function buildEventDurationSummary($eventEntries, $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    {
+        $onlineDailyHours = array_fill(0, count($bucketDates), 0.0);
+        $standbyDailyHours = array_fill(0, count($bucketDates), 0.0);
+        $normalizedEvents = self::eventsAscendingForDuration($eventEntries);
 
         $eventCount = count($normalizedEvents);
         for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {

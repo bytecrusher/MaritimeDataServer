@@ -224,7 +224,8 @@ CREATE TABLE `users` (
   `receive_offline_notifications` tinyint NOT NULL DEFAULT '0',
   `receive_sensor_notifications` tinyint NOT NULL DEFAULT '0',
   `dashboardOnlineOnly` tinyint NOT NULL DEFAULT '0',
-  `preferredChartWindowDays` int NOT NULL DEFAULT '7'
+  `preferredChartWindowDays` int NOT NULL DEFAULT '7',
+  `eventTimelineWindowHours` int NOT NULL DEFAULT '24'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

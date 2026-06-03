@@ -425,7 +425,9 @@ function initializeEventTimeline24hChart() {
 
   const eventTimelineData = Array.isArray(window.eventTimelineLast24h) ? window.eventTimelineLast24h : [];
   const hasEventPoints = eventTimelineData.some(function (timelineEntry) {
-    return Array.isArray(timelineEntry.points) && timelineEntry.points.length > 0;
+    const onlineHours = Number(timelineEntry.onlineHours) || 0;
+    const standbyHours = Number(timelineEntry.standbyHours) || 0;
+    return (Array.isArray(timelineEntry.points) && timelineEntry.points.length > 0) || onlineHours > 0 || standbyHours > 0;
   });
 
   if (!hasEventPoints) {
@@ -525,6 +527,7 @@ function updateEventTimeline24hChart() {
   const eventTimelineShell = canvas ? canvas.closest('.event-summary-chart-shell') : null;
   let emptyState = eventTimelineShell ? eventTimelineShell.querySelector('.event-timeline-empty.is-chart-empty') : null;
   const datasets = [];
+  updateEventTimelineWindowSummary(visibleTimelines);
 
   visibleTimelines.forEach(function (timelineEntry) {
     if (!Array.isArray(timelineEntry.points) || timelineEntry.points.length === 0) {
@@ -580,6 +583,56 @@ function updateEventTimeline24hChart() {
   } else if (emptyState) {
     emptyState.hidden = true;
   }
+}
+
+function updateEventTimelineWindowSummary(visibleTimelines) {
+  const summaryContainer = document.getElementById('eventTimelineWindowSummary');
+  if (!summaryContainer) {
+    return;
+  }
+
+  const summaryItems = visibleTimelines.filter(function (timelineEntry) {
+    const onlineHours = Number(timelineEntry.onlineHours) || 0;
+    const standbyHours = Number(timelineEntry.standbyHours) || 0;
+    return (Array.isArray(timelineEntry.points) && timelineEntry.points.length > 0) || onlineHours > 0 || standbyHours > 0;
+  });
+
+  if (summaryItems.length === 0) {
+    summaryContainer.innerHTML = '';
+    return;
+  }
+
+  summaryContainer.innerHTML = summaryItems.map(function (timelineEntry) {
+    const onlineHours = Number(timelineEntry.onlineHours) || 0;
+    const standbyHours = Number(timelineEntry.standbyHours) || 0;
+    const windowHours = Number(timelineEntry.windowHours) || Number(window.eventTimelineWindowHours) || 24;
+    const onlinePercent = Math.max(0, Math.min(100, Number(timelineEntry.onlinePercent) || 0));
+    const standbyPercent = Math.max(0, Math.min(100, Number(timelineEntry.standbyPercent) || 0));
+
+    return [
+      '<article class="event-window-card">',
+      '<h5>' + escapeHtml(timelineEntry.boardName || '-') + '</h5>',
+      '<div class="event-window-metrics">',
+      '<div class="event-window-metric"><strong>' + onlineHours.toFixed(2) + ' h</strong><span>' + mdsLabel('onlineHours', 'Online hours') + '</span></div>',
+      '<div class="event-window-metric"><strong>' + standbyHours.toFixed(2) + ' h</strong><span>' + mdsLabel('standbyHours', 'Standby hours') + '</span></div>',
+      '<div class="event-window-metric"><strong>' + windowHours.toFixed(0) + ' h</strong><span>' + mdsLabel('windowHours', 'Window') + '</span></div>',
+      '</div>',
+      '<div class="event-window-bar" aria-hidden="true">',
+      '<span class="event-window-bar-online" style="width:' + onlinePercent.toFixed(1) + '%"></span>',
+      '<span class="event-window-bar-standby" style="width:' + standbyPercent.toFixed(1) + '%"></span>',
+      '</div>',
+      '</article>'
+    ].join('');
+  }).join('');
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 function formatEventTimelineAxisLabel(timestamp) {

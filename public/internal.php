@@ -36,6 +36,7 @@
   $dashboardUpdateIntervalMs = $pageData['dashboardUpdateIntervalMs'];
   $dashboardOnlineOnlyDefault = $pageData['dashboardOnlineOnlyDefault'];
   $preferredChartWindowDays = $pageData['preferredChartWindowDays'];
+  $eventTimelineWindowHours = $pageData['eventTimelineWindowHours'];
   $varDemoMode = $pageData['demoMode'];
   $showInstallAlert = $pageData['showInstallAlert'];
   $hasBoards = $pageData['hasBoards'];
@@ -573,6 +574,60 @@
     background: rgba(241, 245, 249, 0.8);
     color: #64748b;
   }
+  .event-window-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .event-window-card {
+    padding: 0.9rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.9rem;
+    background:
+      radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 34%),
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  }
+  .event-window-card h5 {
+    margin: 0 0 0.65rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .event-window-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .event-window-metric {
+    flex: 1 1 7rem;
+    padding: 0.65rem;
+    border-radius: 0.75rem;
+    background: rgba(241, 245, 249, 0.82);
+  }
+  .event-window-metric strong {
+    display: block;
+    font-size: 1.1rem;
+    color: #0f172a;
+  }
+  .event-window-metric span {
+    color: #64748b;
+    font-size: 0.82rem;
+  }
+  .event-window-bar {
+    display: flex;
+    height: 0.55rem;
+    margin-top: 0.75rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+  }
+  .event-window-bar-online {
+    background: #16a34a;
+  }
+  .event-window-bar-standby {
+    background: #f59e0b;
+  }
   .chart-panel-surface {
     padding: 1rem 1rem 0.75rem;
     border-radius: 1rem;
@@ -774,6 +829,7 @@
 
   var DashboardUpdateInterval = <?php echo $dashboardUpdateIntervalMs; ?>;
   window.preferredChartWindowDays = <?php echo (int)$preferredChartWindowDays; ?>;
+  window.eventTimelineWindowHours = <?php echo (int)$eventTimelineWindowHours; ?>;
   window.mdsI18n = <?php echo json_encode(array(
     'onlyThis' => mds_t('js.only_this'),
     'noEvents' => mds_t('js.no_events'),
@@ -781,6 +837,9 @@
     'noSelectedEvents' => mds_t('js.no_selected_events'),
     'onlineSuffix' => mds_t('js.online_suffix'),
     'standbySuffix' => mds_t('js.standby_suffix'),
+    'onlineHours' => mds_t('js.online_hours'),
+    'standbyHours' => mds_t('js.standby_hours'),
+    'windowHours' => mds_t('js.window_hours'),
     'sensorOrderSaved' => mds_t('js.sensor_order_saved'),
     'sensorOrderFailed' => mds_t('js.sensor_order_failed'),
   ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
@@ -1024,6 +1083,7 @@
               <div class="tab-section-title">
                 <div>
                   <?php $eventWindowTitle = (int)$preferredChartWindowDays === 1 ? mds_t('internal.last_24_hours') : mds_t('internal.last_days', array((int)$preferredChartWindowDays)); ?>
+                  <?php $eventTimelineWindowTitle = mds_t('internal.last_hours', array((int)$eventTimelineWindowHours)); ?>
                   <h3><?php echo htmlspecialchars(mds_t('internal.esp_events'), ENT_QUOTES, 'UTF-8'); ?></h3>
                   <p><?php echo htmlspecialchars(mds_t('internal.esp_events_text', array($eventWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
@@ -1036,10 +1096,11 @@
               <div class="chart-panel-surface mb-4">
                 <div class="tab-section-title mb-3">
                   <div>
-                    <h4 class="mb-1"><?php echo htmlspecialchars(mds_t('internal.event_timeline_24h'), ENT_QUOTES, 'UTF-8'); ?></h4>
-                    <p><?php echo htmlspecialchars(mds_t('internal.event_timeline_24h_text'), ENT_QUOTES, 'UTF-8'); ?></p>
+                    <h4 class="mb-1"><?php echo htmlspecialchars(mds_t('internal.event_timeline_window', array($eventTimelineWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></h4>
+                    <p><?php echo htmlspecialchars(mds_t('internal.event_timeline_window_text', array($eventTimelineWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></p>
                   </div>
                 </div>
+                <div id="eventTimelineWindowSummary" class="event-window-summary"></div>
                 <div class="event-summary-chart-shell">
                   <canvas id="eventTimeline24hCanvas" height="300"></canvas>
                 </div>

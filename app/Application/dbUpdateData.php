@@ -301,27 +301,37 @@ class dbUpdateData {
     $dashboardUpdateInterval = isset($post['updateInterval']) ? (int)$post['updateInterval'] : 15;
     $dashboardOnlineOnly = isset($post['dashboardOnlineOnly']) ? 1 : 0;
     $preferredChartWindowDays = isset($post['preferredChartWindowDays']) ? (int)$post['preferredChartWindowDays'] : 7;
+    $eventTimelineWindowHours = isset($post['eventTimelineWindowHours']) ? (int)$post['eventTimelineWindowHours'] : 24;
     if ($dashboardUpdateInterval < 1) {
       $dashboardUpdateInterval = 1;
     }
     if (!in_array($preferredChartWindowDays, array(1, 7, 14, 30), true)) {
       $preferredChartWindowDays = 7;
     }
+    if (!in_array($eventTimelineWindowHours, array(3, 6, 12, 24, 48, 72), true)) {
+      $eventTimelineWindowHours = 24;
+    }
 
     try {
-      $statement = $pdo->prepare(
-        "UPDATE users
-         SET dashboardUpdateInterval = :dashboardUpdateInterval,
-             dashboardOnlineOnly = :dashboardOnlineOnly,
-             preferredChartWindowDays = :preferredChartWindowDays
-         WHERE id = :userId"
+      $setClauses = array(
+        "dashboardUpdateInterval = :dashboardUpdateInterval",
+        "dashboardOnlineOnly = :dashboardOnlineOnly",
+        "preferredChartWindowDays = :preferredChartWindowDays",
       );
-      return $statement->execute(array(
+      $params = array(
         'dashboardUpdateInterval' => $dashboardUpdateInterval,
         'dashboardOnlineOnly' => $dashboardOnlineOnly,
         'preferredChartWindowDays' => $preferredChartWindowDays,
         'userId' => $userId
-      ));
+      );
+
+      if (self::tableColumnExists($pdo, 'users', 'eventTimelineWindowHours')) {
+        $setClauses[] = "eventTimelineWindowHours = :eventTimelineWindowHours";
+        $params['eventTimelineWindowHours'] = $eventTimelineWindowHours;
+      }
+
+      $statement = $pdo->prepare("UPDATE users SET " . implode(', ', $setClauses) . " WHERE id = :userId");
+      return $statement->execute($params);
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: User dashboard preferences in DB not successfully updated for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);

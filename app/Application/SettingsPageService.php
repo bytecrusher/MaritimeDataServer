@@ -226,6 +226,7 @@ class SettingsPageService
                     array('type' => 'column', 'table' => 'users', 'column' => 'receive_sensor_notifications'),
                     array('type' => 'column', 'table' => 'users', 'column' => 'dashboardOnlineOnly'),
                     array('type' => 'column', 'table' => 'users', 'column' => 'preferredChartWindowDays'),
+                    array('type' => 'column', 'table' => 'users', 'column' => 'eventTimelineWindowHours'),
                 ),
             ),
             array(
@@ -376,6 +377,7 @@ class SettingsPageService
         $actions += self::addColumnIfMissing($pdo, 'users', 'receive_sensor_notifications', "`receive_sensor_notifications` tinyint NOT NULL DEFAULT '0' AFTER `receive_offline_notifications`");
         $actions += self::addColumnIfMissing($pdo, 'users', 'dashboardOnlineOnly', "`dashboardOnlineOnly` tinyint NOT NULL DEFAULT '0' AFTER `receive_sensor_notifications`");
         $actions += self::addColumnIfMissing($pdo, 'users', 'preferredChartWindowDays', "`preferredChartWindowDays` int NOT NULL DEFAULT '7' AFTER `dashboardOnlineOnly`");
+        $actions += self::addColumnIfMissing($pdo, 'users', 'eventTimelineWindowHours', "`eventTimelineWindowHours` int NOT NULL DEFAULT '24' AFTER `preferredChartWindowDays`");
 
         if (
             self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'receive_offline_notifications')) &&
@@ -587,6 +589,7 @@ class SettingsPageService
                 'receiveSensorNotifications' => (int)$userObj->getReceiveSensorNotifications(),
                 'dashboardOnlineOnly' => (int)$userObj->getDashboardOnlineOnly(),
                 'preferredChartWindowDays' => (int)$userObj->getPreferredChartWindowDays(),
+                'eventTimelineWindowHours' => (int)$userObj->getEventTimelineWindowHours(),
                 'language' => $userObj->getLanguage(),
             ),
             'boards' => $boards,

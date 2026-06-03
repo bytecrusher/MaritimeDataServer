@@ -160,6 +160,21 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @sql := IF (
+  EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'users'
+      AND COLUMN_NAME = 'eventTimelineWindowHours'
+  ),
+  'SELECT ''users.eventTimelineWindowHours already exists''',
+  'ALTER TABLE `users` ADD COLUMN `eventTimelineWindowHours` int NOT NULL DEFAULT ''24'' AFTER `preferredChartWindowDays`'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 -- Rueckwaertskompatible Initialisierung:
 -- Falls die neuen User-Schalter noch leer/0 sind, uebernehmen sie den bisherigen
 -- globalen receive_notifications-Wert.

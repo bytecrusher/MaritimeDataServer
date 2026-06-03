@@ -310,6 +310,7 @@ class user implements JsonSerializable
       $this->userObj->dashboardUpdateInterval = (int)$post['updateInterval'];
       $this->userObj->dashboardOnlineOnly = isset($post['dashboardOnlineOnly']) ? 1 : 0;
       $this->userObj->preferredChartWindowDays = isset($post['preferredChartWindowDays']) ? (int)$post['preferredChartWindowDays'] : 7;
+      $this->userObj->eventTimelineWindowHours = isset($post['eventTimelineWindowHours']) ? (int)$post['eventTimelineWindowHours'] : 24;
     } catch (Exception $e) {
       throw new Exception('Dashboard Update Interval not saved.');
     }
@@ -357,6 +358,13 @@ class user implements JsonSerializable
       return 7;
     }
     return $this->userObj->preferredChartWindowDays;
+  }
+
+  public function getEventTimelineWindowHours() {
+    if (!property_exists($this->userObj, 'eventTimelineWindowHours')) {
+      return 24;
+    }
+    return $this->userObj->eventTimelineWindowHours;
   }
 
   public function getLanguage() {
