@@ -137,41 +137,28 @@ class InternalPageService
                     'sensorTypeName' => $eventSensor['sensorTypesName'] ?? 'WakeupStan',
                 );
 
-                $eventRows = myFunctions::getLatestSensorData((int)$eventSensor['id'], 200);
+                $eventRows = myFunctions::getLatestSensorData((int)$eventSensor['id'], self::eventRowLimitForWindow($windowDays));
                 if (!is_array($eventRows)) {
                     continue;
                 }
 
-                foreach ($eventRows as $eventRow) {
-                    $boardId = (int)$eventBoardObj->getId();
-                    $eventTimelineBoards[$boardId]['boardId'] = $boardId;
-                    $eventTimelineBoards[$boardId]['boardName'] = $eventBoardObj->getName();
-                    $eventTimelineBoards[$boardId]['events'] = $eventTimelineBoards[$boardId]['events'] ?? array();
+                $boardId = (int)$eventBoardObj->getId();
+                $eventTimelineBoards[$boardId]['boardId'] = $boardId;
+                $eventTimelineBoards[$boardId]['boardName'] = $eventBoardObj->getName();
+                $eventTimelineBoards[$boardId]['events'] = $eventTimelineBoards[$boardId]['events'] ?? array();
 
-                    foreach (array(
-                        array('label' => $eventRow['value1'] ?? null, 'time' => $eventRow['value2'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? '')),
-                        array('label' => $eventRow['value3'] ?? null, 'time' => $eventRow['value4'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? ''))
-                    ) as $eventPair) {
-                        if (!self::isEventLabel($eventPair['label'])) {
-                            continue;
-                        }
-
-                        $normalizedEvent = self::normalizeEventLabel($eventPair['label']);
-                        $eventTimelineBoards[$boardId]['events'][] = array(
-                            'label' => $normalizedEvent['label'],
-                            'stateClass' => $normalizedEvent['stateClass'],
-                            'rawLabel' => trim((string)$eventPair['label']),
-                            'timestamp' => self::isEventTimestamp($eventPair['time']) ? trim((string)$eventPair['time']) : trim((string)$eventPair['fallback']),
-                            'fallbackTimestamp' => trim((string)$eventPair['fallback']),
-                            'sensorName' => $eventSensor['name'] ?? 'WakeupStan',
-                            'readingTime' => $eventRow['reading_time'] ?? null,
-                        );
-                    }
+                foreach (self::buildEventEntriesFromRows($eventRows, $eventSensor['name'] ?? 'WakeupStan') as $eventEntry) {
+                    $eventTimelineBoards[$boardId]['events'][] = $eventEntry;
                 }
             }
         }
 
         foreach ($eventTimelineBoards as &$eventTimelineBoard) {
+            if (empty($eventTimelineBoard['events'])) {
+                continue;
+            }
+
+            $eventTimelineBoard['events'] = self::normalizeEventSequence($eventTimelineBoard['events']);
             if (empty($eventTimelineBoard['events'])) {
                 continue;
             }
@@ -183,22 +170,10 @@ class InternalPageService
                 $eventWindowEnd
             );
 
-            usort($eventTimelineBoard['events'], function ($leftEvent, $rightEvent) {
-                $leftDateTime = self::parseEventDatetime($leftEvent);
-                $rightDateTime = self::parseEventDatetime($rightEvent);
-                $leftTime = $leftDateTime instanceof DateTimeImmutable ? $leftDateTime->getTimestamp() : 0;
-                $rightTime = $rightDateTime instanceof DateTimeImmutable ? $rightDateTime->getTimestamp() : 0;
-
-                if ($rightTime === $leftTime) {
-                    return strcmp((string)($rightEvent['readingTime'] ?? ''), (string)($leftEvent['readingTime'] ?? ''));
-                }
-
-                return $rightTime <=> $leftTime;
-            });
-
             $eventTimelineLast24h[] = self::buildEventTimelineChartData($eventTimelineBoard, $eventLast24hStart, $eventWindowEnd);
+            $eventTimelineBoard['events'] = self::sortEventsDescending($eventTimelineBoard['events']);
             $eventTimelineBoard['events'] = self::addEventDurationDetails($eventTimelineBoard['events'], $eventWindowEnd);
-            $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 40);
+            $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 80);
             $eventTimelineSummary[] = array(
                 'boardId' => (int)$eventTimelineBoard['boardId'],
                 'boardName' => $eventTimelineBoard['boardName'],
@@ -217,6 +192,103 @@ class InternalPageService
             'summary' => $eventTimelineSummary,
             'last24hTimeline' => $eventTimelineLast24h,
         );
+    }
+
+    private static function eventRowLimitForWindow($windowDays)
+    {
+        return min(3000, max(500, ((int)$windowDays + 1) * 150));
+    }
+
+    private static function buildEventEntriesFromRows(array $eventRows, $sensorName)
+    {
+        $eventEntries = array();
+        foreach ($eventRows as $eventRow) {
+            foreach (array(
+                array('label' => $eventRow['value1'] ?? null, 'time' => $eventRow['value2'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? '')),
+                array('label' => $eventRow['value3'] ?? null, 'time' => $eventRow['value4'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? ''))
+            ) as $eventPair) {
+                if (!self::isEventLabel($eventPair['label'])) {
+                    continue;
+                }
+
+                $normalizedEvent = self::normalizeEventLabel($eventPair['label']);
+                $eventEntries[] = array(
+                    'label' => $normalizedEvent['label'],
+                    'stateClass' => $normalizedEvent['stateClass'],
+                    'rawLabel' => trim((string)$eventPair['label']),
+                    'timestamp' => self::isEventTimestamp($eventPair['time']) ? trim((string)$eventPair['time']) : trim((string)$eventPair['fallback']),
+                    'fallbackTimestamp' => trim((string)$eventPair['fallback']),
+                    'sensorName' => $sensorName,
+                    'readingTime' => $eventRow['reading_time'] ?? null,
+                    'sourceRowId' => isset($eventRow['id']) ? (int)$eventRow['id'] : null,
+                );
+            }
+        }
+
+        return $eventEntries;
+    }
+
+    private static function normalizeEventSequence(array $events)
+    {
+        $deduplicatedEvents = array();
+        foreach ($events as $eventEntry) {
+            $eventDateTime = self::parseEventDatetime($eventEntry);
+            if (!$eventDateTime instanceof DateTimeImmutable) {
+                continue;
+            }
+
+            $stateClass = $eventEntry['stateClass'] ?? '';
+            if (!in_array($stateClass, array('is-wakeup', 'is-standby'), true)) {
+                continue;
+            }
+
+            $eventEntry['sortTimestamp'] = $eventDateTime->getTimestamp();
+            $eventKey = $eventEntry['sortTimestamp'] . '|' . $stateClass;
+            if (!isset($deduplicatedEvents[$eventKey])) {
+                $deduplicatedEvents[$eventKey] = $eventEntry;
+            }
+        }
+
+        $sortedEvents = array_values($deduplicatedEvents);
+        usort($sortedEvents, function ($leftEvent, $rightEvent) {
+            if ($leftEvent['sortTimestamp'] === $rightEvent['sortTimestamp']) {
+                return strcmp($leftEvent['stateClass'], $rightEvent['stateClass']);
+            }
+
+            return $leftEvent['sortTimestamp'] <=> $rightEvent['sortTimestamp'];
+        });
+
+        $transitionEvents = array();
+        $lastStateClass = null;
+        foreach ($sortedEvents as $eventEntry) {
+            if (($eventEntry['stateClass'] ?? null) === $lastStateClass) {
+                continue;
+            }
+
+            unset($eventEntry['sortTimestamp']);
+            $transitionEvents[] = $eventEntry;
+            $lastStateClass = $eventEntry['stateClass'] ?? null;
+        }
+
+        return $transitionEvents;
+    }
+
+    private static function sortEventsDescending(array $events)
+    {
+        usort($events, function ($leftEvent, $rightEvent) {
+            $leftDateTime = self::parseEventDatetime($leftEvent);
+            $rightDateTime = self::parseEventDatetime($rightEvent);
+            $leftTime = $leftDateTime instanceof DateTimeImmutable ? $leftDateTime->getTimestamp() : 0;
+            $rightTime = $rightDateTime instanceof DateTimeImmutable ? $rightDateTime->getTimestamp() : 0;
+
+            if ($rightTime === $leftTime) {
+                return strcmp((string)($rightEvent['readingTime'] ?? ''), (string)($leftEvent['readingTime'] ?? ''));
+            }
+
+            return $rightTime <=> $leftTime;
+        });
+
+        return $events;
     }
 
     private static function isEventLabel($value)
@@ -387,10 +459,6 @@ class InternalPageService
             $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
             $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
             $hasNextEvent = ($eventIndex + 1 < $eventCount);
-
-            if ($segmentState === 'is-wakeup' && !$hasNextEvent) {
-                continue;
-            }
 
             $segmentEnd = $hasNextEvent ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
 
