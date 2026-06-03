@@ -32,6 +32,7 @@
   $eventTimelineBoards = $pageData['eventPayload']['timelineBoards'];
   $eventTimelineSummaryLabels = $pageData['eventPayload']['summaryLabels'];
   $eventTimelineSummary = $pageData['eventPayload']['summary'];
+  $eventTimelineLast24h = $pageData['eventPayload']['last24hTimeline'];
   $dashboardUpdateIntervalMs = $pageData['dashboardUpdateIntervalMs'];
   $dashboardOnlineOnlyDefault = $pageData['dashboardOnlineOnlyDefault'];
   $preferredChartWindowDays = $pageData['preferredChartWindowDays'];
@@ -974,6 +975,7 @@
             window.eventChartSensors = <?php echo json_encode($eventChartSensors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
             window.eventTimelineSummaryLabels = <?php echo json_encode($eventTimelineSummaryLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
             window.eventTimelineSummary = <?php echo json_encode($eventTimelineSummary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+            window.eventTimelineLast24h = <?php echo json_encode($eventTimelineLast24h, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
           </script>
           <div id="chart-container">
             <div class="tab-section-card chart-panel">
@@ -1031,6 +1033,17 @@
                 </div>
               </div>
               <div id="chart-device-filter-events" class="d-flex flex-wrap gap-3 mb-3"></div>
+              <div class="chart-panel-surface mb-4">
+                <div class="tab-section-title mb-3">
+                  <div>
+                    <h4 class="mb-1"><?php echo htmlspecialchars(mds_t('internal.event_timeline_24h'), ENT_QUOTES, 'UTF-8'); ?></h4>
+                    <p><?php echo htmlspecialchars(mds_t('internal.event_timeline_24h_text'), ENT_QUOTES, 'UTF-8'); ?></p>
+                  </div>
+                </div>
+                <div class="event-summary-chart-shell">
+                  <canvas id="eventTimeline24hCanvas" height="300"></canvas>
+                </div>
+              </div>
               <div class="chart-panel-surface mb-4">
                 <div class="tab-section-title mb-3">
                   <div>

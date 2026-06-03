@@ -254,6 +254,7 @@ function setOnlyChartBoardVisible(chartKey, activeBoardId) {
 
 function updateChartBoardDatasets(chartKey, boardId) {
   if (chartKey === 'events') {
+    updateEventTimeline24hChart();
     updateEventSummaryChart();
     updateEventTimelineVisibility();
     return;
@@ -411,6 +412,179 @@ function initializeEventSummaryChart() {
   updateEventSummaryChart();
 }
 
+function initializeEventTimeline24hChart() {
+  const eventTimelineCanvas = document.getElementById('eventTimeline24hCanvas');
+  if (!eventTimelineCanvas) {
+    return;
+  }
+
+  const eventTimelineShell = eventTimelineCanvas.closest('.event-summary-chart-shell');
+  if (eventTimelineShell) {
+    eventTimelineShell.style.height = '300px';
+  }
+
+  const eventTimelineData = Array.isArray(window.eventTimelineLast24h) ? window.eventTimelineLast24h : [];
+  const hasEventPoints = eventTimelineData.some(function (timelineEntry) {
+    return Array.isArray(timelineEntry.points) && timelineEntry.points.length > 0;
+  });
+
+  if (!hasEventPoints) {
+    const container = eventTimelineCanvas.parentElement;
+    if (container) {
+      container.innerHTML = '<div class="event-timeline-empty">' + mdsLabel('noEvents', 'No wakeup or standby events available yet.') + '</div>';
+    }
+    return;
+  }
+
+  window.eventTimeline24hChart = new Chart(eventTimelineCanvas, {
+    type: 'line',
+    data: {
+      datasets: []
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      interaction: {
+        mode: 'nearest',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            boxWidth: 10,
+            color: '#334155',
+            font: {
+              weight: '600',
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const rawPoint = context.raw || {};
+              const stateLabel = Number(rawPoint.y) === 1 ? mdsLabel('onlineSuffix', 'Online') : mdsLabel('standbySuffix', 'Standby');
+              return context.dataset.label + ': ' + stateLabel + ' · ' + (rawPoint.timestamp || rawPoint.x || '');
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(148, 163, 184, 0.14)',
+          },
+          ticks: {
+            color: '#475569',
+            maxRotation: 0,
+          },
+        },
+        y: {
+          min: -0.15,
+          max: 1.15,
+          ticks: {
+            stepSize: 1,
+            color: '#64748b',
+            callback: function (value) {
+              if (Number(value) === 1) {
+                return mdsLabel('onlineSuffix', 'Online');
+              }
+              if (Number(value) === 0) {
+                return mdsLabel('standbySuffix', 'Standby');
+              }
+              return '';
+            }
+          },
+          grid: {
+            color: 'rgba(148, 163, 184, 0.18)',
+          }
+        }
+      }
+    }
+  });
+
+  updateEventTimeline24hChart();
+}
+
+function updateEventTimeline24hChart() {
+  if (!window.eventTimeline24hChart) {
+    return;
+  }
+
+  const eventTimelineData = Array.isArray(window.eventTimelineLast24h) ? window.eventTimelineLast24h : [];
+  const visibleTimelines = eventTimelineData.filter(function (timelineEntry) {
+    return chartBoardVisibility.events.get(String(timelineEntry.boardId)) !== false;
+  });
+
+  const canvas = document.getElementById('eventTimeline24hCanvas');
+  const eventTimelineShell = canvas ? canvas.closest('.event-summary-chart-shell') : null;
+  let emptyState = eventTimelineShell ? eventTimelineShell.querySelector('.event-timeline-empty.is-chart-empty') : null;
+  const datasets = [];
+
+  visibleTimelines.forEach(function (timelineEntry) {
+    if (!Array.isArray(timelineEntry.points) || timelineEntry.points.length === 0) {
+      return;
+    }
+
+    const boardId = String(timelineEntry.boardId);
+    const boardColor = getEventSeriesColor(boardId);
+    datasets.push({
+      label: timelineEntry.boardName,
+      data: timelineEntry.points.map(function (point) {
+        return {
+          x: formatEventTimelineAxisLabel(point.timestamp || point.x),
+          y: Number(point.y),
+          timestamp: point.timestamp,
+        };
+      }),
+      borderColor: boardColor.wakeupBorder,
+      backgroundColor: boardColor.wakeupFill,
+      pointBackgroundColor: boardColor.wakeupBorder,
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 1,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      stepped: true,
+      tension: 0,
+      borderWidth: 2,
+      boardId: boardId,
+    });
+  });
+
+  window.eventTimeline24hChart.data.datasets = datasets;
+  window.eventTimeline24hChart.update();
+
+  if (datasets.length === 0) {
+    if (eventTimelineShell && !emptyState) {
+      emptyState = document.createElement('div');
+      emptyState.className = 'event-timeline-empty is-chart-empty';
+      emptyState.textContent = mdsLabel('noSelectedEvents', 'No ESP events are available for the currently selected devices.');
+      eventTimelineShell.appendChild(emptyState);
+    }
+    if (emptyState) {
+      emptyState.hidden = false;
+    }
+  } else if (emptyState) {
+    emptyState.hidden = true;
+  }
+}
+
+function formatEventTimelineAxisLabel(timestamp) {
+  const timestampText = String(timestamp || '');
+  const match = timestampText.match(/(\d{2}):(\d{2})(?::\d{2})?/);
+  if (match) {
+    return match[1] + ':' + match[2];
+  }
+
+  const parsedDate = new Date(timestampText);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return parsedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  return timestampText;
+}
+
 function updateEventSummaryChart() {
   if (!window.eventSummaryChart) {
     return;
@@ -507,10 +681,13 @@ function getEventSeriesColor(boardId) {
 }
 
 function refreshChartsTabViews() {
+  if (!window.eventTimeline24hChart) {
+    initializeEventTimeline24hChart();
+  }
   if (!window.eventSummaryChart) {
     initializeEventSummaryChart();
   }
-  ['myChart', 'myChart2', 'myChart3', 'eventSummaryChart'].forEach(function (chartName) {
+  ['myChart', 'myChart2', 'myChart3', 'eventTimeline24hChart', 'eventSummaryChart'].forEach(function (chartName) {
     const chartInstance = window[chartName];
     if (!chartInstance) {
       return;

@@ -106,9 +106,11 @@ class InternalPageService
         $eventTimelineSummaryLabels = array();
         $eventTimelineSummary = array();
         $eventTimelineSummaryBuckets = array();
+        $eventTimelineLast24h = array();
         $windowDays = max(1, (int) $windowDays);
         $eventWindowStart = new DateTimeImmutable('today -' . ($windowDays - 1) . ' days');
         $eventWindowEnd = new DateTimeImmutable('now');
+        $eventLast24hStart = $eventWindowEnd->modify('-24 hours');
 
         for ($eventOffset = 0; $eventOffset < $windowDays; $eventOffset++) {
             $eventDay = $eventWindowStart->modify('+' . $eventOffset . ' days');
@@ -194,6 +196,7 @@ class InternalPageService
                 return $rightTime <=> $leftTime;
             });
 
+            $eventTimelineLast24h[] = self::buildEventTimelineChartData($eventTimelineBoard, $eventLast24hStart, $eventWindowEnd);
             $eventTimelineBoard['events'] = self::addEventDurationDetails($eventTimelineBoard['events'], $eventWindowEnd);
             $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 40);
             $eventTimelineSummary[] = array(
@@ -212,6 +215,7 @@ class InternalPageService
             'timelineBoards' => $eventTimelineBoards,
             'summaryLabels' => $eventTimelineSummaryLabels,
             'summary' => $eventTimelineSummary,
+            'last24hTimeline' => $eventTimelineLast24h,
         );
     }
 
@@ -305,6 +309,43 @@ class InternalPageService
         }
 
         return $events;
+    }
+
+    private static function buildEventTimelineChartData(array $eventTimelineBoard, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    {
+        $points = array();
+
+        foreach (($eventTimelineBoard['events'] ?? array()) as $eventEntry) {
+            $eventDateTime = self::parseEventDatetime($eventEntry);
+            if (!$eventDateTime instanceof DateTimeImmutable) {
+                continue;
+            }
+            if ($eventDateTime < $windowStart || $eventDateTime > $windowEnd) {
+                continue;
+            }
+
+            $stateClass = $eventEntry['stateClass'] ?? '';
+            if (!in_array($stateClass, array('is-wakeup', 'is-standby'), true)) {
+                continue;
+            }
+
+            $points[] = array(
+                'x' => $eventDateTime->format(DateTimeInterface::ATOM),
+                'y' => $stateClass === 'is-wakeup' ? 1 : 0,
+                'label' => $eventEntry['label'] ?? '',
+                'timestamp' => $eventEntry['timestamp'] ?? $eventDateTime->format('d.m.Y H:i:s'),
+            );
+        }
+
+        usort($points, function ($leftPoint, $rightPoint) {
+            return strcmp((string)$leftPoint['x'], (string)$rightPoint['x']);
+        });
+
+        return array(
+            'boardId' => (int)($eventTimelineBoard['boardId'] ?? 0),
+            'boardName' => (string)($eventTimelineBoard['boardName'] ?? ''),
+            'points' => $points,
+        );
     }
 
     private static function buildEventDurationSummary($eventEntries, $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)

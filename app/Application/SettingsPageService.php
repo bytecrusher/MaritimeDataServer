@@ -88,10 +88,17 @@ class SettingsPageService
         } elseif ($save === 'runAutomaticMigrations') {
             try {
                 $migrationResult = self::runAutomaticMigrationActions($userObj);
-                $result['success_msg'] = mds_t(
-                    'settings.migration_actions_success',
-                    array((int)$migrationResult['executedActions'])
-                );
+                if (!empty($migrationResult['remainingChecks'])) {
+                    $result['error_msg'] = mds_t(
+                        'settings.migration_actions_remaining',
+                        array(implode(', ', $migrationResult['remainingChecks']))
+                    );
+                } else {
+                    $result['success_msg'] = mds_t(
+                        'settings.migration_actions_success',
+                        array((int)$migrationResult['executedActions'])
+                    );
+                }
             } catch (Throwable $e) {
                 $result['error_msg'] = mds_t('settings.migration_actions_error') . ' ' . $e->getMessage();
                 self::logException('Automatic migration actions failed.', $e);
@@ -259,7 +266,10 @@ class SettingsPageService
             __FILE__
         );
 
-        return array('executedActions' => $executedActions);
+        return array(
+            'executedActions' => $executedActions,
+            'remainingChecks' => self::getRemainingMigrationChecks($pdo),
+        );
     }
 
     private static function migrationDefinitionPassed(PDO $pdo, array $migration)
@@ -271,6 +281,20 @@ class SettingsPageService
         }
 
         return true;
+    }
+
+    private static function getRemainingMigrationChecks(PDO $pdo)
+    {
+        $remainingChecks = array();
+        foreach (self::getMigrationDefinitions() as $migration) {
+            foreach ($migration['checks'] as $check) {
+                if (!self::migrationCheckPassed($pdo, $check)) {
+                    $remainingChecks[] = $migration['label'] . ': ' . self::describeMigrationCheck($check);
+                }
+            }
+        }
+
+        return $remainingChecks;
     }
 
     private static function runSchemaHardeningActions(PDO $pdo)
@@ -326,7 +350,7 @@ class SettingsPageService
             "UPDATE `users` SET `lastName` = 'Höche' WHERE `lastName` = 'HÃ¶che'",
             "UPDATE `sensorTypes` SET `description` = 'Coordinates' WHERE `name` = 'GPS' AND `description` = 'Coorinates'",
             "UPDATE `sensorTypes` SET `siUnitVal1` = '', `siUnitVal2` = '', `siUnitVal3` = '', `siUnitVal4` = '', `description` = 'Wakeup / standby event', `MaxNrOfValues` = CASE WHEN `MaxNrOfValues` < 4 THEN 4 ELSE `MaxNrOfValues` END WHERE `name` = 'WakeupStan'",
-            "UPDATE `sensorConfig` SET `name` = 'Standby enter' WHERE `name` = 'Wakeup unknown' AND `typId` = (SELECT `id` FROM (SELECT `id` FROM `sensorTypes` WHERE `name` = 'WakeupStan' LIMIT 1) AS `wakeuptype`)",
+            "UPDATE `sensorConfig` SET `name` = 'Standby enter' WHERE `name` = 'Wakeup unknown'",
             "UPDATE `sensorChannelConfig` SET `name` = CASE `channelNr` WHEN 1 THEN 'Value1' WHEN 2 THEN 'Value2' WHEN 3 THEN 'Value3' WHEN 4 THEN 'Value4' ELSE `name` END, `description` = CASE `channelNr` WHEN 1 THEN 'Event value 1' WHEN 2 THEN 'Event value 2' WHEN 3 THEN 'Event value 3' WHEN 4 THEN 'Event value 4' ELSE `description` END, `onDashboard` = 0 WHERE `sensorConfigId` IN (SELECT `id` FROM (SELECT `id` FROM `sensorConfig` WHERE `typId` = (SELECT `id` FROM `sensorTypes` WHERE `name` = 'WakeupStan' LIMIT 1)) AS `wakeupsensors`)",
         );
 
