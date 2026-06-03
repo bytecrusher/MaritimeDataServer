@@ -472,12 +472,16 @@ function initializeEventTimeline24hChart() {
       },
       scales: {
         x: {
+          type: 'linear',
           grid: {
             color: 'rgba(148, 163, 184, 0.14)',
           },
           ticks: {
             color: '#475569',
             maxRotation: 0,
+            callback: function (value) {
+              return formatEventTimelineAxisLabel(value);
+            },
           },
         },
         y: {
@@ -529,15 +533,23 @@ function updateEventTimeline24hChart() {
 
     const boardId = String(timelineEntry.boardId);
     const boardColor = getEventSeriesColor(boardId);
+    const timelinePoints = timelineEntry.points.map(function (point) {
+      return {
+        x: parseEventTimelineTimestamp(point.x || point.timestamp),
+        y: Number(point.y),
+        timestamp: point.timestamp,
+      };
+    }).filter(function (point) {
+      return Number.isFinite(point.x) && Number.isFinite(point.y);
+    });
+
+    if (timelinePoints.length === 0) {
+      return;
+    }
+
     datasets.push({
       label: timelineEntry.boardName,
-      data: timelineEntry.points.map(function (point) {
-        return {
-          x: formatEventTimelineAxisLabel(point.timestamp || point.x),
-          y: Number(point.y),
-          timestamp: point.timestamp,
-        };
-      }),
+      data: timelinePoints,
       borderColor: boardColor.wakeupBorder,
       backgroundColor: boardColor.wakeupFill,
       pointBackgroundColor: boardColor.wakeupBorder,
@@ -571,6 +583,10 @@ function updateEventTimeline24hChart() {
 }
 
 function formatEventTimelineAxisLabel(timestamp) {
+  if (typeof timestamp === 'number' && Number.isFinite(timestamp)) {
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
   const timestampText = String(timestamp || '');
   const match = timestampText.match(/(\d{2}):(\d{2})(?::\d{2})?/);
   if (match) {
@@ -583,6 +599,32 @@ function formatEventTimelineAxisLabel(timestamp) {
   }
 
   return timestampText;
+}
+
+function parseEventTimelineTimestamp(timestamp) {
+  const timestampText = String(timestamp || '').trim();
+  if (timestampText === '') {
+    return NaN;
+  }
+
+  const parsedDate = new Date(timestampText);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return parsedDate.getTime();
+  }
+
+  const germanMatch = timestampText.match(/^(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!germanMatch) {
+    return NaN;
+  }
+
+  return new Date(
+    Number(germanMatch[3]),
+    Number(germanMatch[2]) - 1,
+    Number(germanMatch[1]),
+    Number(germanMatch[4]),
+    Number(germanMatch[5]),
+    Number(germanMatch[6] || 0)
+  ).getTime();
 }
 
 function updateEventSummaryChart() {
