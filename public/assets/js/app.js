@@ -423,6 +423,15 @@ function initializeEventTimeline24hChart() {
     eventTimelineShell.style.height = '300px';
   }
 
+  const eventTimelineWindowSelect = document.getElementById('eventTimelineWindowSelect');
+  if (eventTimelineWindowSelect && eventTimelineWindowSelect.dataset.initialized !== '1') {
+    eventTimelineWindowSelect.dataset.initialized = '1';
+    eventTimelineWindowSelect.addEventListener('change', function () {
+      window.eventTimelineWindowHours = getSelectedEventTimelineWindowHours();
+      updateEventTimeline24hChart();
+    });
+  }
+
   const eventTimelineData = Array.isArray(window.eventTimelineLast24h) ? window.eventTimelineLast24h : [];
   const hasEventPoints = eventTimelineData.some(function (timelineEntry) {
     const onlineHours = Number(timelineEntry.onlineHours) || 0;
@@ -522,14 +531,20 @@ function updateEventTimeline24hChart() {
   const visibleTimelines = eventTimelineData.filter(function (timelineEntry) {
     return chartBoardVisibility.events.get(String(timelineEntry.boardId)) !== false;
   });
+  const selectedWindowHours = getSelectedEventTimelineWindowHours();
+  const windowEndMs = getEventTimelineEndMs(eventTimelineData);
+  const windowStartMs = windowEndMs - (selectedWindowHours * 60 * 60 * 1000);
+  const visibleWindowTimelines = visibleTimelines.map(function (timelineEntry) {
+    return clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selectedWindowHours);
+  });
 
   const canvas = document.getElementById('eventTimeline24hCanvas');
   const eventTimelineShell = canvas ? canvas.closest('.event-summary-chart-shell') : null;
   let emptyState = eventTimelineShell ? eventTimelineShell.querySelector('.event-timeline-empty.is-chart-empty') : null;
   const datasets = [];
-  updateEventTimelineWindowSummary(visibleTimelines);
+  updateEventTimelineWindowSummary(visibleWindowTimelines);
 
-  visibleTimelines.forEach(function (timelineEntry) {
+  visibleWindowTimelines.forEach(function (timelineEntry) {
     if (!Array.isArray(timelineEntry.points) || timelineEntry.points.length === 0) {
       return;
     }
@@ -568,6 +583,8 @@ function updateEventTimeline24hChart() {
   });
 
   window.eventTimeline24hChart.data.datasets = datasets;
+  window.eventTimeline24hChart.options.scales.x.min = windowStartMs;
+  window.eventTimeline24hChart.options.scales.x.max = windowEndMs;
   window.eventTimeline24hChart.update();
 
   if (datasets.length === 0) {
@@ -583,6 +600,121 @@ function updateEventTimeline24hChart() {
   } else if (emptyState) {
     emptyState.hidden = true;
   }
+}
+
+function getSelectedEventTimelineWindowHours() {
+  const eventTimelineWindowSelect = document.getElementById('eventTimelineWindowSelect');
+  const selectedHours = Number.parseInt(eventTimelineWindowSelect ? eventTimelineWindowSelect.value : window.eventTimelineWindowHours, 10);
+  return [3, 6, 12, 24, 48, 72].includes(selectedHours) ? selectedHours : 24;
+}
+
+function getEventTimelineEndMs(eventTimelineData) {
+  let windowEndMs = 0;
+  eventTimelineData.forEach(function (timelineEntry) {
+    if (!Array.isArray(timelineEntry.points)) {
+      return;
+    }
+    timelineEntry.points.forEach(function (point) {
+      const pointTime = parseEventTimelineTimestamp(point.x || point.timestamp);
+      if (Number.isFinite(pointTime) && pointTime > windowEndMs) {
+        windowEndMs = pointTime;
+      }
+    });
+  });
+
+  return windowEndMs > 0 ? windowEndMs : Date.now();
+}
+
+function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selectedWindowHours) {
+  const rawPoints = Array.isArray(timelineEntry.points) ? timelineEntry.points : [];
+  const parsedPoints = rawPoints.map(function (point) {
+    return {
+      x: parseEventTimelineTimestamp(point.x || point.timestamp),
+      y: Number(point.y),
+      timestamp: point.timestamp,
+    };
+  }).filter(function (point) {
+    return Number.isFinite(point.x) && Number.isFinite(point.y);
+  }).sort(function (leftPoint, rightPoint) {
+    return leftPoint.x - rightPoint.x;
+  });
+
+  let lastPointBeforeWindow = null;
+  const clippedPoints = [];
+
+  parsedPoints.forEach(function (point) {
+    if (point.x <= windowStartMs) {
+      lastPointBeforeWindow = point;
+      return;
+    }
+    if (point.x <= windowEndMs) {
+      clippedPoints.push(point);
+    }
+  });
+
+  if (lastPointBeforeWindow) {
+    clippedPoints.unshift({
+      x: windowStartMs,
+      y: lastPointBeforeWindow.y,
+      timestamp: formatEventTimelineTimestamp(windowStartMs),
+    });
+  }
+
+  if (clippedPoints.length > 0) {
+    const lastPoint = clippedPoints[clippedPoints.length - 1];
+    if (lastPoint.x < windowEndMs) {
+      clippedPoints.push({
+        x: windowEndMs,
+        y: lastPoint.y,
+        timestamp: formatEventTimelineTimestamp(windowEndMs),
+      });
+    }
+  }
+
+  const deduplicatedPoints = [];
+  clippedPoints.forEach(function (point) {
+    const previousPoint = deduplicatedPoints[deduplicatedPoints.length - 1];
+    if (previousPoint && previousPoint.x === point.x && previousPoint.y === point.y) {
+      return;
+    }
+    deduplicatedPoints.push(point);
+  });
+
+  const windowStats = calculateEventWindowStats(deduplicatedPoints, selectedWindowHours);
+  return {
+    boardId: timelineEntry.boardId,
+    boardName: timelineEntry.boardName,
+    points: deduplicatedPoints,
+    onlineHours: windowStats.onlineHours,
+    standbyHours: windowStats.standbyHours,
+    windowHours: selectedWindowHours,
+    onlinePercent: windowStats.onlinePercent,
+    standbyPercent: windowStats.standbyPercent,
+  };
+}
+
+function calculateEventWindowStats(points, selectedWindowHours) {
+  let onlineMs = 0;
+  let standbyMs = 0;
+
+  for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex++) {
+    const segmentStart = points[pointIndex];
+    const segmentEnd = points[pointIndex + 1];
+    const segmentMs = Math.max(0, segmentEnd.x - segmentStart.x);
+    if (Number(segmentStart.y) === 1) {
+      onlineMs += segmentMs;
+    } else if (Number(segmentStart.y) === 0) {
+      standbyMs += segmentMs;
+    }
+  }
+
+  const windowMs = Math.max(1, selectedWindowHours * 60 * 60 * 1000);
+  return {
+    onlineHours: Math.round((onlineMs / 3600000) * 100) / 100,
+    standbyHours: Math.round((standbyMs / 3600000) * 100) / 100,
+    onlinePercent: Math.round((onlineMs / windowMs) * 1000) / 10,
+    standbyPercent: Math.round((standbyMs / windowMs) * 1000) / 10,
+  };
 }
 
 function updateEventTimelineWindowSummary(visibleTimelines) {
@@ -654,7 +786,22 @@ function formatEventTimelineAxisLabel(timestamp) {
   return timestampText;
 }
 
+function formatEventTimelineTimestamp(timestamp) {
+  return new Date(timestamp).toLocaleString([], {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
 function parseEventTimelineTimestamp(timestamp) {
+  if (typeof timestamp === 'number' && Number.isFinite(timestamp)) {
+    return timestamp;
+  }
+
   const timestampText = String(timestamp || '').trim();
   if (timestampText === '') {
     return NaN;

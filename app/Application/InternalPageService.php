@@ -113,7 +113,6 @@ class InternalPageService
         $timelineWindowHours = self::normalizeEventTimelineWindowHours($timelineWindowHours);
         $eventWindowStart = new DateTimeImmutable('today -' . ($windowDays - 1) . ' days');
         $eventWindowEnd = new DateTimeImmutable('now');
-        $eventTimelineStart = $eventWindowEnd->modify('-' . $timelineWindowHours . ' hours');
 
         for ($eventOffset = 0; $eventOffset < $windowDays; $eventOffset++) {
             $eventDay = $eventWindowStart->modify('+' . $eventOffset . ' days');
@@ -173,7 +172,11 @@ class InternalPageService
                 $eventWindowEnd
             );
 
-            $eventTimelineLast24h[] = self::buildEventTimelineChartData($eventTimelineBoard, $eventTimelineStart, $eventWindowEnd);
+            $eventTimelineLast24h[] = self::buildEventTimelineChartData(
+                $eventTimelineBoard,
+                $eventWindowEnd->modify('-72 hours'),
+                $eventWindowEnd
+            );
             $eventTimelineBoard['events'] = self::sortEventsDescending($eventTimelineBoard['events']);
             $eventTimelineBoard['events'] = self::addEventDurationDetails($eventTimelineBoard['events'], $eventWindowEnd);
             $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 80);

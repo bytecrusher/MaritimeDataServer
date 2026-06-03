@@ -580,6 +580,22 @@
     gap: 0.85rem;
     margin-bottom: 1rem;
   }
+  .event-window-control {
+    min-width: 12rem;
+    padding: 0.65rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.85rem;
+    background: rgba(248, 250, 252, 0.88);
+  }
+  .event-window-control label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
   .event-window-card {
     padding: 0.9rem;
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -1081,9 +1097,8 @@
             </div>
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
-                <div>
-                  <?php $eventWindowTitle = (int)$preferredChartWindowDays === 1 ? mds_t('internal.last_24_hours') : mds_t('internal.last_days', array((int)$preferredChartWindowDays)); ?>
-                  <?php $eventTimelineWindowTitle = mds_t('internal.last_hours', array((int)$eventTimelineWindowHours)); ?>
+                  <div>
+                    <?php $eventWindowTitle = (int)$preferredChartWindowDays === 1 ? mds_t('internal.last_24_hours') : mds_t('internal.last_days', array((int)$preferredChartWindowDays)); ?>
                   <h3><?php echo htmlspecialchars(mds_t('internal.esp_events'), ENT_QUOTES, 'UTF-8'); ?></h3>
                   <p><?php echo htmlspecialchars(mds_t('internal.esp_events_text', array($eventWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
@@ -1096,8 +1111,18 @@
               <div class="chart-panel-surface mb-4">
                 <div class="tab-section-title mb-3">
                   <div>
-                    <h4 class="mb-1"><?php echo htmlspecialchars(mds_t('internal.event_timeline_window', array($eventTimelineWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></h4>
-                    <p><?php echo htmlspecialchars(mds_t('internal.event_timeline_window_text', array($eventTimelineWindowTitle)), ENT_QUOTES, 'UTF-8'); ?></p>
+                    <h4 class="mb-1"><?php echo htmlspecialchars(mds_t('internal.event_timeline_window_static'), ENT_QUOTES, 'UTF-8'); ?></h4>
+                    <p><?php echo htmlspecialchars(mds_t('internal.event_timeline_window_static_text'), ENT_QUOTES, 'UTF-8'); ?></p>
+                  </div>
+                  <div class="event-window-control">
+                    <label for="eventTimelineWindowSelect"><?php echo htmlspecialchars(mds_t('internal.timeline_window_control'), ENT_QUOTES, 'UTF-8'); ?></label>
+                    <select id="eventTimelineWindowSelect" class="form-select form-select-sm">
+                      <?php foreach (array(3, 6, 12, 24, 48, 72) as $timelineWindowOption) { ?>
+                        <option value="<?php echo $timelineWindowOption; ?>" <?php if ((int)$eventTimelineWindowHours === $timelineWindowOption) { echo 'selected'; } ?>>
+                          <?php echo htmlspecialchars(mds_t('settings.last_hours', array($timelineWindowOption)), ENT_QUOTES, 'UTF-8'); ?>
+                        </option>
+                      <?php } ?>
+                    </select>
                   </div>
                 </div>
                 <div id="eventTimelineWindowSummary" class="event-window-summary"></div>
