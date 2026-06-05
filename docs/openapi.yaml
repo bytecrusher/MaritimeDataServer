@@ -529,6 +529,9 @@ paths:
       description: |
         Header-basierter OTA-Endpunkt für ESP32-Devices.
         Die Firmware-Auswahl erfolgt aktuell über MAC-Adresse.
+        Der Request muss zusätzlich mit dem Shared Secret aus
+        `config/config.json` (`otaUpdateSecret`) über den Header
+        `X-MDS-OTA-Secret` authentifiziert werden.
       parameters:
         - name: User-Agent
           in: header
@@ -536,6 +539,13 @@ paths:
           schema:
             type: string
             const: ESP32-http-Update
+        - name: X-MDS-OTA-Secret
+          in: header
+          required: true
+          description: Shared Secret; muss dem serverseitigen `otaUpdateSecret` entsprechen.
+          schema:
+            type: string
+            format: password
         - name: x-ESP32-STA-MAC
           in: header
           required: true
@@ -567,7 +577,7 @@ paths:
         '304':
           description: Keine neuere Firmware vorhanden
         '403':
-          description: Header oder User-Agent ungültig
+          description: Header, User-Agent oder OTA Secret ungültig; oder serverseitig ist kein OTA Secret konfiguriert
           content:
             text/plain:
               schema:

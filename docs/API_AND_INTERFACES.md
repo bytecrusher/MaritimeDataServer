@@ -598,6 +598,7 @@ ESP32-Firmware-Update per HTTP-Header-basierter Abfrage.
 Pflicht-Header:
 
 - `User-Agent: ESP32-http-Update`
+- `X-MDS-OTA-Secret`
 - `x-ESP32-STA-MAC`
 - `x-ESP32-sketch-md5`
 - `x-ESP32-sdk-version`
@@ -605,10 +606,29 @@ Pflicht-Header:
 
 Weitere Header werden geloggt, aber nicht zwingend validiert.
 
+### OTA Secret
+
+Der Endpunkt ist durch ein Shared Secret geschuetzt. Der Server erwartet den
+Header `X-MDS-OTA-Secret`; der Wert muss exakt dem Eintrag `otaUpdateSecret`
+in `config/config.json` entsprechen.
+
+Beispiel-Konfiguration:
+
+```json
+{
+  "otaUpdateSecret": "change_this_to_a_long_random_secret"
+}
+```
+
+Wenn `otaUpdateSecret` nicht gesetzt ist oder der Header fehlt bzw. nicht
+passt, wird die Anfrage mit `403 Forbidden` abgelehnt. ESP32-Geräte muessen
+den Header beim OTA-Update mitsenden.
+
 ### Verhalten
 
 - `403`
-  - wenn Header oder User-Agent nicht passen
+  - wenn Header, User-Agent oder `X-MDS-OTA-Secret` nicht passen
+  - wenn serverseitig kein `otaUpdateSecret` konfiguriert ist
 - `500`
   - wenn die MAC nicht fuer Updates konfiguriert ist
 - `200`
