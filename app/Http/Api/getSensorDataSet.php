@@ -1,5 +1,4 @@
 <?php
-// TODO Find a way to secure the function. Only logged in user shall be able to receive Data.
 require_once dirname(__DIR__, 3) . "/bootstrap/app.php";
 mds_start_session();
 

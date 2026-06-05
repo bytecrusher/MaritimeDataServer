@@ -119,7 +119,7 @@ if (count($_POST) > 0) {
             $success_msg = $message;
         ?>
         <div class="container small-container-330">
-            <div class="message <?php echo $type; ?>"><?php echo $message; ?></div>
+            <div class="message <?php echo mds_h($type); ?>"><?php echo mds_h($message); ?></div>
         </div>
         <?php } else { ?>
         <form name="frmRegistration" method="post" action="">
@@ -143,7 +143,7 @@ if (count($_POST) > 0) {
             </div>
             <div class="form-group">
                 <label for="userEmail"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?>:</label>
-                <input type="email" id="userEmail" size="40" maxlength="250" name="userEmail" class="form-control" required value="<?php if(isset($_POST['userEmail'])) echo $_POST['userEmail']; ?>">
+                <input type="email" id="userEmail" size="40" maxlength="250" name="userEmail" class="form-control" required value="<?php if(isset($_POST['userEmail'])) echo mds_h($_POST['userEmail']); ?>">
             </div>
             <div class="form-group">
                 <input type="checkbox" name="terms"> <?php echo htmlspecialchars(mds_t('register.accept_terms'), ENT_QUOTES, 'UTF-8'); ?>

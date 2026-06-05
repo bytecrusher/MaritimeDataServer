@@ -179,7 +179,7 @@ function initializeChartBoardFilters() {
       return;
     }
 
-    filterContainer.innerHTML = '';
+    filterContainer.replaceChildren();
     boardsByChart[chartKey].forEach((boardName, boardId) => {
       const wrapper = document.createElement('div');
       wrapper.className = 'd-inline-flex align-items-center border rounded px-2 py-1 bg-light-subtle';
@@ -314,7 +314,7 @@ function initializeEventTimeline() {
   }
 
   if (!Array.isArray(window.eventChartSensors) || window.eventChartSensors.length === 0) {
-    eventTimelineContainer.innerHTML = '<div class="event-timeline-empty">' + mdsLabel('noEvents', 'No wakeup or standby events available yet.') + '</div>';
+    renderEventTimelineEmptyState(eventTimelineContainer, mdsLabel('noEvents', 'No wakeup or standby events available yet.'));
     return;
   }
 }
@@ -335,7 +335,7 @@ function initializeEventSummaryChart() {
   if (eventSummaryData.length === 0) {
     const container = eventSummaryCanvas.parentElement;
     if (container) {
-      container.innerHTML = '<div class="event-timeline-empty">' + mdsLabel('noEvents', 'No wakeup or standby events available yet.') + '</div>';
+      renderEventTimelineEmptyState(container, mdsLabel('noEvents', 'No wakeup or standby events available yet.'));
     }
     return;
   }
@@ -442,7 +442,7 @@ function initializeEventTimeline24hChart() {
   if (!hasEventPoints) {
     const container = eventTimelineCanvas.parentElement;
     if (container) {
-      container.innerHTML = '<div class="event-timeline-empty">' + mdsLabel('noEvents', 'No wakeup or standby events available yet.') + '</div>';
+      renderEventTimelineEmptyState(container, mdsLabel('noEvents', 'No wakeup or standby events available yet.'));
     }
     return;
   }
@@ -730,41 +730,72 @@ function updateEventTimelineWindowSummary(visibleTimelines) {
   });
 
   if (summaryItems.length === 0) {
-    summaryContainer.innerHTML = '';
+    summaryContainer.replaceChildren();
     return;
   }
 
-  summaryContainer.innerHTML = summaryItems.map(function (timelineEntry) {
+  const summaryCards = summaryItems.map(function (timelineEntry) {
     const onlineHours = Number(timelineEntry.onlineHours) || 0;
     const standbyHours = Number(timelineEntry.standbyHours) || 0;
     const windowHours = Number(timelineEntry.windowHours) || Number(window.eventTimelineWindowHours) || 24;
     const onlinePercent = Math.max(0, Math.min(100, Number(timelineEntry.onlinePercent) || 0));
     const standbyPercent = Math.max(0, Math.min(100, Number(timelineEntry.standbyPercent) || 0));
 
-    return [
-      '<article class="event-window-card">',
-      '<h5>' + escapeHtml(timelineEntry.boardName || '-') + '</h5>',
-      '<div class="event-window-metrics">',
-      '<div class="event-window-metric"><strong>' + onlineHours.toFixed(2) + ' h</strong><span>' + mdsLabel('onlineHours', 'Online hours') + '</span></div>',
-      '<div class="event-window-metric"><strong>' + standbyHours.toFixed(2) + ' h</strong><span>' + mdsLabel('standbyHours', 'Standby hours') + '</span></div>',
-      '<div class="event-window-metric"><strong>' + windowHours.toFixed(0) + ' h</strong><span>' + mdsLabel('windowHours', 'Window') + '</span></div>',
-      '</div>',
-      '<div class="event-window-bar" aria-hidden="true">',
-      '<span class="event-window-bar-online" style="width:' + onlinePercent.toFixed(1) + '%"></span>',
-      '<span class="event-window-bar-standby" style="width:' + standbyPercent.toFixed(1) + '%"></span>',
-      '</div>',
-      '</article>'
-    ].join('');
-  }).join('');
+    const card = document.createElement('article');
+    card.className = 'event-window-card';
+
+    const title = document.createElement('h5');
+    title.textContent = timelineEntry.boardName || '-';
+    card.appendChild(title);
+
+    const metrics = document.createElement('div');
+    metrics.className = 'event-window-metrics';
+    metrics.appendChild(createEventWindowMetric(onlineHours.toFixed(2) + ' h', mdsLabel('onlineHours', 'Online hours')));
+    metrics.appendChild(createEventWindowMetric(standbyHours.toFixed(2) + ' h', mdsLabel('standbyHours', 'Standby hours')));
+    metrics.appendChild(createEventWindowMetric(windowHours.toFixed(0) + ' h', mdsLabel('windowHours', 'Window')));
+    card.appendChild(metrics);
+
+    const bar = document.createElement('div');
+    bar.className = 'event-window-bar';
+    bar.setAttribute('aria-hidden', 'true');
+
+    const onlineBar = document.createElement('span');
+    onlineBar.className = 'event-window-bar-online';
+    onlineBar.style.width = onlinePercent.toFixed(1) + '%';
+    bar.appendChild(onlineBar);
+
+    const standbyBar = document.createElement('span');
+    standbyBar.className = 'event-window-bar-standby';
+    standbyBar.style.width = standbyPercent.toFixed(1) + '%';
+    bar.appendChild(standbyBar);
+    card.appendChild(bar);
+
+    return card;
+  });
+
+  summaryContainer.replaceChildren(...summaryCards);
 }
 
-function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+function createEventWindowMetric(value, label) {
+  const metric = document.createElement('div');
+  metric.className = 'event-window-metric';
+
+  const strong = document.createElement('strong');
+  strong.textContent = value;
+  metric.appendChild(strong);
+
+  const span = document.createElement('span');
+  span.textContent = label;
+  metric.appendChild(span);
+
+  return metric;
+}
+
+function renderEventTimelineEmptyState(container, message) {
+  const emptyState = document.createElement('div');
+  emptyState.className = 'event-timeline-empty';
+  emptyState.textContent = message;
+  container.replaceChildren(emptyState);
 }
 
 function formatEventTimelineAxisLabel(timestamp) {

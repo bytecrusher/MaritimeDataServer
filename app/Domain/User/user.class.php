@@ -53,20 +53,20 @@ class user implements JsonSerializable
     trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
     if (!isset($_SESSION['userId']) && isset($_COOKIE['identifier']) && isset($_COOKIE['securityToken'])) {
       $identifier = $_COOKIE['identifier'];
-      $securityToken = $_COOKIE[''];
+      $securityToken = $_COOKIE['securityToken'];
       try {
         $statement = self::$pdo->prepare("SELECT * FROM securityTokens WHERE identifier = ?");
         $result = $statement->execute(array($identifier));
         $securityToken_row = $statement->fetch();
 
-        if (sha1($securityToken) !== $securityToken_row['securityToken']) {
+        if (!myFunctions::securityTokenMatches($securityToken, $securityToken_row['securityToken'] ?? '')) {
           //The security token was probably stolen
           //If necessary, display a warning or similar here
         } else { //Token was correct
           //Set new token
           $neuer_securityToken = myFunctions::random_string();
           $insert = self::$pdo->prepare("UPDATE securityTokens SET securityToken = :securityToken WHERE identifier = :identifier");
-          $insert->execute(array('securityToken' => sha1($neuer_securityToken), 'identifier' => $identifier));
+          $insert->execute(array('securityToken' => myFunctions::hashSecurityToken($neuer_securityToken), 'identifier' => $identifier));
           mds_set_remember_login_cookies($identifier, $neuer_securityToken);
           //Log in the user
           $_SESSION['userId'] = $securityToken_row['userId'];

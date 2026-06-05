@@ -27,6 +27,7 @@ class configuration {
     static $systemEmailAddress = null;
     static $applicationName = null;
     static $ttnWebhookSecret = null;
+    static $otaUpdateSecret = null;
     static $defaultGaugeStyle = null;
     static $defaultDashboardOnlineOnly = null;
     static $defaultChartWindowDays = null;
@@ -142,6 +143,11 @@ class configuration {
             self::$ttnWebhookSecret = "";
             if (array_key_exists('ttnWebhookSecret', $jsonData)) {
                 self::$ttnWebhookSecret = (string)$jsonData['ttnWebhookSecret'];
+            }
+
+            self::$otaUpdateSecret = "";
+            if (array_key_exists('otaUpdateSecret', $jsonData)) {
+                self::$otaUpdateSecret = (string)$jsonData['otaUpdateSecret'];
             }
 
             self::$defaultGaugeStyle = 'classic';

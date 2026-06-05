@@ -10,13 +10,14 @@
 // Script checking if a newer firmware exist and the configuration allows to update.
 // If yes, the script delivers the firmware to the controller
 header('Content-type: text/plain; charset=utf8', true);
-$headers = getallheaders();
+$headers = array_change_key_case(getallheaders(), CASE_LOWER);
 
 require_once(dirname(__DIR__, 2) . "/bootstrap/app.php");
 require_once(dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php");
 
 function check_header($name, $value = false) {
     global $headers;
+    $name = strtolower((string)$name);
     if(!isset($headers[$name])) {
         return false;
     }
@@ -26,7 +27,34 @@ function check_header($name, $value = false) {
     return true;
 }
 
+function require_ota_secret() {
+    global $headers;
+    $config = new configuration();
+    $expectedSecret = (string)$config::$otaUpdateSecret;
+    if ($expectedSecret === '') {
+        header($_SERVER["SERVER_PROTOCOL"].' 403 Forbidden', true, 403);
+        write_to_log("OTA update secret is not configured.");
+        echo "OTA update secret is not configured.\n";
+        exit();
+    }
+
+    $providedSecret = (string)($headers['x-mds-ota-secret'] ?? '');
+    if ($providedSecret === '' || !hash_equals($expectedSecret, $providedSecret)) {
+        header($_SERVER["SERVER_PROTOCOL"].' 403 Forbidden', true, 403);
+        write_to_log("OTA update secret validation failed.");
+        echo "OTA update secret validation failed.\n";
+        exit();
+    }
+}
+
 function sendFile($path) {
+    if (!is_file($path)) {
+        header($_SERVER["SERVER_PROTOCOL"].' 404 Not Found', true, 404);
+        write_to_log("firmware file not found: " . basename($path));
+        echo "firmware file not found\n";
+        exit();
+    }
+
     header($_SERVER["SERVER_PROTOCOL"].' 200 OK', true, 200);
     header('Content-Type: application/octet-stream', true);
     header('Content-Disposition: attachment; filename='.basename($path));
@@ -42,6 +70,8 @@ if(!check_header('User-Agent', 'ESP32-http-Update')) {
     exit();
 }
 
+require_ota_secret();
+
 if(
     !check_header('x-ESP32-STA-MAC') ||
     //!check_header('X-Esp32-AP-MAC') ||
@@ -55,15 +85,15 @@ if(
     header($_SERVER["SERVER_PROTOCOL"].' 403 Forbidden', true, 403);
 
     $logString = "";
-    $logString = "STA mac " . $headers['x-ESP32-STA-MAC'] .
-    ", host " . $headers['Host'] .
-    ", AP mac " . $headers['x-ESP32-AP-MAC'] .
-    ", free spcae " . $headers['x-ESP32-free-space'] .
-    ", sketch size " . $headers['x-ESP32-sketch-size'] .
-    ", sketch md5 " . $headers['x-ESP32-sketch-md5'] .
-    ", chip size " . $headers['x-ESP32-chip-size'] .
-    ", version " . $headers['x-ESP32-version'] .
-    ", sdk version " . $headers['x-ESP32-sdk-version'];
+    $logString = "STA mac " . ($headers['x-esp32-sta-mac'] ?? '') .
+    ", host " . ($headers['host'] ?? '') .
+    ", AP mac " . ($headers['x-esp32-ap-mac'] ?? '') .
+    ", free space " . ($headers['x-esp32-free-space'] ?? '') .
+    ", sketch size " . ($headers['x-esp32-sketch-size'] ?? '') .
+    ", sketch md5 " . ($headers['x-esp32-sketch-md5'] ?? '') .
+    ", chip size " . ($headers['x-esp32-chip-size'] ?? '') .
+    ", version " . ($headers['x-esp32-version'] ?? '') .
+    ", sdk version " . ($headers['x-esp32-sdk-version'] ?? '');
 
     write_to_log($logString);
     echo "only for ESP32 updater! (header)\n";
@@ -90,18 +120,20 @@ $dbfirmwareversion = array(
     "24:6F:28:7B:A9:14" => "0.0.3"
 );
 
-if(!isset($db[$headers['x-ESP32-STA-MAC']])) {
+$espMac = (string)$headers['x-esp32-sta-mac'];
+if(!isset($db[$espMac])) {
     header($_SERVER["SERVER_PROTOCOL"].' 500 ESP MAC not configured for updates', true, 500);
-    write_to_log($headers['x-ESP32-STA-MAC'] . ", " . $_SERVER["SERVER_PROTOCOL"].' 500 ESP MAC not configured for updates');
+    write_to_log($espMac . ", " . $_SERVER["SERVER_PROTOCOL"].' 500 ESP MAC not configured for updates');
+    exit();
 }
 
-$localBinary = dirname(__DIR__, 2) . "/var/ota/bin/" . $db[$headers['x-ESP32-STA-MAC']] . ".bin";
+$localBinary = dirname(__DIR__, 2) . "/var/ota/bin/" . $db[$espMac] . ".bin";
 
 // Check if version has been set and does not match, if not, check if
 // MD5 hash between local binary and ESP8266 binary do not match if not.
 // then no update has been found.
 //if((check_header('x-ESP32-version') && $dbfirmwareversion[$headers['x-ESP32-STA-MAC']] != $headers['x-ESP32-version']) && ($headers["x-ESP32-sketch-md5"] != md5_file($localBinary)) ) {
-if((check_header('x-ESP32-version') && $dbfirmwareversion[$headers['x-ESP32-STA-MAC']] != $headers['x-ESP32-version']) ) {
+if((check_header('x-ESP32-version') && $dbfirmwareversion[$espMac] != $headers['x-esp32-version']) ) {
     write_to_log("send file");
     sendFile($localBinary);
     exit();

@@ -1,5 +1,8 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+require_once dirname(__DIR__, 2) . "/app/Support/install_guard.func.php";
+mds_deny_finished_install(true);
+
 $var_dbName = $var_dbUserName = $var_dbPassword = $pdo = $rtn = null;
 $var_dbHostName = "localhost";
 if (isset($_POST["action"])) {
@@ -26,7 +29,9 @@ if (isset($_POST["action"])) {
             $sql = $templine;
             try {
               $rowinfo = "Tables created successfully.";
-              foreach ($pdo->query($sql) as $row) {
+              $statement = $pdo->prepare($sql);
+              $statement->execute();
+              foreach ($statement as $row) {
                 $rowinfo = $rowinfo . ", " . $row;
               }
               $rtn = array("error"=>"false", "success_text"=>$rowinfo);

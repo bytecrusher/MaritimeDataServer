@@ -9,6 +9,8 @@
 
   <?php
     require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+    require_once dirname(__DIR__, 2) . "/app/Support/install_guard.func.php";
+    mds_deny_finished_install(false);
     include(dirname(__DIR__, 2) . "/app/Presentation/Common/includes.php");
   ?>
 

@@ -103,6 +103,11 @@ function mds_csrf_input()
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(mds_get_csrf_token(), ENT_QUOTES, 'UTF-8') . '">';
 }
 
+function mds_h($value)
+{
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
 function mds_rate_limit_attempt($bucket, $subject, $limit, $windowSeconds)
 {
     $limit = max(1, (int)$limit);

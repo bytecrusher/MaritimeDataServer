@@ -498,10 +498,12 @@ class SettingsPageService
             }
 
             if ($check['type'] === 'no_rows') {
-                if (!preg_match('/^[A-Za-z0-9_]+$/', $check['table'])) {
+                $sql = self::sqlForNoRowsMigrationCheck($check);
+                if ($sql === null) {
                     return false;
                 }
-                $statement = $pdo->query("SELECT COUNT(*) AS badRows FROM `" . $check['table'] . "` WHERE " . $check['where']);
+                $statement = $pdo->prepare($sql);
+                $statement->execute();
                 $row = $statement->fetch(PDO::FETCH_ASSOC);
                 return ((int)($row['badRows'] ?? 0) === 0);
             }
@@ -511,6 +513,23 @@ class SettingsPageService
         }
 
         return false;
+    }
+
+    private static function sqlForNoRowsMigrationCheck(array $check)
+    {
+        $key = ($check['table'] ?? '') . '|' . ($check['where'] ?? '');
+        $queries = array(
+            "securityTokens|`userId` = 0 OR `securityToken` = ''" =>
+                "SELECT COUNT(*) AS badRows FROM `securityTokens` WHERE `userId` = 0 OR `securityToken` = ''",
+            "users|`lastName` = 'HÃ¶che'" =>
+                "SELECT COUNT(*) AS badRows FROM `users` WHERE `lastName` = 'HÃ¶che'",
+            "sensorTypes|`name` = 'GPS' AND `description` = 'Coorinates'" =>
+                "SELECT COUNT(*) AS badRows FROM `sensorTypes` WHERE `name` = 'GPS' AND `description` = 'Coorinates'",
+            "sensorConfig|`name` = 'Wakeup unknown'" =>
+                "SELECT COUNT(*) AS badRows FROM `sensorConfig` WHERE `name` = 'Wakeup unknown'",
+        );
+
+        return $queries[$key] ?? null;
     }
 
     private static function describeMigrationCheck(array $check)

@@ -10,12 +10,11 @@
     // get all Boards
     global $pdo;
     global $mysqli;
-    $query = sprintf("SELECT * FROM boardconfig ORDER BY id");
-    //execute query
-    $result = $pdo->query($query);
+    $statement = $pdo->prepare("SELECT * FROM boardconfig ORDER BY id");
+    $statement->execute();
     //loop through the returned data
     //$data = array();
-    foreach ($result as $row) {
+    foreach ($statement as $row) {
         //$data[] = $row;
         echo "board id: " . $row['id'] . ", ";
         $boardIsOnline = checkDeviceIsOnline($row['id']);
@@ -24,12 +23,6 @@
             //echo ", Board is Online: " . $boardIsOnline;
             echo ", Board is Online: true";
 
-            //$query2 = sprintf("SELECT * FROM sensorconfig WHERE boardid = " . $row['id'] . " ORDER BY id");
-            //$result2 = $pdo->query($query2);
-            //foreach ($result2 as $row2) {
-                //$data[] = $row2;
-            //    echo "sensor id: " . $row2['id'] . ", ";
-            //}
         } else {
             echo ", Board is Online: false";
         }

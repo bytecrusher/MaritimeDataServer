@@ -24,14 +24,16 @@ class dbGetData {
 
   public static function getAllBoards() {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->query("SELECT * FROM boardConfig ORDER BY id");
+    $statement = $pdo->prepare("SELECT * FROM boardConfig ORDER BY id");
+    $statement->execute();
     return $statement->fetchAll(PDO::FETCH_ASSOC);
   }
 
   public static function getRecentTtnDebugRows($limit = 30) {
     $pdo = dbConfig::getInstance();
     $limit = max(1, min((int)$limit, 500));
-    $statement = $pdo->query("SELECT * FROM ttnDataLoraBoatMonitor ORDER BY id DESC LIMIT " . $limit);
+    $statement = $pdo->prepare("SELECT * FROM ttnDataLoraBoatMonitor ORDER BY id DESC LIMIT " . $limit);
+    $statement->execute();
     return $statement->fetchAll(PDO::FETCH_ASSOC);
   }
 }

@@ -141,21 +141,34 @@ if(strlen($ttn_post) > 0) {
         );
     }
 
-    $DATABASE_HOST = $config::$dbHost;
-    $DATABASE_USERNAME = $config::$dbUser;
-    $DATABASE_PASSWORD = $config::$dbPassword;
-    $DATABASE_NAME = $config::$dbName;
-
-    $db_connect = mysqli_connect($DATABASE_HOST, $DATABASE_USERNAME, $DATABASE_PASSWORD, $DATABASE_NAME);
-
     $server_datetime = date("Y-m-d H:i:s", time());
 
     if ($sensor_raw_payload != null) {
-    mysqli_query($db_connect, "INSERT INTO `ttnDataLoraBoatMonitor` (`id`, `datetime`, `app_id`, `dev_id`, `ttn_timestamp`, `gtw_id`, `gtw_rssi`,"
-            . " `gtw_snr`, `gtw_channel_index`, `gtw_bandwidth`, `gtw_sf`, `dev_counter`, `dev_raw_payload`, `dev_value_1`, `dev_value_2`, `dev_value_3`, `dev_value_4`) "
-            . "VALUES (NULL, '$server_datetime', '$ttn_app_id', '$ttn_dev_id', '$ttn_time', '$gtw_id', '$gtw_rssi', '$gtw_snr', '2', '55', '4', $frame_counter, "
-            . " '$sensor_raw_payload', '$sensor_temperature', '$sensor_temperature_2', '$sensor_humidity', '$sensor_battery');
-    ");
+      $ttnDebugStatement = $pdo2->prepare(
+        "INSERT INTO `ttnDataLoraBoatMonitor`
+          (`datetime`, `app_id`, `dev_id`, `ttn_timestamp`, `gtw_id`, `gtw_rssi`,
+           `gtw_snr`, `gtw_channel_index`, `gtw_bandwidth`, `gtw_sf`, `dev_counter`,
+           `dev_raw_payload`, `dev_value_1`, `dev_value_2`, `dev_value_3`, `dev_value_4`)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      );
+      $ttnDebugStatement->execute(array(
+        $server_datetime,
+        $ttn_app_id,
+        $ttn_dev_id,
+        $ttn_time,
+        $gtw_id,
+        $gtw_rssi,
+        $gtw_snr,
+        2,
+        55,
+        4,
+        (int)$frame_counter,
+        $sensor_raw_payload,
+        $sensor_temperature,
+        $sensor_temperature_2,
+        $sensor_humidity,
+        $sensor_battery
+      ));
     }
 
     // TODO: insert data into 'sensordata' (first get Board-ID by TTN Appid and Devid)
@@ -319,7 +332,7 @@ if(strlen($ttn_post) > 0) {
       "sensors" => $sensors
     ));
 
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,  2);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 15);

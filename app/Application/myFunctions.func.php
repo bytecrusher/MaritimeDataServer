@@ -48,6 +48,28 @@ class myFunctions {
 		return $str;
 	}
 
+	public static function hashSecurityToken($securityToken) {
+		$secret = (string)(configuration::$md5secretString ?? '');
+		if ($secret !== '') {
+			return hash_hmac('sha256', (string)$securityToken, $secret);
+		}
+
+		return hash('sha256', (string)$securityToken);
+	}
+
+	public static function securityTokenMatches($securityToken, $storedHash) {
+		$storedHash = (string)$storedHash;
+		if ($storedHash === '') {
+			return false;
+		}
+
+		if (hash_equals($storedHash, self::hashSecurityToken($securityToken))) {
+			return true;
+		}
+
+		return strlen($storedHash) === 40 && hash_equals($storedHash, sha1((string)$securityToken));
+	}
+
 	/**
 	 * Returns the URL to the site without the script name.
 	 */
@@ -218,7 +240,7 @@ class myFunctions {
 	      return false;
 	    }
 
-	    if (sha1($securityToken) !== $tokenRow['securityToken']) {
+	    if (!self::securityTokenMatches($securityToken, $tokenRow['securityToken'])) {
 	      return false;
 	    }
 
@@ -335,10 +357,12 @@ class myFunctions {
   /*
   * Add SensorConfig Object if a given board id
   */
-  public function addSensorConfig($boardId, $typIdName, $sensorName) {
-    $pdo = dbConfig::getInstance();
-    $valuesDefined = false;
-    $mySensorTypId = $pdo->query('SELECT id, name FROM sensorTypes WHERE name = "' . $typIdName . '" LIMIT 1')->fetchObject('sensorTyp');
+	  public function addSensorConfig($boardId, $typIdName, $sensorName) {
+	    $pdo = dbConfig::getInstance();
+	    $valuesDefined = false;
+	    $sensorTypeStatement = $pdo->prepare("SELECT id, name FROM sensorTypes WHERE name = ? LIMIT 1");
+	    $sensorTypeStatement->execute(array($typIdName));
+	    $mySensorTypId = $sensorTypeStatement->fetchObject('sensorTyp');
     if (!$mySensorTypId) {
       throw new Exception('Unknown sensor type: ' . $typIdName);
     }

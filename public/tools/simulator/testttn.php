@@ -10,10 +10,23 @@
  */
 
 require_once dirname(__DIR__, 3) . "/bootstrap/app.php";
+require_once dirname(__DIR__, 3) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__, 3) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
+require_once __DIR__ . "/mdsSimulatorConfig.php";
 
 // Einheitlicher Response-Typ für das Ajax im Simulator
 header('Content-Type: text/plain; charset=utf-8');
+mds_start_session();
+if (empty($_SESSION['userId']) || !myFunctions::isUserAdmin((int)$_SESSION['userId'])) {
+    http_response_code(403);
+    echo 'Admin permissions required.';
+    exit;
+}
+if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    echo 'Invalid CSRF token.';
+    exit;
+}
 
 // -------------------------------------------------------
 // Eingaben validieren
@@ -32,6 +45,56 @@ if (!filter_var($url, FILTER_VALIDATE_URL)) {
 $scheme = parse_url($url, PHP_URL_SCHEME);
 if (!in_array($scheme, ['http', 'https'], true)) {
     echo 'Fehler: Nur http/https-URLs sind erlaubt.';
+    exit;
+}
+
+function mds_simulator_normalize_url($url)
+{
+    $parts = parse_url($url);
+    if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
+        return null;
+    }
+
+    $scheme = strtolower((string)$parts['scheme']);
+    if (!in_array($scheme, ['http', 'https'], true)) {
+        return null;
+    }
+
+    $host = strtolower((string)$parts['host']);
+    $port = isset($parts['port']) ? (int)$parts['port'] : null;
+    $portPart = '';
+    if ($port !== null && !(($scheme === 'http' && $port === 80) || ($scheme === 'https' && $port === 443))) {
+        $portPart = ':' . $port;
+    }
+
+    $path = $parts['path'] ?? '/';
+    return $scheme . '://' . $host . $portPart . $path;
+}
+
+function mds_simulator_allowed_urls()
+{
+    $config = new configuration();
+    $simulatorConfig = new mdsSimulatorConfig();
+    $urls = array((string)$config::$baseurl . '/webhooks/ttn.php');
+    foreach ((array)$simulatorConfig::$mdsDestination as $destinationUrl) {
+        $urls[] = (string)$destinationUrl;
+    }
+
+    $normalized = array();
+    foreach ($urls as $allowedUrl) {
+        $normalizedUrl = mds_simulator_normalize_url($allowedUrl);
+        if ($normalizedUrl !== null) {
+            $normalized[$normalizedUrl] = true;
+        }
+    }
+
+    return $normalized;
+}
+
+$normalizedUrl = mds_simulator_normalize_url($url);
+if ($normalizedUrl === null || !isset(mds_simulator_allowed_urls()[$normalizedUrl])) {
+    http_response_code(403);
+    echo 'Fehler: Ziel-URL ist nicht in der Simulator-Allowlist.';
     exit;
 }
 
@@ -179,10 +242,6 @@ try {
         $cURL = null;
         throw new Exception('failed to initialize');
     }
-
-    // Optional: SSL-Optionen, falls nötig
-    // curl_setopt($cURL, CURLOPT_SSL_VERIFYPEER, false);
-    // curl_setopt($cURL, CURLOPT_SSL_VERIFYHOST, 2);
 
     curl_setopt($cURL, CURLOPT_POST, true);
     curl_setopt($cURL, CURLOPT_POSTFIELDS, $payloadJson);

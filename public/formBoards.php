@@ -61,42 +61,42 @@
 
       <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%">id</span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id="id" name='id' value='<?=$boardObj->getId();?>'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id="id" name='id' value='<?php echo mds_h($boardObj->getId()); ?>'>
         </div>
 
         <div class="input-group mb-3">
         <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id='macAddress' name='macAddress' value='<?=$boardObj->getMacAddress();?>'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id='macAddress' name='macAddress' value='<?php echo mds_h($boardObj->getMacAddress()); ?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('form.board.type'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardType' name='boardType' value='<?=$boardObj->getBoardTypeName();?>'>
+          <input type="text" readonly class="form-control" style="background:#e9ecef" id='boardType' name='boardType' value='<?php echo mds_h($boardObj->getBoardTypeName()); ?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text"  class="form-control" id='name' name='name' value='<?=$boardObj->getName();?>'>
+          <input type="text"  class="form-control" id='name' name='name' value='<?php echo mds_h($boardObj->getName()); ?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" class="form-control" id='location' name='location' value='<?=$boardObj->getLocation();?>'>
+          <input type="text" class="form-control" id='location' name='location' value='<?php echo mds_h($boardObj->getLocation()); ?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" class="form-control" id='description' name='description' value='<?=$boardObj->getDescription();?>'>
+          <input type="text" class="form-control" id='description' name='description' value='<?php echo mds_h($boardObj->getDescription()); ?>'>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('settings.ttn_app_id'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" class="form-control" id='ttnAppId' name='ttnAppId' value='<?=$boardObj->getTtnAppId();?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
+          <input type="text" class="form-control" id='ttnAppId' name='ttnAppId' value='<?php echo mds_h($boardObj->getTtnAppId()); ?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('settings.ttn_dev_id'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" class="form-control" id='ttnDevId' name='ttnDevId' value='<?=$boardObj->getTtnDevId();?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
+          <input type="text" class="form-control" id='ttnDevId' name='ttnDevId' value='<?php echo mds_h($boardObj->getTtnDevId()); ?>' pattern="^[_A-Za-z0-9\-]{1,36}" maxlength="36" title="Höchstens 36 Zeichen sowie nur Kleinbuchstaben und Zahlen." style="background:#e9ecef" readonly>
         </div>
 
         <!--div class="input-group mb-3">
@@ -115,7 +115,7 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%"><?php echo htmlspecialchars(mds_t('form.board.firmware_version'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?=$boardObj->getFirmwareVersion();?>' style="background:#e9ecef" readonly>
+          <input type="text" readonly class="form-control" id='firmwareversion' name='firmwareversion' value='<?php echo mds_h($boardObj->getFirmwareVersion()); ?>' style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
@@ -151,12 +151,12 @@
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces"><?php echo htmlspecialchars(mds_t('settings.update_interval'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?=$boardObj->getUpdateDataTimer();?>' style="background:#e9ecef" readonly>
+          <input type="text" class="form-control" id='updateDataTimer' name='updateDataTimer' value='<?php echo mds_h($boardObj->getUpdateDataTimer()); ?>' style="background:#e9ecef" readonly>
         </div>
 
         <div class="input-group mb-3">
           <span class="input-group-text" style="width: 30%; white-space: break-spaces"><?php echo htmlspecialchars(mds_t('form.board.offline_after'), ENT_QUOTES, 'UTF-8'); ?></span>
-          <input type="text" class="form-control" id='offlineDataTimer' name='offlineDataTimer' value='<?=$boardObj->getOfflineDataTimer();?>' title="After this timer, the board displays as offline.">
+          <input type="text" class="form-control" id='offlineDataTimer' name='offlineDataTimer' value='<?php echo mds_h($boardObj->getOfflineDataTimer()); ?>' title="After this timer, the board displays as offline.">
         </div>
 
         <?php
@@ -173,9 +173,9 @@
               }
 							foreach ($allUsers as $singleRowUser) {
 								if ($boardObj->getOwnerUserId() == $singleRowUser['id']) {
-									echo "<option selected value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
+									echo "<option selected value='" . (int)$singleRowUser['id'] . "'>" . (int)$singleRowUser['id'] . " : " . mds_h($singleRowUser['email']) . "</option>";
 								} else {
-									echo "<option value='" . $singleRowUser['id'] . "'>" . $singleRowUser['id'] . " : " . $singleRowUser['email'] . "</option>";
+									echo "<option value='" . (int)$singleRowUser['id'] . "'>" . (int)$singleRowUser['id'] . " : " . mds_h($singleRowUser['email']) . "</option>";
 								}
 							}
 							?></select>
@@ -239,7 +239,7 @@
 <script>
   function clicked(e)
   {
-    if(!confirm(<?php echo json_encode(mds_t('form.board.remove_confirm'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?> + ' ' + <?=$boardObj->getId();?> + '?')) {
+    if(!confirm(<?php echo json_encode(mds_t('form.board.remove_confirm'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?> + ' ' + <?php echo (int)$boardObj->getId(); ?> + '?')) {
       e.preventDefault();
     }
   }

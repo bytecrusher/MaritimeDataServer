@@ -12,6 +12,9 @@ Thumbs.db
 ######################
 *.log
 *.csv
+docs/db_design/*.sql
+!docs/db_design/migrations/
+!docs/db_design/migrations/*.sql
 var/status/*.json
 node_modules/*
 

@@ -387,7 +387,7 @@ class dbUpdateData {
     $securityToken = myFunctions::random_string();
     try {
       $insert = $pdo->prepare("INSERT INTO securityTokens (userId, identifier, securityToken) VALUES (:userId, :identifier, :securityToken)");
-      $insert->execute(array('userId' => $userId, 'identifier' => $identifier, 'securityToken' => sha1($securityToken)));
+      $insert->execute(array('userId' => $userId, 'identifier' => $identifier, 'securityToken' => myFunctions::hashSecurityToken($securityToken)));
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: insertSecurityToken not inserted successfully for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
       writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);

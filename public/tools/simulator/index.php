@@ -1,5 +1,12 @@
 <?php
 require_once dirname(__DIR__, 3) . '/bootstrap/app.php';
+require_once dirname(__DIR__, 3) . '/app/Application/myFunctions.func.php';
+mds_start_session();
+if (empty($_SESSION['userId']) || !myFunctions::isUserAdmin((int)$_SESSION['userId'])) {
+    http_response_code(403);
+    echo 'Admin permissions required.';
+    exit;
+}
 ?>
 <!doctype html>
 <html lang="de">
@@ -221,6 +228,7 @@ require_once dirname(__DIR__, 3) . '/bootstrap/app.php';
 
 
 <script>
+    const simulatorCsrfToken = <?php echo json_encode(mds_get_csrf_token(), JSON_UNESCAPED_SLASHES); ?>;
     ttncounter = 0;
     let timerVariable;
 
@@ -299,13 +307,14 @@ require_once dirname(__DIR__, 3) . '/bootstrap/app.php';
             ? document.getElementById('inputCustomUrl').value.trim()
             : urlRadio.value;
         if (!destUrl) {
-            $("p.ajax-response").html("Bitte Ziel-URL wählen oder unter „Eigene URL“ eintragen.").css("color", "var(--bs-danger, #dc3545)");
+            $("p.ajax-response").text("Bitte Ziel-URL wählen oder unter „Eigene URL“ eintragen.").css("color", "var(--bs-danger, #dc3545)");
             return;
         }
         $.ajax({
             method: "POST",
             url: "testttn.php",
             data: {
+                csrf_token: simulatorCsrfToken,
                 url: destUrl,
                 ttncounter: ttncounter,
                 tempbattery: tempbattery,
@@ -322,11 +331,11 @@ require_once dirname(__DIR__, 3) . '/bootstrap/app.php';
             }
         })
             .done(function (response) {
-                $("p.ajax-response").html(response);
+                $("p.ajax-response").text(response);
                 appendLog();
             })
             .fail(function (xhr, status, err) {
-                $("p.ajax-response").html("Fehler: " + (err || status)).css("color", "var(--bs-danger, #dc3545)");
+                $("p.ajax-response").text("Fehler: " + (err || status)).css("color", "var(--bs-danger, #dc3545)");
             });
 
         function appendLog() {

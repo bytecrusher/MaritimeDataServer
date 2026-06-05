@@ -94,7 +94,13 @@ th.rotated-text > div > span {
         g = document.createElement('div');
                 g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
                 g.setAttribute("role", "alert");
-                g.innerHTML = "<?php echo $success_msg; ?><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+                g.textContent = <?php echo json_encode(strip_tags((string)$success_msg), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+                const closeButton = document.createElement('button');
+                closeButton.type = 'button';
+                closeButton.className = 'btn-close';
+                closeButton.setAttribute('data-bs-dismiss', 'alert');
+                closeButton.setAttribute('aria-label', 'Close');
+                g.appendChild(closeButton);
                 const bsAlert = new bootstrap.Alert(g);
                 // Dismiss time out
                 setTimeout(() => {
@@ -114,7 +120,13 @@ th.rotated-text > div > span {
         g = document.createElement('div');
         g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
         g.setAttribute("role", "alert");
-        g.innerHTML = "<?php echo $error_msg; ?><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
+        g.textContent = <?php echo json_encode(strip_tags((string)$error_msg), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+        g.appendChild(closeButton);
         const bsAlert = new bootstrap.Alert(g);
         // Dismiss time out
         setTimeout(() => {
@@ -431,27 +443,27 @@ th.rotated-text > div > span {
           foreach($myBoards as $singleRowMyBoard) {
           ?>
             <tr>
-            <td class='toggleDisplayId'> <?php echo $singleRowMyBoard['id'] ?></td>
-            <td class='toggleDisplayMacAddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['macAddress'] ?></td>
-            <td><?php echo $singleRowMyBoard['name'] ?></td>
-            <td class='toggleDisplayLocation'><?php echo $singleRowMyBoard['location'] ?></td>
-            <td><?php echo $singleRowMyBoard['description'] ?></td>
-            <td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['ttnDevId'] ?></td>
+            <td class='toggleDisplayId'> <?php echo (int)$singleRowMyBoard['id']; ?></td>
+            <td class='toggleDisplayMacAddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo mds_h($singleRowMyBoard['macAddress']); ?></td>
+            <td><?php echo mds_h($singleRowMyBoard['name']); ?></td>
+            <td class='toggleDisplayLocation'><?php echo mds_h($singleRowMyBoard['location']); ?></td>
+            <td><?php echo mds_h($singleRowMyBoard['description']); ?></td>
+            <td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo mds_h($singleRowMyBoard['ttnDevId']); ?></td>
           <?php
             $sensorsOfBoard = myFunctions::getAllSensorsOfBoardOld($singleRowMyBoard['id']);
             echo "<td>".count($sensorsOfBoard)."</td>";
 
             if(isset($singleRowMyBoard['alarmOnUnavailable']) && $singleRowMyBoard['alarmOnUnavailable'] == '1') {
             ?>
-              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo$singleRowMyBoard['id']?> "' disabled name='alarmOnUnavailable' value=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> " checked=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> "></td>
+              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo (int)$singleRowMyBoard['id']; ?>' disabled name='alarmOnUnavailable' value='1' checked></td>
             <?php
             } else {
             ?>
-              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" <?php echo$singleRowMyBoard['id'] ?> "' disabled name='alarmOnUnavailable' value='1'></td>
+              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo (int)$singleRowMyBoard['id']; ?>' disabled name='alarmOnUnavailable' value='1'></td>
             <?php
             }
             ?>
-              <td><a href="formBoards.php?id=<?php echo $singleRowMyBoard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
+              <td><a href="formBoards.php?id=<?php echo (int)$singleRowMyBoard['id']; ?>"><i class='bi bi-pencil-fill'> </i></a></td>
             </tr>
             <?php
           }
@@ -626,30 +638,30 @@ th.rotated-text > div > span {
           foreach($allBoards as $singleRowMyBoard) {
           ?>
             <tr>
-            <td class='toggleDisplayId'> <?php echo $singleRowMyBoard['id'] ?></td>
-            <td class='toggleDisplayMacAddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['macAddress'] ?></td>
-            <td><?php echo $singleRowMyBoard['ownerUserId'] ?></td>
+            <td class='toggleDisplayId'> <?php echo (int)$singleRowMyBoard['id']; ?></td>
+            <td class='toggleDisplayMacAddress' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo mds_h($singleRowMyBoard['macAddress']); ?></td>
+            <td><?php echo mds_h($singleRowMyBoard['ownerUserId']); ?></td>
 
-            <td><?php echo $singleRowMyBoard['name'] ?></td>
-            <td class='toggleDisplayLocation'><?php echo $singleRowMyBoard['location'] ?></td>
-            <td><?php echo $singleRowMyBoard['description'] ?></td>
-            <td class='toggleDisplayTtnAppId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['ttnAppId'] ?></td>
-            <td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo $singleRowMyBoard['ttnDevId'] ?></td>
+            <td><?php echo mds_h($singleRowMyBoard['name']); ?></td>
+            <td class='toggleDisplayLocation'><?php echo mds_h($singleRowMyBoard['location']); ?></td>
+            <td><?php echo mds_h($singleRowMyBoard['description']); ?></td>
+            <td class='toggleDisplayTtnAppId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo mds_h($singleRowMyBoard['ttnAppId']); ?></td>
+            <td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo mds_h($singleRowMyBoard['ttnDevId']); ?></td>
           <?php
             $sensorsOfBoard = myFunctions::getAllSensorsOfBoardOld($singleRowMyBoard['id']);
             echo "<td>".count($sensorsOfBoard)."</td>";
 
             if(isset($singleRowMyBoard['alarmOnUnavailable']) && $singleRowMyBoard['alarmOnUnavailable'] == '1') {
             ?>
-              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo$singleRowMyBoard['id']?> "' disabled name='alarmOnUnavailable' value=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> " checked=" <?php echo $singleRowMyBoard['alarmOnUnavailable'] ?> "></td>
+              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo (int)$singleRowMyBoard['id']; ?>' disabled name='alarmOnUnavailable' value='1' checked></td>
             <?php
             } else {
             ?>
-              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable" <?php echo$singleRowMyBoard['id'] ?> "' disabled name='alarmOnUnavailable' value='1'></td>
+              <td><input type='checkbox' class='form-check-input' id='alarmOnUnavailable<?php echo (int)$singleRowMyBoard['id']; ?>' disabled name='alarmOnUnavailable' value='1'></td>
             <?php
             }
             ?>
-              <td><a href="formBoards.php?id=<?php echo $singleRowMyBoard['id'] ?>"><i class='bi bi-pencil-fill'> </i></td>
+              <td><a href="formBoards.php?id=<?php echo (int)$singleRowMyBoard['id']; ?>"><i class='bi bi-pencil-fill'> </i></a></td>
             </tr>
             <?php
           }
@@ -686,34 +698,34 @@ th.rotated-text > div > span {
                 if(isset($singleRowUser['active']) && $singleRowUser['active'] == '1')
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='active<?php echo $singleRowUser['id'] ?>' name='active[<?php echo $singleRowUser['id'] ?>]' value='0' checked=<?php echo $singleRowUser['active'] ?>>
-                  <input type='checkbox' class='form-check-input' id='active<?php echo $singleRowUser['id'] ?>' name='active[<?php echo $singleRowUser['id'] ?>]' value='1' checked=<?php echo $singleRowUser['active'] ?>></td>
+                  <td><input type='hidden' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='1' checked></td>
                 <?php
                 }
                 else
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='active<?php echo $singleRowUser['id'] ?>' name='active[<?php echo $singleRowUser['id'] ?>]' value='0'>
-                  <input type='checkbox' class='form-check-input' id='active<?php echo $singleRowUser['id'] ?>' name='active[<?php echo $singleRowUser['id'] ?>]' value='1'></td>
+                  <td><input type='hidden' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='1'></td>
                 <?php
                 }
                 ?>
-                <td><?php echo $singleRowUser['firstName'] ?></td>
-                <td><?php echo $singleRowUser['lastName'] ?></td>
-                <td><a href="mailto:<?php echo $singleRowUser['email'] ?>"><?php echo $singleRowUser['email'] ?></a></td>
+                <td><?php echo mds_h($singleRowUser['firstName']); ?></td>
+                <td><?php echo mds_h($singleRowUser['lastName']); ?></td>
+                <td><a href="mailto:<?php echo mds_h($singleRowUser['email']); ?>"><?php echo mds_h($singleRowUser['email']); ?></a></td>
                 <?php
                 if(isset($singleRowUser['userGroupAdmin']) && $singleRowUser['userGroupAdmin'] == '1')
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='0' checked=<?php echo $singleRowUser['userGroupAdmin'] ?>>
-                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='1' checked=<?php echo $singleRowUser['userGroupAdmin'] ?>></td>
+                  <td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='1' checked></td>
                 <?php
                 }
                 else
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='0'>
-                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo $singleRowUser['id'] ?>' name='userGroupAdmin[<?php echo $singleRowUser['id'] ?>]' value='1'></td>
+                  <td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='1'></td>
                 <?php
                 }
                 ?>
@@ -798,7 +810,7 @@ th.rotated-text > div > span {
               <div class="row">
                 <label for="apiKey" class="col col-sm-2 control-label">API Key:</label>
                 <div class="col col-sm-4">
-                  <input class="form-control" id="apiKey" name="apiKey" type="text" value="<?php echo $var_apiKey; ?>" required>
+                  <input class="form-control" id="apiKey" name="apiKey" type="text" value="<?php echo mds_h($var_apiKey); ?>" required>
                 </div>
               </div>
             </div>
@@ -1153,7 +1165,7 @@ th.rotated-text > div > span {
 
   $(function() {
     $('.myToggleButton').change(function() {  
-      $('#console-event').html('Toggle: ' + $(this).prop('checked'))
+      $('#console-event').text('Toggle: ' + $(this).prop('checked'))
       if ($(this).prop('checked') == true) {
         $(".table ." + $(this).attr("value")).show();
       } else {

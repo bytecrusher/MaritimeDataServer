@@ -1,6 +1,9 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
+require_once dirname(__DIR__, 2) . "/app/Support/install_guard.func.php";
+mds_deny_finished_install(true);
+
 require_once dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__, 2) . "/app/Application/dbUpdateData.php";
 require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";

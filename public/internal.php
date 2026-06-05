@@ -1366,11 +1366,17 @@
               })
                 .done(function( response ) {
                   if (!onceSensorOrderDone) {
-                    g = document.createElement('div');
-                    g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
-                    g.setAttribute("role", "alert");
-                    g.innerHTML = (window.mdsI18n?.sensorOrderSaved || "Sensor order saved.") + "<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
-                    const bsAlert = new bootstrap.Alert(g);
+	                    g = document.createElement('div');
+	                    g.setAttribute("class", "alert alert-success alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+	                    g.setAttribute("role", "alert");
+	                    g.textContent = window.mdsI18n?.sensorOrderSaved || "Sensor order saved.";
+	                    const closeButton = document.createElement('button');
+	                    closeButton.type = 'button';
+	                    closeButton.className = 'btn-close';
+	                    closeButton.setAttribute('data-bs-dismiss', 'alert');
+	                    closeButton.setAttribute('aria-label', 'Close');
+	                    g.appendChild(closeButton);
+	                    const bsAlert = new bootstrap.Alert(g);
                     // Dismiss time out
                     setTimeout(() => {
                       bsAlert.close();
@@ -1381,11 +1387,17 @@
                 })
                 .fail(function( response ) {
                   if (!onceSensorOrderFail) {
-                    g = document.createElement('div');
-                    g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
-                    g.setAttribute("role", "alert");
-                    g.innerHTML = (window.mdsI18n?.sensorOrderFailed || "Sensor order not saved.") + "<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>";
-                    const bsAlert = new bootstrap.Alert(g);
+	                    g = document.createElement('div');
+	                    g.setAttribute("class", "alert alert-danger alert-dismissible bg-opacity-70 bg-gray bg-opacity-20 shadow-risen");
+	                    g.setAttribute("role", "alert");
+	                    g.textContent = window.mdsI18n?.sensorOrderFailed || "Sensor order not saved.";
+	                    const closeButton = document.createElement('button');
+	                    closeButton.type = 'button';
+	                    closeButton.className = 'btn-close';
+	                    closeButton.setAttribute('data-bs-dismiss', 'alert');
+	                    closeButton.setAttribute('aria-label', 'Close');
+	                    g.appendChild(closeButton);
+	                    const bsAlert = new bootstrap.Alert(g);
                     // Dismiss time out
                     setTimeout(() => {
                       bsAlert.close();
@@ -1462,7 +1474,12 @@
         $.ajax({
           url: 'formSensors.php?id=' + myArray[0] + '&channel=' + myArray[1] + '&modal=true'
         }).done(function(response) {
-          $('.modal-content').html(response);
+          const modalContent = document.querySelector('.modal-content');
+          if (!modalContent) {
+            return;
+          }
+          const modalDocument = new DOMParser().parseFromString(response, 'text/html');
+          modalContent.replaceChildren(...Array.from(modalDocument.body.childNodes));
         });
       });
     })();
