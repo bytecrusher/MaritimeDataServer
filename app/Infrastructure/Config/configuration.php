@@ -238,6 +238,7 @@ class configuration {
             self::$sendEmails = $post['sendEmails'];
             self::$systemEmailAddress = $post['systemEmailAddress'];
             self::$applicationName = $post['applicationName'];
+            self::$otaUpdateSecret = trim((string)($post['otaUpdateSecret'] ?? self::$otaUpdateSecret));
             self::$defaultGaugeStyle = $defaultGaugeStyle;
             self::$defaultDashboardOnlineOnly = $post['defaultDashboardOnlineOnly'] ?? '0';
             self::$defaultChartWindowDays = (string)$defaultChartWindowDays;
@@ -264,6 +265,7 @@ class configuration {
             $jsonData['sendEmails'] = $post['sendEmails'];
             $jsonData['systemEmailAddress'] = $post['systemEmailAddress'];
             $jsonData['applicationName'] = $post['applicationName'];
+            $jsonData['otaUpdateSecret'] = self::$otaUpdateSecret;
             $jsonData['defaultGaugeStyle'] = self::$defaultGaugeStyle;
             $jsonData['defaultDashboardOnlineOnly'] = self::$defaultDashboardOnlineOnly;
             $jsonData['defaultChartWindowDays'] = self::$defaultChartWindowDays;

@@ -66,6 +66,9 @@ class SettingsPageService
             }
         } elseif ($save === 'serverSetting') {
             try {
+                if ((int)$userObj->getUserGroupAdmin() !== 1) {
+                    throw new RuntimeException('Admin permissions required.');
+                }
                 $config->saveServerSettings($post);
                 $result['success_msg'] = mds_t('settings.saved_server');
             } catch (Exception $e) {
@@ -155,6 +158,7 @@ class SettingsPageService
             'demoMode' => (bool) $config::$demoMode,
             'showQrCode' => $config::$ShowQrCode,
             'apiKey' => $config::$apiKey,
+            'otaUpdateSecret' => $config::$otaUpdateSecret,
             'sendEmails' => $config::$sendEmails,
             'myBoards' => $userObj->getMyBoardsAll(),
             'allBoards' => $isAdmin ? $userObj->getAllBoardsAdmin() : array(),
@@ -236,6 +240,13 @@ class SettingsPageService
                     array('type' => 'column', 'table' => 'users', 'column' => 'language'),
                 ),
             ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-06-07_firmware_version.sql',
+                'label' => 'Board firmware version',
+                'checks' => array(
+                    array('type' => 'column_type', 'table' => 'boardConfig', 'column' => 'firmwareVersion', 'contains' => 'varchar(64)'),
+                ),
+            ),
         );
     }
 
@@ -260,6 +271,9 @@ class SettingsPageService
         }
         if (!self::migrationDefinitionPassed($pdo, $migrations[3])) {
             $executedActions += self::runLanguageMigrationActions($pdo);
+        }
+        if (!self::migrationDefinitionPassed($pdo, $migrations[4])) {
+            $executedActions += self::runFirmwareVersionMigrationActions($pdo);
         }
 
         writeToLogFunction::write_to_log(
@@ -401,6 +415,16 @@ class SettingsPageService
         }
 
         return $actions;
+    }
+
+    private static function runFirmwareVersionMigrationActions(PDO $pdo)
+    {
+        if (self::migrationCheckPassed($pdo, array('type' => 'column_type', 'table' => 'boardConfig', 'column' => 'firmwareVersion', 'contains' => 'varchar(64)'))) {
+            return 0;
+        }
+
+        self::executeMigrationStatement($pdo, "ALTER TABLE `boardConfig` MODIFY `firmwareVersion` varchar(64) DEFAULT NULL");
+        return 1;
     }
 
     private static function addColumnIfMissing(PDO $pdo, $tableName, $columnName, $columnDefinition)

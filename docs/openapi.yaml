@@ -156,6 +156,7 @@ paths:
                     apiKey: my_api_key
                     macAddress: "94:B9:7E:FE:F5:40"
                     protocolVersion: "1"
+                    firmwareVersion: "1.2.3"
                   sensors:
                     - sensorType: ADC
                       sensorName: Battery
@@ -713,6 +714,22 @@ components:
         protocolVersion:
           type: string
           const: "1"
+        firmwareVersion:
+          type: string
+          maxLength: 64
+          description: Aktuelle Firmware-Version des Devices; wird auf dem Dashboard angezeigt.
+        firmware_version:
+          type: string
+          maxLength: 64
+          description: Alias für firmwareVersion
+        fwVersion:
+          type: string
+          maxLength: 64
+          description: Alias für firmwareVersion
+        firmware:
+          type: string
+          maxLength: 64
+          description: Alias für firmwareVersion
     ReceiveJsonSensor:
       type: object
       required: [date, time]

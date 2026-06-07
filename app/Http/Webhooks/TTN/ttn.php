@@ -108,6 +108,7 @@ if(strlen($ttn_post) > 0) {
     $sensor_battery = ttnPayloadValue($decodedPayload, array('BatV', 'voltage', 'battery'), 0);
     $sensor_temperature = ttnPayloadValue($decodedPayload, array('temperature', 'TempC_SHT', 'air.temperature'), 0);
     $sensor_battery2 = ttnPayloadValue($decodedPayload, array('voltage2'), 0);
+    $firmwareVersion = ttnFirmwareVersion($decodedPayload);
 
     // TTN Data
     $gtw_id = $bestRxMetadata->gateway_ids->gateway_id ?? '';
@@ -253,6 +254,9 @@ if(strlen($ttn_post) > 0) {
         "macAddress" => $singleRowBoardIdbyTTN['macAddress'],   // fake mac address for debug.
         "protocolVersion" => "1"   // Version of the used protocoll.
     );
+    if ($firmwareVersion !== null) {
+      $boardInfos["firmwareVersion"] = $firmwareVersion;
+    }
 
     $dateNow = date("d.m.Y");
     $timeNow = date("H:i:s");   
@@ -486,6 +490,20 @@ function ttnPayloadValue($payload, array $paths, $default = 0) {
         }
     }
     return $default;
+}
+
+function ttnFirmwareVersion($payload) {
+    $value = ttnPayloadValue($payload, array('firmwareVersion', 'firmware_version', 'fwVersion', 'firmware'), null);
+    if ($value === null) {
+        return null;
+    }
+
+    $value = trim((string)$value);
+    if ($value === '') {
+        return null;
+    }
+
+    return substr($value, 0, 64);
 }
 
 function ttnJsonResponse($statusCode, array $payload) {

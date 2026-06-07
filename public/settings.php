@@ -40,6 +40,7 @@ $pageData = SettingsPageService::buildPageData($userObj, $config);
 $varDemoMode = $pageData['demoMode'];
 $varShowQrCode = $pageData['showQrCode'];
 $var_apiKey = $pageData['apiKey'];
+$varOtaUpdateSecret = $pageData['otaUpdateSecret'];
 $varSend_emails = $pageData['sendEmails'];
 $myBoards = $pageData['myBoards'];
 $allBoards = $pageData['allBoards'];
@@ -811,6 +812,22 @@ th.rotated-text > div > span {
                 <label for="apiKey" class="col col-sm-2 control-label">API Key:</label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="apiKey" name="apiKey" type="text" value="<?php echo mds_h($var_apiKey); ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="otaUpdateSecret" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.ota_update_secret'), ENT_QUOTES, 'UTF-8'); ?></label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="otaUpdateSecret" name="otaUpdateSecret" type="password" autocomplete="new-password" value="<?php echo mds_h($varOtaUpdateSecret); ?>">
+                  <div class="form-text"><?php echo htmlspecialchars(mds_t('settings.ota_update_secret_help'), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="showOtaUpdateSecret" onclick="document.getElementById('otaUpdateSecret').type = this.checked ? 'text' : 'password';">
+                    <label class="form-check-label" for="showOtaUpdateSecret"><?php echo htmlspecialchars(mds_t('settings.show_secret'), ENT_QUOTES, 'UTF-8'); ?></label>
+                  </div>
                 </div>
               </div>
             </div>

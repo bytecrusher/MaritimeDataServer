@@ -35,7 +35,7 @@ CREATE TABLE `boardConfig` (
   `location` varchar(20) DEFAULT NULL,
   `description` varchar(50) DEFAULT NULL,
   `performUpdate` tinyint DEFAULT '0',
-  `firmwareVersion` varchar(10) DEFAULT NULL,
+  `firmwareVersion` varchar(64) DEFAULT NULL,
   `alarmOnUnavailable` tinyint DEFAULT '0',
   `updateDataTimer` int DEFAULT NULL,
   `boardTypeId` int DEFAULT NULL,

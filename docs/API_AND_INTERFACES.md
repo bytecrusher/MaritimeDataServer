@@ -163,7 +163,8 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
   "board": {
     "apiKey": "<configured-api-key>",
     "macAddress": "<board-mac-or-fake-mac>",
-    "protocolVersion": "1"
+    "protocolVersion": "1",
+    "firmwareVersion": "1.2.3"
   },
   "sensors": [
     {
@@ -214,7 +215,8 @@ Pflichtstruktur:
   "board": {
     "apiKey": "string",
     "macAddress": "string",
-    "protocolVersion": "1"
+    "protocolVersion": "1",
+    "firmwareVersion": "string"
   },
   "sensors": [
     {
@@ -230,6 +232,13 @@ Pflichtstruktur:
   ]
 }
 ```
+
+Optionale Board-Felder:
+
+- `firmwareVersion`, alternativ `firmware_version`, `fwVersion` oder `firmware`
+  - wird in `boardConfig.firmwareVersion` gespeichert
+  - wird im Dashboard pro Device angezeigt
+  - maximale gespeicherte Laenge: 64 Zeichen
 
 ### Sensor-Mapping
 
@@ -257,7 +266,8 @@ Empfohlene Payload fuer externe Geraete ohne bekannte `sensorId`:
   "board": {
     "apiKey": "my_api_key",
     "macAddress": "24:6F:28:7B:A9:14",
-    "protocolVersion": "1"
+    "protocolVersion": "1",
+    "firmwareVersion": "1.2.3"
   },
   "sensors": [
     {
@@ -611,6 +621,9 @@ Weitere Header werden geloggt, aber nicht zwingend validiert.
 Der Endpunkt ist durch ein Shared Secret geschuetzt. Der Server erwartet den
 Header `X-MDS-OTA-Secret`; der Wert muss exakt dem Eintrag `otaUpdateSecret`
 in `config/config.json` entsprechen.
+
+Admins koennen den Wert in der Weboberflaeche unter
+`Settings -> Server Setting -> OTA-Update-Secret` pflegen.
 
 Beispiel-Konfiguration:
 

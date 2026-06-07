@@ -88,6 +88,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $macAddress = test_input($boardData['macAddress']);
                 $macAddressId = check_macAddress($macAddress, $pdo2);
                 $responseBoardId = $macAddressId;
+                $firmwareVersion = extractFirmwareVersionFromBoardPayload($boardData);
+                if ($firmwareVersion !== null) {
+                    updateBoardFirmwareVersion($macAddressId, $firmwareVersion, $pdo2);
+                }
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                 $boardSensorCount = is_array($boardSensors) ? count($boardSensors) : 0;
                 writeToLogFunction::info(
@@ -96,6 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     array(
                         'boardId' => $macAddressId,
                         'macAddress' => $macAddress,
+                        'firmwareVersion' => $firmwareVersion,
                         'sensorConfigCount' => $boardSensorCount
                     )
                 );
@@ -410,8 +415,38 @@ function summarizeBoardPayloadForLog(array $boardData)
     return array(
         'protocolVersion' => $boardData['protocolVersion'] ?? null,
         'macAddress' => $boardData['macAddress'] ?? null,
+        'firmwareVersion' => extractFirmwareVersionFromBoardPayload($boardData),
         'apiKeyPresent' => isset($boardData['apiKey']) || isset($boardData['api_key']),
         'apiKeyMasked' => maskSecretForLog($boardData['apiKey'] ?? ($boardData['api_key'] ?? null)),
+    );
+}
+
+function extractFirmwareVersionFromBoardPayload(array $boardData)
+{
+    foreach (array('firmwareVersion', 'firmware_version', 'fwVersion', 'firmware') as $fieldName) {
+        if (!array_key_exists($fieldName, $boardData)) {
+            continue;
+        }
+
+        $firmwareVersion = trim((string)$boardData[$fieldName]);
+        if ($firmwareVersion === '') {
+            return null;
+        }
+
+        return substr(test_input($firmwareVersion), 0, 64);
+    }
+
+    return null;
+}
+
+function updateBoardFirmwareVersion($boardId, $firmwareVersion, PDO $pdo2)
+{
+    $statement = $pdo2->prepare("UPDATE boardConfig SET firmwareVersion = ? WHERE id = ?");
+    $statement->execute(array($firmwareVersion, $boardId));
+    writeToLogFunction::info(
+        'Board firmware version updated from receivejson payload.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array('boardId' => $boardId, 'firmwareVersion' => $firmwareVersion)
     );
 }
 

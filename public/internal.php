@@ -949,6 +949,7 @@
                         <div class="dashboard-board-summary">
                           <span><?php echo htmlspecialchars(mds_t('internal.update_every', array((int)$dashboardUpdateIntervalMs / 1000)), ENT_QUOTES, 'UTF-8'); ?></span>
                           <span><?php echo htmlspecialchars(mds_t('internal.offline_timer', array((int)$singleRowmyboard->getOfflineDataTimer())), ENT_QUOTES, 'UTF-8'); ?></span>
+                          <span><?php echo htmlspecialchars(mds_t('internal.firmware_version', array($singleRowmyboard->getFirmwareVersion() ?: '-')), ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
                       </div>
                       <div class="dashboard-board-badges">
