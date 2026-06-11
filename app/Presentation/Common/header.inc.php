@@ -174,7 +174,7 @@
   <div class="container-fluid">
     <a class="navbar-brand" href="<?php echo htmlspecialchars(mds_route_path('index.php'), ENT_QUOTES, 'UTF-8'); ?>">
       <img src="<?php echo htmlspecialchars(mds_asset_path('img/MDS_Logo_black.png'), ENT_QUOTES, 'UTF-8'); ?>" class="filter-green me-2" height="40px" />
-      Mausel Industries
+      Maritime Data Server
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon">.</span>

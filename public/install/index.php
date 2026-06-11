@@ -77,7 +77,7 @@
 <body>
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
     <div class="container-fluid">
-      <a class="navbar-brand" href="<?php echo htmlspecialchars(mds_route_path('index.php'), ENT_QUOTES, 'UTF-8'); ?>"><i class="bi bi-speedometer logo"> </i> Mausel Industries</a>
+      <a class="navbar-brand" href="<?php echo htmlspecialchars(mds_route_path('index.php'), ENT_QUOTES, 'UTF-8'); ?>"><i class="bi bi-speedometer logo"> </i> Maritime Data Server</a>
       <div id="navbar" class="navbar-collapse collapse">
       </div>
     </div>
