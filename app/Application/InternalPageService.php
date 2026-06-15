@@ -437,11 +437,15 @@ class InternalPageService
 
         if (!empty($points)) {
             $lastPoint = $points[count($points) - 1];
-            $points[] = self::buildEventTimelinePoint(
-                $windowEnd,
-                ((int)$lastPoint['y'] === 1) ? 'is-wakeup' : 'is-standby',
-                ((int)$lastPoint['y'] === 1) ? 'Wakeup' : 'Standby'
-            );
+            if ((int)$lastPoint['y'] === 1) {
+                $points[count($points) - 1]['openEnded'] = true;
+            } else {
+                $points[] = self::buildEventTimelinePoint(
+                    $windowEnd,
+                    'is-standby',
+                    'Standby'
+                );
+            }
         }
 
         $points = self::deduplicateEventTimelinePoints($points);
@@ -494,7 +498,11 @@ class InternalPageService
         for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
             $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
             $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
-            $segmentEnd = ($eventIndex + 1 < $eventCount) ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
+            $hasNextEvent = ($eventIndex + 1 < $eventCount);
+            if (!$hasNextEvent && $segmentState === 'is-wakeup') {
+                continue;
+            }
+            $segmentEnd = $hasNextEvent ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
 
             if ($segmentEnd <= $windowStart || $segmentStart >= $windowEnd || $segmentEnd <= $segmentStart) {
                 continue;
@@ -576,6 +584,9 @@ class InternalPageService
             $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
             $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
             $hasNextEvent = ($eventIndex + 1 < $eventCount);
+            if (!$hasNextEvent && $segmentState === 'is-wakeup') {
+                continue;
+            }
 
             $segmentEnd = $hasNextEvent ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
 

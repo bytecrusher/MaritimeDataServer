@@ -45,6 +45,9 @@ class SettingsPageService
             }
         } elseif ($save === 'users') {
             try {
+                if ((int)$userObj->getUserGroupAdmin() !== 1) {
+                    throw new RuntimeException('Admin permissions required.');
+                }
                 dbUpdateData::updateUserStatus($post);
                 $result['success_msg'] = 'User Status updated.';
             } catch (Exception $e) {
@@ -111,7 +114,7 @@ class SettingsPageService
         return $result;
     }
 
-    public static function handleBoardFormSubmission($post)
+    public static function handleBoardFormSubmission($userObj, $post)
     {
         $result = array(
             'success_msg' => null,
@@ -120,6 +123,12 @@ class SettingsPageService
 
         if (isset($post['submit_formBoards'])) {
             try {
+                if (!myFunctions::canUserAccessBoard((int)$userObj->getId(), (int)($post['id'] ?? 0))) {
+                    throw new RuntimeException('Access denied.');
+                }
+                if ((int)$userObj->getUserGroupAdmin() !== 1) {
+                    $post['ownerId'] = $userObj->getId();
+                }
                 dbUpdateData::updateBoard($post);
                 $result['success_msg'] = 'Board successfully updated.';
             } catch (Exception $e) {
@@ -127,6 +136,9 @@ class SettingsPageService
             }
         } elseif (isset($post['submit_formBoards_remove'])) {
             try {
+                if (!myFunctions::canUserAccessBoard((int)$userObj->getId(), (int)($post['id'] ?? 0))) {
+                    throw new RuntimeException('Access denied.');
+                }
                 dbUpdateData::removeBoardOwner($post);
                 $result['success_msg'] = 'Board successfully removed.';
             } catch (Exception $e) {

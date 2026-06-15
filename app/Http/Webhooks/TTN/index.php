@@ -10,6 +10,14 @@
 
 require_once(dirname(__DIR__, 4) . '/bootstrap/app.php');
 require_once(dirname(__DIR__, 3) . '/Infrastructure/Database/dbGetData.php');
+require_once(dirname(__DIR__, 3) . '/Application/myFunctions.func.php');
+
+mds_start_session();
+if (empty($_SESSION['userId']) || !myFunctions::isUserAdmin((int)$_SESSION['userId'])) {
+    http_response_code(403);
+    echo "<div class='alert alert-danger' role='alert'>Access denied.</div>";
+    return;
+}
 
 $debugRows = dbGetData::getRecentTtnDebugRows(30);
 $row_cnt = count($debugRows);

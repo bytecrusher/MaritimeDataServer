@@ -844,6 +844,7 @@
   }
 
   var DashboardUpdateInterval = <?php echo $dashboardUpdateIntervalMs; ?>;
+  const mdsCsrfToken = <?php echo json_encode(mds_get_csrf_token(), JSON_UNESCAPED_SLASHES); ?>;
   window.preferredChartWindowDays = <?php echo (int)$preferredChartWindowDays; ?>;
   window.eventTimelineWindowHours = <?php echo (int)$eventTimelineWindowHours; ?>;
   window.mdsI18n = <?php echo json_encode(array(
@@ -853,6 +854,7 @@
     'noSelectedEvents' => mds_t('js.no_selected_events'),
     'onlineSuffix' => mds_t('js.online_suffix'),
     'standbySuffix' => mds_t('js.standby_suffix'),
+    'openEnded' => mds_t('js.open_ended'),
     'onlineHours' => mds_t('js.online_hours'),
     'standbyHours' => mds_t('js.standby_hours'),
     'windowHours' => mds_t('js.window_hours'),
@@ -1361,6 +1363,7 @@
                 method: "POST",
                 url: "api/updateData.php",
                 data: { update: "sensorOrderNumber",
+                    csrf_token: mdsCsrfToken,
                     channel: SensorIdChannel[1],
                     orderNumber: $( this ).attr("data-id"),
                     id: SensorIdChannel[0] }

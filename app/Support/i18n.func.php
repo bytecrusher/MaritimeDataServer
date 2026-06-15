@@ -27,8 +27,8 @@ function mds_current_language()
     }
 
     if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['userObj']) && class_exists('user')) {
-        $userObj = @unserialize($_SESSION['userObj']);
-        if ($userObj && method_exists($userObj, 'getLanguage')) {
+        $userObj = @unserialize($_SESSION['userObj'], ['allowed_classes' => ['user']]);
+        if ($userObj instanceof user && method_exists($userObj, 'getLanguage')) {
             return mds_normalize_language($userObj->getLanguage());
         }
     }
@@ -255,7 +255,7 @@ function mds_translations()
             'internal.no_events' => 'No wakeup or standby events available yet.',
             'internal.events_in_history' => '%d events in history',
             'internal.event_duration' => 'Duration: %s',
-            'internal.event_duration_open' => 'Duration: open',
+            'internal.event_duration_open' => 'Duration: open / not final',
             'internal.boards_text' => 'Status, transmission path and assignment of your registered devices.',
             'internal.debug_text' => 'Raw data from `ttnDataLoraBoatMonitor` for analysis and troubleshooting.',
             'internal.debug_table_text' => 'All TTN raw data from `ttnDataLoraBoatMonitor`. Horizontally and vertically scrollable.',
@@ -305,6 +305,7 @@ function mds_translations()
             'js.no_selected_events' => 'No ESP events are available for the currently selected devices.',
             'js.online_suffix' => 'Online',
             'js.standby_suffix' => 'Standby',
+            'js.open_ended' => 'open / not final',
             'js.online_hours' => 'Online hours',
             'js.standby_hours' => 'Standby hours',
             'js.window_hours' => 'Window',
@@ -522,7 +523,7 @@ function mds_translations()
             'internal.no_events' => 'Noch keine Wakeup- oder Standby-Ereignisse vorhanden.',
             'internal.events_in_history' => '%d Ereignisse im Verlauf',
             'internal.event_duration' => 'Dauer: %s',
-            'internal.event_duration_open' => 'Dauer: offen',
+            'internal.event_duration_open' => 'Dauer: offen / nicht final',
             'internal.boards_text' => 'Status, Uebertragungsweg und Zuordnung deiner registrierten Devices.',
             'internal.debug_text' => 'Rohdaten aus `ttnDataLoraBoatMonitor` fuer Analyse und Fehlersuche.',
             'internal.debug_table_text' => 'Alle TTN-Rohdaten aus `ttnDataLoraBoatMonitor`. Horizontal und vertikal scrollbar.',
@@ -572,6 +573,7 @@ function mds_translations()
             'js.no_selected_events' => 'Fuer die aktuell ausgewaehlten Devices liegen keine ESP-Ereignisse vor.',
             'js.online_suffix' => 'Online',
             'js.standby_suffix' => 'Standby',
+            'js.open_ended' => 'offen / nicht final',
             'js.online_hours' => 'Online-Stunden',
             'js.standby_hours' => 'Standby-Stunden',
             'js.window_hours' => 'Fenster',

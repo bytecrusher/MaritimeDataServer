@@ -36,16 +36,17 @@ class myFunctions {
 	 * @return string
 	 */
 	public static function random_string() {
-		if(function_exists('openssl_random_pseudo_bytes')) {
-			$bytes = openssl_random_pseudo_bytes(16);
-			$str = bin2hex($bytes);
-		} else if(function_exists('mcrypt_create_iv')) {
-			$bytes = mcrypt_create_iv(16, MCRYPT_DEV_URANDOM);
-			$str = bin2hex($bytes);
-		} else {
-			$str = md5(uniqid(configuration::$md5secretString, true));
+		if (function_exists('random_bytes')) {
+			return bin2hex(random_bytes(32));
 		}
-		return $str;
+		if (function_exists('openssl_random_pseudo_bytes')) {
+			$strong = false;
+			$bytes = openssl_random_pseudo_bytes(32, $strong);
+			if ($bytes !== false && $strong === true) {
+				return bin2hex($bytes);
+			}
+		}
+		throw new RuntimeException('No secure random generator available.');
 	}
 
 	public static function hashSecurityToken($securityToken) {
@@ -253,6 +254,28 @@ class myFunctions {
 	    $statement->execute(array((int)$userId));
 	    $userRow = $statement->fetch(PDO::FETCH_ASSOC);
 	    return ($userRow !== false) && ((int)$userRow['userGroupAdmin'] === 1);
+	  }
+
+	  public static function canUserAccessBoard($userId, $boardId) {
+	    $userId = (int)$userId;
+	    $boardId = (int)$boardId;
+	    if (($userId <= 0) || ($boardId <= 0)) {
+	      return false;
+	    }
+
+	    if (self::isUserAdmin($userId)) {
+	      return true;
+	    }
+
+	    $pdo = dbConfig::getInstance();
+	    $statement = $pdo->prepare(
+	      "SELECT id
+	      FROM boardConfig
+	      WHERE id = ? AND ownerUserId = ?
+	      LIMIT 1"
+	    );
+	    $statement->execute(array($boardId, $userId));
+	    return $statement->fetch(PDO::FETCH_ASSOC) !== false;
 	  }
 
 	  public static function canUserAccessSensor($userId, $sensorId) {

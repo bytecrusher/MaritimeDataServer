@@ -476,7 +476,8 @@ function initializeEventTimeline24hChart() {
             label: function (context) {
               const rawPoint = context.raw || {};
               const stateLabel = Number(rawPoint.y) === 1 ? mdsLabel('onlineSuffix', 'Online') : mdsLabel('standbySuffix', 'Standby');
-              return context.dataset.label + ': ' + stateLabel + ' · ' + (rawPoint.timestamp || rawPoint.x || '');
+              const openLabel = rawPoint.openEnded ? ' · ' + mdsLabel('openEnded', 'open / not final') : '';
+              return context.dataset.label + ': ' + stateLabel + openLabel + ' · ' + (rawPoint.timestamp || rawPoint.x || '');
             }
           }
         }
@@ -556,6 +557,7 @@ function updateEventTimeline24hChart() {
         x: parseEventTimelineTimestamp(point.x || point.timestamp),
         y: Number(point.y),
         timestamp: point.timestamp,
+        openEnded: point.openEnded === true,
       };
     }).filter(function (point) {
       return Number.isFinite(point.x) && Number.isFinite(point.y);
@@ -622,7 +624,7 @@ function getEventTimelineEndMs(eventTimelineData) {
     });
   });
 
-  return windowEndMs > 0 ? windowEndMs : Date.now();
+  return Math.max(Date.now(), windowEndMs);
 }
 
 function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selectedWindowHours) {
@@ -632,6 +634,7 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
       x: parseEventTimelineTimestamp(point.x || point.timestamp),
       y: Number(point.y),
       timestamp: point.timestamp,
+      openEnded: point.openEnded === true,
     };
   }).filter(function (point) {
     return Number.isFinite(point.x) && Number.isFinite(point.y);
@@ -657,17 +660,20 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
       x: windowStartMs,
       y: lastPointBeforeWindow.y,
       timestamp: formatEventTimelineTimestamp(windowStartMs),
+      openEnded: lastPointBeforeWindow.openEnded === true,
     });
   }
 
   if (clippedPoints.length > 0) {
     const lastPoint = clippedPoints[clippedPoints.length - 1];
-    if (lastPoint.x < windowEndMs) {
+    if (lastPoint.x < windowEndMs && Number(lastPoint.y) !== 1) {
       clippedPoints.push({
         x: windowEndMs,
         y: lastPoint.y,
         timestamp: formatEventTimelineTimestamp(windowEndMs),
       });
+    } else if (Number(lastPoint.y) === 1) {
+      lastPoint.openEnded = true;
     }
   }
 

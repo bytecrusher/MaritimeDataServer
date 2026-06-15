@@ -542,17 +542,20 @@ class dbUpdateData {
   */
   public static function updateSensorOrderNumber($post) {
     $pdo = dbConfig::getInstance();
-    if (json_encode($post['channel']) != null) {
-      try {
-        $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET DashboardOrderNr=? WHERE sensorConfigId=? AND channelNr=?");
-  	    return $statement2->execute(array($post['orderNumber'], $post['id'], $post['channel']));
-      } catch (PDOException $e) {
-        writeToLogFunction::write_to_log("Error: Sensor order number not saved.", $_SERVER["SCRIPT_FILENAME"]);
-        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-        throw new Exception('Sensor order number not saved.');
-      }
+    $sensorId = isset($post['id']) ? (int)$post['id'] : 0;
+    $channelNr = isset($post['channel']) ? (int)$post['channel'] : 0;
+    $orderNumber = isset($post['orderNumber']) ? (int)$post['orderNumber'] : 0;
+    if ($sensorId <= 0 || $channelNr <= 0) {
+      return false;
     }
-    return true;
+    try {
+      $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET DashboardOrderNr=? WHERE sensorConfigId=? AND channelNr=?");
+      return $statement2->execute(array($orderNumber, $sensorId, $channelNr));
+    } catch (PDOException $e) {
+      writeToLogFunction::write_to_log("Error: Sensor order number not saved.", $_SERVER["SCRIPT_FILENAME"]);
+      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+      throw new Exception('Sensor order number not saved.');
+    }
   }
 
   /**

@@ -24,6 +24,18 @@
       die();
     }
 
+    if (!myFunctions::canUserAccessSensor((int)$currentUser->getId(), (int)($_POST['id'] ?? 0))) {
+      http_response_code(403);
+      $error_msg = 'Access denied.';
+      ?>
+      <div class="alert alert-danger">
+        <a href="#" class="close" data-bs-dismiss="alert" aria-label="close">&times;</a>
+        <?php echo htmlspecialchars($error_msg, ENT_QUOTES, 'UTF-8'); ?>
+      </div>
+      <?php
+      die();
+    }
+
     if (!isset($_POST['modal'])) {
       try {
         $updateSensorReturn = dbUpdateData::updateSensor($_POST);
@@ -84,7 +96,16 @@
 <?php
 }
 
-  $sensorPageData = SensorFormPageService::buildPageData($_GET['id'] ?? 0, $_GET['channel'] ?? null, isset($_GET['modal']));
+  try {
+    $sensorPageData = SensorFormPageService::buildPageData($currentUser, $_GET['id'] ?? 0, $_GET['channel'] ?? null, isset($_GET['modal']));
+  } catch (Throwable $e) {
+    http_response_code(403);
+    echo "<div class='alert alert-danger'>Access denied.</div>";
+    if (!isset($_GET['modal'])) {
+      include(dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php");
+    }
+    exit();
+  }
   $SensorConfig = $sensorPageData['sensorConfig'];
   $SensorChannelConfig = $sensorPageData['sensorChannels'];
   $SensorType = $sensorPageData['sensorType'];

@@ -22,6 +22,9 @@ class BoardFormPageService
         if (!$boardRow) {
             throw new RuntimeException('Board not found.');
         }
+        if (!myFunctions::canUserAccessBoard((int)$currentUser->getId(), $boardId)) {
+            throw new RuntimeException('Access denied.');
+        }
 
         return array(
             'boardId' => $boardId,

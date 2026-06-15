@@ -91,10 +91,10 @@ $config  = new configuration();
 					<input type="hidden" name="action" value="update" />
 					<br /><br />
 					<label><strong><?php echo htmlspecialchars(mds_t('reset.new_password'), ENT_QUOTES, 'UTF-8'); ?>:</strong></label><br />
-					<input type="password" name="pass1" maxlength="15" required />
+					<input type="password" name="pass1" maxlength="128" required />
 					<br /><br />
 						<label><strong><?php echo htmlspecialchars(mds_t('reset.new_password_repeat'), ENT_QUOTES, 'UTF-8'); ?>:</strong></label><br />
-						<input type="password" name="pass2" maxlength="15" required/>
+						<input type="password" name="pass2" maxlength="128" required/>
 						<br /><br />
 						<input type="hidden" name="userId" value="<?php echo $userId;?>"/>
 						<input type="hidden" name="code" value="<?php echo htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>"/>

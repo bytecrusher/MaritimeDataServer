@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !mds_verify_csrf_token($_POST['csrf
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error_msg) && (isset($_POST['submit_formBoards']) || isset($_POST['submit_formBoards_remove']))) {
-  $boardResult = SettingsPageService::handleBoardFormSubmission($_POST);
+  $boardResult = SettingsPageService::handleBoardFormSubmission($userObj, $_POST);
   $success_msg = $boardResult['success_msg'] ?? $success_msg ?? null;
   $error_msg = $boardResult['error_msg'] ?? $error_msg ?? null;
 }

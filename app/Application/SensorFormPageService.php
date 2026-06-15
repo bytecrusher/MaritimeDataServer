@@ -10,11 +10,14 @@ class SensorFormPageService
         return InternalPageService::resolveCurrentUserFromSession();
     }
 
-    public static function buildPageData($sensorId, $channelNr = null, $isModal = false)
+    public static function buildPageData($currentUser, $sensorId, $channelNr = null, $isModal = false)
     {
         $sensorId = (int)$sensorId;
         if ($sensorId <= 0) {
             throw new InvalidArgumentException('Invalid sensor id.');
+        }
+        if (!myFunctions::canUserAccessSensor((int)$currentUser->getId(), $sensorId)) {
+            throw new RuntimeException('Access denied.');
         }
 
         $sensorConfig = myFunctions::getSensorConfig($sensorId);
