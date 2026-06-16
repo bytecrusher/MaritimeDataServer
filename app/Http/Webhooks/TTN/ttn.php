@@ -517,20 +517,6 @@ function ttnStandbyState($payload) {
         return $normalizedState;
     }
 
-    $legacyStandbyEnabled = ttnNormalizeBooleanValue(
-        ttnPayloadValue($payload, array('standbyEnabled', 'standby_enabled', 'standbyModeEnabled', 'sleepEnabled'), null)
-    );
-    if ($legacyStandbyEnabled === false) {
-        return 'always_online';
-    }
-
-    $legacyAlwaysOnline = ttnNormalizeBooleanValue(
-        ttnPayloadValue($payload, array('alwaysOnline'), null)
-    );
-    if ($legacyAlwaysOnline === true) {
-        return 'always_online';
-    }
-
     return null;
 }
 

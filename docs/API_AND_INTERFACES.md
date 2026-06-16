@@ -187,7 +187,6 @@ Hinweis:
 - die interne TTN-Bridge sendet weiterhin `sensorId`
 - fuer externe Geraete ist `sensorId` inzwischen optional
 - wenn `decoded_payload` einen Zustandswert wie `standbyState`, `standby_state`, `powerState`, `deviceState` oder `sleepState` enthaelt, wird dieser in `board.standbyState` an `/ingest/receivejson.php` weitergereicht
-- Legacy-Fallback: alte Bool-Felder wie `standbyEnabled` oder `alwaysOnline` werden weiterhin akzeptiert, koennen aber nur `always_online` ausdruecken und nicht zwischen `wakeup` und `standby` unterscheiden
 
 ### Wichtige Hinweise
 
@@ -252,11 +251,6 @@ Optionale Board-Felder:
   - zusaetzlich akzeptiert MDS tolerante Schreibweisen wie `always online`, `always-online`, `wake`, `awake`, `sleep`
   - wenn `always_online` uebertragen wird, erzeugt MDS bei Bedarf ein persistentes ESP-Ereignis `Always online`
   - wenn `wakeup` oder `standby` uebertragen wird, schreibt MDS bei einem Zustandswechsel ein entsprechendes ESP-Ereignis
-- Legacy-Kompatibilitaet:
-  - `standbyEnabled`, `standby_enabled`, `standbyModeEnabled`, `sleepEnabled`, `alwaysOnline`
-  - diese alten Bool-Felder werden noch akzeptiert
-  - `false` bzw. `alwaysOnline=true` wird auf `always_online` gemappt
-  - `true` ist mehrdeutig und erzeugt keinen expliziten `wakeup`- oder `standby`-Zustand
 
 ### Sensor-Mapping
 

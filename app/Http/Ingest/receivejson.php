@@ -459,21 +459,6 @@ function extractStandbyStateFromBoardPayload(array $boardData)
         }
     }
 
-    foreach (array('standbyEnabled', 'standby_enabled', 'standbyModeEnabled', 'sleepEnabled', 'alwaysOnline') as $legacyFieldName) {
-        if (!array_key_exists($legacyFieldName, $boardData)) {
-            continue;
-        }
-
-        $normalized = normalizeBooleanPayloadValue($boardData[$legacyFieldName]);
-        if ($legacyFieldName === 'alwaysOnline' && $normalized !== null) {
-            return $normalized ? 'always_online' : null;
-        }
-        if ($normalized === false) {
-            return 'always_online';
-        }
-        return null;
-    }
-
     return null;
 }
 
@@ -699,36 +684,6 @@ function normalizeSensorValueForLog($value)
     }
 
     return (string)$value;
-}
-
-function normalizeBooleanPayloadValue($value)
-{
-    if (is_bool($value)) {
-        return $value;
-    }
-
-    if (is_int($value) || is_float($value)) {
-        return ((int)$value) !== 0;
-    }
-
-    if (!is_string($value)) {
-        return null;
-    }
-
-    $normalizedValue = mb_strtolower(trim($value));
-    if ($normalizedValue === '') {
-        return null;
-    }
-
-    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled'), true)) {
-        return true;
-    }
-
-    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled'), true)) {
-        return false;
-    }
-
-    return null;
 }
 
 function maskSecretForLog($secret)
