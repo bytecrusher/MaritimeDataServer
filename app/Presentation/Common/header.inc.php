@@ -97,17 +97,18 @@
       .navbar.mds-navbar .navbar-toggler {
         border: 1px solid rgba(255, 255, 255, 0.15);
         box-shadow: none;
+        position: relative;
       }
       .navbar.mds-navbar .navbar-toggler-icon {
         width: 1.15rem;
-        height: 1.15rem;
+        height: 0.9rem;
         background-image: none;
         position: relative;
+        display: block;
       }
       .navbar.mds-navbar .navbar-toggler-icon::before,
       .navbar.mds-navbar .navbar-toggler-icon::after,
       .navbar.mds-navbar .navbar-toggler-icon {
-        display: block;
         background-color: #fff;
         border-radius: 999px;
       }
@@ -120,8 +121,11 @@
         height: 2px;
       }
       .navbar.mds-navbar .navbar-toggler-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
         height: 2px;
-        margin-top: 0.45rem;
+        transform: translate(-50%, -50%);
       }
       .navbar.mds-navbar .navbar-toggler-icon::before {
         top: -0.35rem;
