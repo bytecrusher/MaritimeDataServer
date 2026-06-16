@@ -126,7 +126,6 @@
       .navbar.mds-navbar .navbar-toggler-icon {
         background-color: #fff;
         border-radius: 999px;
-        transition: transform 180ms ease, opacity 180ms ease, background-color 180ms ease, top 180ms ease;
       }
       .navbar.mds-navbar .navbar-toggler-icon::before,
       .navbar.mds-navbar .navbar-toggler-icon::after {
@@ -148,17 +147,6 @@
       }
       .navbar.mds-navbar .navbar-toggler-icon::after {
         top: 0.35rem;
-      }
-      .navbar.mds-navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
-        background-color: transparent;
-      }
-      .navbar.mds-navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
-        top: 0;
-        transform: rotate(45deg);
-      }
-      .navbar.mds-navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
-        top: 0;
-        transform: rotate(-45deg);
       }
       .navbar.mds-navbar .mds-qr-slot {
         max-width: 104px;
