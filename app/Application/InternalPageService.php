@@ -217,6 +217,11 @@ class InternalPageService
     {
         $eventEntries = array();
         foreach ($eventRows as $eventRow) {
+            $legacyEventEntry = self::buildLegacyWakeupStandbyEntry($eventRow, $sensorName);
+            if ($legacyEventEntry !== null) {
+                $eventEntries[] = $legacyEventEntry;
+            }
+
             foreach (array(
                 array('label' => $eventRow['value1'] ?? null, 'time' => $eventRow['value2'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? '')),
                 array('label' => $eventRow['value3'] ?? null, 'time' => $eventRow['value4'] ?? null, 'fallback' => ($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? ''))
@@ -240,6 +245,34 @@ class InternalPageService
         }
 
         return $eventEntries;
+    }
+
+    private static function buildLegacyWakeupStandbyEntry(array $eventRow, $sensorName)
+    {
+        $value1 = trim((string)($eventRow['value1'] ?? ''));
+        $value2 = trim((string)($eventRow['value2'] ?? ''));
+        $value3 = trim((string)($eventRow['value3'] ?? ''));
+        $value4 = trim((string)($eventRow['value4'] ?? ''));
+
+        if ($value1 !== '0' || $value2 !== '1' || $value3 !== '0' || $value4 !== '0') {
+            return null;
+        }
+
+        $fallbackTimestamp = trim((string)(($eventRow['val_date'] ?? '') . ' ' . ($eventRow['val_time'] ?? '')));
+        if ($fallbackTimestamp === '') {
+            $fallbackTimestamp = trim((string)($eventRow['reading_time'] ?? ''));
+        }
+
+        return array(
+            'label' => 'Standby',
+            'stateClass' => 'is-standby',
+            'rawLabel' => '0|1|0|0',
+            'timestamp' => $fallbackTimestamp,
+            'fallbackTimestamp' => $fallbackTimestamp,
+            'sensorName' => $sensorName,
+            'readingTime' => $eventRow['reading_time'] ?? null,
+            'sourceRowId' => isset($eventRow['id']) ? (int)$eventRow['id'] : null,
+        );
     }
 
     private static function normalizeEventSequence(array $events)
