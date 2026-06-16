@@ -563,6 +563,11 @@
     background: rgba(59, 130, 246, 0.10);
     color: #1d4ed8;
   }
+  .event-timeline-status-pill.is-wakeup-cycle {
+    border-color: rgba(59, 130, 246, 0.18);
+    background: rgba(59, 130, 246, 0.10);
+    color: #1d4ed8;
+  }
   .event-timeline-status-pill.is-wakeup {
     border-color: rgba(34, 197, 94, 0.18);
     background: rgba(34, 197, 94, 0.12);

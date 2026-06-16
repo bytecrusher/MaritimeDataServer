@@ -109,7 +109,7 @@ if(strlen($ttn_post) > 0) {
     $sensor_temperature = ttnPayloadValue($decodedPayload, array('temperature', 'TempC_SHT', 'air.temperature'), 0);
     $sensor_battery2 = ttnPayloadValue($decodedPayload, array('voltage2'), 0);
     $firmwareVersion = ttnFirmwareVersion($decodedPayload);
-    $standbyEnabled = ttnStandbyEnabled($decodedPayload);
+    $standbyState = ttnStandbyState($decodedPayload);
 
     // TTN Data
     $gtw_id = $bestRxMetadata->gateway_ids->gateway_id ?? '';
@@ -258,8 +258,8 @@ if(strlen($ttn_post) > 0) {
     if ($firmwareVersion !== null) {
       $boardInfos["firmwareVersion"] = $firmwareVersion;
     }
-    if ($standbyEnabled !== null) {
-      $boardInfos["standbyEnabled"] = $standbyEnabled;
+    if ($standbyState !== null) {
+      $boardInfos["standbyState"] = $standbyState;
     }
 
     $dateNow = date("d.m.Y");
@@ -510,10 +510,61 @@ function ttnFirmwareVersion($payload) {
     return substr($value, 0, 64);
 }
 
-function ttnStandbyEnabled($payload) {
-    return ttnNormalizeBooleanValue(
+function ttnStandbyState($payload) {
+    $stateValue = ttnPayloadValue($payload, array('standbyState', 'standby_state', 'powerState', 'deviceState', 'sleepState'), null);
+    $normalizedState = ttnNormalizeStandbyStateValue($stateValue);
+    if ($normalizedState !== null) {
+        return $normalizedState;
+    }
+
+    $legacyStandbyEnabled = ttnNormalizeBooleanValue(
         ttnPayloadValue($payload, array('standbyEnabled', 'standby_enabled', 'standbyModeEnabled', 'sleepEnabled'), null)
     );
+    if ($legacyStandbyEnabled === false) {
+        return 'always_online';
+    }
+
+    $legacyAlwaysOnline = ttnNormalizeBooleanValue(
+        ttnPayloadValue($payload, array('alwaysOnline'), null)
+    );
+    if ($legacyAlwaysOnline === true) {
+        return 'always_online';
+    }
+
+    return null;
+}
+
+function ttnNormalizeStandbyStateValue($value) {
+    if (is_bool($value)) {
+        return $value ? null : 'always_online';
+    }
+
+    if (is_int($value) || is_float($value)) {
+        return ((int)$value) === 0 ? 'always_online' : null;
+    }
+
+    if (!is_string($value)) {
+        return null;
+    }
+
+    $normalizedValue = mb_strtolower(trim($value));
+    if ($normalizedValue === '') {
+        return null;
+    }
+
+    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson', 'online'), true)) {
+        return 'always_online';
+    }
+
+    if (in_array($normalizedValue, array('wakeup', 'wake', 'awake', 'active'), true) || str_contains($normalizedValue, 'wake')) {
+        return 'wakeup';
+    }
+
+    if (in_array($normalizedValue, array('standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
+        return 'standby';
+    }
+
+    return null;
 }
 
 function ttnNormalizeBooleanValue($value) {

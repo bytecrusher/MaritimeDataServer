@@ -409,9 +409,9 @@ class InternalPageService
 
         return array(
             'modeLabel' => $persistentOnline
-                ? (function_exists('mds_t') ? mds_t('internal.standby_disabled') : 'Standby disabled')
-                : (function_exists('mds_t') ? mds_t('internal.standby_enabled') : 'Standby enabled'),
-            'modeClass' => $persistentOnline ? 'is-persistent-online' : 'is-standby-enabled',
+                ? (function_exists('mds_t') ? mds_t('internal.always_online') : 'Always online')
+                : (function_exists('mds_t') ? mds_t('internal.wakeup_standby_cycle') : 'Wakeup / Standby'),
+            'modeClass' => $persistentOnline ? 'is-persistent-online' : 'is-wakeup-cycle',
             'currentLabel' => $currentLabel,
             'currentClass' => $stateClass,
             'persistentOnline' => $persistentOnline,

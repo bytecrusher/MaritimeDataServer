@@ -165,7 +165,7 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
     "macAddress": "<board-mac-or-fake-mac>",
     "protocolVersion": "1",
     "firmwareVersion": "1.2.3",
-    "standbyEnabled": true
+    "standbyState": "wakeup"
   },
   "sensors": [
     {
@@ -186,7 +186,8 @@ Hinweis:
 
 - die interne TTN-Bridge sendet weiterhin `sensorId`
 - fuer externe Geraete ist `sensorId` inzwischen optional
-- wenn `decoded_payload` einen Bool-Wert wie `standbyEnabled`, `standby_enabled`, `standbyModeEnabled` oder `sleepEnabled` enthaelt, wird dieser in `board.standbyEnabled` an `/ingest/receivejson.php` weitergereicht
+- wenn `decoded_payload` einen Zustandswert wie `standbyState`, `standby_state`, `powerState`, `deviceState` oder `sleepState` enthaelt, wird dieser in `board.standbyState` an `/ingest/receivejson.php` weitergereicht
+- Legacy-Fallback: alte Bool-Felder wie `standbyEnabled` oder `alwaysOnline` werden weiterhin akzeptiert, koennen aber nur `always_online` ausdruecken und nicht zwischen `wakeup` und `standby` unterscheiden
 
 ### Wichtige Hinweise
 
@@ -219,7 +220,7 @@ Pflichtstruktur:
     "macAddress": "string",
     "protocolVersion": "1",
     "firmwareVersion": "string",
-    "standbyEnabled": true
+    "standbyState": "wakeup"
   },
   "sensors": [
     {
@@ -242,11 +243,20 @@ Optionale Board-Felder:
   - wird in `boardConfig.firmwareVersion` gespeichert
   - wird im Dashboard pro Device angezeigt
   - maximale gespeicherte Laenge: 64 Zeichen
-- `standbyEnabled`, alternativ `standby_enabled`, `standbyModeEnabled`, `sleepEnabled`
-  - Boolean-Feld fuer die aktuelle Standby-Konfiguration des Devices
-  - `true` bedeutet: das Device darf regulär in den Standby gehen
-  - `false` bedeutet: Standby ist deaktiviert, das Device bleibt bewusst online
-  - wenn `false` uebertragen wird, erzeugt MDS bei Bedarf ein persistentes ESP-Ereignis `Always online`, damit der Zustand unter `ESP-Ereignisse` sichtbar bleibt
+- `standbyState`, alternativ `standby_state`, `powerState`, `deviceState` oder `sleepState`
+  - Zustandsfeld fuer den aktuellen Device-Zustand
+  - erlaubte Werte:
+    - `always_online`
+    - `wakeup`
+    - `standby`
+  - zusaetzlich akzeptiert MDS tolerante Schreibweisen wie `always online`, `always-online`, `wake`, `awake`, `sleep`
+  - wenn `always_online` uebertragen wird, erzeugt MDS bei Bedarf ein persistentes ESP-Ereignis `Always online`
+  - wenn `wakeup` oder `standby` uebertragen wird, schreibt MDS bei einem Zustandswechsel ein entsprechendes ESP-Ereignis
+- Legacy-Kompatibilitaet:
+  - `standbyEnabled`, `standby_enabled`, `standbyModeEnabled`, `sleepEnabled`, `alwaysOnline`
+  - diese alten Bool-Felder werden noch akzeptiert
+  - `false` bzw. `alwaysOnline=true` wird auf `always_online` gemappt
+  - `true` ist mehrdeutig und erzeugt keinen expliziten `wakeup`- oder `standby`-Zustand
 
 ### Sensor-Mapping
 
@@ -276,7 +286,7 @@ Empfohlene Payload fuer externe Geraete ohne bekannte `sensorId`:
     "macAddress": "24:6F:28:7B:A9:14",
     "protocolVersion": "1",
     "firmwareVersion": "1.2.3",
-    "standbyEnabled": false
+    "standbyState": "always_online"
   },
   "sensors": [
     {
@@ -309,8 +319,10 @@ Empfehlung fuer externe Devices:
 - `sensorName` ebenfalls mitsenden, wenn mehrere Sensoren desselben Typs auf einem Board existieren koennen, z. B. `ADC/Battery` und `ADC/Tanks`
 - gute Werte sind z. B. `BME280`, `ADC`, `GPS`, `DS18B20`, `Digital`, `DS2438`, `Lora`
 - dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
-- wenn das Device absichtlich dauerhaft online bleibt, `board.standbyEnabled = false` mitsenden
-- dann zeigt MDS unter `ESP-Ereignisse` einen persistenten Online-Zustand an, auch wenn kein neuer Wakeup/Standby-Wechsel mehr stattfindet
+- wenn das Device absichtlich dauerhaft online bleibt, `board.standbyState = "always_online"` mitsenden
+- wenn das Device gerade aufgeweckt wurde, `board.standbyState = "wakeup"` mitsenden
+- wenn das Device gerade in den Schlafzustand gegangen ist oder sich dort befindet, `board.standbyState = "standby"` mitsenden
+- dann zeigt MDS unter `ESP-Ereignisse` den aktuellen Zustand und den Verlauf ohne zusaetzliche Speziallogik aus einer Konfiguration an
 
 Verhalten bei neuen oder unvollstaendig provisionierten Boards:
 

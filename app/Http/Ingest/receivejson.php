@@ -93,9 +93,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     updateBoardFirmwareVersion($macAddressId, $firmwareVersion, $pdo2);
                 }
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
-                $standbyEnabled = extractStandbyEnabledFromBoardPayload($boardData);
-                if ($standbyEnabled === false) {
-                    ensurePersistentOnlineWakeupEvent($macAddressId, $boardSensors, $pdo2);
+                $standbyState = extractStandbyStateFromBoardPayload($boardData);
+                if ($standbyState !== null) {
+                    syncWakeupStandbyEventFromBoardState($macAddressId, $boardSensors, $pdo2, $standbyState);
                     $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                 }
                 $boardSensorCount = is_array($boardSensors) ? count($boardSensors) : 0;
@@ -106,7 +106,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         'boardId' => $macAddressId,
                         'macAddress' => $macAddress,
                         'firmwareVersion' => $firmwareVersion,
-                        'standbyEnabled' => $standbyEnabled,
+                        'standbyState' => $standbyState,
                         'sensorConfigCount' => $boardSensorCount
                     )
                 );
@@ -422,7 +422,7 @@ function summarizeBoardPayloadForLog(array $boardData)
         'protocolVersion' => $boardData['protocolVersion'] ?? null,
         'macAddress' => $boardData['macAddress'] ?? null,
         'firmwareVersion' => extractFirmwareVersionFromBoardPayload($boardData),
-        'standbyEnabled' => extractStandbyEnabledFromBoardPayload($boardData),
+        'standbyState' => extractStandbyStateFromBoardPayload($boardData),
         'apiKeyPresent' => isset($boardData['apiKey']) || isset($boardData['api_key']),
         'apiKeyMasked' => maskSecretForLog($boardData['apiKey'] ?? ($boardData['api_key'] ?? null)),
     );
@@ -446,19 +446,32 @@ function extractFirmwareVersionFromBoardPayload(array $boardData)
     return null;
 }
 
-function extractStandbyEnabledFromBoardPayload(array $boardData)
+function extractStandbyStateFromBoardPayload(array $boardData)
 {
-    foreach (array('standbyEnabled', 'standby_enabled', 'standbyModeEnabled', 'sleepEnabled', 'alwaysOnline') as $fieldName) {
+    foreach (array('standbyState', 'standby_state', 'powerState', 'deviceState', 'sleepState') as $fieldName) {
         if (!array_key_exists($fieldName, $boardData)) {
             continue;
         }
 
-        $normalized = normalizeBooleanPayloadValue($boardData[$fieldName]);
-        if ($fieldName === 'alwaysOnline' && $normalized !== null) {
-            return !$normalized;
+        $normalizedState = normalizeBoardStandbyStateValue($boardData[$fieldName]);
+        if ($normalizedState !== null) {
+            return $normalizedState;
+        }
+    }
+
+    foreach (array('standbyEnabled', 'standby_enabled', 'standbyModeEnabled', 'sleepEnabled', 'alwaysOnline') as $legacyFieldName) {
+        if (!array_key_exists($legacyFieldName, $boardData)) {
+            continue;
         }
 
-        return $normalized;
+        $normalized = normalizeBooleanPayloadValue($boardData[$legacyFieldName]);
+        if ($legacyFieldName === 'alwaysOnline' && $normalized !== null) {
+            return $normalized ? 'always_online' : null;
+        }
+        if ($normalized === false) {
+            return 'always_online';
+        }
+        return null;
     }
 
     return null;
@@ -475,7 +488,7 @@ function updateBoardFirmwareVersion($boardId, $firmwareVersion, PDO $pdo2)
     );
 }
 
-function ensurePersistentOnlineWakeupEvent($boardId, array $boardSensors, PDO $pdo2)
+function syncWakeupStandbyEventFromBoardState($boardId, array $boardSensors, PDO $pdo2, $standbyState)
 {
     $wakeupSensor = resolveWakeupStandbySensor($boardSensors, $boardId, $pdo2);
     if ($wakeupSensor === null) {
@@ -483,32 +496,38 @@ function ensurePersistentOnlineWakeupEvent($boardId, array $boardSensors, PDO $p
     }
 
     $latestEventRow = getLatestWakeupStandbySensorRow((int)$wakeupSensor['id'], $pdo2);
-    if (isPersistentOnlineWakeupRow($latestEventRow)) {
+    $latestState = determineWakeupStandbyStateFromRow($latestEventRow);
+    if ($latestState === $standbyState) {
         return;
     }
 
     $now = new DateTimeImmutable('now');
+    $stateLabels = buildWakeupStandbyStateLabels($standbyState);
+    if ($stateLabels === null) {
+        return;
+    }
     $insertStatement = $pdo2->prepare(
         "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $insertStatement->execute(array(
         (int)$wakeupSensor['id'],
-        'Always online',
+        $stateLabels['label'],
         $now->format('d.m.Y H:i:s'),
-        '',
-        '',
+        $stateLabels['secondaryLabel'],
+        $stateLabels['secondaryTimestamp'],
         $now->format('d.m.Y'),
         $now->format('H:i:s'),
         '1'
     ));
 
     writeToLogFunction::info(
-        'Persistent online wakeup event inserted because standby is disabled.',
+        'Wakeup/standby event inserted from board state.',
         $_SERVER["SCRIPT_FILENAME"],
         array(
             'boardId' => $boardId,
             'sensorId' => (int)$wakeupSensor['id'],
+            'standbyState' => $standbyState,
             'timestamp' => $now->format(DateTimeInterface::ATOM)
         )
     );
@@ -561,7 +580,7 @@ function determineWakeupStandbyStateFromRow($sensorRow)
     }
 
     foreach (array('value1', 'value3') as $fieldName) {
-        $normalizedState = normalizeWakeupStandbyStateLabel($sensorRow[$fieldName] ?? null);
+        $normalizedState = normalizeBoardStandbyStateValue($sensorRow[$fieldName] ?? null);
         if ($normalizedState !== null) {
             return $normalizedState;
         }
@@ -572,35 +591,49 @@ function determineWakeupStandbyStateFromRow($sensorRow)
     $value3 = trim((string)($sensorRow['value3'] ?? ''));
     $value4 = trim((string)($sensorRow['value4'] ?? ''));
     if ($value1 === '0' && $value2 === '1' && $value3 === '0' && $value4 === '0') {
-        return 'is-standby';
+        return 'standby';
     }
 
     return null;
 }
 
-function isPersistentOnlineWakeupRow($sensorRow)
+function buildWakeupStandbyStateLabels($standbyState)
 {
-    if (!is_array($sensorRow)) {
-        return false;
+    if ($standbyState === 'always_online') {
+        return array(
+            'label' => 'Always online',
+            'secondaryLabel' => '',
+            'secondaryTimestamp' => '',
+        );
+    }
+    if ($standbyState === 'wakeup') {
+        return array(
+            'label' => 'Wakeup',
+            'secondaryLabel' => '',
+            'secondaryTimestamp' => '',
+        );
+    }
+    if ($standbyState === 'standby') {
+        return array(
+            'label' => 'Standby',
+            'secondaryLabel' => '',
+            'secondaryTimestamp' => '',
+        );
     }
 
-    foreach (array('value1', 'value3') as $fieldName) {
-        $value = $sensorRow[$fieldName] ?? null;
-        if (!is_string($value)) {
-            continue;
-        }
-
-        $normalizedValue = mb_strtolower(trim($value));
-        if (str_contains($normalizedValue, 'always online') || str_contains($normalizedValue, 'always-on')) {
-            return true;
-        }
-    }
-
-    return false;
+    return null;
 }
 
-function normalizeWakeupStandbyStateLabel($value)
+function normalizeBoardStandbyStateValue($value)
 {
+    if (is_bool($value)) {
+        return $value ? null : 'always_online';
+    }
+
+    if (is_int($value) || is_float($value)) {
+        return ((int)$value) === 0 ? 'always_online' : null;
+    }
+
     if (!is_string($value)) {
         return null;
     }
@@ -610,12 +643,16 @@ function normalizeWakeupStandbyStateLabel($value)
         return null;
     }
 
-    if (str_contains($normalizedValue, 'always online') || str_contains($normalizedValue, 'always-on') || str_contains($normalizedValue, 'wake')) {
-        return 'is-wakeup';
+    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson', 'online'), true)) {
+        return 'always_online';
     }
 
-    if (str_contains($normalizedValue, 'sleep') || str_contains($normalizedValue, 'standby')) {
-        return 'is-standby';
+    if (in_array($normalizedValue, array('wakeup', 'wake', 'awake', 'active'), true) || str_contains($normalizedValue, 'wake')) {
+        return 'wakeup';
+    }
+
+    if (in_array($normalizedValue, array('standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
+        return 'standby';
     }
 
     return null;
