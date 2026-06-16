@@ -33,6 +33,7 @@
   $eventTimelineSummaryLabels = $pageData['eventPayload']['summaryLabels'];
   $eventTimelineSummary = $pageData['eventPayload']['summary'];
   $eventTimelineLast24h = $pageData['eventPayload']['last24hTimeline'];
+  $eventStatusByBoard = $pageData['eventPayload']['statusByBoard'] ?? array();
   $dashboardUpdateIntervalMs = $pageData['dashboardUpdateIntervalMs'];
   $dashboardOnlineOnlyDefault = $pageData['dashboardOnlineOnlyDefault'];
   $preferredChartWindowDays = $pageData['preferredChartWindowDays'];
@@ -259,6 +260,23 @@
     flex-wrap: wrap;
     gap: 0.5rem;
     align-items: center;
+  }
+  .dashboard-board-badges .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+  }
+  .dashboard-board-badges .badge.mds-standby-badge {
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    background: rgba(59, 130, 246, 0.10);
+    color: #1d4ed8;
+  }
+  .dashboard-board-badges .badge.mds-persistent-online-badge {
+    border: 1px solid rgba(14, 165, 233, 0.18);
+    background: rgba(14, 165, 233, 0.12);
+    color: #0f766e;
   }
   .dashboard-board-summary {
     display: flex;
@@ -507,12 +525,53 @@
     gap: 0.75rem;
     margin-bottom: 0.85rem;
   }
+  .event-timeline-head-main {
+    min-width: 0;
+  }
   .event-timeline-head strong {
     font-size: 1rem;
   }
   .event-timeline-head span {
     color: #64748b;
     font-size: 0.9rem;
+  }
+  .event-timeline-status {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.45rem;
+  }
+  .event-timeline-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .event-timeline-status-pill.is-persistent-online {
+    border-color: rgba(14, 165, 233, 0.18);
+    background: rgba(14, 165, 233, 0.12);
+    color: #0f766e;
+  }
+  .event-timeline-status-pill.is-standby-enabled {
+    border-color: rgba(59, 130, 246, 0.18);
+    background: rgba(59, 130, 246, 0.10);
+    color: #1d4ed8;
+  }
+  .event-timeline-status-pill.is-wakeup {
+    border-color: rgba(34, 197, 94, 0.18);
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+  }
+  .event-timeline-status-pill.is-standby {
+    border-color: rgba(245, 158, 11, 0.18);
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
   }
   .event-timeline-list {
     list-style: none;
@@ -691,6 +750,11 @@
   }
   .event-detail-body {
     padding: 0 1rem 1rem;
+  }
+  @media (max-width: 767.98px) {
+    .event-timeline-status {
+      justify-content: flex-start;
+    }
   }
   #chart-container-debug {
     max-height: 520px;
@@ -941,6 +1005,7 @@
               if($singleRowmyboard->isOnDashboard() == 1) {
                 $deviceOnline = checkDeviceIsOnline($singleRowmyboard->getId());
                 $mySensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
+                $boardEventStatus = $eventStatusByBoard[$singleRowmyboard->getId()] ?? null;
                 $boardGaugeCount = 0;
                 ?>
                   <section class="dashboard-board-card <?php if(!$deviceOnline) { echo 'is-offline'; } ?> <?php if ((int)$dashboardOnlineOnlyDefault === 1 && !$deviceOnline) { echo 'dashboard-board-hidden'; } ?>" data-dashboard-board-id="<?php echo $singleRowmyboard->getId(); ?>" data-dashboard-online="<?php echo $deviceOnline ? '1' : '0'; ?>">
@@ -957,6 +1022,11 @@
                       <div class="dashboard-board-badges">
                         <span class="badge <?php echo $deviceOnline ? 'bg-success' : 'bg-danger'; ?>"><?php echo htmlspecialchars($deviceOnline ? mds_t('common.online') : mds_t('common.offline'), ENT_QUOTES, 'UTF-8'); ?></span>
                         <span class="badge text-bg-light"><?php echo is_array($mySensors2) ? count($mySensors2) : 0; ?> <?php echo htmlspecialchars(mds_t('common.sensors'), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <?php if (is_array($boardEventStatus) && !empty($boardEventStatus['modeLabel'])) { ?>
+                          <span class="badge <?php echo !empty($boardEventStatus['persistentOnline']) ? 'mds-persistent-online-badge' : 'mds-standby-badge'; ?>">
+                            <?php echo htmlspecialchars($boardEventStatus['modeLabel'], ENT_QUOTES, 'UTF-8'); ?>
+                          </span>
+                        <?php } ?>
                       </div>
                     </div>
                     <div class="card-block dashboard-board-gauges" id="gaugescontainer<?php echo $singleRowmyboard->getId() ?>">
@@ -1154,12 +1224,28 @@
                       <div class="event-timeline-empty"><?php echo htmlspecialchars(mds_t('internal.no_events'), ENT_QUOTES, 'UTF-8'); ?></div>
                     <?php } else { ?>
                       <?php foreach ($eventTimelineBoards as $eventTimelineBoard) { ?>
+                        <?php $boardStatus = $eventStatusByBoard[(int)$eventTimelineBoard['boardId']] ?? null; ?>
                         <section class="event-timeline-board" data-event-board-id="<?php echo (int)$eventTimelineBoard['boardId']; ?>">
                           <div class="event-timeline-head">
-                            <div>
+                            <div class="event-timeline-head-main">
                               <strong><?php echo htmlspecialchars($eventTimelineBoard['boardName'], ENT_QUOTES, 'UTF-8'); ?></strong><br>
                               <span><?php echo htmlspecialchars(mds_t('internal.events_in_history', array(count($eventTimelineBoard['events']))), ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
+                            <?php if (is_array($boardStatus)) { ?>
+                              <div class="event-timeline-status">
+                                <span class="event-timeline-status-pill <?php echo htmlspecialchars($boardStatus['modeClass'], ENT_QUOTES, 'UTF-8'); ?>">
+                                  <?php echo htmlspecialchars(mds_t('internal.event_mode', array($boardStatus['modeLabel'])), ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                                <span class="event-timeline-status-pill <?php echo htmlspecialchars($boardStatus['currentClass'], ENT_QUOTES, 'UTF-8'); ?>">
+                                  <?php echo htmlspecialchars(mds_t('internal.event_current_state', array($boardStatus['currentLabel'])), ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                                <?php if (!empty($boardStatus['timestamp'])) { ?>
+                                  <span class="event-timeline-status-pill">
+                                    <?php echo htmlspecialchars(mds_t('internal.event_since', array($boardStatus['timestamp'])), ENT_QUOTES, 'UTF-8'); ?>
+                                  </span>
+                                <?php } ?>
+                              </div>
+                            <?php } ?>
                           </div>
                           <ol class="event-timeline-list">
                             <?php foreach ($eventTimelineBoard['events'] as $eventTimelineEntry) { ?>

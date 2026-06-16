@@ -94,6 +94,11 @@
         background: rgba(255, 255, 255, 0.08);
         transform: translateY(-1px);
       }
+      .navbar.mds-navbar .navbar-nav {
+        align-items: center;
+        gap: 0.2rem;
+        width: 100%;
+      }
       .navbar.mds-navbar .navbar-toggler {
         width: 3rem;
         height: 3rem;
@@ -160,6 +165,32 @@
         color: rgba(255, 255, 255, 0.72) !important;
         text-align: center;
         font-size: 0.72rem !important;
+      }
+      @media (min-width: 576px) {
+        .navbar.mds-navbar .navbar-toggler {
+          display: none !important;
+        }
+        .navbar.mds-navbar .navbar-collapse {
+          display: flex !important;
+          flex-basis: auto;
+          justify-content: flex-end;
+        }
+        .navbar.mds-navbar .navbar-nav {
+          margin-left: auto;
+        }
+      }
+      @media (max-width: 575.98px) {
+        .navbar.mds-navbar .navbar-collapse {
+          padding-top: 0.85rem;
+        }
+        .navbar.mds-navbar .navbar-nav {
+          align-items: stretch;
+          gap: 0.35rem;
+        }
+        .navbar.mds-navbar .mds-qr-slot {
+          margin-left: 0;
+          max-width: 100%;
+        }
       }
       .mds-alert {
         display: flex;
@@ -231,18 +262,14 @@
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('internal.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.my_sensors'), ENT_QUOTES, 'UTF-8'); ?></a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('settings.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.settings'), ENT_QUOTES, 'UTF-8'); ?></a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('logout.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.logout'), ENT_QUOTES, 'UTF-8'); ?></a></li>
-          <li class="nav-item container mds-qr-slot">
-            <?php
-              if ($config::$ShowQrCode == "1") {
-            ?>
+          <?php if ($config::$ShowQrCode == "1") { ?>
+          <li class="nav-item mds-qr-slot">
                 <figure class="mb-0" >
                   <img src="<?php echo htmlspecialchars(mds_asset_path('img/qr-code.png'), ENT_QUOTES, 'UTF-8'); ?>" class="img-fluid" alt="derguntmar.de">
                   <figcaption style="color: white; font-size: 0.8rem">derguntmar.de</figcaption>
                 </figure>
-            <?php
-            }
-            ?>
           </li>
+          <?php } ?>
         </ul>
       </div>
     <?php endif; ?>

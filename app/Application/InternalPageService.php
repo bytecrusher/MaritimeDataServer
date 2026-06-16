@@ -109,6 +109,7 @@ class InternalPageService
         $eventTimelineSummary = array();
         $eventTimelineSummaryBuckets = array();
         $eventTimelineLast24h = array();
+        $eventStatusByBoard = array();
         $windowDays = max(1, (int) $windowDays);
         $timelineWindowHours = self::normalizeEventTimelineWindowHours($timelineWindowHours);
         $eventWindowStart = new DateTimeImmutable('today -' . ($windowDays - 1) . ' days');
@@ -165,6 +166,8 @@ class InternalPageService
                 continue;
             }
 
+            $eventStatusByBoard[(int)$eventTimelineBoard['boardId']] = self::buildBoardEventStatus($eventTimelineBoard['events']);
+
             $eventDurationSummary = self::buildEventDurationSummary(
                 $eventTimelineBoard['events'],
                 $eventTimelineSummaryBuckets,
@@ -198,6 +201,7 @@ class InternalPageService
             'summary' => $eventTimelineSummary,
             'last24hTimeline' => $eventTimelineLast24h,
             'timelineWindowHours' => $timelineWindowHours,
+            'statusByBoard' => $eventStatusByBoard,
         );
     }
 
@@ -383,6 +387,36 @@ class InternalPageService
             return array('label' => 'Wakeup', 'stateClass' => 'is-wakeup', 'persistentOnline' => false);
         }
         return array('label' => $rawValue, 'stateClass' => 'is-other', 'persistentOnline' => false);
+    }
+
+    private static function buildBoardEventStatus(array $eventEntries)
+    {
+        $normalizedEvents = self::eventsAscendingForDuration($eventEntries);
+        if (empty($normalizedEvents)) {
+            return null;
+        }
+
+        $latestEvent = $normalizedEvents[count($normalizedEvents) - 1];
+        $latestDateTime = $latestEvent['dateTime'] ?? null;
+        $persistentOnline = !empty($latestEvent['persistentOnline']);
+        $stateClass = (string)($latestEvent['stateClass'] ?? '');
+
+        $currentLabel = $stateClass === 'is-standby'
+            ? 'Standby'
+            : ($persistentOnline
+                ? (function_exists('mds_t') ? mds_t('internal.always_online') : 'Always online')
+                : 'Wakeup');
+
+        return array(
+            'modeLabel' => $persistentOnline
+                ? (function_exists('mds_t') ? mds_t('internal.standby_disabled') : 'Standby disabled')
+                : (function_exists('mds_t') ? mds_t('internal.standby_enabled') : 'Standby enabled'),
+            'modeClass' => $persistentOnline ? 'is-persistent-online' : 'is-standby-enabled',
+            'currentLabel' => $currentLabel,
+            'currentClass' => $stateClass,
+            'persistentOnline' => $persistentOnline,
+            'timestamp' => $latestDateTime instanceof DateTimeImmutable ? $latestDateTime->format('d.m.Y H:i:s') : '',
+        );
     }
 
     private static function parseEventDatetime($eventEntry)
