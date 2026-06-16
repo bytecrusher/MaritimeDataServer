@@ -558,6 +558,7 @@ function updateEventTimeline24hChart() {
         y: Number(point.y),
         timestamp: point.timestamp,
         openEnded: point.openEnded === true,
+        persistentOnline: point.persistentOnline === true,
       };
     }).filter(function (point) {
       return Number.isFinite(point.x) && Number.isFinite(point.y);
@@ -635,6 +636,7 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
       y: Number(point.y),
       timestamp: point.timestamp,
       openEnded: point.openEnded === true,
+      persistentOnline: point.persistentOnline === true,
     };
   }).filter(function (point) {
     return Number.isFinite(point.x) && Number.isFinite(point.y);
@@ -661,6 +663,7 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
       y: lastPointBeforeWindow.y,
       timestamp: formatEventTimelineTimestamp(windowStartMs),
       openEnded: lastPointBeforeWindow.openEnded === true,
+      persistentOnline: lastPointBeforeWindow.persistentOnline === true,
     });
   }
 
@@ -672,7 +675,7 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
         y: lastPoint.y,
         timestamp: formatEventTimelineTimestamp(windowEndMs),
       });
-    } else if (Number(lastPoint.y) === 1) {
+    } else if (Number(lastPoint.y) === 1 && lastPoint.persistentOnline !== true) {
       lastPoint.openEnded = true;
     }
   }

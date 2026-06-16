@@ -93,6 +93,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     updateBoardFirmwareVersion($macAddressId, $firmwareVersion, $pdo2);
                 }
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
+                $standbyEnabled = extractStandbyEnabledFromBoardPayload($boardData);
+                if ($standbyEnabled === false) {
+                    ensurePersistentOnlineWakeupEvent($macAddressId, $boardSensors, $pdo2);
+                    $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
+                }
                 $boardSensorCount = is_array($boardSensors) ? count($boardSensors) : 0;
                 writeToLogFunction::info(
                     'Board resolved for receivejson payload.',
@@ -101,6 +106,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         'boardId' => $macAddressId,
                         'macAddress' => $macAddress,
                         'firmwareVersion' => $firmwareVersion,
+                        'standbyEnabled' => $standbyEnabled,
                         'sensorConfigCount' => $boardSensorCount
                     )
                 );
@@ -416,6 +422,7 @@ function summarizeBoardPayloadForLog(array $boardData)
         'protocolVersion' => $boardData['protocolVersion'] ?? null,
         'macAddress' => $boardData['macAddress'] ?? null,
         'firmwareVersion' => extractFirmwareVersionFromBoardPayload($boardData),
+        'standbyEnabled' => extractStandbyEnabledFromBoardPayload($boardData),
         'apiKeyPresent' => isset($boardData['apiKey']) || isset($boardData['api_key']),
         'apiKeyMasked' => maskSecretForLog($boardData['apiKey'] ?? ($boardData['api_key'] ?? null)),
     );
@@ -439,6 +446,24 @@ function extractFirmwareVersionFromBoardPayload(array $boardData)
     return null;
 }
 
+function extractStandbyEnabledFromBoardPayload(array $boardData)
+{
+    foreach (array('standbyEnabled', 'standby_enabled', 'standbyModeEnabled', 'sleepEnabled', 'alwaysOnline') as $fieldName) {
+        if (!array_key_exists($fieldName, $boardData)) {
+            continue;
+        }
+
+        $normalized = normalizeBooleanPayloadValue($boardData[$fieldName]);
+        if ($fieldName === 'alwaysOnline' && $normalized !== null) {
+            return !$normalized;
+        }
+
+        return $normalized;
+    }
+
+    return null;
+}
+
 function updateBoardFirmwareVersion($boardId, $firmwareVersion, PDO $pdo2)
 {
     $statement = $pdo2->prepare("UPDATE boardConfig SET firmwareVersion = ? WHERE id = ?");
@@ -448,6 +473,152 @@ function updateBoardFirmwareVersion($boardId, $firmwareVersion, PDO $pdo2)
         $_SERVER["SCRIPT_FILENAME"],
         array('boardId' => $boardId, 'firmwareVersion' => $firmwareVersion)
     );
+}
+
+function ensurePersistentOnlineWakeupEvent($boardId, array $boardSensors, PDO $pdo2)
+{
+    $wakeupSensor = resolveWakeupStandbySensor($boardSensors, $boardId, $pdo2);
+    if ($wakeupSensor === null) {
+        return;
+    }
+
+    $latestEventRow = getLatestWakeupStandbySensorRow((int)$wakeupSensor['id'], $pdo2);
+    if (isPersistentOnlineWakeupRow($latestEventRow)) {
+        return;
+    }
+
+    $now = new DateTimeImmutable('now');
+    $insertStatement = $pdo2->prepare(
+        "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    $insertStatement->execute(array(
+        (int)$wakeupSensor['id'],
+        'Always online',
+        $now->format('d.m.Y H:i:s'),
+        '',
+        '',
+        $now->format('d.m.Y'),
+        $now->format('H:i:s'),
+        '1'
+    ));
+
+    writeToLogFunction::info(
+        'Persistent online wakeup event inserted because standby is disabled.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+            'boardId' => $boardId,
+            'sensorId' => (int)$wakeupSensor['id'],
+            'timestamp' => $now->format(DateTimeInterface::ATOM)
+        )
+    );
+}
+
+function resolveWakeupStandbySensor(array $boardSensors, $boardId, PDO $pdo2)
+{
+    foreach ($boardSensors as $boardSensor) {
+        if (($boardSensor['sensorTypesName'] ?? null) === 'WakeupStan') {
+            return $boardSensor;
+        }
+    }
+
+    try {
+        $myFunctions = new myFunctions();
+        $myFunctions->addSensorConfig($boardId, 'WakeupStan', 'WakeupStan');
+    } catch (Throwable $ex) {
+        writeToLogFunction::exception(
+            $ex,
+            $_SERVER["SCRIPT_FILENAME"],
+            array('boardId' => $boardId, 'sensorType' => 'WakeupStan')
+        );
+        return null;
+    }
+
+    $updatedBoardSensors = myFunctions::getAllSensorsOfBoard($boardId);
+    foreach ($updatedBoardSensors as $boardSensor) {
+        if (($boardSensor['sensorTypesName'] ?? null) === 'WakeupStan') {
+            return $boardSensor;
+        }
+    }
+
+    return null;
+}
+
+function getLatestWakeupStandbySensorRow($sensorId, PDO $pdo2)
+{
+    $statement = $pdo2->prepare(
+        "SELECT * FROM sensorData WHERE sensorId = ? ORDER BY id DESC LIMIT 1"
+    );
+    $statement->execute(array($sensorId));
+    $row = $statement->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+function determineWakeupStandbyStateFromRow($sensorRow)
+{
+    if (!is_array($sensorRow)) {
+        return null;
+    }
+
+    foreach (array('value1', 'value3') as $fieldName) {
+        $normalizedState = normalizeWakeupStandbyStateLabel($sensorRow[$fieldName] ?? null);
+        if ($normalizedState !== null) {
+            return $normalizedState;
+        }
+    }
+
+    $value1 = trim((string)($sensorRow['value1'] ?? ''));
+    $value2 = trim((string)($sensorRow['value2'] ?? ''));
+    $value3 = trim((string)($sensorRow['value3'] ?? ''));
+    $value4 = trim((string)($sensorRow['value4'] ?? ''));
+    if ($value1 === '0' && $value2 === '1' && $value3 === '0' && $value4 === '0') {
+        return 'is-standby';
+    }
+
+    return null;
+}
+
+function isPersistentOnlineWakeupRow($sensorRow)
+{
+    if (!is_array($sensorRow)) {
+        return false;
+    }
+
+    foreach (array('value1', 'value3') as $fieldName) {
+        $value = $sensorRow[$fieldName] ?? null;
+        if (!is_string($value)) {
+            continue;
+        }
+
+        $normalizedValue = mb_strtolower(trim($value));
+        if (str_contains($normalizedValue, 'always online') || str_contains($normalizedValue, 'always-on')) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function normalizeWakeupStandbyStateLabel($value)
+{
+    if (!is_string($value)) {
+        return null;
+    }
+
+    $normalizedValue = mb_strtolower(trim($value));
+    if ($normalizedValue === '') {
+        return null;
+    }
+
+    if (str_contains($normalizedValue, 'always online') || str_contains($normalizedValue, 'always-on') || str_contains($normalizedValue, 'wake')) {
+        return 'is-wakeup';
+    }
+
+    if (str_contains($normalizedValue, 'sleep') || str_contains($normalizedValue, 'standby')) {
+        return 'is-standby';
+    }
+
+    return null;
 }
 
 function summarizeSensorPayloadForLog(array $sensor)
@@ -491,6 +662,36 @@ function normalizeSensorValueForLog($value)
     }
 
     return (string)$value;
+}
+
+function normalizeBooleanPayloadValue($value)
+{
+    if (is_bool($value)) {
+        return $value;
+    }
+
+    if (is_int($value) || is_float($value)) {
+        return ((int)$value) !== 0;
+    }
+
+    if (!is_string($value)) {
+        return null;
+    }
+
+    $normalizedValue = mb_strtolower(trim($value));
+    if ($normalizedValue === '') {
+        return null;
+    }
+
+    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled'), true)) {
+        return true;
+    }
+
+    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled'), true)) {
+        return false;
+    }
+
+    return null;
 }
 
 function maskSecretForLog($secret)

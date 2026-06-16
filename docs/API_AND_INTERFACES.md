@@ -164,7 +164,8 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
     "apiKey": "<configured-api-key>",
     "macAddress": "<board-mac-or-fake-mac>",
     "protocolVersion": "1",
-    "firmwareVersion": "1.2.3"
+    "firmwareVersion": "1.2.3",
+    "standbyEnabled": true
   },
   "sensors": [
     {
@@ -185,6 +186,7 @@ Hinweis:
 
 - die interne TTN-Bridge sendet weiterhin `sensorId`
 - fuer externe Geraete ist `sensorId` inzwischen optional
+- wenn `decoded_payload` einen Bool-Wert wie `standbyEnabled`, `standby_enabled`, `standbyModeEnabled` oder `sleepEnabled` enthaelt, wird dieser in `board.standbyEnabled` an `/ingest/receivejson.php` weitergereicht
 
 ### Wichtige Hinweise
 
@@ -216,7 +218,8 @@ Pflichtstruktur:
     "apiKey": "string",
     "macAddress": "string",
     "protocolVersion": "1",
-    "firmwareVersion": "string"
+    "firmwareVersion": "string",
+    "standbyEnabled": true
   },
   "sensors": [
     {
@@ -239,6 +242,11 @@ Optionale Board-Felder:
   - wird in `boardConfig.firmwareVersion` gespeichert
   - wird im Dashboard pro Device angezeigt
   - maximale gespeicherte Laenge: 64 Zeichen
+- `standbyEnabled`, alternativ `standby_enabled`, `standbyModeEnabled`, `sleepEnabled`
+  - Boolean-Feld fuer die aktuelle Standby-Konfiguration des Devices
+  - `true` bedeutet: das Device darf regulär in den Standby gehen
+  - `false` bedeutet: Standby ist deaktiviert, das Device bleibt bewusst online
+  - wenn `false` uebertragen wird, erzeugt MDS bei Bedarf ein persistentes ESP-Ereignis `Always online`, damit der Zustand unter `ESP-Ereignisse` sichtbar bleibt
 
 ### Sensor-Mapping
 
@@ -267,7 +275,8 @@ Empfohlene Payload fuer externe Geraete ohne bekannte `sensorId`:
     "apiKey": "my_api_key",
     "macAddress": "24:6F:28:7B:A9:14",
     "protocolVersion": "1",
-    "firmwareVersion": "1.2.3"
+    "firmwareVersion": "1.2.3",
+    "standbyEnabled": false
   },
   "sensors": [
     {
@@ -300,6 +309,8 @@ Empfehlung fuer externe Devices:
 - `sensorName` ebenfalls mitsenden, wenn mehrere Sensoren desselben Typs auf einem Board existieren koennen, z. B. `ADC/Battery` und `ADC/Tanks`
 - gute Werte sind z. B. `BME280`, `ADC`, `GPS`, `DS18B20`, `Digital`, `DS2438`, `Lora`
 - dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
+- wenn das Device absichtlich dauerhaft online bleibt, `board.standbyEnabled = false` mitsenden
+- dann zeigt MDS unter `ESP-Ereignisse` einen persistenten Online-Zustand an, auch wenn kein neuer Wakeup/Standby-Wechsel mehr stattfindet
 
 Verhalten bei neuen oder unvollstaendig provisionierten Boards:
 

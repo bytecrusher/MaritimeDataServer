@@ -234,6 +234,7 @@ class InternalPageService
                 $eventEntries[] = array(
                     'label' => $normalizedEvent['label'],
                     'stateClass' => $normalizedEvent['stateClass'],
+                    'persistentOnline' => !empty($normalizedEvent['persistentOnline']),
                     'rawLabel' => trim((string)$eventPair['label']),
                     'timestamp' => self::isEventTimestamp($eventPair['time']) ? trim((string)$eventPair['time']) : trim((string)$eventPair['fallback']),
                     'fallbackTimestamp' => trim((string)$eventPair['fallback']),
@@ -266,6 +267,7 @@ class InternalPageService
         return array(
             'label' => 'Standby',
             'stateClass' => 'is-standby',
+            'persistentOnline' => false,
             'rawLabel' => '0|1|0|0',
             'timestamp' => $fallbackTimestamp,
             'fallbackTimestamp' => $fallbackTimestamp,
@@ -309,6 +311,8 @@ class InternalPageService
         $lastStateClass = null;
         foreach ($sortedEvents as $eventEntry) {
             if (($eventEntry['stateClass'] ?? null) === $lastStateClass) {
+                unset($eventEntry['sortTimestamp']);
+                $transitionEvents[count($transitionEvents) - 1] = $eventEntry;
                 continue;
             }
 
@@ -365,13 +369,20 @@ class InternalPageService
     {
         $rawValue = trim((string)$value);
         $normalizedValue = mb_strtolower($rawValue);
+        if (str_contains($normalizedValue, 'always online') || str_contains($normalizedValue, 'always-on')) {
+            return array(
+                'label' => function_exists('mds_t') ? mds_t('internal.always_online') : 'Always online',
+                'stateClass' => 'is-wakeup',
+                'persistentOnline' => true
+            );
+        }
         if (str_contains($normalizedValue, 'sleep') || str_contains($normalizedValue, 'standby')) {
-            return array('label' => 'Standby', 'stateClass' => 'is-standby');
+            return array('label' => 'Standby', 'stateClass' => 'is-standby', 'persistentOnline' => false);
         }
         if (str_contains($normalizedValue, 'wake')) {
-            return array('label' => 'Wakeup', 'stateClass' => 'is-wakeup');
+            return array('label' => 'Wakeup', 'stateClass' => 'is-wakeup', 'persistentOnline' => false);
         }
-        return array('label' => $rawValue, 'stateClass' => 'is-other');
+        return array('label' => $rawValue, 'stateClass' => 'is-other', 'persistentOnline' => false);
     }
 
     private static function parseEventDatetime($eventEntry)
@@ -404,6 +415,7 @@ class InternalPageService
         for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
             $events[$eventIndex]['durationSeconds'] = null;
             $events[$eventIndex]['durationOpen'] = false;
+            $events[$eventIndex]['persistentOnline'] = !empty($events[$eventIndex]['persistentOnline']);
 
             $eventStart = self::parseEventDatetime($events[$eventIndex]);
             if (!$eventStart instanceof DateTimeImmutable) {
@@ -411,7 +423,7 @@ class InternalPageService
             }
 
             if ($eventIndex === 0) {
-                if (($events[$eventIndex]['stateClass'] ?? '') === 'is-wakeup') {
+                if (($events[$eventIndex]['stateClass'] ?? '') === 'is-wakeup' && empty($events[$eventIndex]['persistentOnline'])) {
                     $events[$eventIndex]['durationOpen'] = true;
                     continue;
                 }
@@ -465,13 +477,25 @@ class InternalPageService
                 continue;
             }
 
-            $points[] = self::buildEventTimelinePoint($eventDateTime, $stateClass, $eventEntry['label'] ?? '');
+            $points[] = self::buildEventTimelinePoint(
+                $eventDateTime,
+                $stateClass,
+                $eventEntry['label'] ?? '',
+                !empty($eventEntry['persistentOnline'])
+            );
         }
 
         if (!empty($points)) {
             $lastPoint = $points[count($points) - 1];
-            if ((int)$lastPoint['y'] === 1) {
+            if ((int)$lastPoint['y'] === 1 && empty($lastPoint['persistentOnline'])) {
                 $points[count($points) - 1]['openEnded'] = true;
+            } elseif ((int)$lastPoint['y'] === 1) {
+                $points[] = self::buildEventTimelinePoint(
+                    $windowEnd,
+                    'is-wakeup',
+                    $lastPoint['label'] ?? (function_exists('mds_t') ? mds_t('internal.always_online') : 'Always online'),
+                    true
+                );
             } else {
                 $points[] = self::buildEventTimelinePoint(
                     $windowEnd,
@@ -511,13 +535,14 @@ class InternalPageService
         return $deduplicatedPoints;
     }
 
-    private static function buildEventTimelinePoint(DateTimeImmutable $eventDateTime, $stateClass, $label)
+    private static function buildEventTimelinePoint(DateTimeImmutable $eventDateTime, $stateClass, $label, $persistentOnline = false)
     {
         return array(
             'x' => $eventDateTime->format(DateTimeInterface::ATOM),
             'y' => $stateClass === 'is-wakeup' ? 1 : 0,
             'label' => $label,
             'timestamp' => $eventDateTime->format('d.m.Y H:i:s'),
+            'persistentOnline' => (bool)$persistentOnline,
         );
     }
 
@@ -532,7 +557,7 @@ class InternalPageService
             $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
             $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
             $hasNextEvent = ($eventIndex + 1 < $eventCount);
-            if (!$hasNextEvent && $segmentState === 'is-wakeup') {
+            if (!$hasNextEvent && $segmentState === 'is-wakeup' && empty($normalizedEvents[$eventIndex]['persistentOnline'])) {
                 continue;
             }
             $segmentEnd = $hasNextEvent ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
@@ -588,6 +613,7 @@ class InternalPageService
             $normalizedEventMap[$eventKey] = array(
                 'stateClass' => $stateClass,
                 'dateTime' => $eventDateTime,
+                'persistentOnline' => !empty($eventEntry['persistentOnline']),
             );
         }
 
@@ -617,7 +643,7 @@ class InternalPageService
             $segmentState = $normalizedEvents[$eventIndex]['stateClass'];
             $segmentStart = $normalizedEvents[$eventIndex]['dateTime'];
             $hasNextEvent = ($eventIndex + 1 < $eventCount);
-            if (!$hasNextEvent && $segmentState === 'is-wakeup') {
+            if (!$hasNextEvent && $segmentState === 'is-wakeup' && empty($normalizedEvents[$eventIndex]['persistentOnline'])) {
                 continue;
             }
 

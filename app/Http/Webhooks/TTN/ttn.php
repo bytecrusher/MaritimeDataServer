@@ -109,6 +109,7 @@ if(strlen($ttn_post) > 0) {
     $sensor_temperature = ttnPayloadValue($decodedPayload, array('temperature', 'TempC_SHT', 'air.temperature'), 0);
     $sensor_battery2 = ttnPayloadValue($decodedPayload, array('voltage2'), 0);
     $firmwareVersion = ttnFirmwareVersion($decodedPayload);
+    $standbyEnabled = ttnStandbyEnabled($decodedPayload);
 
     // TTN Data
     $gtw_id = $bestRxMetadata->gateway_ids->gateway_id ?? '';
@@ -256,6 +257,9 @@ if(strlen($ttn_post) > 0) {
     );
     if ($firmwareVersion !== null) {
       $boardInfos["firmwareVersion"] = $firmwareVersion;
+    }
+    if ($standbyEnabled !== null) {
+      $boardInfos["standbyEnabled"] = $standbyEnabled;
     }
 
     $dateNow = date("d.m.Y");
@@ -504,6 +508,41 @@ function ttnFirmwareVersion($payload) {
     }
 
     return substr($value, 0, 64);
+}
+
+function ttnStandbyEnabled($payload) {
+    return ttnNormalizeBooleanValue(
+        ttnPayloadValue($payload, array('standbyEnabled', 'standby_enabled', 'standbyModeEnabled', 'sleepEnabled'), null)
+    );
+}
+
+function ttnNormalizeBooleanValue($value) {
+    if (is_bool($value)) {
+        return $value;
+    }
+
+    if (is_int($value) || is_float($value)) {
+        return ((int)$value) !== 0;
+    }
+
+    if (!is_string($value)) {
+        return null;
+    }
+
+    $normalizedValue = mb_strtolower(trim($value));
+    if ($normalizedValue === '') {
+        return null;
+    }
+
+    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled'), true)) {
+        return true;
+    }
+
+    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled'), true)) {
+        return false;
+    }
+
+    return null;
 }
 
 function ttnJsonResponse($statusCode, array $payload) {
