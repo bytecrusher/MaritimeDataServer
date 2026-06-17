@@ -445,6 +445,41 @@ class InternalPageService
 
     private static function addEventDurationDetails(array $events, DateTimeImmutable $windowEnd)
     {
+        $durationByEventKey = array();
+        $normalizedEvents = self::eventsAscendingForDuration($events);
+        $normalizedEventCount = count($normalizedEvents);
+
+        for ($eventIndex = 0; $eventIndex < $normalizedEventCount; $eventIndex++) {
+            $eventDateTime = $normalizedEvents[$eventIndex]['dateTime'];
+            $stateClass = $normalizedEvents[$eventIndex]['stateClass'];
+            $persistentOnline = !empty($normalizedEvents[$eventIndex]['persistentOnline']);
+            $eventKey = $eventDateTime->getTimestamp() . '|' . $stateClass;
+
+            $durationByEventKey[$eventKey] = array(
+                'durationSeconds' => null,
+                'durationOpen' => false,
+                'persistentOnline' => $persistentOnline,
+            );
+
+            $nextEventDateTime = isset($normalizedEvents[$eventIndex + 1])
+                ? $normalizedEvents[$eventIndex + 1]['dateTime']
+                : null;
+
+            if ($nextEventDateTime instanceof DateTimeImmutable && $nextEventDateTime > $eventDateTime) {
+                $durationByEventKey[$eventKey]['durationSeconds'] = $nextEventDateTime->getTimestamp() - $eventDateTime->getTimestamp();
+                continue;
+            }
+
+            if ($stateClass === 'is-wakeup' && !$persistentOnline) {
+                $durationByEventKey[$eventKey]['durationOpen'] = true;
+                continue;
+            }
+
+            if ($windowEnd > $eventDateTime) {
+                $durationByEventKey[$eventKey]['durationSeconds'] = $windowEnd->getTimestamp() - $eventDateTime->getTimestamp();
+            }
+        }
+
         $eventCount = count($events);
         for ($eventIndex = 0; $eventIndex < $eventCount; $eventIndex++) {
             $events[$eventIndex]['durationSeconds'] = null;
@@ -456,38 +491,14 @@ class InternalPageService
                 continue;
             }
 
-            $stateClass = $events[$eventIndex]['stateClass'] ?? '';
-            if ($stateClass === 'is-wakeup') {
-                $periodStart = isset($events[$eventIndex + 1])
-                    ? self::parseEventDatetime($events[$eventIndex + 1])
-                    : null;
-
-                if (!$periodStart instanceof DateTimeImmutable) {
-                    if (!empty($events[$eventIndex]['persistentOnline'])) {
-                        $periodStart = $eventDateTime;
-                    } else {
-                        $events[$eventIndex]['durationOpen'] = true;
-                        continue;
-                    }
-                }
-
-                if ($eventDateTime <= $periodStart) {
-                    continue;
-                }
-
-                $events[$eventIndex]['durationSeconds'] = $eventDateTime->getTimestamp() - $periodStart->getTimestamp();
+            $eventKey = $eventDateTime->getTimestamp() . '|' . ($events[$eventIndex]['stateClass'] ?? '');
+            if (!isset($durationByEventKey[$eventKey])) {
                 continue;
             }
 
-            $periodEnd = isset($events[$eventIndex - 1])
-                ? self::parseEventDatetime($events[$eventIndex - 1])
-                : $windowEnd;
-
-            if (!$periodEnd instanceof DateTimeImmutable || $periodEnd <= $eventDateTime) {
-                continue;
-            }
-
-            $events[$eventIndex]['durationSeconds'] = $periodEnd->getTimestamp() - $eventDateTime->getTimestamp();
+            $events[$eventIndex]['durationSeconds'] = $durationByEventKey[$eventKey]['durationSeconds'];
+            $events[$eventIndex]['durationOpen'] = $durationByEventKey[$eventKey]['durationOpen'];
+            $events[$eventIndex]['persistentOnline'] = $durationByEventKey[$eventKey]['persistentOnline'];
         }
 
         return $events;
