@@ -270,13 +270,38 @@ class SettingsPageService
     public static function buildLegacyStatus()
     {
         $pdo = dbConfig::getInstance();
-        $legacyPasswordResetTokens = self::countLegacyPasswordResetTokens($pdo);
-        $legacyWakeupRows = self::countLegacyWakeupStandbyRows($pdo);
+        $legacyPasswordResetTokens = null;
+        $legacyWakeupRows = null;
+        $notificationColumns = array();
 
-        $notificationColumns = array(
-            'receive_offline_notifications' => self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'receive_offline_notifications')),
-            'receive_sensor_notifications' => self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'receive_sensor_notifications')),
-        );
+        try {
+            $legacyPasswordResetTokens = self::countLegacyPasswordResetTokens($pdo);
+        } catch (Throwable $e) {
+            writeToLogFunction::exception($e, __FILE__, array(
+                'message' => 'Legacy password reset token check failed.',
+            ));
+        }
+
+        try {
+            $legacyWakeupRows = self::countLegacyWakeupStandbyRows($pdo);
+        } catch (Throwable $e) {
+            writeToLogFunction::exception($e, __FILE__, array(
+                'message' => 'Legacy WakeupStan row check failed.',
+            ));
+        }
+
+        foreach (array('receive_offline_notifications', 'receive_sensor_notifications') as $notificationColumn) {
+            try {
+                $notificationColumns[$notificationColumn] = self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => $notificationColumn));
+            } catch (Throwable $e) {
+                writeToLogFunction::exception($e, __FILE__, array(
+                    'message' => 'Legacy notification column check failed.',
+                    'column' => $notificationColumn,
+                ));
+                $notificationColumns[$notificationColumn] = false;
+            }
+        }
+
         $missingNotificationColumns = array_keys(array_filter($notificationColumns, function ($exists) {
             return !$exists;
         }));
@@ -291,10 +316,14 @@ class SettingsPageService
             array(
                 'label' => 'Password reset legacy tokens',
                 'status' => $legacyPasswordResetTokens === 0 ? 'clean' : 'action_required',
-                'details' => $legacyPasswordResetTokens . ' unhashed password reset token rows found.',
+                'details' => $legacyPasswordResetTokens === null
+                    ? 'Password reset legacy tokens could not be checked. See log.'
+                    : $legacyPasswordResetTokens . ' unhashed password reset token rows found.',
                 'action' => $legacyPasswordResetTokens === 0
                     ? 'No legacy reset tokens detected.'
-                    : 'Wait until all old reset links have expired, then remove the legacy passwordCode fallback in dbUpdateData::readUserPasswordCode().',
+                    : ($legacyPasswordResetTokens === null
+                        ? 'Review the logged database error before removing the passwordCode fallback.'
+                        : 'Wait until all old reset links have expired, then remove the legacy passwordCode fallback in dbUpdateData::readUserPasswordCode().'),
             ),
             array(
                 'label' => 'Notification schema fallback',
@@ -309,10 +338,14 @@ class SettingsPageService
             array(
                 'label' => 'WakeupStan legacy event rows',
                 'status' => $legacyWakeupRows === 0 ? 'clean' : 'action_required',
-                'details' => $legacyWakeupRows . ' rows still use the old 0|1|0|0 standby marker.',
+                'details' => $legacyWakeupRows === null
+                    ? 'WakeupStan legacy rows could not be checked. See log.'
+                    : $legacyWakeupRows . ' rows still use the old 0|1|0|0 standby marker.',
                 'action' => $legacyWakeupRows === 0
                     ? 'Legacy WakeupStan parser can be removed after one last review.'
-                    : 'Normalize existing WakeupStan rows before removing buildLegacyWakeupStandbyEntry() from InternalPageService.',
+                    : ($legacyWakeupRows === null
+                        ? 'Review the logged database error before removing buildLegacyWakeupStandbyEntry() from InternalPageService.'
+                        : 'Normalize existing WakeupStan rows before removing buildLegacyWakeupStandbyEntry() from InternalPageService.'),
             ),
         );
     }
