@@ -806,7 +806,7 @@ class SettingsPageService
         writeToLogFunction::write_to_log($exception->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
     }
 
-    private static function getTimeZoneList()
+    public static function getTimeZoneList()
     {
         $allZones = array();
         $timestamp = time();

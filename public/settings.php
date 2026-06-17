@@ -17,7 +17,9 @@ require_once dirname(__DIR__) . "/app/Infrastructure/Logging/writeToLogFunction.
 $config  = new configuration();
 $userObj = SettingsPageService::resolveCurrentUserFromSession();
 if (!$userObj) {
-  header("Location: ./index.php");
+  $loginTarget = function_exists('mds_route_path') ? mds_route_path('index.php') : './index.php';
+  header('Location: ' . $loginTarget);
+  echo '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=' . htmlspecialchars($loginTarget, ENT_QUOTES, 'UTF-8') . '">';
   exit();
 }
 
@@ -36,7 +38,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error_msg) && (isset($_POST[
   $error_msg = $boardResult['error_msg'] ?? $error_msg ?? null;
 }
 
-$pageData = SettingsPageService::buildPageData($userObj, $config);
+try {
+  $pageData = SettingsPageService::buildPageData($userObj, $config);
+} catch (Throwable $settingsPageException) {
+  writeToLogFunction::exception($settingsPageException, $_SERVER["SCRIPT_FILENAME"], array(
+    'message' => 'Settings page data could not be loaded. Rendering fallback page.',
+    'userId' => (int)$userObj->getId(),
+  ));
+  $error_msg = mds_t('settings.load_error');
+  $pageData = array(
+    'demoMode' => (bool) $config::$demoMode,
+    'showQrCode' => $config::$ShowQrCode,
+    'apiKey' => $config::$apiKey,
+    'otaUpdateSecret' => $config::$otaUpdateSecret,
+    'sendEmails' => $config::$sendEmails,
+    'myBoards' => array(),
+    'allBoards' => array(),
+    'allUsers' => array(),
+    'timeZones' => SettingsPageService::getTimeZoneList(),
+    'currentLogContent' => '',
+    'isAdmin' => ((int)$userObj->getUserGroupAdmin() === 1),
+    'notificationOverview' => array(
+      'jobStatus' => null,
+      'offlineBoards' => array(),
+      'activeSensorAlerts' => array(),
+    ),
+    'migrationStatus' => array(),
+    'legacyStatus' => array(),
+  );
+}
 $varDemoMode = $pageData['demoMode'];
 $varShowQrCode = $pageData['showQrCode'];
 $var_apiKey = $pageData['apiKey'];
