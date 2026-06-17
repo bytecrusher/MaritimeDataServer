@@ -180,6 +180,7 @@ class SettingsPageService
             'isAdmin' => $isAdmin,
             'notificationOverview' => $notificationOverview,
             'migrationStatus' => self::buildMigrationStatus(),
+            'legacyStatus' => $isAdmin ? self::buildLegacyStatus() : array(),
         );
     }
 
@@ -201,6 +202,56 @@ class SettingsPageService
         }
 
         return $migrations;
+    }
+
+    public static function buildLegacyStatus()
+    {
+        $pdo = dbConfig::getInstance();
+        $legacyPasswordResetTokens = self::countLegacyPasswordResetTokens($pdo);
+        $legacyWakeupRows = self::countLegacyWakeupStandbyRows($pdo);
+
+        $notificationColumns = array(
+            'receive_offline_notifications' => self::tableColumnExists($pdo, 'users', 'receive_offline_notifications'),
+            'receive_sensor_notifications' => self::tableColumnExists($pdo, 'users', 'receive_sensor_notifications'),
+        );
+        $missingNotificationColumns = array_keys(array_filter($notificationColumns, function ($exists) {
+            return !$exists;
+        }));
+
+        return array(
+            array(
+                'label' => 'Deprecated user methods',
+                'status' => 'clean',
+                'details' => 'Obsolete methods removed from user domain class.',
+                'action' => 'No action required.',
+            ),
+            array(
+                'label' => 'Password reset legacy tokens',
+                'status' => $legacyPasswordResetTokens === 0 ? 'clean' : 'action_required',
+                'details' => $legacyPasswordResetTokens . ' unhashed password reset token rows found.',
+                'action' => $legacyPasswordResetTokens === 0
+                    ? 'No legacy reset tokens detected.'
+                    : 'Wait until all old reset links have expired, then remove the legacy passwordCode fallback in dbUpdateData::readUserPasswordCode().',
+            ),
+            array(
+                'label' => 'Notification schema fallback',
+                'status' => empty($missingNotificationColumns) ? 'clean' : 'action_required',
+                'details' => empty($missingNotificationColumns)
+                    ? 'users.receive_offline_notifications and users.receive_sensor_notifications are present.'
+                    : 'Missing columns: ' . implode(', ', $missingNotificationColumns),
+                'action' => empty($missingNotificationColumns)
+                    ? 'Schema is ready to remove the fallback column checks.'
+                    : 'Run docs/db_design/migrations/2026-04-26_notification_and_gauge_style_idempotent.sql on all environments.',
+            ),
+            array(
+                'label' => 'WakeupStan legacy event rows',
+                'status' => $legacyWakeupRows === 0 ? 'clean' : 'action_required',
+                'details' => $legacyWakeupRows . ' rows still use the old 0|1|0|0 standby marker.',
+                'action' => $legacyWakeupRows === 0
+                    ? 'Legacy WakeupStan parser can be removed after one last review.'
+                    : 'Normalize existing WakeupStan rows before removing buildLegacyWakeupStandbyEntry() from InternalPageService.',
+            ),
+        );
     }
 
     private static function getMigrationDefinitions()
@@ -260,6 +311,33 @@ class SettingsPageService
                 ),
             ),
         );
+    }
+
+    private static function countLegacyPasswordResetTokens(PDO $pdo)
+    {
+        $statement = $pdo->query(
+            "SELECT COUNT(*) AS legacyCount
+             FROM users
+             WHERE passwordCode IS NOT NULL
+               AND passwordCode <> ''
+               AND passwordCode NOT REGEXP '^[A-Fa-f0-9]{64}$'"
+        );
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['legacyCount'] ?? 0);
+    }
+
+    private static function countLegacyWakeupStandbyRows(PDO $pdo)
+    {
+        $statement = $pdo->query(
+            "SELECT COUNT(*) AS legacyCount
+             FROM sensorData
+             WHERE value1 = '0'
+               AND value2 = '1'
+               AND value3 = '0'
+               AND value4 = '0'"
+        );
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['legacyCount'] ?? 0);
     }
 
     public static function runAutomaticMigrationActions($userObj)

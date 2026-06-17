@@ -9,13 +9,11 @@ require_once(__DIR__ . "/../../Infrastructure/Database/dbConfig.func.php");
 require_once(__DIR__ . "/../../Infrastructure/Database/dbGetData.php");
 require_once(__DIR__ . "/../../Support/password.func.php");
 require_once(__DIR__ . "/../../Infrastructure/Logging/writeToLogFunction.func.php");
-require_once(__DIR__ . "/../../Application/myFunctions.func.php");
 
 class user implements JsonSerializable
 {
   //private $user = null;
   private $userObj = null;
-  private $object;
   private static $pdo;
   private $error;
 
@@ -39,47 +37,6 @@ class user implements JsonSerializable
       writeToLogFunction::write_to_log("error code: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
       $this->error = $err->getCode();
     }
-  }
-
-  /**
-   * @deprecated Checks that the user is logged in.
-   *
-   * @return $user|null or False if user is not logged in
-   * @throws Exception Return Exception message on error.
-   * 
-   */
-  public static function check_user()
-  {
-    trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
-    if (!isset($_SESSION['userId']) && isset($_COOKIE['identifier']) && isset($_COOKIE['securityToken'])) {
-      $identifier = $_COOKIE['identifier'];
-      $securityToken = $_COOKIE['securityToken'];
-      try {
-        $statement = self::$pdo->prepare("SELECT * FROM securityTokens WHERE identifier = ?");
-        $result = $statement->execute(array($identifier));
-        $securityToken_row = $statement->fetch();
-
-        if (!myFunctions::securityTokenMatches($securityToken, $securityToken_row['securityToken'] ?? '')) {
-          //The security token was probably stolen
-          //If necessary, display a warning or similar here
-        } else { //Token was correct
-          //Set new token
-          $neuer_securityToken = myFunctions::random_string();
-          $insert = self::$pdo->prepare("UPDATE securityTokens SET securityToken = :securityToken WHERE identifier = :identifier");
-          $insert->execute(array('securityToken' => myFunctions::hashSecurityToken($neuer_securityToken), 'identifier' => $identifier));
-          mds_set_remember_login_cookies($identifier, $neuer_securityToken);
-          //Log in the user
-          $_SESSION['userId'] = $securityToken_row['userId'];
-        }
-      } catch (PDOException $err) {
-        writeToLogFunction::write_to_log("error code: " . $err->getCode(), $_SERVER["SCRIPT_FILENAME"]);
-        //$this->error = $err->getCode();
-      }
-    }
-    if (!isset($_SESSION['userId'])) {
-      return false;
-    }
-    return dbGetData::getUserById($_SESSION['userId']);
   }
 
 /**
@@ -106,20 +63,6 @@ class user implements JsonSerializable
     } else {
       return $this->userObj->active;
     }
-  }
-
-  /**
-  * @deprecated Returns the user of the email address.
-  * @param $email address of the user.
-  * @return user as object
-  */
-  public function getUser($email)
-  {
-    trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
-    if ($this->userObj === null) {
-      $this->object = new self($email);
-    }
-    return $this->userObj;
   }
 
   /**
