@@ -670,17 +670,22 @@ den Header beim OTA-Update mitsenden.
 - `403`
   - wenn Header, User-Agent oder `X-MDS-OTA-Secret` nicht passen
   - wenn serverseitig kein `otaUpdateSecret` konfiguriert ist
-- `500`
-  - wenn die MAC nicht fuer Updates konfiguriert ist
+- `404`
+  - wenn die MAC keinem Board in `boardConfig` zugeordnet werden kann
+  - wenn die Firmware-Datei fehlt
 - `200`
-  - wenn eine neue Firmware geliefert wird
+  - wenn `boardConfig.performUpdate = 1` ist und die lokale Firmware-Datei einen anderen MD5-Hash als `x-ESP32-sketch-md5` hat
 - `304`
   - wenn keine neuere Firmware vorhanden ist
+  - wenn das Board bekannt ist, aber `performUpdate` nicht aktiviert ist
 
 ### Dateipfade
 
 - Firmware-Binaerdateien: `var/ota/bin/`
 - OTA-Logs: `var/ota/logs/`
+
+Aktuell wird als Standarddatei `var/ota/bin/firmware.bin` ausgeliefert.
+Die Freigabe erfolgt pro Board ueber `boardConfig.performUpdate`.
 
 
 ## TTN Simulator

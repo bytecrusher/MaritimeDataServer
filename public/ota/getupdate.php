@@ -15,6 +15,8 @@ $headers = array_change_key_case(getallheaders(), CASE_LOWER);
 require_once(dirname(__DIR__, 2) . "/bootstrap/app.php");
 require_once(dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php");
 
+$otaDefaultFirmwareName = 'firmware';
+
 function check_header($name, $value = false) {
     global $headers;
     $name = strtolower((string)$name);
@@ -47,12 +49,16 @@ function require_ota_secret() {
     }
 }
 
+function ota_response($statusCode, $message) {
+    header($_SERVER["SERVER_PROTOCOL"].' ' . (int)$statusCode . ' ' . $message, true, (int)$statusCode);
+    write_to_log($message);
+    echo $message . "\n";
+    exit();
+}
+
 function sendFile($path) {
     if (!is_file($path)) {
-        header($_SERVER["SERVER_PROTOCOL"].' 404 Not Found', true, 404);
-        write_to_log("firmware file not found: " . basename($path));
-        echo "firmware file not found\n";
-        exit();
+        ota_response(404, "firmware file not found: " . basename($path));
     }
 
     header($_SERVER["SERVER_PROTOCOL"].' 200 OK', true, 200);
@@ -100,50 +106,53 @@ if(
     exit();
 }
 
-// Later to get board infos out of DB
-//$singleRowBoardId = myFunctions::getBoardByMac($headers['x-ESP32-STA-MAC']);
-//write_to_log($singleRowBoardId['firmwareversion']);
-
-// later comes from DB
-$db = array(
-    "18:FE:AA:AA:AA:AA" => "DOOR-7-g14f53a19",
-    "18:FE:AA:AA:AA:BB" => "TEMP-1.0.0",
-    "24:62:AB:F3:8A:54" => "firmware",
-    "24:6F:28:7B:A9:14" => "firmware"
-);
-
-// later comes from DB
-$dbfirmwareversion = array(
-    "18:FE:AA:AA:AA:AA" => "DOOR-7-g14f53a19",
-    "18:FE:AA:AA:AA:BB" => "TEMP-1.0.0",
-    "24:62:AB:F3:8A:54" => "0.0.1",
-    "24:6F:28:7B:A9:14" => "0.0.3"
-);
-
-$espMac = (string)$headers['x-esp32-sta-mac'];
-if(!isset($db[$espMac])) {
-    header($_SERVER["SERVER_PROTOCOL"].' 500 ESP MAC not configured for updates', true, 500);
-    write_to_log($espMac . ", " . $_SERVER["SERVER_PROTOCOL"].' 500 ESP MAC not configured for updates');
-    exit();
+$espMac = myFunctions::normalizeMacAddress((string)$headers['x-esp32-sta-mac']);
+$board = myFunctions::getBoardByMacAddress($espMac);
+if(!$board) {
+    ota_response(404, "ESP MAC not configured for updates: " . $espMac);
 }
 
-$localBinary = dirname(__DIR__, 2) . "/var/ota/bin/" . $db[$espMac] . ".bin";
+$firmwareName = $otaDefaultFirmwareName;
+$localBinary = dirname(__DIR__, 2) . "/var/ota/bin/" . $firmwareName . ".bin";
+if (!is_file($localBinary)) {
+    ota_response(404, "firmware file not found: " . basename($localBinary));
+}
 
-// Check if version has been set and does not match, if not, check if
-// MD5 hash between local binary and ESP8266 binary do not match if not.
-// then no update has been found.
-//if((check_header('x-ESP32-version') && $dbfirmwareversion[$headers['x-ESP32-STA-MAC']] != $headers['x-ESP32-version']) && ($headers["x-ESP32-sketch-md5"] != md5_file($localBinary)) ) {
-if((check_header('x-ESP32-version') && $dbfirmwareversion[$espMac] != $headers['x-esp32-version']) ) {
-    write_to_log("send file");
-    sendFile($localBinary);
-    exit();
-} else {
-    write_to_log("fehler 304");
+$currentSketchMd5 = strtolower(trim((string)($headers['x-esp32-sketch-md5'] ?? '')));
+$serverBinaryMd5 = strtolower((string)md5_file($localBinary));
+$currentVersion = trim((string)($headers['x-esp32-version'] ?? ''));
+$knownDeviceVersion = trim((string)($board['firmwareVersion'] ?? ''));
+$performUpdate = (int)($board['performUpdate'] ?? 0) === 1;
+
+write_to_log(array(
+    'otaRequest' => 'resolved',
+    'boardId' => $board['id'] ?? null,
+    'macAddress' => $espMac,
+    'performUpdate' => $performUpdate ? '1' : '0',
+    'deviceVersionHeader' => $currentVersion,
+    'storedDeviceVersion' => $knownDeviceVersion,
+    'deviceSketchMd5' => $currentSketchMd5,
+    'serverBinaryMd5' => $serverBinaryMd5,
+    'firmwareFile' => basename($localBinary)
+));
+
+if (!$performUpdate) {
+    header('x-MDS-OTA-Status: disabled', true);
+    write_to_log("OTA disabled for device: " . $espMac);
     header($_SERVER["SERVER_PROTOCOL"].' 304 Not Modified', true, 304);
     exit();
 }
 
-header($_SERVER["SERVER_PROTOCOL"].' 500 no version for ESP MAC', true, 500);
+if ($currentSketchMd5 !== '' && hash_equals($serverBinaryMd5, $currentSketchMd5)) {
+    header('x-MDS-OTA-Status: current', true);
+    write_to_log("OTA firmware already current: " . $espMac);
+    header($_SERVER["SERVER_PROTOCOL"].' 304 Not Modified', true, 304);
+    exit();
+}
+
+write_to_log("send file to " . $espMac);
+sendFile($localBinary);
+exit();
 
 function write_to_log($text)
 {

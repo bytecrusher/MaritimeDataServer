@@ -533,7 +533,9 @@ paths:
       summary: ESP32 OTA-Update anfragen
       description: |
         Header-basierter OTA-Endpunkt für ESP32-Devices.
-        Die Firmware-Auswahl erfolgt aktuell über MAC-Adresse.
+        Die Board-Auswahl erfolgt über `x-ESP32-STA-MAC`.
+        Updates werden nur ausgeliefert, wenn das Board in `boardConfig`
+        existiert und `performUpdate = 1` gesetzt ist.
         Der Request muss zusätzlich mit dem Shared Secret aus
         `config/config.json` (`otaUpdateSecret`) über den Header
         `X-MDS-OTA-Secret` authentifiziert werden.
@@ -580,15 +582,15 @@ paths:
                 type: string
                 format: binary
         '304':
-          description: Keine neuere Firmware vorhanden
+          description: Keine neuere Firmware vorhanden oder OTA ist für das bekannte Board nicht aktiviert
         '403':
           description: Header, User-Agent oder OTA Secret ungültig; oder serverseitig ist kein OTA Secret konfiguriert
           content:
             text/plain:
               schema:
                 type: string
-        '500':
-          description: Device nicht für Updates konfiguriert oder interner OTA-Fehler
+        '404':
+          description: Device-MAC nicht in boardConfig vorhanden oder Firmware-Datei fehlt
           content:
             text/plain:
               schema:
