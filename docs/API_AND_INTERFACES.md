@@ -115,6 +115,7 @@ Der Code verarbeitet insbesondere:
 
 Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 
+- `macAddress` als primaere Board-ID, wenn der TTN-Decoder sie aus dem ESP-Payload liefert
 - `alarm1`
 - `altitude`
 - `counter`
@@ -141,13 +142,16 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 
 1. TTN sendet einen Uplink an `/webhooks/ttn.php`
 2. MDS extrahiert Board-Identifier:
-   - bevorzugt `device_id`
-   - sonst `dev_eui`
+   - bevorzugt `decoded_payload.macAddress`
+   - sonst als Legacy-Fallback `device_id`
+   - sonst als Legacy-Fallback `dev_eui`
 3. MDS sucht das Board ueber:
-   - `ttnAppId`
-   - `ttnDevId`
+   - primaer `boardConfig.macAddress`
+   - fallback `ttnAppId` plus `ttnDevId`
 4. Falls das Board nicht existiert:
    - wird ein Board automatisch angelegt
+   - wenn `macAddress` vorhanden ist, wird diese direkt als Board-MAC gespeichert
+   - alte automatisch angelegte TTN-Boards mit `fakeMacAddress...` werden beim naechsten passenden Uplink auf die echte MAC migriert
 5. Falls notwendige Sensoren fehlen:
    - werden `GPS`, `Lora`, `ADC`, `DS18B20`, `BME280`, `DS2438`, `Digital` automatisch angelegt
 6. MDS baut eine interne JSON-Payload
@@ -162,7 +166,7 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 {
   "board": {
     "apiKey": "<configured-api-key>",
-    "macAddress": "<board-mac-or-fake-mac>",
+    "macAddress": "<board-mac>",
     "protocolVersion": "1",
     "firmwareVersion": "1.2.3",
     "standbyState": "wakeup"

@@ -85,7 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     writeToLogFunction::warning("Missing macAddress in board payload.", $_SERVER["SCRIPT_FILENAME"], array('board' => $boardData));
                     ingestJsonResponse(400, array('error' => 'Missing board.macAddress.'));
                 }
-                $macAddress = test_input($boardData['macAddress']);
+                $macAddress = myFunctions::normalizeMacAddress(test_input($boardData['macAddress']));
                 $macAddressId = check_macAddress($macAddress, $pdo2);
                 $responseBoardId = $macAddressId;
                 $boardObj = new board($macAddressId);
@@ -796,13 +796,25 @@ function maskSecretForLog($secret)
 
 function check_macAddress($macAddress, $pdo2)
 {
+    $macAddress = myFunctions::normalizeMacAddress($macAddress);
+    $isNormalizedMacAddress = preg_match('/^[A-F0-9]{2}(:[A-F0-9]{2}){5}$/', $macAddress) === 1;
+    $macAddressHex = strtoupper(preg_replace('/[^A-Fa-f0-9]/', '', $macAddress));
     try {
-        $statement = $pdo2->prepare("SELECT id FROM boardConfig WHERE macAddress = ? LIMIT 1");
-        $statement->execute(array($macAddress));
+        if ($isNormalizedMacAddress) {
+            $statement = $pdo2->prepare(
+                "SELECT id FROM boardConfig
+                 WHERE REPLACE(REPLACE(UPPER(macAddress), ':', ''), '-', '') = ?
+                 LIMIT 1"
+            );
+            $statement->execute(array($macAddressHex));
+        } else {
+            $statement = $pdo2->prepare("SELECT id FROM boardConfig WHERE macAddress = ? LIMIT 1");
+            $statement->execute(array($macAddress));
+        }
         $idMacAddress = $statement->fetch();
     } catch (PDOException $ex) {
-        echo "An Error has occurred while check macAddress";
         writeToLogFunction::exception($ex, $_SERVER["SCRIPT_FILENAME"], array('macAddress' => $macAddress));
+        ingestJsonResponse(500, array('error' => 'Unable to resolve board by macAddress.'));
     }
 
     if ( (!isset($idMacAddress['id']) ) || ($idMacAddress['id'] == null) ) {

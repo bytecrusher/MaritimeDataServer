@@ -39,6 +39,9 @@ paths:
         Werte aus `uplink_message.decoded_payload` oder `normalized_payload`,
         legt bei Bedarf Board- und Sensor-Konfigurationen automatisch an und
         leitet die normalisierte Payload intern an `/ingest/receivejson.php` weiter.
+        Wenn `decoded_payload.macAddress` vorhanden ist, wird diese MAC-Adresse
+        primaer zur Board-Identifikation verwendet. `device_id` und `dev_eui`
+        bleiben als Legacy-Fallback erhalten.
       security:
         - ttnWebhookSecret: []
         - {}
@@ -60,6 +63,7 @@ paths:
                   uplink_message:
                     frm_payload: ghredFHTeFiLhDbffzewSderGjKLJgfftrO
                     decoded_payload:
+                      macAddress: "94:B9:7E:FE:F5:40"
                       counter: 180
                       temperature: 21.5
                       humidity: 61.2
@@ -815,8 +819,15 @@ components:
             frm_payload:
               type: string
             decoded_payload:
-              type: object
-              additionalProperties: true
+              allOf:
+                - type: object
+                  properties:
+                    macAddress:
+                      type: string
+                      example: "94:B9:7E:FE:F5:40"
+                      description: Primaere Board-Kennung, wenn der TTN-Decoder sie aus dem ESP-Payload liefert.
+                - type: object
+                  additionalProperties: true
             normalized_payload:
               type: object
               additionalProperties: true

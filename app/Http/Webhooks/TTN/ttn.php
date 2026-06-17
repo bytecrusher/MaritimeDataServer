@@ -110,6 +110,7 @@ if(strlen($ttn_post) > 0) {
     $sensor_battery2 = ttnPayloadValue($decodedPayload, array('voltage2'), 0);
     $firmwareVersion = ttnFirmwareVersion($decodedPayload);
     $standbyState = ttnStandbyState($decodedPayload);
+    $payloadMacAddress = ttnMacAddress($decodedPayload);
 
     // TTN Data
     $gtw_id = $bestRxMetadata->gateway_ids->gateway_id ?? '';
@@ -129,6 +130,7 @@ if(strlen($ttn_post) > 0) {
             'ttnAppId' => $ttn_app_id,
             'ttnDeviceId' => $ttn_device_id,
             'ttnDevEui' => $ttn_dev_eui,
+            'payloadMacAddress' => $payloadMacAddress,
             'frameCounter' => $frame_counter,
             'hasDecodedPayload' => isset($uplinkMessage->decoded_payload),
             'hasNormalizedPayload' => isset($uplinkMessage->normalized_payload)
@@ -173,24 +175,95 @@ if(strlen($ttn_post) > 0) {
       ));
     }
 
-    // TODO: insert data into 'sensordata' (first get Board-ID by TTN Appid and Devid)
-    $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
+    $boardResolvedBy = null;
+    $singleRowBoardIdbyTTN = null;
+    if ($payloadMacAddress !== null && $payloadMacAddress !== '') {
+        $singleRowBoardIdbyTTN = myFunctions::getBoardByMacAddress($payloadMacAddress);
+        if ($singleRowBoardIdbyTTN) {
+            $boardResolvedBy = 'macAddress';
+            myFunctions::updateBoardTTNIdentifiersIfEmpty($singleRowBoardIdbyTTN['id'], $ttn_app_id, $ttn_board_identifier);
+        }
+    }
+
+    if (!$singleRowBoardIdbyTTN) {
+        $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
+        if ($singleRowBoardIdbyTTN) {
+            $boardResolvedBy = 'ttnLegacy';
+        }
+    }
+
     $myFunctions = new myFunctions();
     
     // if board not exist, create it.
     if (!$singleRowBoardIdbyTTN) {
-        $newId = myFunctions::addBoardByTTN($ttn_app_id, $ttn_board_identifier);
+        $newId = myFunctions::addBoardByTTN($ttn_app_id, $ttn_board_identifier, $payloadMacAddress);
         writeToLogFunction::info(
             'New board created from TTN uplink.',
             $_SERVER["SCRIPT_FILENAME"],
             array(
                 'boardId' => $newId,
                 'ttnAppId' => $ttn_app_id,
-                'ttnDeviceIdentifier' => $ttn_board_identifier
+                'ttnDeviceIdentifier' => $ttn_board_identifier,
+                'payloadMacAddress' => $payloadMacAddress
             )
         );
-        $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
+        $singleRowBoardIdbyTTN = $payloadMacAddress !== null && $payloadMacAddress !== ''
+            ? myFunctions::getBoardByMacAddress($payloadMacAddress)
+            : myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
+        $boardResolvedBy = $payloadMacAddress !== null && $payloadMacAddress !== '' ? 'macAddress.created' : 'ttnLegacy.created';
+    } elseif ($payloadMacAddress !== null && $payloadMacAddress !== '' && $boardResolvedBy === 'ttnLegacy') {
+        $macAddressUpdated = myFunctions::updateBoardMacAddressIfPlaceholder($singleRowBoardIdbyTTN['id'], $payloadMacAddress);
+        if ($macAddressUpdated) {
+            $singleRowBoardIdbyTTN['macAddress'] = $payloadMacAddress;
+            writeToLogFunction::info(
+                'Existing TTN board migrated from placeholder MAC to payload MAC.',
+                $_SERVER["SCRIPT_FILENAME"],
+                array(
+                    'boardId' => $singleRowBoardIdbyTTN['id'],
+                    'payloadMacAddress' => $payloadMacAddress,
+                    'ttnAppId' => $ttn_app_id,
+                    'ttnDeviceIdentifier' => $ttn_board_identifier
+                )
+            );
+        } elseif (myFunctions::normalizeMacAddress($singleRowBoardIdbyTTN['macAddress'] ?? '') !== $payloadMacAddress) {
+            writeToLogFunction::warning(
+                'TTN payload MAC differs from existing board MAC. Keeping existing board MAC to avoid accidental re-assignment.',
+                $_SERVER["SCRIPT_FILENAME"],
+                array(
+                    'boardId' => $singleRowBoardIdbyTTN['id'],
+                    'existingMacAddress' => $singleRowBoardIdbyTTN['macAddress'] ?? null,
+                    'payloadMacAddress' => $payloadMacAddress,
+                    'ttnAppId' => $ttn_app_id,
+                    'ttnDeviceIdentifier' => $ttn_board_identifier
+                )
+            );
+        }
     }
+
+    if (!$singleRowBoardIdbyTTN) {
+      writeToLogFunction::error(
+        'TTN board could not be resolved or created.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+          'ttnAppId' => $ttn_app_id,
+          'ttnDeviceId' => $ttn_device_id,
+          'ttnDevEui' => $ttn_dev_eui,
+          'payloadMacAddress' => $payloadMacAddress
+        )
+      );
+      ttnJsonResponse(500, array('error' => 'TTN board could not be resolved or created.'));
+    }
+
+    writeToLogFunction::info(
+      'TTN board resolved.',
+      $_SERVER["SCRIPT_FILENAME"],
+      array(
+        'boardId' => $singleRowBoardIdbyTTN['id'],
+        'resolvedBy' => $boardResolvedBy,
+        'boardMacAddress' => $singleRowBoardIdbyTTN['macAddress'] ?? null,
+        'payloadMacAddress' => $payloadMacAddress
+      )
+    );
     
     $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
     $createdSensors = false;
@@ -251,8 +324,7 @@ if(strlen($ttn_post) > 0) {
 
     $boardInfos = array(
         "apiKey" => $config::$apiKey,
-        // TODO: Anhand der Dev_IDE die Mac ermitteln
-        "macAddress" => $singleRowBoardIdbyTTN['macAddress'],   // fake mac address for debug.
+        "macAddress" => $singleRowBoardIdbyTTN['macAddress'],
         "protocolVersion" => "1"   // Version of the used protocoll.
     );
     if ($firmwareVersion !== null) {
@@ -518,6 +590,20 @@ function ttnStandbyState($payload) {
     }
 
     return null;
+}
+
+function ttnMacAddress($payload) {
+    $value = ttnPayloadValue(
+        $payload,
+        array('macAddress', 'mac_address', 'mac', 'deviceMac', 'device_mac', 'espMac', 'esp_mac', 'chipMac', 'chip_mac'),
+        null
+    );
+    if ($value === null) {
+        return null;
+    }
+
+    $normalizedMacAddress = myFunctions::normalizeMacAddress($value);
+    return $normalizedMacAddress === '' ? null : $normalizedMacAddress;
 }
 
 function ttnNormalizeStandbyStateValue($value) {

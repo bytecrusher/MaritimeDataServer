@@ -141,9 +141,55 @@ class myFunctions {
     return null;
   }
 
-/*
+  /*
   * Get Board by Board TTN appid and dev id. Only one dataset will return.
   */
+  public static function normalizeMacAddress($macAddress) {
+    $rawMacAddress = trim((string)$macAddress);
+    if ($rawMacAddress === '') {
+      return '';
+    }
+
+    if (
+      preg_match('/^[A-Fa-f0-9]{12}$/', $rawMacAddress) !== 1
+      && preg_match('/^[A-Fa-f0-9]{2}([:-][A-Fa-f0-9]{2}){5}$/', $rawMacAddress) !== 1
+    ) {
+      return $rawMacAddress;
+    }
+
+    $hexMacAddress = strtoupper(preg_replace('/[^A-Fa-f0-9]/', '', $rawMacAddress));
+    return implode(':', str_split($hexMacAddress, 2));
+  }
+
+  public static function getBoardByMacAddress($macAddress) {
+    $normalizedMacAddress = self::normalizeMacAddress($macAddress);
+    if ($normalizedMacAddress === '') {
+      return null;
+    }
+
+    $isNormalizedMacAddress = preg_match('/^[A-F0-9]{2}(:[A-F0-9]{2}){5}$/', $normalizedMacAddress) === 1;
+    $normalizedHexMacAddress = strtoupper(preg_replace('/[^A-Fa-f0-9]/', '', $normalizedMacAddress));
+    if ($normalizedHexMacAddress === '' && $normalizedMacAddress === '') {
+      return null;
+    }
+
+    $pdo = dbConfig::getInstance();
+    if ($isNormalizedMacAddress) {
+      $statement = $pdo->prepare(
+        "SELECT * FROM boardConfig
+         WHERE REPLACE(REPLACE(UPPER(macAddress), ':', ''), '-', '') = ?
+         ORDER BY id LIMIT 1"
+      );
+      $statement->execute(array($normalizedHexMacAddress));
+    } else {
+      $statement = $pdo->prepare("SELECT * FROM boardConfig WHERE macAddress = ? ORDER BY id LIMIT 1");
+      $statement->execute(array($normalizedMacAddress));
+    }
+    $board = $statement->fetch(PDO::FETCH_ASSOC);
+
+    return $board ?: null;
+  }
+
   public static function getBoardByTTN($ttnAppId, $ttnDevId, $ttnDeviceId = null) {
     if (($ttnAppId == null) || (($ttnDevId == null) && ($ttnDeviceId == null))) {
       return null;
@@ -167,12 +213,56 @@ class myFunctions {
   /*
   * Add Board by Board TTN appid and dev id. Only one dataset will return.
   */
-  public static function addBoardByTTN($ttnAppId, $ttnDevId) {
+  public static function addBoardByTTN($ttnAppId, $ttnDevId, $macAddress = null) {
     $pdo = dbConfig::getInstance();
+    $boardMacAddress = self::normalizeMacAddress($macAddress);
+    if ($boardMacAddress === '') {
+      $boardMacAddress = "fakeMacAddress" . $ttnDevId;
+    }
+
     $statement = $pdo->prepare("INSERT INTO boardConfig (macAddress, name, ttnAppId, ttnDevId, onDashboard, updateDataTimer, offlineDataTimer) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $statement->execute(array("fakeMacAddress" . $ttnDevId, "- new imported -", $ttnAppId, $ttnDevId, 1, 15, 15));
+    $statement->execute(array($boardMacAddress, "- new imported -", $ttnAppId, $ttnDevId, 1, 15, 15));
     $neue_id = $pdo->lastInsertId();
     return $neue_id;
+  }
+
+  public static function updateBoardMacAddressIfPlaceholder($boardId, $macAddress) {
+    $normalizedMacAddress = self::normalizeMacAddress($macAddress);
+    if ((int)$boardId <= 0 || $normalizedMacAddress === '') {
+      return false;
+    }
+
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare("SELECT macAddress FROM boardConfig WHERE id = ? LIMIT 1");
+    $statement->execute(array((int)$boardId));
+    $board = $statement->fetch(PDO::FETCH_ASSOC);
+    if (!$board) {
+      return false;
+    }
+
+    $currentMacAddress = trim((string)($board['macAddress'] ?? ''));
+    if ($currentMacAddress !== '' && stripos($currentMacAddress, 'fakeMacAddress') !== 0) {
+      return false;
+    }
+
+    $updateStatement = $pdo->prepare("UPDATE boardConfig SET macAddress = ? WHERE id = ?");
+    return $updateStatement->execute(array($normalizedMacAddress, (int)$boardId));
+  }
+
+  public static function updateBoardTTNIdentifiersIfEmpty($boardId, $ttnAppId, $ttnDevId) {
+    if ((int)$boardId <= 0 || $ttnAppId === null || $ttnDevId === null || $ttnDevId === '') {
+      return false;
+    }
+
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare(
+      "UPDATE boardConfig
+       SET ttnAppId = COALESCE(NULLIF(ttnAppId, ''), ?),
+           ttnDevId = COALESCE(NULLIF(ttnDevId, ''), ?)
+       WHERE id = ?"
+    );
+
+    return $statement->execute(array($ttnAppId, $ttnDevId, (int)$boardId));
   }
 
   /*
