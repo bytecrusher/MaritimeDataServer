@@ -249,8 +249,13 @@ Optionale Board-Felder:
     - `wakeup`
     - `standby`
   - zusaetzlich akzeptiert MDS tolerante Schreibweisen wie `always online`, `always-online`, `wake`, `awake`, `sleep`
+  - numerische oder boolesche Zustandswerte werden ebenfalls interpretiert:
+    - `1`, `true`, `on`, `online` => `wakeup`
+    - `0`, `false`, `off` => `standby`
   - wenn `always_online` uebertragen wird, erzeugt MDS bei Bedarf ein persistentes ESP-Ereignis `Always online`
   - wenn `wakeup` oder `standby` uebertragen wird, schreibt MDS bei einem Zustandswechsel ein entsprechendes ESP-Ereignis
+  - wenn kein `standbyState` uebertragen wird, versucht MDS weiterhin Wakeup-/Standby-Ereignisse aus Telemetrie-Luecken abzuleiten
+  - dabei gilt: nach Ablauf von `offlineDataTimer` ohne neue Nutzdaten wird ein `Standby` angenommen; beim naechsten Datenempfang wird ein `Wakeup` erzeugt
 
 ### Sensor-Mapping
 

@@ -522,11 +522,11 @@ function ttnStandbyState($payload) {
 
 function ttnNormalizeStandbyStateValue($value) {
     if (is_bool($value)) {
-        return $value ? null : 'always_online';
+        return $value ? 'wakeup' : 'standby';
     }
 
     if (is_int($value) || is_float($value)) {
-        return ((int)$value) === 0 ? 'always_online' : null;
+        return ((int)$value) === 0 ? 'standby' : 'wakeup';
     }
 
     if (!is_string($value)) {
@@ -538,15 +538,15 @@ function ttnNormalizeStandbyStateValue($value) {
         return null;
     }
 
-    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson', 'online'), true)) {
+    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson'), true)) {
         return 'always_online';
     }
 
-    if (in_array($normalizedValue, array('wakeup', 'wake', 'awake', 'active'), true) || str_contains($normalizedValue, 'wake')) {
+    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled', 'wakeup', 'wake', 'awake', 'active', 'online'), true) || str_contains($normalizedValue, 'wake')) {
         return 'wakeup';
     }
 
-    if (in_array($normalizedValue, array('standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
+    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled', 'standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
         return 'standby';
     }
 

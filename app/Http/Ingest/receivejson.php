@@ -88,10 +88,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $macAddress = test_input($boardData['macAddress']);
                 $macAddressId = check_macAddress($macAddress, $pdo2);
                 $responseBoardId = $macAddressId;
+                $boardObj = new board($macAddressId);
                 $firmwareVersion = extractFirmwareVersionFromBoardPayload($boardData);
                 if ($firmwareVersion !== null) {
                     updateBoardFirmwareVersion($macAddressId, $firmwareVersion, $pdo2);
                 }
+                $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
+                syncWakeupStandbyEventFromBoardActivity($boardObj, $boardSensors, $pdo2);
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                 $standbyState = extractStandbyStateFromBoardPayload($boardData);
                 if ($standbyState !== null) {
@@ -473,6 +476,43 @@ function updateBoardFirmwareVersion($boardId, $firmwareVersion, PDO $pdo2)
     );
 }
 
+function syncWakeupStandbyEventFromBoardActivity(board $boardObj, array $boardSensors, PDO $pdo2)
+{
+    $boardId = (int)$boardObj->getId();
+    $wakeupSensor = resolveWakeupStandbySensor($boardSensors, $boardId, $pdo2);
+    if ($wakeupSensor === null) {
+        return;
+    }
+
+    $latestPayloadReadingTime = getLatestBoardPayloadReadingTime($boardId, $pdo2);
+    $latestEventRow = getLatestWakeupStandbySensorRow((int)$wakeupSensor['id'], $pdo2);
+    $latestEventState = determineWakeupStandbyStateFromRow($latestEventRow);
+    $now = new DateTimeImmutable('now');
+
+    if (!$latestPayloadReadingTime instanceof DateTimeImmutable) {
+        if ($latestEventState !== 'wakeup') {
+            insertWakeupStandbyEventRow((int)$wakeupSensor['id'], 'wakeup', $now, 'Wakeup event inferred from first payload.');
+        }
+        return;
+    }
+
+    $offlineDataTimer = (int)$boardObj->getOfflineDataTimer();
+    if ($offlineDataTimer <= 0) {
+        $offlineDataTimer = 15;
+    }
+
+    $standbyAt = $latestPayloadReadingTime->modify('+' . $offlineDataTimer . ' minutes');
+    if ($standbyAt >= $now) {
+        return;
+    }
+
+    if ($latestEventState !== 'standby') {
+        insertWakeupStandbyEventRow((int)$wakeupSensor['id'], 'standby', $standbyAt, 'Standby event inferred from payload gap.', false);
+    }
+
+    insertWakeupStandbyEventRow((int)$wakeupSensor['id'], 'wakeup', $now, 'Wakeup event inferred from resumed payload.', true);
+}
+
 function syncWakeupStandbyEventFromBoardState($boardId, array $boardSensors, PDO $pdo2, $standbyState)
 {
     $wakeupSensor = resolveWakeupStandbySensor($boardSensors, $boardId, $pdo2);
@@ -487,35 +527,7 @@ function syncWakeupStandbyEventFromBoardState($boardId, array $boardSensors, PDO
     }
 
     $now = new DateTimeImmutable('now');
-    $stateLabels = buildWakeupStandbyStateLabels($standbyState);
-    if ($stateLabels === null) {
-        return;
-    }
-    $insertStatement = $pdo2->prepare(
-        "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    );
-    $insertStatement->execute(array(
-        (int)$wakeupSensor['id'],
-        $stateLabels['label'],
-        $now->format('d.m.Y H:i:s'),
-        $stateLabels['secondaryLabel'],
-        $stateLabels['secondaryTimestamp'],
-        $now->format('d.m.Y'),
-        $now->format('H:i:s'),
-        '1'
-    ));
-
-    writeToLogFunction::info(
-        'Wakeup/standby event inserted from board state.',
-        $_SERVER["SCRIPT_FILENAME"],
-        array(
-            'boardId' => $boardId,
-            'sensorId' => (int)$wakeupSensor['id'],
-            'standbyState' => $standbyState,
-            'timestamp' => $now->format(DateTimeInterface::ATOM)
-        )
-    );
+    insertWakeupStandbyEventRow((int)$wakeupSensor['id'], $standbyState, $now, 'Wakeup/standby event inserted from board state.');
 }
 
 function resolveWakeupStandbySensor(array $boardSensors, $boardId, PDO $pdo2)
@@ -556,6 +568,29 @@ function getLatestWakeupStandbySensorRow($sensorId, PDO $pdo2)
     $statement->execute(array($sensorId));
     $row = $statement->fetch(PDO::FETCH_ASSOC);
     return $row ?: null;
+}
+
+function getLatestBoardPayloadReadingTime($boardId, PDO $pdo2)
+{
+    $statement = $pdo2->prepare(
+        "SELECT MAX(sensorData.reading_time) AS latestReadingTime
+         FROM sensorData
+         INNER JOIN sensorConfig ON sensorConfig.id = sensorData.sensorId
+         INNER JOIN sensorTypes ON sensorTypes.id = sensorConfig.typId
+         WHERE sensorConfig.boardId = ?
+           AND sensorTypes.name <> 'WakeupStan'"
+    );
+    $statement->execute(array($boardId));
+    $row = $statement->fetch(PDO::FETCH_ASSOC);
+    if (!is_array($row) || empty($row['latestReadingTime'])) {
+        return null;
+    }
+
+    try {
+        return new DateTimeImmutable((string)$row['latestReadingTime']);
+    } catch (Exception $exception) {
+        return null;
+    }
 }
 
 function determineWakeupStandbyStateFromRow($sensorRow)
@@ -609,14 +644,56 @@ function buildWakeupStandbyStateLabels($standbyState)
     return null;
 }
 
+function insertWakeupStandbyEventRow($sensorId, $standbyState, DateTimeImmutable $timestamp, $logMessage, $skipIfLatestAlreadyMatches = true)
+{
+    $pdo2 = dbConfig::getInstance();
+    $stateLabels = buildWakeupStandbyStateLabels($standbyState);
+    if ($stateLabels === null) {
+        return;
+    }
+
+    if ($skipIfLatestAlreadyMatches) {
+        $latestEventRow = getLatestWakeupStandbySensorRow((int)$sensorId, $pdo2);
+        $latestState = determineWakeupStandbyStateFromRow($latestEventRow);
+        if ($latestState === $standbyState) {
+            return;
+        }
+    }
+
+    $insertStatement = $pdo2->prepare(
+        "INSERT INTO sensorData (sensorId, value1, value2, value3, value4, val_date, val_time, transmissionPath)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    $insertStatement->execute(array(
+        (int)$sensorId,
+        $stateLabels['label'],
+        $timestamp->format('d.m.Y H:i:s'),
+        $stateLabels['secondaryLabel'],
+        $stateLabels['secondaryTimestamp'],
+        $timestamp->format('d.m.Y'),
+        $timestamp->format('H:i:s'),
+        '1'
+    ));
+
+    writeToLogFunction::info(
+        $logMessage,
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+            'sensorId' => (int)$sensorId,
+            'standbyState' => $standbyState,
+            'timestamp' => $timestamp->format(DateTimeInterface::ATOM)
+        )
+    );
+}
+
 function normalizeBoardStandbyStateValue($value)
 {
     if (is_bool($value)) {
-        return $value ? null : 'always_online';
+        return $value ? 'wakeup' : 'standby';
     }
 
     if (is_int($value) || is_float($value)) {
-        return ((int)$value) === 0 ? 'always_online' : null;
+        return ((int)$value) === 0 ? 'standby' : 'wakeup';
     }
 
     if (!is_string($value)) {
@@ -628,15 +705,15 @@ function normalizeBoardStandbyStateValue($value)
         return null;
     }
 
-    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson', 'online'), true)) {
+    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson'), true)) {
         return 'always_online';
     }
 
-    if (in_array($normalizedValue, array('wakeup', 'wake', 'awake', 'active'), true) || str_contains($normalizedValue, 'wake')) {
+    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled', 'wakeup', 'wake', 'awake', 'active', 'online'), true) || str_contains($normalizedValue, 'wake')) {
         return 'wakeup';
     }
 
-    if (in_array($normalizedValue, array('standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
+    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled', 'standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
         return 'standby';
     }
 
