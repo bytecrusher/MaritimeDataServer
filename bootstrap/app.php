@@ -1,5 +1,9 @@
 <?php
 
+if (PHP_SAPI !== 'cli' && ob_get_level() === 0) {
+    ob_start();
+}
+
 $projectRoot = dirname(__DIR__);
 $vendorAutoload = $projectRoot . '/vendor/autoload.php';
 

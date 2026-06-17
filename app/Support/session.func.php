@@ -56,6 +56,22 @@ function mds_start_session()
         return;
     }
 
+    $headersFile = '';
+    $headersLine = 0;
+    if (headers_sent($headersFile, $headersLine)) {
+        if (class_exists('writeToLogFunction')) {
+            writeToLogFunction::warning(
+                'Session could not be started because response headers were already sent.',
+                __FILE__,
+                array(
+                    'headersFile' => $headersFile,
+                    'headersLine' => $headersLine,
+                )
+            );
+        }
+        return;
+    }
+
     ini_set('session.use_only_cookies', '1');
     ini_set('session.use_strict_mode', '1');
     ini_set('session.cookie_httponly', '1');
