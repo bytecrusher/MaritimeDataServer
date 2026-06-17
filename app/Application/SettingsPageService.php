@@ -152,6 +152,11 @@ class SettingsPageService
     public static function buildPageData($userObj, $config)
     {
         $isAdmin = ((int) $userObj->getUserGroupAdmin() === 1);
+        $myBoards = array();
+        $allBoards = array();
+        $allUsers = array();
+        $migrationStatus = array();
+        $legacyStatus = array();
 
         try {
             $notificationOverview = NotificationService::getNotificationStatusOverview($userObj->getId(), $isAdmin);
@@ -166,21 +171,79 @@ class SettingsPageService
             );
         }
 
+        try {
+            $myBoards = $userObj->getMyBoardsAll();
+            if (!is_array($myBoards)) {
+                $myBoards = array();
+            }
+        } catch (Throwable $e) {
+            writeToLogFunction::exception($e, __FILE__, array(
+                'message' => 'User board list could not be loaded on settings page.',
+                'userId' => (int)$userObj->getId(),
+            ));
+        }
+
+        if ($isAdmin) {
+            try {
+                $allBoards = $userObj->getAllBoardsAdmin();
+                if (!is_array($allBoards)) {
+                    $allBoards = array();
+                }
+            } catch (Throwable $e) {
+                writeToLogFunction::exception($e, __FILE__, array(
+                    'message' => 'Admin board list could not be loaded on settings page.',
+                    'userId' => (int)$userObj->getId(),
+                ));
+            }
+
+            try {
+                $allUsers = myFunctions::getAllUsers();
+                if (!is_array($allUsers)) {
+                    $allUsers = array();
+                }
+            } catch (Throwable $e) {
+                writeToLogFunction::exception($e, __FILE__, array(
+                    'message' => 'User list could not be loaded on settings page.',
+                    'userId' => (int)$userObj->getId(),
+                ));
+            }
+        }
+
+        try {
+            $migrationStatus = self::buildMigrationStatus();
+        } catch (Throwable $e) {
+            writeToLogFunction::exception($e, __FILE__, array(
+                'message' => 'Migration status could not be loaded on settings page.',
+                'userId' => (int)$userObj->getId(),
+            ));
+        }
+
+        if ($isAdmin) {
+            try {
+                $legacyStatus = self::buildLegacyStatus();
+            } catch (Throwable $e) {
+                writeToLogFunction::exception($e, __FILE__, array(
+                    'message' => 'Legacy status could not be loaded on settings page.',
+                    'userId' => (int)$userObj->getId(),
+                ));
+            }
+        }
+
         return array(
             'demoMode' => (bool) $config::$demoMode,
             'showQrCode' => $config::$ShowQrCode,
             'apiKey' => $config::$apiKey,
             'otaUpdateSecret' => $config::$otaUpdateSecret,
             'sendEmails' => $config::$sendEmails,
-            'myBoards' => $userObj->getMyBoardsAll(),
-            'allBoards' => $isAdmin ? $userObj->getAllBoardsAdmin() : array(),
-            'allUsers' => $isAdmin ? myFunctions::getAllUsers() : array(),
+            'myBoards' => $myBoards,
+            'allBoards' => $allBoards,
+            'allUsers' => $allUsers,
             'timeZones' => self::getTimeZoneList(),
             'currentLogContent' => self::getCurrentLogContent(),
             'isAdmin' => $isAdmin,
             'notificationOverview' => $notificationOverview,
-            'migrationStatus' => self::buildMigrationStatus(),
-            'legacyStatus' => $isAdmin ? self::buildLegacyStatus() : array(),
+            'migrationStatus' => $migrationStatus,
+            'legacyStatus' => $legacyStatus,
         );
     }
 
@@ -819,7 +882,7 @@ class SettingsPageService
         return $allZones;
     }
 
-    private static function getCurrentLogContent()
+    public static function getCurrentLogContent()
     {
         $format = 'log';
         date_default_timezone_set('Europe/Berlin');

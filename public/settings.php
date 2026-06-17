@@ -56,7 +56,7 @@ try {
     'allBoards' => array(),
     'allUsers' => array(),
     'timeZones' => SettingsPageService::getTimeZoneList(),
-    'currentLogContent' => '',
+    'currentLogContent' => SettingsPageService::getCurrentLogContent(),
     'isAdmin' => ((int)$userObj->getUserGroupAdmin() === 1),
     'notificationOverview' => array(
       'jobStatus' => null,
