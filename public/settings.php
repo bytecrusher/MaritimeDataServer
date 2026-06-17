@@ -75,6 +75,57 @@ th.rotated-text > div {
 th.rotated-text > div > span {
     padding: 5px 10px;
 }
+
+.settings-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.settings-tabs .nav-item {
+    flex: 0 0 auto;
+}
+
+.settings-tabs .nav-link {
+    white-space: nowrap;
+}
+
+.settings-tab-content {
+    background: white;
+}
+
+@media (max-width: 767.98px) {
+    .settings-tabs {
+        gap: 0.35rem;
+        padding-bottom: 0.35rem;
+    }
+
+    .settings-tabs .nav-link {
+        padding: 0.7rem 0.95rem;
+        border-radius: 999px;
+        font-size: 0.95rem;
+    }
+
+    .settings-tab-content {
+        border-top: 1px solid #ddd;
+    }
+
+    .settings-tab-content .row {
+        padding-top: 12px;
+    }
+
+    .settings-tab-content .col-sm-4,
+    .settings-tab-content .col-sm-10,
+    .settings-tab-content .col-sm-2 {
+        width: 100%;
+    }
+
+    #settings-log-content {
+        min-height: 320px;
+    }
+}
 </style>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css" rel="stylesheet">
@@ -192,7 +243,7 @@ th.rotated-text > div > span {
       </div>
     </div>
     <!-- Nav tabs -->
-    <ul class="nav nav-tabs" role="tablist">
+    <ul class="nav nav-tabs settings-tabs" id="settingsTabs" role="tablist">
       <li class="nav-item" role="presentation"><a class="nav-link active" href="#data" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('settings.personal_data'), ENT_QUOTES, 'UTF-8'); ?></a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#email" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#password" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?></a></li>
@@ -213,8 +264,8 @@ th.rotated-text > div > span {
     </ul>
 
     <!-- Personal data -->
-    <div class="tab-content" style="background: white">
-      <div role="tabpanel" class="tab-pane active" id="data">
+    <div class="tab-content settings-tab-content">
+      <div role="tabpanel" class="tab-pane show active" id="data">
         <form action="?save=personal_data" method="post" class="form-horizontal">
           <?php echo mds_csrf_input(); ?>
           <div class="form-group">
@@ -1213,10 +1264,28 @@ th.rotated-text > div > span {
   $(function() {
     var hash = document.location.hash;
     if (hash.match('#confBoards')) {
-      $('.nav-tabs a[href="#' + hash.split('#')[1] + '"]').tab('show');
+      $('#settingsTabs a[href="' + hash + '"]').tab('show');
     } else if (hash.match('#confSensors')) {
-      $('.nav-tabs a[href="#' + hash.split('#')[1] + '"]').tab('show');
+      $('#settingsTabs a[href="#' + hash.split('#')[1] + '"]').tab('show');
     }
+  });
+
+  $(function() {
+    var $settingsTabs = $('#settingsTabs a[data-bs-toggle="tab"]');
+    if ($settingsTabs.length === 0) {
+      return;
+    }
+
+    if ($('#settingsTabs a.active').length === 0) {
+      $settingsTabs.first().tab('show');
+    }
+
+    $settingsTabs.on('shown.bs.tab', function(event) {
+      var targetHash = $(event.target).attr('href');
+      if (targetHash) {
+        history.replaceState(null, '', targetHash);
+      }
+    });
   });
 
   $(function() {
