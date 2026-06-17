@@ -515,6 +515,18 @@ function syncWakeupStandbyEventFromBoardActivity(board $boardObj, array $boardSe
 
 function syncWakeupStandbyEventFromBoardState($boardId, array $boardSensors, PDO $pdo2, $standbyState)
 {
+    if ($standbyState !== 'always_online') {
+        writeToLogFunction::info(
+            'Transient standbyState received. Event durations continue to be inferred from payload activity.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'boardId' => (int)$boardId,
+                'standbyState' => $standbyState
+            )
+        );
+        return;
+    }
+
     $wakeupSensor = resolveWakeupStandbySensor($boardSensors, $boardId, $pdo2);
     if ($wakeupSensor === null) {
         return;

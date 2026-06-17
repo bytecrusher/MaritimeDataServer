@@ -253,8 +253,9 @@ Optionale Board-Felder:
     - `1`, `true`, `on`, `online` => `wakeup`
     - `0`, `false`, `off` => `standby`
   - wenn `always_online` uebertragen wird, erzeugt MDS bei Bedarf ein persistentes ESP-Ereignis `Always online`
-  - wenn `wakeup` oder `standby` uebertragen wird, schreibt MDS bei einem Zustandswechsel ein entsprechendes ESP-Ereignis
-  - wenn kein `standbyState` uebertragen wird, versucht MDS weiterhin Wakeup-/Standby-Ereignisse aus Telemetrie-Luecken abzuleiten
+  - `wakeup` und `standby` werden als aktueller Zustands-Hinweis akzeptiert, steuern aber nicht direkt die Dauerberechnung im Verlauf
+  - Wakeup-/Standby-Dauern werden primaer aus Telemetrie-Aktivitaet und Payload-Luecken abgeleitet, damit am Ende eines Sendezyklus gemeldete Schlafhinweise die Zeiten nicht vertauschen
+  - wenn kein `standbyState` uebertragen wird, versucht MDS weiterhin Wakeup-/Standby-Ereignisse vollstaendig aus Telemetrie-Luecken abzuleiten
   - dabei gilt: nach Ablauf von `offlineDataTimer` ohne neue Nutzdaten wird ein `Standby` angenommen; beim naechsten Datenempfang wird ein `Wakeup` erzeugt
 
 ### Sensor-Mapping
@@ -319,8 +320,9 @@ Empfehlung fuer externe Devices:
 - gute Werte sind z. B. `BME280`, `ADC`, `GPS`, `DS18B20`, `Digital`, `DS2438`, `Lora`
 - dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
 - wenn das Device absichtlich dauerhaft online bleibt, `board.standbyState = "always_online"` mitsenden
-- wenn das Device gerade aufgeweckt wurde, `board.standbyState = "wakeup"` mitsenden
-- wenn das Device gerade in den Schlafzustand gegangen ist oder sich dort befindet, `board.standbyState = "standby"` mitsenden
+- wenn das Device gerade aufgeweckt wurde, kann `board.standbyState = "wakeup"` als Zustands-Hinweis mitgesendet werden
+- wenn das Device gerade in den Schlafzustand gegangen ist oder sich dort befindet, kann `board.standbyState = "standby"` als Zustands-Hinweis mitgesendet werden
+- fuer die Verlaufsdauer ist jedoch die Payload-Aktivitaet die fuehrende Quelle; `always_online` bleibt der einzige Zustand, der den Verlauf direkt fest auf online setzt
 - dann zeigt MDS unter `ESP-Ereignisse` den aktuellen Zustand und den Verlauf ohne zusaetzliche Speziallogik aus einer Konfiguration an
 
 Verhalten bei neuen oder unvollstaendig provisionierten Boards:
