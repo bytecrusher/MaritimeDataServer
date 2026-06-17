@@ -501,11 +501,12 @@ function syncWakeupStandbyEventFromBoardActivity(board $boardObj, array $boardSe
         $offlineDataTimer = 15;
     }
 
-    $standbyAt = $latestPayloadReadingTime->modify('+' . $offlineDataTimer . ' minutes');
-    if ($standbyAt >= $now) {
+    $offlineThresholdAt = $latestPayloadReadingTime->modify('+' . $offlineDataTimer . ' minutes');
+    if ($offlineThresholdAt >= $now) {
         return;
     }
 
+    $standbyAt = $latestPayloadReadingTime->modify('+1 second');
     if ($latestEventState !== 'standby') {
         insertWakeupStandbyEventRow((int)$wakeupSensor['id'], 'standby', $standbyAt, 'Standby event inferred from payload gap.', false);
     }

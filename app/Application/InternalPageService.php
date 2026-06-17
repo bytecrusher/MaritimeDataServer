@@ -451,26 +451,43 @@ class InternalPageService
             $events[$eventIndex]['durationOpen'] = false;
             $events[$eventIndex]['persistentOnline'] = !empty($events[$eventIndex]['persistentOnline']);
 
-            $eventStart = self::parseEventDatetime($events[$eventIndex]);
-            if (!$eventStart instanceof DateTimeImmutable) {
+            $eventDateTime = self::parseEventDatetime($events[$eventIndex]);
+            if (!$eventDateTime instanceof DateTimeImmutable) {
                 continue;
             }
 
-            if ($eventIndex === 0) {
-                if (($events[$eventIndex]['stateClass'] ?? '') === 'is-wakeup' && empty($events[$eventIndex]['persistentOnline'])) {
-                    $events[$eventIndex]['durationOpen'] = true;
+            $stateClass = $events[$eventIndex]['stateClass'] ?? '';
+            if ($stateClass === 'is-wakeup') {
+                $periodStart = isset($events[$eventIndex + 1])
+                    ? self::parseEventDatetime($events[$eventIndex + 1])
+                    : null;
+
+                if (!$periodStart instanceof DateTimeImmutable) {
+                    if (!empty($events[$eventIndex]['persistentOnline'])) {
+                        $periodStart = $eventDateTime;
+                    } else {
+                        $events[$eventIndex]['durationOpen'] = true;
+                        continue;
+                    }
+                }
+
+                if ($eventDateTime <= $periodStart) {
                     continue;
                 }
-                $eventEnd = $windowEnd;
-            } else {
-                $eventEnd = self::parseEventDatetime($events[$eventIndex - 1]);
-            }
 
-            if (!$eventEnd instanceof DateTimeImmutable || $eventEnd <= $eventStart) {
+                $events[$eventIndex]['durationSeconds'] = $eventDateTime->getTimestamp() - $periodStart->getTimestamp();
                 continue;
             }
 
-            $events[$eventIndex]['durationSeconds'] = $eventEnd->getTimestamp() - $eventStart->getTimestamp();
+            $periodEnd = isset($events[$eventIndex - 1])
+                ? self::parseEventDatetime($events[$eventIndex - 1])
+                : $windowEnd;
+
+            if (!$periodEnd instanceof DateTimeImmutable || $periodEnd <= $eventDateTime) {
+                continue;
+            }
+
+            $events[$eventIndex]['durationSeconds'] = $periodEnd->getTimestamp() - $eventDateTime->getTimestamp();
         }
 
         return $events;

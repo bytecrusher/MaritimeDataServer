@@ -1238,9 +1238,6 @@
                             </div>
                             <?php if (is_array($boardStatus)) { ?>
                               <div class="event-timeline-status">
-                                <span class="event-timeline-status-pill <?php echo htmlspecialchars($boardStatus['modeClass'], ENT_QUOTES, 'UTF-8'); ?>">
-                                  <?php echo htmlspecialchars(mds_t('internal.event_mode', array($boardStatus['modeLabel'])), ENT_QUOTES, 'UTF-8'); ?>
-                                </span>
                                 <span class="event-timeline-status-pill <?php echo htmlspecialchars($boardStatus['currentClass'], ENT_QUOTES, 'UTF-8'); ?>">
                                   <?php echo htmlspecialchars(mds_t('internal.event_current_state', array($boardStatus['currentLabel'])), ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
