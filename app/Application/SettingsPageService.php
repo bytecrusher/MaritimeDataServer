@@ -274,8 +274,8 @@ class SettingsPageService
         $legacyWakeupRows = self::countLegacyWakeupStandbyRows($pdo);
 
         $notificationColumns = array(
-            'receive_offline_notifications' => self::tableColumnExists($pdo, 'users', 'receive_offline_notifications'),
-            'receive_sensor_notifications' => self::tableColumnExists($pdo, 'users', 'receive_sensor_notifications'),
+            'receive_offline_notifications' => self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'receive_offline_notifications')),
+            'receive_sensor_notifications' => self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => 'users', 'column' => 'receive_sensor_notifications')),
         );
         $missingNotificationColumns = array_keys(array_filter($notificationColumns, function ($exists) {
             return !$exists;
