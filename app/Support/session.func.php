@@ -124,7 +124,7 @@ function mds_h($value)
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function mds_rate_limit_attempt($bucket, $subject, $limit, $windowSeconds)
+function mds_rate_limit_attempt($bucket, $subject, $limit, $windowSeconds, $consumeAttempt = true)
 {
     $limit = max(1, (int)$limit);
     $windowSeconds = max(1, (int)$windowSeconds);
@@ -188,9 +188,11 @@ function mds_rate_limit_attempt($bucket, $subject, $limit, $windowSeconds)
         );
     }
 
-    $entry['timestamps'][] = $now;
-    $payload[$key] = $entry;
-    @file_put_contents($storageFile, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    if ($consumeAttempt) {
+        $entry['timestamps'][] = $now;
+        $payload[$key] = $entry;
+        @file_put_contents($storageFile, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    }
 
     return array(
         'allowed' => true,

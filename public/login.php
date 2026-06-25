@@ -17,7 +17,8 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
     'login',
     strtolower(trim((string)($_POST['email'] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
     5,
-    900
+    900,
+    false
   );
   if (!$rateLimit['allowed']) {
     $error_msg = "<div class='alert alert-danger' role='alert'>" . htmlspecialchars(mds_t('login.too_many'), ENT_QUOTES, 'UTF-8') . "</div>";
@@ -36,6 +37,7 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
       if ($userObj->isActive() == true) {
         //Check Password
         if ($userObj !== false && password_verify($password, $userObj->getPassword()) && $userObj->isActive() != false) {
+          session_regenerate_id(true);
           $_SESSION['userId'] = $userObj->getId();
           mds_set_current_language($userObj->getLanguage());
     
@@ -46,12 +48,30 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
           header("location: internal.php");
           exit;
         } else {
+          mds_rate_limit_attempt(
+            'login',
+            strtolower(trim((string)($_POST['email'] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+            5,
+            900
+          );
           $error_msg =  "<div class='alert alert-danger' role='alert'>" . htmlspecialchars(mds_t('login.failed'), ENT_QUOTES, 'UTF-8') . "</div>";
         }
       } else {
+        mds_rate_limit_attempt(
+          'login',
+          strtolower(trim((string)($_POST['email'] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+          5,
+          900
+        );
         $error_msg =  "<div class='alert alert-danger' role='alert'>" . htmlspecialchars(mds_t('login.failed'), ENT_QUOTES, 'UTF-8') . "</div>";
       }
     } else {
+      mds_rate_limit_attempt(
+        'login',
+        strtolower(trim((string)($_POST['email'] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+        5,
+        900
+      );
       $error_msg =  "<div class='alert alert-danger' role='alert'>" . htmlspecialchars(mds_t('login.failed'), ENT_QUOTES, 'UTF-8') . "</div>";
     }
   }
