@@ -21,6 +21,102 @@ function mdsLabel(key, fallback) {
   return (window.mdsI18n && window.mdsI18n[key]) ? window.mdsI18n[key] : fallback;
 }
 
+function mdsIsMobileChartViewport() {
+  return window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches;
+}
+
+function mdsFormatChartXAxisLabel(label) {
+  const value = String(label || '');
+  if (!mdsIsMobileChartViewport()) {
+    return value;
+  }
+
+  const parts = value.split(' ');
+  if (parts.length >= 2) {
+    return parts[1].substring(0, 5);
+  }
+  return value.length > 8 ? value.substring(0, 8) : value;
+}
+
+function mdsLineChartOptions() {
+  const isMobile = mdsIsMobileChartViewport();
+  return {
+    maintainAspectRatio: false,
+    responsive: true,
+    resizeDelay: 120,
+    normalized: true,
+    interaction: {
+      mode: 'nearest',
+      intersect: false,
+      axis: 'x',
+    },
+    elements: {
+      line: {
+        borderWidth: isMobile ? 2.5 : 2,
+        tension: 0.25,
+      },
+      point: {
+        radius: isMobile ? 0 : 1.8,
+        hoverRadius: 5,
+        hitRadius: 12,
+      },
+    },
+    plugins: {
+      legend: {
+        display: !isMobile,
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          color: '#334155',
+          font: {
+            size: 11,
+            weight: '600',
+          },
+        },
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          autoSkip: true,
+          maxTicksLimit: isMobile ? 6 : 10,
+          maxRotation: 0,
+          color: '#64748b',
+          callback: function (value) {
+            return mdsFormatChartXAxisLabel(this.getLabelForValue(value));
+          },
+        },
+      },
+      y: {
+        ticks: {
+          maxTicksLimit: isMobile ? 6 : 8,
+          color: '#475569',
+        },
+        grid: {
+          color: 'rgba(148, 163, 184, 0.16)',
+        },
+      },
+    },
+  };
+}
+
+function mdsEventChartHeight() {
+  return mdsIsMobileChartViewport() ? '390px' : '320px';
+}
+
+function mdsEventTimelineChartHeight() {
+  return mdsIsMobileChartViewport() ? '390px' : '300px';
+}
+
 //function sleep(ms) {
 //  return new Promise(resolve => setTimeout(resolve, ms));
 //}
@@ -119,6 +215,8 @@ function addDataToChart(destinationChart, chartKey, varSensorId, varMaxValues, v
         backgroundColor: dsColor,
         borderColor: dsColor,
         data: value1,
+        fill: false,
+        spanGaps: true,
         boardId: String(boardId),
         boardName: boardName,
         chartKey: chartKey,
@@ -327,7 +425,7 @@ function initializeEventSummaryChart() {
 
   const eventSummaryShell = eventSummaryCanvas.closest('.event-summary-chart-shell');
   if (eventSummaryShell) {
-    eventSummaryShell.style.height = '320px';
+    eventSummaryShell.style.height = mdsEventChartHeight();
   }
 
   const eventSummaryData = Array.isArray(window.eventTimelineSummary) ? window.eventTimelineSummary : [];
@@ -355,6 +453,7 @@ function initializeEventSummaryChart() {
       },
       plugins: {
         legend: {
+          display: !mdsIsMobileChartViewport(),
           position: 'top',
           labels: {
             usePointStyle: true,
@@ -383,6 +482,7 @@ function initializeEventSummaryChart() {
           },
           ticks: {
             color: '#475569',
+            maxTicksLimit: mdsIsMobileChartViewport() ? 6 : 10,
             font: {
               weight: '600',
             }
@@ -392,6 +492,7 @@ function initializeEventSummaryChart() {
           beginAtZero: true,
           ticks: {
             color: '#64748b',
+            maxTicksLimit: mdsIsMobileChartViewport() ? 6 : 8,
             callback: function (value) {
               return Number(value).toFixed(1) + ' h';
             }
@@ -420,7 +521,7 @@ function initializeEventTimeline24hChart() {
 
   const eventTimelineShell = eventTimelineCanvas.closest('.event-summary-chart-shell');
   if (eventTimelineShell) {
-    eventTimelineShell.style.height = '300px';
+    eventTimelineShell.style.height = mdsEventTimelineChartHeight();
   }
 
   const eventTimelineWindowSelect = document.getElementById('eventTimelineWindowSelect');
@@ -461,6 +562,7 @@ function initializeEventTimeline24hChart() {
       },
       plugins: {
         legend: {
+          display: !mdsIsMobileChartViewport(),
           position: 'top',
           labels: {
             usePointStyle: true,
@@ -491,6 +593,7 @@ function initializeEventTimeline24hChart() {
           ticks: {
             color: '#475569',
             maxRotation: 0,
+            maxTicksLimit: mdsIsMobileChartViewport() ? 6 : 10,
             callback: function (value) {
               return formatEventTimelineAxisLabel(value);
             },
@@ -969,6 +1072,7 @@ function refreshChartsTabViews() {
   if (!window.eventSummaryChart) {
     initializeEventSummaryChart();
   }
+  refreshResponsiveChartOptions();
   ['myChart', 'myChart2', 'myChart3', 'eventTimeline24hChart', 'eventSummaryChart'].forEach(function (chartName) {
     const chartInstance = window[chartName];
     if (!chartInstance) {
@@ -982,6 +1086,38 @@ function refreshChartsTabViews() {
     }
   });
 }
+
+function refreshResponsiveChartOptions() {
+  ['myChart', 'myChart2', 'myChart3'].forEach(function (chartName) {
+    if (window[chartName]) {
+      window[chartName].options = mdsLineChartOptions();
+    }
+  });
+
+  const eventSummaryShell = document.getElementById('eventSummaryCanvas')?.closest('.event-summary-chart-shell');
+  if (eventSummaryShell) {
+    eventSummaryShell.style.height = mdsEventChartHeight();
+  }
+  const eventTimelineShell = document.getElementById('eventTimeline24hCanvas')?.closest('.event-summary-chart-shell');
+  if (eventTimelineShell) {
+    eventTimelineShell.style.height = mdsEventTimelineChartHeight();
+  }
+
+  if (window.eventSummaryChart) {
+    window.eventSummaryChart.options.plugins.legend.display = !mdsIsMobileChartViewport();
+    window.eventSummaryChart.options.scales.x.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 6 : 10;
+    window.eventSummaryChart.options.scales.y.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 6 : 8;
+  }
+  if (window.eventTimeline24hChart) {
+    window.eventTimeline24hChart.options.plugins.legend.display = !mdsIsMobileChartViewport();
+    window.eventTimeline24hChart.options.scales.x.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 6 : 10;
+  }
+}
+
+window.addEventListener('resize', function () {
+  window.clearTimeout(window.mdsChartResizeTimer);
+  window.mdsChartResizeTimer = window.setTimeout(refreshChartsTabViews, 180);
+});
 
 function updateEventTimelineVisibility() {
   const eventTimelineContainer = document.getElementById('event-timeline-container');
@@ -1065,13 +1201,7 @@ function InitialSetupChart(varSensorId, varmaxValues, varLabel, varBackgroundCol
             borderWidth: 1
         }]*/
     },
-    /*options: {
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }*/
+    options: mdsLineChartOptions()
   });
 
   const ctx2 = document.getElementById('mycanvas2');
@@ -1101,13 +1231,7 @@ function InitialSetupChart(varSensorId, varmaxValues, varLabel, varBackgroundCol
             borderWidth: 1
         }]*/
     },
-    /*options: {
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }*/
+    options: mdsLineChartOptions()
   });
 
   const ctx3 = document.getElementById('mycanvas3');
@@ -1137,12 +1261,6 @@ function InitialSetupChart(varSensorId, varmaxValues, varLabel, varBackgroundCol
             borderWidth: 1
         }]*/
     },
-    /*options: {
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }*/
+    options: mdsLineChartOptions()
   });
 }

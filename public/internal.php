@@ -507,7 +507,28 @@
   }
   .chart-panel canvas {
     width: 100% !important;
-    max-height: 380px;
+    height: 100% !important;
+  }
+  .chart-scroll-shell {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    -webkit-overflow-scrolling: touch;
+  }
+  .chart-scroll-inner {
+    min-width: 760px;
+    height: 380px;
+    padding: 0.85rem 0.95rem 0.75rem;
+  }
+  .chart-mobile-hint {
+    display: none;
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-size: 0.82rem;
   }
   .event-timeline-board {
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -719,10 +740,16 @@
     position: relative;
     min-height: 320px;
     height: 320px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
   }
   .event-summary-chart-shell canvas {
     width: 100% !important;
     height: 100% !important;
+  }
+  .event-summary-chart-shell > canvas {
+    min-width: 680px;
   }
   .event-detail-disclosure {
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -759,6 +786,45 @@
   @media (max-width: 767.98px) {
     .event-timeline-status {
       justify-content: flex-start;
+    }
+    .chart-panel {
+      padding: 1rem 0.75rem;
+    }
+    .chart-panel .tab-section-title {
+      align-items: flex-start;
+      gap: 0.85rem;
+    }
+    .chart-panel .tab-section-title h3 {
+      font-size: 1.1rem;
+    }
+    .chart-panel .tab-section-title p {
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+    .chart-device-filter {
+      gap: 0.45rem !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto;
+      padding-bottom: 0.35rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .chart-device-filter > * {
+      flex: 0 0 auto;
+    }
+    .chart-scroll-inner {
+      min-width: 820px;
+      height: 430px;
+      padding: 0.75rem 0.85rem 0.7rem;
+    }
+    .chart-mobile-hint {
+      display: block;
+    }
+    .event-summary-chart-shell {
+      height: 390px !important;
+      min-height: 390px;
+    }
+    .event-summary-chart-shell > canvas {
+      min-width: 760px;
     }
   }
   #chart-container-debug {
@@ -1147,8 +1213,13 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="temperature"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
               </div>
-              <div id="chart-device-filter-temperature" class="d-flex flex-wrap gap-3 mb-2"></div>
-              <canvas id="mycanvas"></canvas>
+              <div id="chart-device-filter-temperature" class="chart-device-filter d-flex flex-wrap gap-3 mb-2"></div>
+              <div class="chart-scroll-shell" aria-label="<?php echo htmlspecialchars(mds_t('internal.temperature_title'), ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="chart-scroll-inner">
+                  <canvas id="mycanvas"></canvas>
+                </div>
+              </div>
+              <p class="chart-mobile-hint"><?php echo htmlspecialchars(mds_t('internal.chart_mobile_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
@@ -1161,8 +1232,13 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="adc"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
               </div>
-              <div id="chart-device-filter-adc" class="d-flex flex-wrap gap-3 mb-2"></div>
-              <canvas id="mycanvas2"></canvas>
+              <div id="chart-device-filter-adc" class="chart-device-filter d-flex flex-wrap gap-3 mb-2"></div>
+              <div class="chart-scroll-shell" aria-label="<?php echo htmlspecialchars(mds_t('internal.adc_title'), ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="chart-scroll-inner">
+                  <canvas id="mycanvas2"></canvas>
+                </div>
+              </div>
+              <p class="chart-mobile-hint"><?php echo htmlspecialchars(mds_t('internal.chart_mobile_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
@@ -1175,8 +1251,13 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="other"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
               </div>
-              <div id="chart-device-filter-other" class="d-flex flex-wrap gap-3 mb-2"></div>
-              <canvas id="mycanvas3"></canvas>
+              <div id="chart-device-filter-other" class="chart-device-filter d-flex flex-wrap gap-3 mb-2"></div>
+              <div class="chart-scroll-shell" aria-label="<?php echo htmlspecialchars(mds_t('internal.other_sensors_title'), ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="chart-scroll-inner">
+                  <canvas id="mycanvas3"></canvas>
+                </div>
+              </div>
+              <p class="chart-mobile-hint"><?php echo htmlspecialchars(mds_t('internal.chart_mobile_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
             <div class="tab-section-card chart-panel">
               <div class="tab-section-title">
@@ -1190,7 +1271,7 @@
                   <button type="button" class="btn btn-sm btn-outline-secondary chart-hide-all-devices" data-chart-key="events"><?php echo htmlspecialchars(mds_t('common.hide_all'), ENT_QUOTES, 'UTF-8'); ?></button>
                 </div>
               </div>
-              <div id="chart-device-filter-events" class="d-flex flex-wrap gap-3 mb-3"></div>
+              <div id="chart-device-filter-events" class="chart-device-filter d-flex flex-wrap gap-3 mb-3"></div>
               <div class="chart-panel-surface mb-4">
                 <div class="tab-section-title mb-3">
                   <div>
