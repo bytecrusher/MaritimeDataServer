@@ -729,6 +729,32 @@
   .event-window-bar-standby {
     background: #f59e0b;
   }
+  .event-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+    margin: 0 0 0.75rem;
+    color: #475569;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .event-chart-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .event-chart-legend-dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 999px;
+  }
+  .event-chart-legend-dot.is-online {
+    background: #16a34a;
+  }
+  .event-chart-legend-dot.is-standby {
+    background: #f59e0b;
+  }
   .chart-panel-surface {
     padding: 1rem 1rem 0.75rem;
     border-radius: 1rem;
@@ -1290,6 +1316,10 @@
                   </div>
                 </div>
                 <div id="eventTimelineWindowSummary" class="event-window-summary"></div>
+                <div class="event-chart-legend">
+                  <span class="event-chart-legend-item"><span class="event-chart-legend-dot is-online"></span><?php echo htmlspecialchars(mds_t('js.online_suffix'), ENT_QUOTES, 'UTF-8'); ?></span>
+                  <span class="event-chart-legend-item"><span class="event-chart-legend-dot is-standby"></span><?php echo htmlspecialchars(mds_t('js.standby_suffix'), ENT_QUOTES, 'UTF-8'); ?></span>
+                </div>
                 <div class="event-summary-chart-shell">
                   <canvas id="eventTimeline24hCanvas" height="300"></canvas>
                 </div>

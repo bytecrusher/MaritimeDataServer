@@ -117,6 +117,18 @@ function mdsEventTimelineChartHeight() {
   return mdsIsMobileChartViewport() ? '390px' : '300px';
 }
 
+function mdsSetEventTimelineChartHeight(visibleLaneCount) {
+  const eventTimelineShell = document.getElementById('eventTimeline24hCanvas')?.closest('.event-summary-chart-shell');
+  if (!eventTimelineShell) {
+    return;
+  }
+
+  const baseHeight = mdsIsMobileChartViewport() ? 390 : 320;
+  const laneHeight = mdsIsMobileChartViewport() ? 78 : 64;
+  const dynamicHeight = Math.max(baseHeight, (Math.max(1, visibleLaneCount) * laneHeight) + 120);
+  eventTimelineShell.style.height = dynamicHeight + 'px';
+}
+
 //function sleep(ms) {
 //  return new Promise(resolve => setTimeout(resolve, ms));
 //}
@@ -477,6 +489,7 @@ function initializeEventSummaryChart() {
       },
       scales: {
         x: {
+          stacked: true,
           grid: {
             display: false,
           },
@@ -489,6 +502,7 @@ function initializeEventSummaryChart() {
           }
         },
         y: {
+          stacked: true,
           beginAtZero: true,
           ticks: {
             color: '#64748b',
@@ -577,7 +591,7 @@ function initializeEventTimeline24hChart() {
           callbacks: {
             label: function (context) {
               const rawPoint = context.raw || {};
-              const stateLabel = Number(rawPoint.y) === 1 ? mdsLabel('onlineSuffix', 'Online') : mdsLabel('standbySuffix', 'Standby');
+              const stateLabel = Number(rawPoint.state) === 1 ? mdsLabel('onlineSuffix', 'Online') : mdsLabel('standbySuffix', 'Standby');
               const openLabel = rawPoint.openEnded ? ' · ' + mdsLabel('openEnded', 'open / not final') : '';
               return context.dataset.label + ': ' + stateLabel + openLabel + ' · ' + (rawPoint.timestamp || rawPoint.x || '');
             }
@@ -600,19 +614,17 @@ function initializeEventTimeline24hChart() {
           },
         },
         y: {
-          min: -0.15,
-          max: 1.15,
+          min: -0.5,
+          max: 0.5,
           ticks: {
             stepSize: 1,
             color: '#64748b',
             callback: function (value) {
-              if (Number(value) === 1) {
-                return mdsLabel('onlineSuffix', 'Online');
+              const laneIndex = Math.round(Number(value));
+              if (Math.abs(Number(value) - laneIndex) > 0.01) {
+                return '';
               }
-              if (Number(value) === 0) {
-                return mdsLabel('standbySuffix', 'Standby');
-              }
-              return '';
+              return (window.eventTimelineLaneLabels && window.eventTimelineLaneLabels[laneIndex]) ? window.eventTimelineLaneLabels[laneIndex] : '';
             }
           },
           grid: {
@@ -641,6 +653,10 @@ function updateEventTimeline24hChart() {
   const visibleWindowTimelines = visibleTimelines.map(function (timelineEntry) {
     return clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selectedWindowHours);
   });
+  window.eventTimelineLaneLabels = visibleWindowTimelines.map(function (timelineEntry) {
+    return timelineEntry.boardName || '-';
+  });
+  mdsSetEventTimelineChartHeight(visibleWindowTimelines.length);
 
   const canvas = document.getElementById('eventTimeline24hCanvas');
   const eventTimelineShell = canvas ? canvas.closest('.event-summary-chart-shell') : null;
@@ -648,7 +664,7 @@ function updateEventTimeline24hChart() {
   const datasets = [];
   updateEventTimelineWindowSummary(visibleWindowTimelines);
 
-  visibleWindowTimelines.forEach(function (timelineEntry) {
+  visibleWindowTimelines.forEach(function (timelineEntry, laneIndex) {
     if (!Array.isArray(timelineEntry.points) || timelineEntry.points.length === 0) {
       return;
     }
@@ -658,7 +674,8 @@ function updateEventTimeline24hChart() {
     const timelinePoints = timelineEntry.points.map(function (point) {
       return {
         x: parseEventTimelineTimestamp(point.x || point.timestamp),
-        y: Number(point.y),
+        y: laneIndex + (Number(point.y) === 1 ? 0.18 : -0.18),
+        state: Number(point.y),
         timestamp: point.timestamp,
         openEnded: point.openEnded === true,
         persistentOnline: point.persistentOnline === true,
@@ -676,14 +693,24 @@ function updateEventTimeline24hChart() {
       data: timelinePoints,
       borderColor: boardColor.wakeupBorder,
       backgroundColor: boardColor.wakeupFill,
-      pointBackgroundColor: boardColor.wakeupBorder,
+      pointBackgroundColor: function (context) {
+        return Number(context.raw?.state) === 1 ? boardColor.wakeupBorder : boardColor.standbyBorder;
+      },
       pointBorderColor: '#ffffff',
       pointBorderWidth: 1,
-      pointRadius: 4,
+      pointRadius: mdsIsMobileChartViewport() ? 3 : 4,
       pointHoverRadius: 6,
       stepped: true,
       tension: 0,
-      borderWidth: 2,
+      borderWidth: mdsIsMobileChartViewport() ? 3 : 2.25,
+      segment: {
+        borderColor: function (context) {
+          return Number(context.p0.raw?.state) === 1 ? boardColor.wakeupBorder : boardColor.standbyBorder;
+        },
+        backgroundColor: function (context) {
+          return Number(context.p0.raw?.state) === 1 ? boardColor.wakeupFill : boardColor.standbyFill;
+        },
+      },
       boardId: boardId,
     });
   });
@@ -691,6 +718,8 @@ function updateEventTimeline24hChart() {
   window.eventTimeline24hChart.data.datasets = datasets;
   window.eventTimeline24hChart.options.scales.x.min = windowStartMs;
   window.eventTimeline24hChart.options.scales.x.max = windowEndMs;
+  window.eventTimeline24hChart.options.scales.y.min = -0.5;
+  window.eventTimeline24hChart.options.scales.y.max = Math.max(0.5, visibleWindowTimelines.length - 0.5);
   window.eventTimeline24hChart.update();
 
   if (datasets.length === 0) {
@@ -1015,7 +1044,8 @@ function updateEventSummaryChart() {
       backgroundColor: boardColor.wakeupFill,
       borderWidth: 1,
       borderRadius: 6,
-      maxBarThickness: 20,
+      maxBarThickness: mdsIsMobileChartViewport() ? 28 : 22,
+      stack: boardId,
       boardId: boardId,
     });
     datasets.push({
@@ -1025,7 +1055,8 @@ function updateEventSummaryChart() {
       backgroundColor: boardColor.standbyFill,
       borderWidth: 1,
       borderRadius: 6,
-      maxBarThickness: 20,
+      maxBarThickness: mdsIsMobileChartViewport() ? 28 : 22,
+      stack: boardId,
       boardId: boardId,
     });
   });
@@ -1100,7 +1131,7 @@ function refreshResponsiveChartOptions() {
   }
   const eventTimelineShell = document.getElementById('eventTimeline24hCanvas')?.closest('.event-summary-chart-shell');
   if (eventTimelineShell) {
-    eventTimelineShell.style.height = mdsEventTimelineChartHeight();
+    mdsSetEventTimelineChartHeight(Array.isArray(window.eventTimelineLaneLabels) ? window.eventTimelineLaneLabels.length : 1);
   }
 
   if (window.eventSummaryChart) {
@@ -1111,6 +1142,7 @@ function refreshResponsiveChartOptions() {
   if (window.eventTimeline24hChart) {
     window.eventTimeline24hChart.options.plugins.legend.display = !mdsIsMobileChartViewport();
     window.eventTimeline24hChart.options.scales.x.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 6 : 10;
+    window.eventTimeline24hChart.options.scales.y.max = Math.max(0.5, (Array.isArray(window.eventTimelineLaneLabels) ? window.eventTimelineLaneLabels.length : 1) - 0.5);
   }
 }
 
