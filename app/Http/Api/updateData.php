@@ -20,7 +20,7 @@ if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
 
 if (isset($_POST['update']) && $_POST['update'] == "sensorOrderNumber") {
     $sensorId = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    if (!myFunctions::canUserAccessSensor((int)$_SESSION['userId'], $sensorId)) {
+    if (!myFunctions::canUserEditSensor((int)$_SESSION['userId'], $sensorId)) {
         http_response_code(403);
         echo json_encode(array('error' => 'Access denied.'));
         exit;

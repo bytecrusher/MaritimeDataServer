@@ -974,7 +974,7 @@
         <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab"><?php echo htmlspecialchars(mds_t('internal.map'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <?php
-        if($currentUser->getUserGroupAdmin() == 1 ) {
+        if(myFunctions::isUserAdmin((int)$currentUser->getId()) ) {
       ?>
         <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab'><?php echo htmlspecialchars(mds_t('internal.debug'), ENT_QUOTES, 'UTF-8'); ?></a></li>
         <?php
@@ -1010,6 +1010,11 @@
               if($singleRowmyboard->isOnDashboard() == 1) {
                 $deviceOnline = checkDeviceIsOnline($singleRowmyboard->getId());
                 $mySensors2 = myFunctions::getAllSensorsOfBoardWithDashboardWithTypeName($singleRowmyboard->getId());
+                if (is_array($mySensors2)) {
+                  $mySensors2 = array_values(array_filter($mySensors2, function ($sensorRow) use ($currentUser) {
+                    return myFunctions::canUserAccessSensor((int)$currentUser->getId(), (int)($sensorRow['id'] ?? 0));
+                  }));
+                }
                 $boardEventStatus = $eventStatusByBoard[$singleRowmyboard->getId()] ?? null;
                 $boardGaugeCount = 0;
                 ?>
@@ -1308,6 +1313,11 @@
             foreach($boardObjsArray as $singleBoardObj) {
               $transmissionPath = 0;
               $mySensors2 = myFunctions::getAllSensorsOfBoard($singleBoardObj->getId());
+              if (is_array($mySensors2)) {
+                $mySensors2 = array_values(array_filter($mySensors2, function ($sensorRow) use ($currentUser) {
+                  return myFunctions::canUserAccessSensor((int)$currentUser->getId(), (int)($sensorRow['id'] ?? 0));
+                }));
+              }
               $boardOnlineStatus = false;
               $mySensorIdList = null;
               if ($mySensors2 == null) {

@@ -100,14 +100,11 @@ class NotificationService
     {
         $pdo = dbConfig::getInstance();
         $statement = $pdo->prepare(
-            "SELECT boardConfig.*, users.email, users.receive_notifications
+            "SELECT boardConfig.*
              FROM boardConfig
-             INNER JOIN users ON users.id = boardConfig.ownerUserId
              WHERE boardConfig.offlineDataTimer != 0
                AND boardConfig.alarmOnUnavailable = 1
                AND boardConfig.alreadyNotified = 0
-               AND users.receive_notifications = 1
-               AND users.receive_offline_notifications = 1
              ORDER BY boardConfig.id"
         );
         $statement->execute();
@@ -130,26 +127,43 @@ class NotificationService
                 continue;
             }
 
+            $recipients = self::getBoardNotificationRecipients($boardId, 'offline');
+            if (empty($recipients)) {
+                writeToLogFunction::warning(
+                    'Skipping offline notification because no recipient is configured.',
+                    __FILE__,
+                    array('boardId' => $boardId, 'boardName' => $boardRow['name'] ?? null)
+                );
+                continue;
+            }
+
             $subject = self::buildSubject($config, 'Board offline: ' . ($boardRow['name'] ?: $boardRow['macAddress']));
             $message = self::buildOfflineMessage($boardRow);
-            writeToLogFunction::info(
-                'Attempting offline notification email.',
-                __FILE__,
-                array(
-                    'boardId' => $boardId,
-                    'boardName' => $boardRow['name'] ?? null,
-                    'to' => $boardRow['email'] ?? null,
-                    'offlineDataTimer' => $boardRow['offlineDataTimer'] ?? null,
-                )
-            );
-            if (self::sendEmail($boardRow['email'], $subject, $message, $config)) {
-                $sentCount++;
-                self::markBoardOfflineNotificationSent($boardId);
+            $boardSent = false;
+            foreach ($recipients as $recipient) {
                 writeToLogFunction::info(
-                    'Offline notification email sent.',
+                    'Attempting offline notification email.',
                     __FILE__,
-                    array('boardId' => $boardId, 'to' => $boardRow['email'] ?? null)
+                    array(
+                        'boardId' => $boardId,
+                        'boardName' => $boardRow['name'] ?? null,
+                        'to' => $recipient['email'] ?? null,
+                        'offlineDataTimer' => $boardRow['offlineDataTimer'] ?? null,
+                    )
                 );
+                if (self::sendEmail($recipient['email'], $subject, $message, $config)) {
+                    $sentCount++;
+                    $boardSent = true;
+                    writeToLogFunction::info(
+                        'Offline notification email sent.',
+                        __FILE__,
+                        array('boardId' => $boardId, 'to' => $recipient['email'] ?? null)
+                    );
+                }
+            }
+
+            if ($boardSent) {
+                self::markBoardOfflineNotificationSent($boardId);
             }
         }
 
@@ -166,16 +180,11 @@ class NotificationService
                 sensorConfig.name AS sensorConfigName,
                 boardConfig.name AS boardName,
                 boardConfig.macAddress,
-                boardConfig.ownerUserId,
-                users.email,
-                users.receive_notifications
+                boardConfig.ownerUserId
              FROM sensorChannelConfig
              INNER JOIN sensorConfig ON sensorConfig.id = sensorChannelConfig.sensorConfigId
              INNER JOIN boardConfig ON boardConfig.id = sensorConfig.boardId
-             INNER JOIN users ON users.id = boardConfig.ownerUserId
              WHERE sensorChannelConfig.AlertEnabled = 1
-               AND users.receive_notifications = 1
-               AND users.receive_sensor_notifications = 1
              ORDER BY sensorChannelConfig.id"
         );
         $statement->execute();
@@ -265,37 +274,196 @@ class NotificationService
                 'Sensor alert: ' . ($channelRow['boardName'] ?: $channelRow['macAddress']) . ' / ' . ($channelRow['name'] ?: ('Channel ' . $channelNr))
             );
             $message = self::buildSensorAlertMessage($channelRow, $latestData, $currentValue, $alertState);
-            writeToLogFunction::info(
-                'Attempting sensor alert email.',
-                __FILE__,
-                array(
-                    'channelConfigId' => $channelRow['id'] ?? null,
-                    'sensorConfigId' => $channelRow['sensorConfigId'] ?? null,
-                    'boardName' => $channelRow['boardName'] ?? null,
-                    'channelName' => $channelRow['name'] ?? null,
-                    'alertState' => $alertState,
-                    'currentValue' => $currentValue,
-                    'to' => $channelRow['email'] ?? null,
-                )
-            );
-
-            if (self::sendEmail($channelRow['email'], $subject, $message, $config)) {
-                $sentCount++;
-                self::updateChannelAlertState((int)$channelRow['id'], $alertState);
-                writeToLogFunction::info(
-                    'Sensor alert email sent.',
+            $recipients = self::getSensorNotificationRecipients((int)$channelRow['sensorConfigId']);
+            if (empty($recipients)) {
+                writeToLogFunction::warning(
+                    'Skipping sensor alert email because no recipient is configured.',
                     __FILE__,
                     array(
                         'channelConfigId' => $channelRow['id'] ?? null,
                         'sensorConfigId' => $channelRow['sensorConfigId'] ?? null,
                         'alertState' => $alertState,
-                        'to' => $channelRow['email'] ?? null,
                     )
                 );
+                continue;
+            }
+
+            $alertSent = false;
+            foreach ($recipients as $recipient) {
+                writeToLogFunction::info(
+                    'Attempting sensor alert email.',
+                    __FILE__,
+                    array(
+                        'channelConfigId' => $channelRow['id'] ?? null,
+                        'sensorConfigId' => $channelRow['sensorConfigId'] ?? null,
+                        'boardName' => $channelRow['boardName'] ?? null,
+                        'channelName' => $channelRow['name'] ?? null,
+                        'alertState' => $alertState,
+                        'currentValue' => $currentValue,
+                        'to' => $recipient['email'] ?? null,
+                    )
+                );
+
+                if (self::sendEmail($recipient['email'], $subject, $message, $config)) {
+                    $sentCount++;
+                    $alertSent = true;
+                    writeToLogFunction::info(
+                        'Sensor alert email sent.',
+                        __FILE__,
+                        array(
+                            'channelConfigId' => $channelRow['id'] ?? null,
+                            'sensorConfigId' => $channelRow['sensorConfigId'] ?? null,
+                            'alertState' => $alertState,
+                            'to' => $recipient['email'] ?? null,
+                        )
+                    );
+                }
+            }
+
+            if ($alertSent) {
+                self::updateChannelAlertState((int)$channelRow['id'], $alertState);
             }
         }
 
         return $sentCount;
+    }
+
+    private static function getBoardNotificationRecipients($boardId, $notificationType)
+    {
+        $pdo = dbConfig::getInstance();
+        $boardId = (int)$boardId;
+        $notificationColumn = $notificationType === 'sensor'
+            ? 'receive_sensor_notifications'
+            : 'receive_offline_notifications';
+
+        if (self::permissionsTablesExist($pdo)) {
+            $statement = $pdo->prepare(
+                "SELECT DISTINCT users.id, users.email
+                 FROM users
+                 INNER JOIN board_permissions ON board_permissions.userId = users.id
+                 WHERE board_permissions.boardId = ?
+                   AND board_permissions.canReceiveAlerts = 1
+                   AND users.receive_notifications = 1
+                   AND users.`$notificationColumn` = 1
+                   AND users.active = 1
+                 UNION
+                 SELECT DISTINCT users.id, users.email
+                 FROM users
+                 INNER JOIN boardConfig ON boardConfig.ownerUserId = users.id
+                 WHERE boardConfig.id = ?
+                   AND users.receive_notifications = 1
+                   AND users.`$notificationColumn` = 1
+                   AND users.active = 1"
+            );
+            $statement->execute(array($boardId, $boardId));
+            return self::deduplicateRecipients($statement->fetchAll(PDO::FETCH_ASSOC));
+        }
+
+        $statement = $pdo->prepare(
+            "SELECT users.id, users.email
+             FROM users
+             INNER JOIN boardConfig ON boardConfig.ownerUserId = users.id
+             WHERE boardConfig.id = ?
+               AND users.receive_notifications = 1
+               AND users.`$notificationColumn` = 1
+               AND users.active = 1"
+        );
+        $statement->execute(array($boardId));
+        return self::deduplicateRecipients($statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    private static function getSensorNotificationRecipients($sensorId)
+    {
+        $pdo = dbConfig::getInstance();
+        $sensorId = (int)$sensorId;
+        if (self::permissionsTablesExist($pdo)) {
+            $statement = $pdo->prepare(
+                "SELECT DISTINCT users.id, users.email
+                 FROM users
+                 INNER JOIN sensor_permissions ON sensor_permissions.userId = users.id
+                 WHERE sensor_permissions.sensorId = ?
+                   AND sensor_permissions.canReceiveAlerts = 1
+                   AND users.receive_notifications = 1
+                   AND users.receive_sensor_notifications = 1
+                   AND users.active = 1
+                 UNION
+                 SELECT DISTINCT users.id, users.email
+                 FROM users
+                 INNER JOIN sensorConfig ON sensorConfig.id = ?
+                 INNER JOIN board_permissions ON board_permissions.boardId = sensorConfig.boardId
+                   AND board_permissions.userId = users.id
+                 WHERE board_permissions.canReceiveAlerts = 1
+                   AND users.receive_notifications = 1
+                   AND users.receive_sensor_notifications = 1
+                   AND users.active = 1
+                 UNION
+                 SELECT DISTINCT users.id, users.email
+                 FROM users
+                 INNER JOIN sensorConfig ON sensorConfig.id = ?
+                 INNER JOIN boardConfig ON boardConfig.id = sensorConfig.boardId
+                   AND boardConfig.ownerUserId = users.id
+                 WHERE users.receive_notifications = 1
+                   AND users.receive_sensor_notifications = 1
+                   AND users.active = 1"
+            );
+            $statement->execute(array($sensorId, $sensorId, $sensorId));
+            return self::deduplicateRecipients($statement->fetchAll(PDO::FETCH_ASSOC));
+        }
+
+        $statement = $pdo->prepare(
+            "SELECT users.id, users.email
+             FROM users
+             INNER JOIN sensorConfig ON sensorConfig.id = ?
+             INNER JOIN boardConfig ON boardConfig.id = sensorConfig.boardId
+               AND boardConfig.ownerUserId = users.id
+             WHERE users.receive_notifications = 1
+               AND users.receive_sensor_notifications = 1
+               AND users.active = 1"
+        );
+        $statement->execute(array($sensorId));
+        return self::deduplicateRecipients($statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    private static function deduplicateRecipients(array $rows)
+    {
+        $recipients = array();
+        foreach ($rows as $row) {
+            $email = trim((string)($row['email'] ?? ''));
+            if ($email === '') {
+                continue;
+            }
+            $recipients[strtolower($email)] = array(
+                'id' => isset($row['id']) ? (int)$row['id'] : null,
+                'email' => $email,
+            );
+        }
+
+        return array_values($recipients);
+    }
+
+    private static function permissionsTablesExist(PDO $pdo)
+    {
+        static $tablesExist = null;
+        if ($tablesExist !== null) {
+            return $tablesExist;
+        }
+
+        try {
+            $statement = $pdo->prepare(
+                "SELECT COUNT(*) AS tableCount
+                 FROM INFORMATION_SCHEMA.TABLES
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME IN ('board_permissions', 'sensor_permissions')"
+            );
+            $statement->execute();
+            $row = $statement->fetch(PDO::FETCH_ASSOC);
+            $tablesExist = ((int)($row['tableCount'] ?? 0) === 2);
+        } catch (Throwable $e) {
+            $tablesExist = false;
+            writeToLogFunction::exception($e, __FILE__);
+        }
+
+        return $tablesExist;
     }
 
     private static function determineAlertState(array $channelRow, $currentValue)
@@ -443,8 +611,23 @@ class NotificationService
                   AND boardConfig.alarmOnUnavailable = 1";
         $params = array();
         if (!$isAdmin && $userId !== null) {
-            $sql .= " AND boardConfig.ownerUserId = :userId";
-            $params['userId'] = (int)$userId;
+            if (self::permissionsTablesExist($pdo)) {
+                $sql .= " AND (
+                    boardConfig.ownerUserId = :userId
+                    OR EXISTS (
+                        SELECT 1
+                        FROM board_permissions
+                        WHERE board_permissions.boardId = boardConfig.id
+                          AND board_permissions.userId = :permissionUserId
+                          AND board_permissions.canReceiveAlerts = 1
+                    )
+                )";
+                $params['userId'] = (int)$userId;
+                $params['permissionUserId'] = (int)$userId;
+            } else {
+                $sql .= " AND boardConfig.ownerUserId = :userId";
+                $params['userId'] = (int)$userId;
+            }
         }
         $sql .= " ORDER BY boardConfig.id";
         $statement = $pdo->prepare($sql);
@@ -483,8 +666,31 @@ class NotificationService
                 WHERE sensorChannelConfig.AlertEnabled = 1";
         $params = array();
         if (!$isAdmin && $userId !== null) {
-            $sql .= " AND boardConfig.ownerUserId = :userId";
-            $params['userId'] = (int)$userId;
+            if (self::permissionsTablesExist($pdo)) {
+                $sql .= " AND (
+                    boardConfig.ownerUserId = :userId
+                    OR EXISTS (
+                        SELECT 1
+                        FROM board_permissions
+                        WHERE board_permissions.boardId = boardConfig.id
+                          AND board_permissions.userId = :boardPermissionUserId
+                          AND board_permissions.canReceiveAlerts = 1
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM sensor_permissions
+                        WHERE sensor_permissions.sensorId = sensorConfig.id
+                          AND sensor_permissions.userId = :sensorPermissionUserId
+                          AND sensor_permissions.canReceiveAlerts = 1
+                    )
+                )";
+                $params['userId'] = (int)$userId;
+                $params['boardPermissionUserId'] = (int)$userId;
+                $params['sensorPermissionUserId'] = (int)$userId;
+            } else {
+                $sql .= " AND boardConfig.ownerUserId = :userId";
+                $params['userId'] = (int)$userId;
+            }
         }
         $sql .= " ORDER BY boardConfig.id, sensorChannelConfig.channelNr";
         $statement = $pdo->prepare($sql);

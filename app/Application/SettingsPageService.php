@@ -2,6 +2,7 @@
 
 require_once(__DIR__ . '/InternalPageService.php');
 require_once(__DIR__ . '/dbUpdateData.php');
+require_once(__DIR__ . '/myFunctions.func.php');
 require_once(__DIR__ . '/NotificationService.php');
 require_once(__DIR__ . '/../Infrastructure/Database/dbConfig.func.php');
 require_once(__DIR__ . '/../Infrastructure/Logging/writeToLogFunction.func.php');
@@ -45,7 +46,7 @@ class SettingsPageService
             }
         } elseif ($save === 'users') {
             try {
-                if ((int)$userObj->getUserGroupAdmin() !== 1) {
+                if (!myFunctions::isUserAdmin((int)$userObj->getId())) {
                     throw new RuntimeException('Admin permissions required.');
                 }
                 dbUpdateData::updateUserStatus($post);
@@ -67,9 +68,25 @@ class SettingsPageService
                 $result['error_msg'] = $e->getMessage();
                 self::logException($result['error_msg'], $e);
             }
+        } elseif ($save === 'boardAccess') {
+            try {
+                self::handleBoardAccessSave($userObj, $post);
+                $result['success_msg'] = mds_t('settings.access_saved');
+            } catch (Exception $e) {
+                $result['error_msg'] = $e->getMessage();
+                self::logException('Board access settings not saved.', $e);
+            }
+        } elseif ($save === 'sensorAccess') {
+            try {
+                self::handleSensorAccessSave($userObj, $post);
+                $result['success_msg'] = mds_t('settings.access_saved');
+            } catch (Exception $e) {
+                $result['error_msg'] = $e->getMessage();
+                self::logException('Sensor access settings not saved.', $e);
+            }
         } elseif ($save === 'serverSetting') {
             try {
-                if ((int)$userObj->getUserGroupAdmin() !== 1) {
+                if (!myFunctions::isUserAdmin((int)$userObj->getId())) {
                     throw new RuntimeException('Admin permissions required.');
                 }
                 $config->saveServerSettings($post);
@@ -123,10 +140,10 @@ class SettingsPageService
 
         if (isset($post['submit_formBoards'])) {
             try {
-                if (!myFunctions::canUserAccessBoard((int)$userObj->getId(), (int)($post['id'] ?? 0))) {
+                if (!myFunctions::canUserEditBoard((int)$userObj->getId(), (int)($post['id'] ?? 0))) {
                     throw new RuntimeException('Access denied.');
                 }
-                if ((int)$userObj->getUserGroupAdmin() !== 1) {
+                if (!myFunctions::isUserAdmin((int)$userObj->getId())) {
                     $post['ownerId'] = $userObj->getId();
                 }
                 dbUpdateData::updateBoard($post);
@@ -136,7 +153,7 @@ class SettingsPageService
             }
         } elseif (isset($post['submit_formBoards_remove'])) {
             try {
-                if (!myFunctions::canUserAccessBoard((int)$userObj->getId(), (int)($post['id'] ?? 0))) {
+                if (!myFunctions::canUserManageBoardAccess((int)$userObj->getId(), (int)($post['id'] ?? 0))) {
                     throw new RuntimeException('Access denied.');
                 }
                 dbUpdateData::removeBoardOwner($post);
@@ -151,12 +168,14 @@ class SettingsPageService
 
     public static function buildPageData($userObj, $config)
     {
-        $isAdmin = ((int) $userObj->getUserGroupAdmin() === 1);
+        $isAdmin = myFunctions::isUserAdmin((int)$userObj->getId());
         $myBoards = array();
         $allBoards = array();
         $allUsers = array();
         $migrationStatus = array();
         $legacyStatus = array();
+        $accessBoards = array();
+        $canManageAccess = false;
 
         try {
             $notificationOverview = NotificationService::getNotificationStatusOverview($userObj->getId(), $isAdmin);
@@ -196,6 +215,19 @@ class SettingsPageService
                 ));
             }
 
+        }
+
+        try {
+            $accessBoards = self::buildAccessBoardData((int)$userObj->getId());
+            $canManageAccess = !empty($accessBoards);
+        } catch (Throwable $e) {
+            writeToLogFunction::exception($e, __FILE__, array(
+                'message' => 'Access board data could not be loaded on settings page.',
+                'userId' => (int)$userObj->getId(),
+            ));
+        }
+
+        if ($isAdmin || $canManageAccess) {
             try {
                 $allUsers = myFunctions::getAllUsers();
                 if (!is_array($allUsers)) {
@@ -238,13 +270,60 @@ class SettingsPageService
             'myBoards' => $myBoards,
             'allBoards' => $allBoards,
             'allUsers' => $allUsers,
+            'accessBoards' => $accessBoards,
+            'canManageAccess' => $canManageAccess,
             'timeZones' => self::getTimeZoneList(),
             'currentLogContent' => self::getCurrentLogContent(),
+            'otaUpdateLogs' => self::getOtaUpdateLogOverview(),
             'isAdmin' => $isAdmin,
             'notificationOverview' => $notificationOverview,
             'migrationStatus' => $migrationStatus,
             'legacyStatus' => $legacyStatus,
         );
+    }
+
+    private static function handleBoardAccessSave($userObj, $post)
+    {
+        $boardId = (int)($post['boardId'] ?? 0);
+        $targetUserId = (int)($post['targetUserId'] ?? 0);
+        $action = (string)($post['permissionAction'] ?? 'save');
+
+        if ($action === 'remove') {
+            myFunctions::removeBoardPermission((int)$userObj->getId(), $boardId, $targetUserId);
+            return;
+        }
+
+        $role = (string)($post['role'] ?? 'observer');
+        myFunctions::saveBoardPermission((int)$userObj->getId(), $boardId, $targetUserId, $role);
+    }
+
+    private static function handleSensorAccessSave($userObj, $post)
+    {
+        $boardId = (int)($post['boardId'] ?? 0);
+        $sensorId = (int)($post['sensorId'] ?? 0);
+        $targetUserId = (int)($post['targetUserId'] ?? 0);
+        $action = (string)($post['permissionAction'] ?? 'save');
+
+        if ($action === 'remove') {
+            myFunctions::removeSensorPermission((int)$userObj->getId(), $boardId, $sensorId, $targetUserId);
+            return;
+        }
+
+        $role = (string)($post['role'] ?? 'observer');
+        myFunctions::saveSensorPermission((int)$userObj->getId(), $boardId, $sensorId, $targetUserId, $role);
+    }
+
+    private static function buildAccessBoardData($userId)
+    {
+        $boards = myFunctions::getManageableBoards((int)$userId);
+        foreach ($boards as $boardIndex => $board) {
+            $boardId = (int)($board['id'] ?? 0);
+            $boards[$boardIndex]['sensors'] = myFunctions::getAllSensorsOfBoardOld($boardId);
+            $boards[$boardIndex]['boardPermissions'] = myFunctions::getBoardAccessList($boardId);
+            $boards[$boardIndex]['sensorPermissions'] = myFunctions::getSensorAccessList($boardId);
+        }
+
+        return $boards;
     }
 
     public static function buildMigrationStatus()
@@ -406,6 +485,19 @@ class SettingsPageService
                     array('type' => 'column_type', 'table' => 'boardConfig', 'column' => 'firmwareVersion', 'contains' => 'varchar(64)'),
                 ),
             ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-07-06_roles_and_permissions.sql',
+                'label' => 'Roles and board/sensor permissions',
+                'checks' => array(
+                    array('type' => 'table', 'table' => 'roles'),
+                    array('type' => 'table', 'table' => 'user_roles'),
+                    array('type' => 'table', 'table' => 'board_permissions'),
+                    array('type' => 'table', 'table' => 'sensor_permissions'),
+                    array('type' => 'table', 'table' => 'permission_audit_log'),
+                    array('type' => 'index', 'table' => 'board_permissions', 'index' => 'uniq_board_permissions_board_user'),
+                    array('type' => 'index', 'table' => 'sensor_permissions', 'index' => 'uniq_sensor_permissions_sensor_user'),
+                ),
+            ),
         );
     }
 
@@ -438,7 +530,7 @@ class SettingsPageService
 
     public static function runAutomaticMigrationActions($userObj)
     {
-        if ((int)$userObj->getUserGroupAdmin() !== 1) {
+        if (!myFunctions::isUserAdmin((int)$userObj->getId())) {
             throw new RuntimeException('Admin permissions required.');
         }
 
@@ -460,6 +552,9 @@ class SettingsPageService
         }
         if (!self::migrationDefinitionPassed($pdo, $migrations[4])) {
             $executedActions += self::runFirmwareVersionMigrationActions($pdo);
+        }
+        if (!self::migrationDefinitionPassed($pdo, $migrations[5])) {
+            $executedActions += self::runRolesAndPermissionsMigrationActions($pdo);
         }
 
         writeToLogFunction::write_to_log(
@@ -611,6 +706,107 @@ class SettingsPageService
 
         self::executeMigrationStatement($pdo, "ALTER TABLE `boardConfig` MODIFY `firmwareVersion` varchar(64) DEFAULT NULL");
         return 1;
+    }
+
+    private static function runRolesAndPermissionsMigrationActions(PDO $pdo)
+    {
+        $actions = 0;
+        foreach (self::getRolesAndPermissionsMigrationStatements() as $statement) {
+            self::executeMigrationStatement($pdo, $statement);
+            $actions++;
+        }
+
+        return $actions;
+    }
+
+    private static function getRolesAndPermissionsMigrationStatements()
+    {
+        return array(
+            "CREATE TABLE IF NOT EXISTS `roles` (
+                `id` int NOT NULL AUTO_INCREMENT,
+                `name` varchar(50) NOT NULL,
+                `description` varchar(255) DEFAULT NULL,
+                `isGlobal` tinyint NOT NULL DEFAULT '1',
+                `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uniq_roles_name` (`name`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `user_roles` (
+                `id` int NOT NULL AUTO_INCREMENT,
+                `userId` int NOT NULL,
+                `roleId` int NOT NULL,
+                `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uniq_user_roles_user_role` (`userId`, `roleId`),
+                KEY `idx_user_roles_roleId` (`roleId`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `board_permissions` (
+                `id` int NOT NULL AUTO_INCREMENT,
+                `boardId` int NOT NULL,
+                `userId` int NOT NULL,
+                `role` varchar(20) NOT NULL DEFAULT 'observer',
+                `canView` tinyint NOT NULL DEFAULT '1',
+                `canEdit` tinyint NOT NULL DEFAULT '0',
+                `canManageUsers` tinyint NOT NULL DEFAULT '0',
+                `canReceiveAlerts` tinyint NOT NULL DEFAULT '1',
+                `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updatedAt` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uniq_board_permissions_board_user` (`boardId`, `userId`),
+                KEY `idx_board_permissions_userId` (`userId`),
+                KEY `idx_board_permissions_role` (`role`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `sensor_permissions` (
+                `id` int NOT NULL AUTO_INCREMENT,
+                `sensorId` int NOT NULL,
+                `userId` int NOT NULL,
+                `role` varchar(20) NOT NULL DEFAULT 'observer',
+                `canView` tinyint NOT NULL DEFAULT '1',
+                `canEdit` tinyint NOT NULL DEFAULT '0',
+                `canReceiveAlerts` tinyint NOT NULL DEFAULT '1',
+                `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updatedAt` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uniq_sensor_permissions_sensor_user` (`sensorId`, `userId`),
+                KEY `idx_sensor_permissions_userId` (`userId`),
+                KEY `idx_sensor_permissions_role` (`role`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `permission_audit_log` (
+                `id` int NOT NULL AUTO_INCREMENT,
+                `actorUserId` int DEFAULT NULL,
+                `targetUserId` int DEFAULT NULL,
+                `resourceType` varchar(20) NOT NULL,
+                `resourceId` int NOT NULL,
+                `action` varchar(30) NOT NULL,
+                `oldValue` text DEFAULT NULL,
+                `newValue` text DEFAULT NULL,
+                `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `idx_permission_audit_resource` (`resourceType`, `resourceId`),
+                KEY `idx_permission_audit_actor` (`actorUserId`),
+                KEY `idx_permission_audit_target` (`targetUserId`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "INSERT INTO `roles` (`name`, `description`, `isGlobal`) VALUES
+                ('admin', 'System administrator', 1),
+                ('user', 'Regular authenticated user', 1),
+                ('owner', 'Board or sensor owner', 0),
+                ('observer', 'Read-only observer with notifications', 0)
+             ON DUPLICATE KEY UPDATE `description` = VALUES(`description`), `isGlobal` = VALUES(`isGlobal`)",
+            "INSERT IGNORE INTO `user_roles` (`userId`, `roleId`)
+             SELECT `users`.`id`, `roles`.`id`
+             FROM `users`
+             INNER JOIN `roles` ON `roles`.`name` = CASE WHEN `users`.`userGroupAdmin` = 1 THEN 'admin' ELSE 'user' END",
+            "INSERT INTO `board_permissions` (`boardId`, `userId`, `role`, `canView`, `canEdit`, `canManageUsers`, `canReceiveAlerts`)
+             SELECT `id`, `ownerUserId`, 'owner', 1, 1, 1, 1
+             FROM `boardConfig`
+             WHERE `ownerUserId` IS NOT NULL AND `ownerUserId` > 0
+             ON DUPLICATE KEY UPDATE
+                `role` = 'owner',
+                `canView` = 1,
+                `canEdit` = 1,
+                `canManageUsers` = 1,
+                `canReceiveAlerts` = 1",
+        );
     }
 
     private static function addColumnIfMissing(PDO $pdo, $tableName, $columnName, $columnDefinition)
@@ -943,5 +1139,82 @@ class SettingsPageService
         }
 
         return $data;
+    }
+
+    public static function getOtaUpdateLogOverview($limit = 100)
+    {
+        $logDirectory = dirname(__DIR__, 2) . "/var/ota/logs";
+        $filename = $logDirectory . "/log.csv";
+        $overview = array(
+            'path' => $filename,
+            'entries' => array(),
+            'message' => '',
+        );
+
+        if (!is_dir($logDirectory)) {
+            $overview['message'] = 'OTA log directory not found: ' . $logDirectory;
+            return $overview;
+        }
+
+        if (!is_readable($logDirectory)) {
+            $overview['message'] = 'OTA log directory is not readable: ' . $logDirectory;
+            return $overview;
+        }
+
+        if (!is_file($filename)) {
+            $overview['message'] = 'OTA log file not found.';
+            return $overview;
+        }
+
+        $handle = fopen($filename, 'r');
+        if ($handle === false) {
+            $overview['message'] = 'Error while opening OTA log file.';
+            return $overview;
+        }
+
+        $header = fgetcsv($handle);
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 3) {
+                continue;
+            }
+
+            $message = trim((string)$row[2]);
+            $overview['entries'][] = array(
+                'datetime' => trim((string)$row[0]),
+                'request' => trim((string)$row[1]),
+                'message' => $message,
+                'status' => self::classifyOtaLogMessage($message),
+            );
+        }
+        fclose($handle);
+
+        $overview['entries'] = array_slice(array_reverse($overview['entries']), 0, max(1, (int)$limit));
+        return $overview;
+    }
+
+    private static function classifyOtaLogMessage($message)
+    {
+        $normalizedMessage = strtolower((string)$message);
+
+        if (str_contains($normalizedMessage, 'send file')) {
+            return 'sent';
+        }
+        if (str_contains($normalizedMessage, 'already current')) {
+            return 'current';
+        }
+        if (str_contains($normalizedMessage, 'disabled')) {
+            return 'disabled';
+        }
+        if (str_contains($normalizedMessage, 'validation failed') || str_contains($normalizedMessage, 'not configured')) {
+            return 'rejected';
+        }
+        if (str_contains($normalizedMessage, 'not found')) {
+            return 'missing';
+        }
+        if (str_contains($normalizedMessage, 'otaRequest: resolved')) {
+            return 'checked';
+        }
+
+        return 'info';
     }
 }

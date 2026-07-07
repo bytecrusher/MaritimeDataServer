@@ -24,7 +24,7 @@
       die();
     }
 
-    if (!myFunctions::canUserAccessSensor((int)$currentUser->getId(), (int)($_POST['id'] ?? 0))) {
+    if (!myFunctions::canUserEditSensor((int)$currentUser->getId(), (int)($_POST['id'] ?? 0))) {
       http_response_code(403);
       $error_msg = 'Access denied.';
       ?>

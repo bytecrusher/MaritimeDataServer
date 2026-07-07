@@ -193,20 +193,59 @@ class dbUpdateData {
   */
   public static function updateUserStatus($post) {
     $pdo = dbConfig::getInstance();
-    $result = null;
+    $updated = false;
     foreach($post['active'] as $i=>$array_wert)
 		{
       try {
         $statement = $pdo->prepare("UPDATE users SET active =?, userGroupAdmin=? WHERE id =?");
         $statement->execute(array($post['active'][$i], $post['userGroupAdmin'][$i], $i ));
-        return true;
+        self::syncUserGlobalRole($pdo, (int)$i, (int)$post['userGroupAdmin'][$i]);
+        $updated = true;
       } catch (PDOException $e) {
         writeToLogFunction::write_to_log("Error: User Status in DB not successfully updated for user id: " . $post['active'][$i], $_SERVER["SCRIPT_FILENAME"]);
         writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
         throw new Exception('User Status in DB not successfully updated.');
       }
 		}
-    return false;
+    return $updated;
+  }
+
+  private static function syncUserGlobalRole(PDO $pdo, $userId, $isAdmin) {
+    if (!self::tableExists($pdo, 'roles') || !self::tableExists($pdo, 'user_roles')) {
+      return;
+    }
+
+    $roleName = ((int)$isAdmin === 1) ? 'admin' : 'user';
+    $cleanup = $pdo->prepare(
+      "DELETE user_roles
+       FROM user_roles
+       INNER JOIN roles ON roles.id = user_roles.roleId
+       WHERE user_roles.userId = ?
+         AND roles.name IN ('admin', 'user')"
+    );
+    $cleanup->execute(array((int)$userId));
+
+    $insert = $pdo->prepare(
+      "INSERT IGNORE INTO user_roles (userId, roleId)
+       SELECT ?, id FROM roles WHERE name = ? LIMIT 1"
+    );
+    $insert->execute(array((int)$userId, $roleName));
+  }
+
+  private static function tableExists(PDO $pdo, $tableName) {
+    try {
+      $statement = $pdo->prepare(
+        "SELECT COUNT(*) AS tableCount
+         FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = ?"
+      );
+      $statement->execute(array((string)$tableName));
+      $row = $statement->fetch(PDO::FETCH_ASSOC);
+      return ((int)($row['tableCount'] ?? 0) > 0);
+    } catch (Throwable $e) {
+      return false;
+    }
   }
 
   /**

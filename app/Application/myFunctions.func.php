@@ -87,8 +87,34 @@ class myFunctions {
 	    if (!$userId == null) {
 	      $pdo = dbConfig::getInstance();
 	      try {
-	        $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = ? ORDER BY id");
-	        $result = $myBoards->execute(array((int)$userId));
+	        if (self::isUserAdmin((int)$userId)) {
+	          $myBoards = $pdo->prepare("SELECT DISTINCT boardConfig.* FROM boardConfig ORDER BY boardConfig.id");
+	          $result = $myBoards->execute();
+	        } elseif (self::tableExists($pdo, 'board_permissions')) {
+	          $myBoards = $pdo->prepare(
+	            "SELECT DISTINCT boardConfig.*
+	             FROM boardConfig
+	             LEFT JOIN board_permissions
+	               ON board_permissions.boardId = boardConfig.id
+	              AND board_permissions.userId = ?
+	              AND board_permissions.canView = 1
+	             WHERE boardConfig.ownerUserId = ?
+	                OR board_permissions.id IS NOT NULL
+	                OR EXISTS (
+	                  SELECT 1
+	                  FROM sensor_permissions
+	                  INNER JOIN sensorConfig ON sensorConfig.id = sensor_permissions.sensorId
+	                  WHERE sensorConfig.boardId = boardConfig.id
+	                    AND sensor_permissions.userId = ?
+	                    AND sensor_permissions.canView = 1
+	                )
+	             ORDER BY boardConfig.id"
+	          );
+	          $result = $myBoards->execute(array((int)$userId, (int)$userId, (int)$userId));
+	        } else {
+	          $myBoards = $pdo->prepare("SELECT * FROM boardConfig WHERE ownerUserId = ? ORDER BY id");
+	          $result = $myBoards->execute(array((int)$userId));
+	        }
 	        return $myBoards->fetchAll(PDO::FETCH_ASSOC);
       } catch (PDOException $e) {
         writeToLogFunction::write_to_log("Error: Unable to get myBoards for user id: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
@@ -343,52 +369,397 @@ class myFunctions {
 	    $statement = $pdo->prepare("SELECT userGroupAdmin FROM users WHERE id = ? LIMIT 1");
 	    $statement->execute(array((int)$userId));
 	    $userRow = $statement->fetch(PDO::FETCH_ASSOC);
-	    return ($userRow !== false) && ((int)$userRow['userGroupAdmin'] === 1);
+	    if (($userRow !== false) && ((int)$userRow['userGroupAdmin'] === 1)) {
+	      return true;
+	    }
+
+	    if (!self::tableExists($pdo, 'roles') || !self::tableExists($pdo, 'user_roles')) {
+	      return false;
+	    }
+
+	    $roleStatement = $pdo->prepare(
+	      "SELECT user_roles.userId
+	       FROM user_roles
+	       INNER JOIN roles ON roles.id = user_roles.roleId
+	       WHERE user_roles.userId = ? AND roles.name = 'admin'
+	       LIMIT 1"
+	    );
+	    $roleStatement->execute(array((int)$userId));
+	    return $roleStatement->fetch(PDO::FETCH_ASSOC) !== false;
 	  }
 
 	  public static function canUserAccessBoard($userId, $boardId) {
-	    $userId = (int)$userId;
-	    $boardId = (int)$boardId;
-	    if (($userId <= 0) || ($boardId <= 0)) {
-	      return false;
-	    }
+	    $permission = self::getBoardPermission((int)$userId, (int)$boardId);
+	    return !empty($permission['canView']);
+	  }
 
-	    if (self::isUserAdmin($userId)) {
-	      return true;
-	    }
+	  public static function canUserEditBoard($userId, $boardId) {
+	    $permission = self::getBoardPermission((int)$userId, (int)$boardId);
+	    return !empty($permission['canEdit']);
+	  }
 
-	    $pdo = dbConfig::getInstance();
-	    $statement = $pdo->prepare(
-	      "SELECT id
-	      FROM boardConfig
-	      WHERE id = ? AND ownerUserId = ?
-	      LIMIT 1"
-	    );
-	    $statement->execute(array($boardId, $userId));
-	    return $statement->fetch(PDO::FETCH_ASSOC) !== false;
+	  public static function canUserManageBoardAccess($userId, $boardId) {
+	    $permission = self::getBoardPermission((int)$userId, (int)$boardId);
+	    return !empty($permission['canManageUsers']);
 	  }
 
 	  public static function canUserAccessSensor($userId, $sensorId) {
+	    $permission = self::getSensorPermission((int)$userId, (int)$sensorId);
+	    return !empty($permission['canView']);
+	  }
+
+	  public static function canUserEditSensor($userId, $sensorId) {
+	    $permission = self::getSensorPermission((int)$userId, (int)$sensorId);
+	    return !empty($permission['canEdit']);
+	  }
+
+	  public static function canUserReceiveSensorAlert($userId, $sensorId) {
+	    $permission = self::getSensorPermission((int)$userId, (int)$sensorId);
+	    return !empty($permission['canReceiveAlerts']);
+	  }
+
+	  public static function getBoardPermission($userId, $boardId) {
 	    $userId = (int)$userId;
-	    $sensorId = (int)$sensorId;
-	    if (($userId <= 0) || ($sensorId <= 0)) {
-	      return false;
+	    $boardId = (int)$boardId;
+	    $emptyPermission = self::permissionDefaults('none');
+	    if (($userId <= 0) || ($boardId <= 0)) {
+	      return $emptyPermission;
 	    }
 
 	    if (self::isUserAdmin($userId)) {
-	      return true;
+	      return self::permissionDefaults('admin');
+	    }
+
+	    $pdo = dbConfig::getInstance();
+	    if (self::tableExists($pdo, 'board_permissions')) {
+	      $statement = $pdo->prepare(
+	        "SELECT role, canView, canEdit, canManageUsers, canReceiveAlerts
+	         FROM board_permissions
+	         WHERE boardId = ? AND userId = ?
+	         LIMIT 1"
+	      );
+	      $statement->execute(array($boardId, $userId));
+	      $row = $statement->fetch(PDO::FETCH_ASSOC);
+	      if ($row !== false) {
+	        return array(
+	          'role' => $row['role'] ?: 'custom',
+	          'canView' => (int)$row['canView'] === 1,
+	          'canEdit' => (int)$row['canEdit'] === 1,
+	          'canManageUsers' => (int)$row['canManageUsers'] === 1,
+	          'canReceiveAlerts' => (int)$row['canReceiveAlerts'] === 1,
+	          'source' => 'board_permissions',
+	        );
+	      }
+	    }
+
+	    $statement = $pdo->prepare(
+	      "SELECT id FROM boardConfig WHERE id = ? AND ownerUserId = ? LIMIT 1"
+	    );
+	    $statement->execute(array($boardId, $userId));
+	    if ($statement->fetch(PDO::FETCH_ASSOC) !== false) {
+	      return self::permissionDefaults('owner');
+	    }
+
+	    return $emptyPermission;
+	  }
+
+	  public static function getSensorPermission($userId, $sensorId) {
+	    $userId = (int)$userId;
+	    $sensorId = (int)$sensorId;
+	    $emptyPermission = self::permissionDefaults('none');
+	    if (($userId <= 0) || ($sensorId <= 0)) {
+	      return $emptyPermission;
+	    }
+
+	    if (self::isUserAdmin($userId)) {
+	      return self::permissionDefaults('admin');
+	    }
+
+	    $pdo = dbConfig::getInstance();
+	    $sensorStatement = $pdo->prepare("SELECT id, boardId FROM sensorConfig WHERE id = ? LIMIT 1");
+	    $sensorStatement->execute(array($sensorId));
+	    $sensorRow = $sensorStatement->fetch(PDO::FETCH_ASSOC);
+	    if ($sensorRow === false) {
+	      return $emptyPermission;
+	    }
+
+	    if (self::tableExists($pdo, 'sensor_permissions')) {
+	      $statement = $pdo->prepare(
+	        "SELECT role, canView, canEdit, canReceiveAlerts
+	         FROM sensor_permissions
+	         WHERE sensorId = ? AND userId = ?
+	         LIMIT 1"
+	      );
+	      $statement->execute(array($sensorId, $userId));
+	      $row = $statement->fetch(PDO::FETCH_ASSOC);
+	      if ($row !== false) {
+	        return array(
+	          'role' => $row['role'] ?: 'custom',
+	          'canView' => (int)$row['canView'] === 1,
+	          'canEdit' => (int)$row['canEdit'] === 1,
+	          'canManageUsers' => false,
+	          'canReceiveAlerts' => (int)$row['canReceiveAlerts'] === 1,
+	          'source' => 'sensor_permissions',
+	        );
+	      }
+	    }
+
+	    return self::getBoardPermission($userId, (int)$sensorRow['boardId']);
+	  }
+
+	  public static function getManageableBoards($userId) {
+	    if (!self::permissionsStorageAvailable()) {
+	      return array();
+	    }
+
+	    $boards = self::getMyBoards((int)$userId);
+	    if (!is_array($boards)) {
+	      return array();
+	    }
+
+	    return array_values(array_filter($boards, function ($board) use ($userId) {
+	      return self::canUserManageBoardAccess((int)$userId, (int)($board['id'] ?? 0));
+	    }));
+	  }
+
+	  public static function getBoardAccessList($boardId) {
+	    $pdo = dbConfig::getInstance();
+	    if (!self::tableExists($pdo, 'board_permissions')) {
+	      return array();
+	    }
+
+	    $statement = $pdo->prepare(
+	      "SELECT board_permissions.*, users.email, users.firstName, users.lastName
+	       FROM board_permissions
+	       INNER JOIN users ON users.id = board_permissions.userId
+	       WHERE board_permissions.boardId = ?
+	       ORDER BY board_permissions.role = 'owner' DESC, users.email"
+	    );
+	    $statement->execute(array((int)$boardId));
+	    return $statement->fetchAll(PDO::FETCH_ASSOC);
+	  }
+
+	  public static function permissionsStorageAvailable() {
+	    $pdo = dbConfig::getInstance();
+	    return self::tableExists($pdo, 'board_permissions')
+	      && self::tableExists($pdo, 'sensor_permissions')
+	      && self::tableExists($pdo, 'permission_audit_log');
+	  }
+
+	  public static function getSensorAccessList($boardId) {
+	    $pdo = dbConfig::getInstance();
+	    if (!self::tableExists($pdo, 'sensor_permissions')) {
+	      return array();
+	    }
+
+	    $statement = $pdo->prepare(
+	      "SELECT sensor_permissions.*, users.email, users.firstName, users.lastName, sensorConfig.name AS sensorName
+	       FROM sensor_permissions
+	       INNER JOIN users ON users.id = sensor_permissions.userId
+	       INNER JOIN sensorConfig ON sensorConfig.id = sensor_permissions.sensorId
+	       WHERE sensorConfig.boardId = ?
+	       ORDER BY sensorConfig.name, users.email"
+	    );
+	    $statement->execute(array((int)$boardId));
+	    return $statement->fetchAll(PDO::FETCH_ASSOC);
+	  }
+
+	  public static function saveBoardPermission($actorUserId, $boardId, $targetUserId, $role) {
+	    if (!self::permissionsStorageAvailable()) {
+	      throw new RuntimeException('Permission migration has not been applied yet.');
+	    }
+
+	    $actorUserId = (int)$actorUserId;
+	    $boardId = (int)$boardId;
+	    $targetUserId = (int)$targetUserId;
+	    if (!self::canUserManageBoardAccess($actorUserId, $boardId)) {
+	      throw new RuntimeException('Access denied.');
+	    }
+
+	    $defaults = self::permissionDefaults($role);
+	    if ($defaults['role'] === 'none' || $targetUserId <= 0) {
+	      throw new InvalidArgumentException('Invalid permission role or user.');
 	    }
 
 	    $pdo = dbConfig::getInstance();
 	    $statement = $pdo->prepare(
-	      "SELECT sensorConfig.id
-	      FROM sensorConfig
-	      INNER JOIN boardConfig ON boardConfig.id = sensorConfig.boardId
-	      WHERE sensorConfig.id = ? AND boardConfig.ownerUserId = ?
-	      LIMIT 1"
+	      "INSERT INTO board_permissions (boardId, userId, role, canView, canEdit, canManageUsers, canReceiveAlerts)
+	       VALUES (?, ?, ?, ?, ?, ?, ?)
+	       ON DUPLICATE KEY UPDATE
+	         role = VALUES(role),
+	         canView = VALUES(canView),
+	         canEdit = VALUES(canEdit),
+	         canManageUsers = VALUES(canManageUsers),
+	         canReceiveAlerts = VALUES(canReceiveAlerts),
+	         updatedAt = CURRENT_TIMESTAMP"
 	    );
-	    $statement->execute(array($sensorId, $userId));
-	    return $statement->fetch(PDO::FETCH_ASSOC) !== false;
+	    $statement->execute(array(
+	      $boardId,
+	      $targetUserId,
+	      $defaults['role'],
+	      $defaults['canView'] ? 1 : 0,
+	      $defaults['canEdit'] ? 1 : 0,
+	      $defaults['canManageUsers'] ? 1 : 0,
+	      $defaults['canReceiveAlerts'] ? 1 : 0,
+	    ));
+	    self::writePermissionAudit($actorUserId, $targetUserId, 'board', $boardId, 'save', null, $defaults['role']);
+	  }
+
+	  public static function removeBoardPermission($actorUserId, $boardId, $targetUserId) {
+	    if (!self::permissionsStorageAvailable()) {
+	      throw new RuntimeException('Permission migration has not been applied yet.');
+	    }
+
+	    $actorUserId = (int)$actorUserId;
+	    $boardId = (int)$boardId;
+	    $targetUserId = (int)$targetUserId;
+	    if (!self::canUserManageBoardAccess($actorUserId, $boardId)) {
+	      throw new RuntimeException('Access denied.');
+	    }
+
+	    $pdo = dbConfig::getInstance();
+	    $ownerStatement = $pdo->prepare("SELECT ownerUserId FROM boardConfig WHERE id = ? LIMIT 1");
+	    $ownerStatement->execute(array($boardId));
+	    $ownerRow = $ownerStatement->fetch(PDO::FETCH_ASSOC);
+	    if ($ownerRow && (int)$ownerRow['ownerUserId'] === $targetUserId) {
+	      throw new RuntimeException('The primary board owner cannot be removed here.');
+	    }
+
+	    $statement = $pdo->prepare("DELETE FROM board_permissions WHERE boardId = ? AND userId = ?");
+	    $statement->execute(array($boardId, $targetUserId));
+	    self::writePermissionAudit($actorUserId, $targetUserId, 'board', $boardId, 'remove', null, null);
+	  }
+
+	  public static function saveSensorPermission($actorUserId, $boardId, $sensorId, $targetUserId, $role) {
+	    if (!self::permissionsStorageAvailable()) {
+	      throw new RuntimeException('Permission migration has not been applied yet.');
+	    }
+
+	    $actorUserId = (int)$actorUserId;
+	    $boardId = (int)$boardId;
+	    $sensorId = (int)$sensorId;
+	    $targetUserId = (int)$targetUserId;
+	    if (!self::canUserManageBoardAccess($actorUserId, $boardId)) {
+	      throw new RuntimeException('Access denied.');
+	    }
+
+	    $sensorRow = self::getSensorConfig($sensorId);
+	    if (!$sensorRow || (int)$sensorRow['boardId'] !== $boardId) {
+	      throw new RuntimeException('Sensor does not belong to the selected board.');
+	    }
+
+	    $defaults = self::permissionDefaults($role);
+	    if ($defaults['role'] === 'none' || $targetUserId <= 0) {
+	      throw new InvalidArgumentException('Invalid permission role or user.');
+	    }
+
+	    $pdo = dbConfig::getInstance();
+	    $statement = $pdo->prepare(
+	      "INSERT INTO sensor_permissions (sensorId, userId, role, canView, canEdit, canReceiveAlerts)
+	       VALUES (?, ?, ?, ?, ?, ?)
+	       ON DUPLICATE KEY UPDATE
+	         role = VALUES(role),
+	         canView = VALUES(canView),
+	         canEdit = VALUES(canEdit),
+	         canReceiveAlerts = VALUES(canReceiveAlerts),
+	         updatedAt = CURRENT_TIMESTAMP"
+	    );
+	    $statement->execute(array(
+	      $sensorId,
+	      $targetUserId,
+	      $defaults['role'],
+	      $defaults['canView'] ? 1 : 0,
+	      $defaults['canEdit'] ? 1 : 0,
+	      $defaults['canReceiveAlerts'] ? 1 : 0,
+	    ));
+	    self::writePermissionAudit($actorUserId, $targetUserId, 'sensor', $sensorId, 'save', null, $defaults['role']);
+	  }
+
+	  public static function removeSensorPermission($actorUserId, $boardId, $sensorId, $targetUserId) {
+	    if (!self::permissionsStorageAvailable()) {
+	      throw new RuntimeException('Permission migration has not been applied yet.');
+	    }
+
+	    $actorUserId = (int)$actorUserId;
+	    $boardId = (int)$boardId;
+	    $sensorId = (int)$sensorId;
+	    $targetUserId = (int)$targetUserId;
+	    if (!self::canUserManageBoardAccess($actorUserId, $boardId)) {
+	      throw new RuntimeException('Access denied.');
+	    }
+
+	    $sensorRow = self::getSensorConfig($sensorId);
+	    if (!$sensorRow || (int)$sensorRow['boardId'] !== $boardId) {
+	      throw new RuntimeException('Sensor does not belong to the selected board.');
+	    }
+
+	    $pdo = dbConfig::getInstance();
+	    $statement = $pdo->prepare("DELETE FROM sensor_permissions WHERE sensorId = ? AND userId = ?");
+	    $statement->execute(array($sensorId, $targetUserId));
+	    self::writePermissionAudit($actorUserId, $targetUserId, 'sensor', $sensorId, 'remove', null, null);
+	  }
+
+	  public static function permissionDefaults($role) {
+	    $role = strtolower(trim((string)$role));
+	    if ($role === 'admin') {
+	      return array('role' => 'admin', 'canView' => true, 'canEdit' => true, 'canManageUsers' => true, 'canReceiveAlerts' => true, 'source' => 'admin');
+	    }
+	    if ($role === 'owner') {
+	      return array('role' => 'owner', 'canView' => true, 'canEdit' => true, 'canManageUsers' => true, 'canReceiveAlerts' => true, 'source' => 'owner');
+	    }
+	    if ($role === 'user' || $role === 'editor') {
+	      return array('role' => 'user', 'canView' => true, 'canEdit' => true, 'canManageUsers' => false, 'canReceiveAlerts' => true, 'source' => 'role');
+	    }
+	    if ($role === 'observer') {
+	      return array('role' => 'observer', 'canView' => true, 'canEdit' => false, 'canManageUsers' => false, 'canReceiveAlerts' => true, 'source' => 'role');
+	    }
+
+	    return array('role' => 'none', 'canView' => false, 'canEdit' => false, 'canManageUsers' => false, 'canReceiveAlerts' => false, 'source' => 'none');
+	  }
+
+	  private static function writePermissionAudit($actorUserId, $targetUserId, $resourceType, $resourceId, $action, $oldValue, $newValue) {
+	    $pdo = dbConfig::getInstance();
+	    if (!self::tableExists($pdo, 'permission_audit_log')) {
+	      return;
+	    }
+
+	    $statement = $pdo->prepare(
+	      "INSERT INTO permission_audit_log (actorUserId, targetUserId, resourceType, resourceId, action, oldValue, newValue)
+	       VALUES (?, ?, ?, ?, ?, ?, ?)"
+	    );
+	    $statement->execute(array(
+	      (int)$actorUserId,
+	      (int)$targetUserId,
+	      (string)$resourceType,
+	      (int)$resourceId,
+	      (string)$action,
+	      $oldValue,
+	      $newValue,
+	    ));
+	  }
+
+	  private static function tableExists(PDO $pdo, $tableName) {
+	    static $cache = array();
+	    $tableName = (string)$tableName;
+	    if (isset($cache[$tableName])) {
+	      return $cache[$tableName];
+	    }
+
+	    try {
+	      $statement = $pdo->prepare(
+	        "SELECT COUNT(*) AS tableCount
+	         FROM INFORMATION_SCHEMA.TABLES
+	         WHERE TABLE_SCHEMA = DATABASE()
+	           AND TABLE_NAME = ?"
+	      );
+	      $statement->execute(array($tableName));
+	      $row = $statement->fetch(PDO::FETCH_ASSOC);
+	      $cache[$tableName] = ((int)($row['tableCount'] ?? 0) > 0);
+	    } catch (Throwable $e) {
+	      $cache[$tableName] = false;
+	    }
+
+	    return $cache[$tableName];
 	  }
 
 	  private static function normalizeIntList($value) {

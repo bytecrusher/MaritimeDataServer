@@ -56,6 +56,36 @@ Die wichtigsten nicht-oeffentlichen Wartungspfade sind:
   - letzter Status des Benachrichtigungsjobs mit Summen und Zeitstempeln
 
 
+## Rollen und Zugriffsrechte
+
+MDS verwendet ab der Migration `docs/db_design/migrations/2026-07-06_roles_and_permissions.sql` ein zweistufiges Rechtemodell:
+
+- Globale Rollen:
+  - `admin`: administrativer Vollzugriff
+  - `user`: normaler eingeloggter Benutzer
+- Ressourcenrollen:
+  - `owner`: darf Board/Sensor sehen, bearbeiten, Benutzer verwalten und Benachrichtigungen erhalten
+  - `user`: darf Board/Sensor sehen, Einstellungen bearbeiten und Benachrichtigungen erhalten
+  - `observer`: darf freigegebene Sensoren sehen und Benachrichtigungen erhalten, aber keine Einstellungen bearbeiten
+
+Die neuen Tabellen sind:
+
+- `roles`
+- `user_roles`
+- `board_permissions`
+- `sensor_permissions`
+- `permission_audit_log`
+
+Bestehende `boardConfig.ownerUserId`-Zuordnungen bleiben kompatibel. Die Migration uebernimmt sie automatisch als `owner`-Eintrag in `board_permissions`. Solange die neuen Tabellen auf einer Installation noch fehlen, faellt der Code auf das bisherige Owner-Verhalten zurueck.
+
+Auswirkungen auf Schnittstellen:
+
+- Lese-APIs liefern Boards/Sensoren, fuer die der eingeloggte User `canView` besitzt.
+- Schreib-Endpunkte wie `POST /api/updateData.php` verlangen `canEdit`.
+- Board-/Sensor-Freigaben werden in `settings.php` im Tab `Freigaben` verwaltet.
+- Benachrichtigungen gehen an Owner und an freigegebene User/Observer mit `canReceiveAlerts = 1`, sofern deren persoenliche Benachrichtigungsschalter aktiv sind.
+
+
 ## TTN Integration
 
 ### Endpoint
@@ -247,7 +277,8 @@ Optionale Board-Felder:
   - wird im Dashboard pro Device angezeigt
   - maximale gespeicherte Laenge: 64 Zeichen
 - `standbyState`, alternativ `standby_state`, `powerState`, `deviceState` oder `sleepState`
-  - Zustandsfeld fuer den aktuellen Device-Zustand
+  - Zustandsfeld fuer den aktuellen Device-Zustand, abgeleitet vom Operation Mode Input des ESP
+  - beim LoRa Boat Monitor bedeutet 12 V am Operation Mode Input `always_online`; ohne 12 V ist der Standby-/Wakeup-Modus aktiv
   - erlaubte Werte:
     - `always_online`
     - `wakeup`
@@ -323,7 +354,7 @@ Empfehlung fuer externe Devices:
 - `sensorName` ebenfalls mitsenden, wenn mehrere Sensoren desselben Typs auf einem Board existieren koennen, z. B. `ADC/Battery` und `ADC/Tanks`
 - gute Werte sind z. B. `BME280`, `ADC`, `GPS`, `DS18B20`, `Digital`, `DS2438`, `Lora`
 - dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
-- wenn das Device absichtlich dauerhaft online bleibt, `board.standbyState = "always_online"` mitsenden
+- wenn am Operation Mode Input 12 V anliegen und das Device absichtlich dauerhaft online bleibt, `board.standbyState = "always_online"` mitsenden
 - wenn das Device gerade aufgeweckt wurde, kann `board.standbyState = "wakeup"` als Zustands-Hinweis mitgesendet werden
 - wenn das Device gerade in den Schlafzustand gegangen ist oder sich dort befindet, kann `board.standbyState = "standby"` als Zustands-Hinweis mitgesendet werden
 - fuer die Verlaufsdauer ist jedoch die Payload-Aktivitaet die fuehrende Quelle; `always_online` bleibt der einzige Zustand, der den Verlauf direkt fest auf online setzt
@@ -770,6 +801,7 @@ Wichtige TTN-Logeintraege:
 OTA-spezifische Logs:
 
 - `var/ota/logs/log.csv`
+- Anzeige in der Weboberflaeche: `Settings -> Log -> OTA-Update-Log`
 
 
 ## Bekannte Besonderheiten

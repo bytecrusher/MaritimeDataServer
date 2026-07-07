@@ -232,7 +232,7 @@
 
     <?php if ((!myFunctions::is_checked_in()) && (basename($_SERVER['PHP_SELF']) != "login.php")) : ?>
       <div id="navbar" class="navbar-collapse collapse">
-        <form class="navbar-form navbar-right" action="<?php echo htmlspecialchars(mds_route_path('login.php'), ENT_QUOTES, 'UTF-8'); ?>" method="post">
+        <form class="navbar-form navbar-right" action="login.php" method="post">
           <?php echo mds_csrf_input(); ?>
           <table class="login" role="presentation">
             <tbody>

@@ -228,6 +228,64 @@ CREATE TABLE `users` (
   `eventTimelineWindowHours` int NOT NULL DEFAULT '24'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Rollen und Ressourcenrechte
+--
+
+CREATE TABLE `roles` (
+  `id` int NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `isGlobal` tinyint NOT NULL DEFAULT '1',
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `user_roles` (
+  `id` int NOT NULL,
+  `userId` int NOT NULL,
+  `roleId` int NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `board_permissions` (
+  `id` int NOT NULL,
+  `boardId` int NOT NULL,
+  `userId` int NOT NULL,
+  `role` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'observer',
+  `canView` tinyint NOT NULL DEFAULT '1',
+  `canEdit` tinyint NOT NULL DEFAULT '0',
+  `canManageUsers` tinyint NOT NULL DEFAULT '0',
+  `canReceiveAlerts` tinyint NOT NULL DEFAULT '1',
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `sensor_permissions` (
+  `id` int NOT NULL,
+  `sensorId` int NOT NULL,
+  `userId` int NOT NULL,
+  `role` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'observer',
+  `canView` tinyint NOT NULL DEFAULT '1',
+  `canEdit` tinyint NOT NULL DEFAULT '0',
+  `canReceiveAlerts` tinyint NOT NULL DEFAULT '1',
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `permission_audit_log` (
+  `id` int NOT NULL,
+  `actorUserId` int DEFAULT NULL,
+  `targetUserId` int DEFAULT NULL,
+  `resourceType` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `resourceId` int NOT NULL,
+  `action` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `oldValue` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `newValue` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
 -- Indizes der exportierten Tabellen
 --
@@ -246,6 +304,48 @@ ALTER TABLE `boardConfig`
 --
 ALTER TABLE `boardType`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indizes für die Tabelle `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_roles_name` (`name`);
+
+--
+-- Indizes für die Tabelle `user_roles`
+--
+ALTER TABLE `user_roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_user_roles_user_role` (`userId`,`roleId`),
+  ADD KEY `idx_user_roles_roleId` (`roleId`);
+
+--
+-- Indizes für die Tabelle `board_permissions`
+--
+ALTER TABLE `board_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_board_permissions_board_user` (`boardId`,`userId`),
+  ADD KEY `idx_board_permissions_userId` (`userId`),
+  ADD KEY `idx_board_permissions_role` (`role`);
+
+--
+-- Indizes für die Tabelle `sensor_permissions`
+--
+ALTER TABLE `sensor_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_sensor_permissions_sensor_user` (`sensorId`,`userId`),
+  ADD KEY `idx_sensor_permissions_userId` (`userId`),
+  ADD KEY `idx_sensor_permissions_role` (`role`);
+
+--
+-- Indizes für die Tabelle `permission_audit_log`
+--
+ALTER TABLE `permission_audit_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_permission_audit_resource` (`resourceType`,`resourceId`),
+  ADD KEY `idx_permission_audit_actor` (`actorUserId`),
+  ADD KEY `idx_permission_audit_target` (`targetUserId`);
 
 --
 -- Indizes für die Tabelle `securityTokens`
@@ -312,6 +412,36 @@ ALTER TABLE `boardType`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT für Tabelle `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT für Tabelle `user_roles`
+--
+ALTER TABLE `user_roles`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT für Tabelle `board_permissions`
+--
+ALTER TABLE `board_permissions`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT für Tabelle `sensor_permissions`
+--
+ALTER TABLE `sensor_permissions`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT für Tabelle `permission_audit_log`
+--
+ALTER TABLE `permission_audit_log`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT für Tabelle `securityTokens`
 --
 ALTER TABLE `securityTokens`
@@ -352,6 +482,15 @@ ALTER TABLE `ttnDataLoraBoatMonitor`
 --
 ALTER TABLE `users`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- Standardrollen
+--
+INSERT INTO `roles` (`name`, `description`, `isGlobal`) VALUES
+  ('admin', 'System administrator', 1),
+  ('user', 'Regular authenticated user', 1),
+  ('owner', 'Board or sensor owner', 0),
+  ('observer', 'Read-only observer with notifications', 0);
 
 --
 -- Constraints der exportierten Tabellen

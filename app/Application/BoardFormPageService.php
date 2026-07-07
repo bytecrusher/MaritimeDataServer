@@ -22,7 +22,7 @@ class BoardFormPageService
         if (!$boardRow) {
             throw new RuntimeException('Board not found.');
         }
-        if (!myFunctions::canUserAccessBoard((int)$currentUser->getId(), $boardId)) {
+        if (!myFunctions::canUserEditBoard((int)$currentUser->getId(), $boardId)) {
             throw new RuntimeException('Access denied.');
         }
 
@@ -31,8 +31,8 @@ class BoardFormPageService
             'boardRow' => $boardRow,
             'boardObj' => new board($boardId),
             'sensors' => myFunctions::getAllSensorsOfBoardOld($boardId),
-            'allUsers' => ((int) $currentUser->getUserGroupAdmin() === 1) ? myFunctions::getAllUsers() : array(),
-            'isAdmin' => ((int) $currentUser->getUserGroupAdmin() === 1),
+            'allUsers' => myFunctions::isUserAdmin((int)$currentUser->getId()) ? myFunctions::getAllUsers() : array(),
+            'isAdmin' => myFunctions::isUserAdmin((int)$currentUser->getId()),
         );
     }
 }

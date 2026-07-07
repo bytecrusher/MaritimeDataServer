@@ -49,13 +49,13 @@ class InternalPageService
             'myBoardsIdList' => $myBoardsIdList,
             'boardObjsArray' => $boardObjsArray,
             'mapPayload' => self::buildMapPayload($currentUser),
-            'eventPayload' => self::buildEventPayload($boardObjsArray, $preferredChartWindowDays, $eventTimelineWindowHours),
+            'eventPayload' => self::buildEventPayload($boardObjsArray, $preferredChartWindowDays, $eventTimelineWindowHours, (int)$currentUser->getId()),
             'dashboardUpdateIntervalMs' => max(1000, (int) $currentUser->getDashboardUpdateInterval() * 10000),
             'dashboardOnlineOnlyDefault' => (int) ($currentUser->getDashboardOnlineOnly() ?? $config::$defaultDashboardOnlineOnly),
             'preferredChartWindowDays' => $preferredChartWindowDays,
             'eventTimelineWindowHours' => $eventTimelineWindowHours,
             'demoMode' => (bool) $config::$demoMode,
-            'showInstallAlert' => ((int) $currentUser->getUserGroupAdmin() === 1) && is_dir(__DIR__ . '/../../public/install'),
+            'showInstallAlert' => myFunctions::isUserAdmin((int)$currentUser->getId()) && is_dir(__DIR__ . '/../../public/install'),
             'hasBoards' => !empty($myBoardsIdList),
         );
     }
@@ -87,6 +87,20 @@ class InternalPageService
 
         $mapBoards = myFunctions::getMyBoards($currentUser->getId());
         foreach ($mapBoards as $mapBoard) {
+            $hasAccessibleGpsSensor = false;
+            $boardSensors = myFunctions::getAllSensorsOfBoard((int)$mapBoard['id']);
+            if (is_array($boardSensors)) {
+                foreach ($boardSensors as $boardSensor) {
+                    if (($boardSensor['sensorTypesName'] ?? null) === 'GPS' && myFunctions::canUserAccessSensor((int)$currentUser->getId(), (int)$boardSensor['id'])) {
+                        $hasAccessibleGpsSensor = true;
+                        break;
+                    }
+                }
+            }
+            if (!$hasAccessibleGpsSensor) {
+                continue;
+            }
+
             $gpsData = myFunctions::getAllGpsData($mapBoard['id']);
             if (!empty($gpsData) && $gpsData !== 0) {
                 $boardId = (string) $mapBoard['id'];
@@ -101,7 +115,7 @@ class InternalPageService
         );
     }
 
-    private static function buildEventPayload(array $boardObjsArray, $windowDays = 7, $timelineWindowHours = 24)
+    private static function buildEventPayload(array $boardObjsArray, $windowDays = 7, $timelineWindowHours = 24, $userId = 0)
     {
         $eventChartSensors = array();
         $eventTimelineBoards = array();
@@ -128,6 +142,9 @@ class InternalPageService
             }
 
             foreach ($eventBoardSensors as $eventSensor) {
+                if (!myFunctions::canUserAccessSensor((int)$userId, (int)$eventSensor['id'])) {
+                    continue;
+                }
                 if (($eventSensor['sensorTypesName'] ?? null) !== 'WakeupStan') {
                     continue;
                 }

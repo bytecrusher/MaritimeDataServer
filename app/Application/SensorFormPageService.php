@@ -16,7 +16,7 @@ class SensorFormPageService
         if ($sensorId <= 0) {
             throw new InvalidArgumentException('Invalid sensor id.');
         }
-        if (!myFunctions::canUserAccessSensor((int)$currentUser->getId(), $sensorId)) {
+        if (!myFunctions::canUserEditSensor((int)$currentUser->getId(), $sensorId)) {
             throw new RuntimeException('Access denied.');
         }
 

@@ -55,9 +55,16 @@ try {
     'myBoards' => array(),
     'allBoards' => array(),
     'allUsers' => array(),
+    'accessBoards' => array(),
+    'canManageAccess' => false,
     'timeZones' => SettingsPageService::getTimeZoneList(),
     'currentLogContent' => SettingsPageService::getCurrentLogContent(),
-    'isAdmin' => ((int)$userObj->getUserGroupAdmin() === 1),
+    'otaUpdateLogs' => array(
+      'path' => dirname(__DIR__) . '/var/ota/logs/log.csv',
+      'entries' => array(),
+      'message' => 'OTA log could not be loaded.',
+    ),
+    'isAdmin' => myFunctions::isUserAdmin((int)$userObj->getId()),
     'notificationOverview' => array(
       'jobStatus' => null,
       'offlineBoards' => array(),
@@ -75,8 +82,11 @@ $varSend_emails = $pageData['sendEmails'];
 $myBoards = $pageData['myBoards'];
 $allBoards = $pageData['allBoards'];
 $allUsers = $pageData['allUsers'];
+$accessBoards = $pageData['accessBoards'] ?? array();
+$canManageAccess = (bool)($pageData['canManageAccess'] ?? false);
 $timeZones = $pageData['timeZones'];
 $currentLogContent = $pageData['currentLogContent'];
+$otaUpdateLogs = $pageData['otaUpdateLogs'] ?? array('path' => '', 'entries' => array(), 'message' => '');
 $isAdmin = $pageData['isAdmin'];
 $notificationOverview = $pageData['notificationOverview'];
 $notificationJobStatus = $notificationOverview['jobStatus'] ?? null;
@@ -278,6 +288,9 @@ th.rotated-text > div > span {
       <li class="nav-item" role="presentation"><a class="nav-link" href="#email" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#password" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?></a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#confBoards" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('settings.my_boards'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+      <?php if ($canManageAccess) { ?>
+        <li class="nav-item" role="presentation"><a class="nav-link" href="#access" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('settings.access'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+      <?php } ?>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#confDashboard" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('settings.dashboard'), ENT_QUOTES, 'UTF-8'); ?></a></li>
       <li class="nav-item" role="presentation"><a class="nav-link" href="#privacy" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('nav.privacy'), ENT_QUOTES, 'UTF-8'); ?></a></li>
       <?php
@@ -534,6 +547,11 @@ th.rotated-text > div > span {
             <td class='toggleDisplayTtnDevId' style='word-wrap: break-word;min-width: 160px;max-width: 160px;'><?php echo mds_h($singleRowMyBoard['ttnDevId']); ?></td>
           <?php
             $sensorsOfBoard = myFunctions::getAllSensorsOfBoardOld($singleRowMyBoard['id']);
+            if (is_array($sensorsOfBoard)) {
+              $sensorsOfBoard = array_values(array_filter($sensorsOfBoard, function ($sensorRow) use ($userObj) {
+                return myFunctions::canUserAccessSensor((int)$userObj->getId(), (int)($sensorRow['id'] ?? 0));
+              }));
+            }
             echo "<td>".count($sensorsOfBoard)."</td>";
 
             if(isset($singleRowMyBoard['alarmOnUnavailable']) && $singleRowMyBoard['alarmOnUnavailable'] == '1') {
@@ -546,7 +564,13 @@ th.rotated-text > div > span {
             <?php
             }
             ?>
-              <td><a href="formBoards.php?id=<?php echo (int)$singleRowMyBoard['id']; ?>"><i class='bi bi-pencil-fill'> </i></a></td>
+              <td>
+                <?php if (myFunctions::canUserEditBoard((int)$userObj->getId(), (int)$singleRowMyBoard['id'])) { ?>
+                  <a href="formBoards.php?id=<?php echo (int)$singleRowMyBoard['id']; ?>"><i class='bi bi-pencil-fill'> </i></a>
+                <?php } else { ?>
+                  <span class="text-muted">-</span>
+                <?php } ?>
+              </td>
             </tr>
             <?php
           }
@@ -581,6 +605,145 @@ th.rotated-text > div > span {
         </div>
         </div>
       </div>
+
+      <?php if ($canManageAccess) { ?>
+      <div role="tabpanel" class="tab-pane" id="access">
+        <div class="panel panel-default p-3">
+          <h4><?php echo htmlspecialchars(mds_t('settings.access_title'), ENT_QUOTES, 'UTF-8'); ?></h4>
+          <p class="text-muted"><?php echo htmlspecialchars(mds_t('settings.access_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
+          <?php foreach ($accessBoards as $accessBoard) { ?>
+            <?php
+              $accessBoardId = (int)($accessBoard['id'] ?? 0);
+              $boardPermissions = $accessBoard['boardPermissions'] ?? array();
+              $sensorPermissions = $accessBoard['sensorPermissions'] ?? array();
+              $accessSensors = $accessBoard['sensors'] ?? array();
+            ?>
+            <div class="card mb-4">
+              <div class="card-header">
+                <strong><?php echo mds_h($accessBoard['name'] ?: ('Board #' . $accessBoardId)); ?></strong>
+                <span class="text-muted ms-2"><?php echo mds_h($accessBoard['macAddress'] ?? ''); ?></span>
+              </div>
+              <div class="card-body">
+                <div class="row g-4">
+                  <div class="col-lg-6">
+                    <h5><?php echo htmlspecialchars(mds_t('settings.board_access'), ENT_QUOTES, 'UTF-8'); ?></h5>
+                    <form action="?save=boardAccess#access" method="post" class="row gy-2 gx-2 align-items-end">
+                      <?php echo mds_csrf_input(); ?>
+                      <input type="hidden" name="boardId" value="<?php echo $accessBoardId; ?>">
+                      <div class="col-md-5">
+                        <label class="form-label"><?php echo htmlspecialchars(mds_t('settings.user'), ENT_QUOTES, 'UTF-8'); ?></label>
+                        <select class="form-select" name="targetUserId" required>
+                          <?php foreach ($allUsers as $accessUser) { ?>
+                            <option value="<?php echo (int)$accessUser['id']; ?>">
+                              <?php echo mds_h(trim(($accessUser['firstName'] ?? '') . ' ' . ($accessUser['lastName'] ?? '')) ?: ($accessUser['email'] ?? ('User #' . $accessUser['id']))); ?>
+                            </option>
+                          <?php } ?>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label"><?php echo htmlspecialchars(mds_t('settings.role'), ENT_QUOTES, 'UTF-8'); ?></label>
+                        <select class="form-select" name="role">
+                          <option value="observer"><?php echo htmlspecialchars(mds_t('settings.role_observer'), ENT_QUOTES, 'UTF-8'); ?></option>
+                          <option value="user"><?php echo htmlspecialchars(mds_t('settings.role_user'), ENT_QUOTES, 'UTF-8'); ?></option>
+                          <option value="owner"><?php echo htmlspecialchars(mds_t('settings.role_owner'), ENT_QUOTES, 'UTF-8'); ?></option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <button type="submit" name="permissionAction" value="save" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
+                        <button type="submit" name="permissionAction" value="remove" class="btn btn-outline-danger"><?php echo htmlspecialchars(mds_t('common.remove'), ENT_QUOTES, 'UTF-8'); ?></button>
+                      </div>
+                    </form>
+                    <div class="table-responsive mt-3">
+                      <table class="table table-sm table-striped">
+                        <thead>
+                          <tr>
+                            <th><?php echo htmlspecialchars(mds_t('settings.user'), ENT_QUOTES, 'UTF-8'); ?></th>
+                            <th><?php echo htmlspecialchars(mds_t('settings.role'), ENT_QUOTES, 'UTF-8'); ?></th>
+                            <th><?php echo htmlspecialchars(mds_t('settings.permissions'), ENT_QUOTES, 'UTF-8'); ?></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <?php foreach ($boardPermissions as $permissionRow) { ?>
+                            <tr>
+                              <td><?php echo mds_h($permissionRow['email'] ?? ('User #' . ($permissionRow['userId'] ?? ''))); ?></td>
+                              <td><?php echo mds_h($permissionRow['role'] ?? ''); ?></td>
+                              <td>
+                                <?php
+                                  $permissionLabels = array();
+                                  if (!empty($permissionRow['canView'])) { $permissionLabels[] = mds_t('settings.permission_view'); }
+                                  if (!empty($permissionRow['canEdit'])) { $permissionLabels[] = mds_t('settings.permission_edit'); }
+                                  if (!empty($permissionRow['canManageUsers'])) { $permissionLabels[] = mds_t('settings.permission_manage'); }
+                                  if (!empty($permissionRow['canReceiveAlerts'])) { $permissionLabels[] = mds_t('settings.permission_alerts'); }
+                                  echo htmlspecialchars(implode(', ', $permissionLabels), ENT_QUOTES, 'UTF-8');
+                                ?>
+                              </td>
+                            </tr>
+                          <?php } ?>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <h5><?php echo htmlspecialchars(mds_t('settings.sensor_access'), ENT_QUOTES, 'UTF-8'); ?></h5>
+                    <form action="?save=sensorAccess#access" method="post" class="row gy-2 gx-2 align-items-end">
+                      <?php echo mds_csrf_input(); ?>
+                      <input type="hidden" name="boardId" value="<?php echo $accessBoardId; ?>">
+                      <div class="col-md-4">
+                        <label class="form-label"><?php echo htmlspecialchars(mds_t('common.sensor'), ENT_QUOTES, 'UTF-8'); ?></label>
+                        <select class="form-select" name="sensorId" required>
+                          <?php foreach ($accessSensors as $accessSensor) { ?>
+                            <option value="<?php echo (int)$accessSensor['id']; ?>"><?php echo mds_h($accessSensor['name'] ?: ('Sensor #' . $accessSensor['id'])); ?></option>
+                          <?php } ?>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label"><?php echo htmlspecialchars(mds_t('settings.user'), ENT_QUOTES, 'UTF-8'); ?></label>
+                        <select class="form-select" name="targetUserId" required>
+                          <?php foreach ($allUsers as $accessUser) { ?>
+                            <option value="<?php echo (int)$accessUser['id']; ?>"><?php echo mds_h($accessUser['email'] ?? ('User #' . $accessUser['id'])); ?></option>
+                          <?php } ?>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label"><?php echo htmlspecialchars(mds_t('settings.role'), ENT_QUOTES, 'UTF-8'); ?></label>
+                        <select class="form-select" name="role">
+                          <option value="observer"><?php echo htmlspecialchars(mds_t('settings.role_observer'), ENT_QUOTES, 'UTF-8'); ?></option>
+                          <option value="user"><?php echo htmlspecialchars(mds_t('settings.role_user'), ENT_QUOTES, 'UTF-8'); ?></option>
+                        </select>
+                      </div>
+                      <div class="col-12">
+                        <button type="submit" name="permissionAction" value="save" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
+                        <button type="submit" name="permissionAction" value="remove" class="btn btn-outline-danger"><?php echo htmlspecialchars(mds_t('common.remove'), ENT_QUOTES, 'UTF-8'); ?></button>
+                      </div>
+                    </form>
+                    <div class="table-responsive mt-3">
+                      <table class="table table-sm table-striped">
+                        <thead>
+                          <tr>
+                            <th><?php echo htmlspecialchars(mds_t('common.sensor'), ENT_QUOTES, 'UTF-8'); ?></th>
+                            <th><?php echo htmlspecialchars(mds_t('settings.user'), ENT_QUOTES, 'UTF-8'); ?></th>
+                            <th><?php echo htmlspecialchars(mds_t('settings.role'), ENT_QUOTES, 'UTF-8'); ?></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <?php foreach ($sensorPermissions as $permissionRow) { ?>
+                            <tr>
+                              <td><?php echo mds_h($permissionRow['sensorName'] ?? ('Sensor #' . ($permissionRow['sensorId'] ?? ''))); ?></td>
+                              <td><?php echo mds_h($permissionRow['email'] ?? ('User #' . ($permissionRow['userId'] ?? ''))); ?></td>
+                              <td><?php echo mds_h($permissionRow['role'] ?? ''); ?></td>
+                            </tr>
+                          <?php } ?>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <?php } ?>
+        </div>
+      </div>
+      <?php } ?>
 
       <!-- Configure the user's dashboard -->
       <div role="tabpanel" class="tab-pane" id="confDashboard">
@@ -1261,6 +1424,60 @@ th.rotated-text > div > span {
 
       <!-- Modification of Log -->
       <div role="tabpanel" class="tab-pane" id="log">
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
+              <div>
+                <h5 class="card-title mb-1"><?php echo htmlspecialchars(mds_t('settings.ota_update_log'), ENT_QUOTES, 'UTF-8'); ?></h5>
+                <div class="text-muted small"><?php echo htmlspecialchars(mds_t('settings.ota_update_log_text'), ENT_QUOTES, 'UTF-8'); ?></div>
+              </div>
+              <?php if (!empty($otaUpdateLogs['path'])) { ?>
+                <code class="small"><?php echo htmlspecialchars((string)$otaUpdateLogs['path'], ENT_QUOTES, 'UTF-8'); ?></code>
+              <?php } ?>
+            </div>
+            <?php if (!empty($otaUpdateLogs['entries'])) { ?>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th><?php echo htmlspecialchars(mds_t('common.status'), ENT_QUOTES, 'UTF-8'); ?></th>
+                      <th><?php echo htmlspecialchars(mds_t('settings.ota_time'), ENT_QUOTES, 'UTF-8'); ?></th>
+                      <th><?php echo htmlspecialchars(mds_t('settings.ota_request'), ENT_QUOTES, 'UTF-8'); ?></th>
+                      <th><?php echo htmlspecialchars(mds_t('settings.ota_message'), ENT_QUOTES, 'UTF-8'); ?></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($otaUpdateLogs['entries'] as $otaLogEntry) { ?>
+                      <?php
+                        $otaStatus = (string)($otaLogEntry['status'] ?? 'info');
+                        $otaStatusClasses = array(
+                          'sent' => 'bg-success',
+                          'current' => 'bg-secondary',
+                          'disabled' => 'bg-warning text-dark',
+                          'rejected' => 'bg-danger',
+                          'missing' => 'bg-danger',
+                          'checked' => 'bg-info text-dark',
+                          'info' => 'bg-secondary',
+                        );
+                        $otaStatusClass = $otaStatusClasses[$otaStatus] ?? 'bg-secondary';
+                      ?>
+                      <tr>
+                        <td><span class="badge <?php echo htmlspecialchars($otaStatusClass, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('settings.ota_status_' . $otaStatus), ENT_QUOTES, 'UTF-8'); ?></span></td>
+                        <td><?php echo htmlspecialchars((string)($otaLogEntry['datetime'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><code><?php echo htmlspecialchars((string)($otaLogEntry['request'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></code></td>
+                        <td><?php echo htmlspecialchars((string)($otaLogEntry['message'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      </tr>
+                    <?php } ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php } else { ?>
+              <div class="alert alert-secondary mb-0">
+                <?php echo htmlspecialchars((string)($otaUpdateLogs['message'] ?? mds_t('settings.ota_no_logs')), ENT_QUOTES, 'UTF-8'); ?>
+              </div>
+            <?php } ?>
+          </div>
+        </div>
         <div class="panel panel-default p-2"><?php echo htmlspecialchars(mds_t('settings.log_hint'), ENT_QUOTES, 'UTF-8'); ?></div>
         <div class="panel panel-default p-2">
           <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
