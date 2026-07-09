@@ -764,18 +764,17 @@
   }
   .event-summary-chart-shell {
     position: relative;
-    min-height: 320px;
-    height: 320px;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
   }
+  .event-chart-scroll-inner {
+    min-width: 680px;
+    height: 320px;
+  }
   .event-summary-chart-shell canvas {
     width: 100% !important;
     height: 100% !important;
-  }
-  .event-summary-chart-shell > canvas {
-    min-width: 680px;
   }
   .event-detail-disclosure {
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -845,12 +844,9 @@
     .chart-mobile-hint {
       display: block;
     }
-    .event-summary-chart-shell {
-      height: 390px !important;
-      min-height: 390px;
-    }
-    .event-summary-chart-shell > canvas {
+    .event-chart-scroll-inner {
       min-width: 760px;
+      height: 390px;
     }
   }
   #chart-container-debug {
@@ -1321,7 +1317,9 @@
                   <span class="event-chart-legend-item"><span class="event-chart-legend-dot is-standby"></span><?php echo htmlspecialchars(mds_t('js.standby_suffix'), ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="event-summary-chart-shell">
-                  <canvas id="eventTimeline24hCanvas" height="300"></canvas>
+                  <div class="event-chart-scroll-inner">
+                    <canvas id="eventTimeline24hCanvas"></canvas>
+                  </div>
                 </div>
               </div>
               <div class="chart-panel-surface mb-4">
@@ -1333,7 +1331,9 @@
                   </div>
                 </div>
                 <div class="event-summary-chart-shell">
-                  <canvas id="eventSummaryCanvas" height="320"></canvas>
+                  <div class="event-chart-scroll-inner">
+                    <canvas id="eventSummaryCanvas"></canvas>
+                  </div>
                 </div>
               </div>
               <details class="event-detail-disclosure mt-4">

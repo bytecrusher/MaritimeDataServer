@@ -117,16 +117,21 @@ function mdsEventTimelineChartHeight() {
   return mdsIsMobileChartViewport() ? '390px' : '300px';
 }
 
+function mdsEventChartInner(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  return canvas ? canvas.closest('.event-chart-scroll-inner') : null;
+}
+
 function mdsSetEventTimelineChartHeight(visibleLaneCount) {
-  const eventTimelineShell = document.getElementById('eventTimeline24hCanvas')?.closest('.event-summary-chart-shell');
-  if (!eventTimelineShell) {
+  const eventTimelineInner = mdsEventChartInner('eventTimeline24hCanvas');
+  if (!eventTimelineInner) {
     return;
   }
 
   const baseHeight = mdsIsMobileChartViewport() ? 390 : 320;
   const laneHeight = mdsIsMobileChartViewport() ? 78 : 64;
   const dynamicHeight = Math.max(baseHeight, (Math.max(1, visibleLaneCount) * laneHeight) + 120);
-  eventTimelineShell.style.height = dynamicHeight + 'px';
+  eventTimelineInner.style.height = dynamicHeight + 'px';
 }
 
 //function sleep(ms) {
@@ -436,8 +441,9 @@ function initializeEventSummaryChart() {
   }
 
   const eventSummaryShell = eventSummaryCanvas.closest('.event-summary-chart-shell');
-  if (eventSummaryShell) {
-    eventSummaryShell.style.height = mdsEventChartHeight();
+  const eventSummaryInner = mdsEventChartInner('eventSummaryCanvas');
+  if (eventSummaryInner) {
+    eventSummaryInner.style.height = mdsEventChartHeight();
   }
 
   const eventSummaryData = Array.isArray(window.eventTimelineSummary) ? window.eventTimelineSummary : [];
@@ -534,8 +540,9 @@ function initializeEventTimeline24hChart() {
   }
 
   const eventTimelineShell = eventTimelineCanvas.closest('.event-summary-chart-shell');
-  if (eventTimelineShell) {
-    eventTimelineShell.style.height = mdsEventTimelineChartHeight();
+  const eventTimelineInner = mdsEventChartInner('eventTimeline24hCanvas');
+  if (eventTimelineInner) {
+    eventTimelineInner.style.height = mdsEventTimelineChartHeight();
   }
 
   const eventTimelineWindowSelect = document.getElementById('eventTimelineWindowSelect');
@@ -1125,12 +1132,12 @@ function refreshResponsiveChartOptions() {
     }
   });
 
-  const eventSummaryShell = document.getElementById('eventSummaryCanvas')?.closest('.event-summary-chart-shell');
-  if (eventSummaryShell) {
-    eventSummaryShell.style.height = mdsEventChartHeight();
+  const eventSummaryInner = mdsEventChartInner('eventSummaryCanvas');
+  if (eventSummaryInner) {
+    eventSummaryInner.style.height = mdsEventChartHeight();
   }
-  const eventTimelineShell = document.getElementById('eventTimeline24hCanvas')?.closest('.event-summary-chart-shell');
-  if (eventTimelineShell) {
+  const eventTimelineInner = mdsEventChartInner('eventTimeline24hCanvas');
+  if (eventTimelineInner) {
     mdsSetEventTimelineChartHeight(Array.isArray(window.eventTimelineLaneLabels) ? window.eventTimelineLaneLabels.length : 1);
   }
 
