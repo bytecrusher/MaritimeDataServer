@@ -254,6 +254,7 @@ class SettingsPageService
             'showQrCode' => $config::$ShowQrCode,
             'apiKey' => $config::$apiKey,
             'otaUpdateSecret' => $config::$otaUpdateSecret,
+            'googleSiteVerification' => $config::$googleSiteVerification,
             'sendEmails' => $config::$sendEmails,
             'myBoards' => $myBoards,
             'allBoards' => $allBoards,

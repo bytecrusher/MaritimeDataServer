@@ -1,7 +1,11 @@
 <?php
 
 require_once dirname(__DIR__) . "/bootstrap/app.php";
-mds_start_session();
+mds_set_request_language($_GET['lang'] ?? 'en');
+mds_start_session_if_present();
+mds_apply_public_cache_headers();
+$mdsPageNeedsJquery = false;
+$mdsPageNeedsBootstrapIcons = false;
 
 $config = new configuration();
 $privacyContact = trim((string)($config::$privacyContactEmail ?: $config::$adminEmailAddress ?: $config::$systemEmailAddress));

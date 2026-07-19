@@ -88,6 +88,21 @@ function mds_start_session()
     session_start();
 }
 
+function mds_start_session_if_present()
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return true;
+    }
+
+    $sessionName = session_name();
+    if ($sessionName === '' || empty($_COOKIE[$sessionName])) {
+        return false;
+    }
+
+    mds_start_session();
+    return session_status() === PHP_SESSION_ACTIVE;
+}
+
 function mds_get_csrf_token()
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {

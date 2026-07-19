@@ -284,3 +284,207 @@ body {
 .disabled {
   filter: grayscale(1);
 }
+
+/* Public, indexable product pages */
+.mds-public-main {
+  width: min(1200px, calc(100% - 24px));
+  margin: 0 auto 3rem;
+}
+
+.mds-public-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.5fr);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+  min-height: 460px;
+  padding: clamp(2rem, 6vw, 5rem);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at 82% 20%, rgba(56, 189, 248, 0.22), transparent 30%),
+    radial-gradient(circle at 70% 90%, rgba(101, 184, 75, 0.14), transparent 34%),
+    linear-gradient(135deg, #0f172a, #172338 68%, #12334a);
+  color: #fff;
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.18);
+}
+
+.mds-public-hero h1,
+.mds-topic-hero h1 {
+  max-width: 850px;
+  margin: 0.5rem 0 1rem;
+  font-size: clamp(2.35rem, 6vw, 4.9rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.mds-public-hero p,
+.mds-topic-hero > p {
+  max-width: 720px;
+  margin-bottom: 1.75rem;
+  color: rgba(226, 232, 240, 0.88);
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.65;
+}
+
+.mds-public-hero img {
+  width: min(100%, 280px);
+  height: auto;
+  justify-self: center;
+  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.28));
+}
+
+.mds-eyebrow {
+  display: inline-block;
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mds-public-section {
+  padding: clamp(3rem, 7vw, 6rem) 0;
+}
+
+.mds-section-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 2rem;
+  align-items: end;
+  margin-bottom: 2rem;
+}
+
+.mds-section-heading h2,
+.mds-public-proof h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.04em;
+}
+
+.mds-section-heading p,
+.mds-public-proof p {
+  margin: 0;
+  color: #475569;
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.mds-feature-grid,
+.mds-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.mds-feature-card,
+.mds-topic-card {
+  padding: clamp(1.4rem, 3vw, 2rem);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 1.35rem;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.06);
+}
+
+.mds-feature-card h3,
+.mds-topic-card h2 {
+  margin-bottom: 0.65rem;
+  font-size: 1.25rem;
+}
+
+.mds-feature-card p,
+.mds-topic-card p {
+  color: #475569;
+  line-height: 1.65;
+}
+
+.mds-feature-card a,
+.mds-related a {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.mds-public-proof {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 2rem;
+  padding: clamp(2rem, 5vw, 4rem);
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, #e8f2ed, #eef6fb);
+}
+
+.mds-public-proof .mds-eyebrow {
+  color: #15803d;
+}
+
+.mds-topic-hero {
+  padding: clamp(2.5rem, 7vw, 5rem);
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background: linear-gradient(135deg, #0f172a, #18324a);
+  color: #fff;
+}
+
+.mds-topic-hero h1 {
+  font-size: clamp(2.3rem, 5vw, 4.3rem);
+  overflow-wrap: anywhere;
+}
+
+.mds-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.mds-breadcrumb a {
+  color: #86efac;
+}
+
+.mds-topic-grid {
+  margin: 1rem 0;
+}
+
+.mds-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1.25rem 0;
+}
+
+.mds-related a,
+.mds-language-link {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+}
+
+@media (max-width: 767.98px) {
+  .mds-public-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 2rem 1.35rem;
+  }
+
+  .mds-public-hero img {
+    width: 150px;
+  }
+
+  .mds-section-heading,
+  .mds-feature-grid,
+  .mds-topic-grid,
+  .mds-public-proof {
+    grid-template-columns: 1fr;
+  }
+
+  .mds-public-section {
+    padding: 3rem 0;
+  }
+
+  .mds-topic-hero {
+    padding: 2rem 1.35rem;
+  }
+}

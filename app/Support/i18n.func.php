@@ -20,8 +20,17 @@ function mds_set_current_language($language)
     $_SESSION['language'] = mds_normalize_language($language);
 }
 
+function mds_set_request_language($language)
+{
+    $GLOBALS['mds_request_language'] = mds_normalize_language($language);
+}
+
 function mds_current_language()
 {
+    if (!empty($GLOBALS['mds_request_language'])) {
+        return mds_normalize_language($GLOBALS['mds_request_language']);
+    }
+
     if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['language'])) {
         return mds_normalize_language($_SESSION['language']);
     }

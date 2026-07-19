@@ -6,13 +6,38 @@ PassengerEnabled off
 
 RewriteEngine On
 
+# One canonical public URL per language. THE_REQUEST prevents rewrite loops.
+RewriteCond %{THE_REQUEST} \s/+index\.php(?:[?\s]) [NC]
+RewriteRule ^index\.php$ en [R=301,L]
+RewriteRule ^$ en [R=301,L]
+RewriteRule ^(en|de)/$ $1 [R=301,L]
+
+RewriteCond %{THE_REQUEST} \s/+privacy\.php(?:[?\s]) [NC]
+RewriteRule ^privacy\.php$ en/privacy [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+imprint\.php(?:[?\s]) [NC]
+RewriteRule ^imprint\.php$ en/imprint [R=301,L]
+
+RewriteRule ^en/?$ index.php?lang=en [END,QSA]
+RewriteRule ^de/?$ index.php?lang=de [END,QSA]
+RewriteRule ^en/privacy/?$ privacy.php?lang=en [END,QSA]
+RewriteRule ^de/datenschutz/?$ privacy.php?lang=de [END,QSA]
+RewriteRule ^en/imprint/?$ imprint.php?lang=en [END,QSA]
+RewriteRule ^de/impressum/?$ imprint.php?lang=de [END,QSA]
+RewriteRule ^en/features/?$ docs.php?lang=en&topic=features [END,QSA]
+RewriteRule ^de/funktionen/?$ docs.php?lang=de&topic=features [END,QSA]
+RewriteRule ^en/ttn-integration/?$ docs.php?lang=en&topic=ttn [END,QSA]
+RewriteRule ^de/ttn-integration/?$ docs.php?lang=de&topic=ttn [END,QSA]
+RewriteRule ^(en|de)/api/?$ docs.php?lang=$1&topic=api [END,QSA]
+RewriteRule ^(en|de)/ota-updates/?$ docs.php?lang=$1&topic=ota [END,QSA]
+RewriteRule ^sitemap\.xml$ sitemap.php [END]
+
 RewriteRule ^frontend/func/ - [F,L]
 RewriteRule ^frontend/common/ - [F,L]
 
-RedirectPermanent /index.html /index.php
-RedirectPermanent /index.htm /index.php
+RedirectPermanent /index.html /en
+RedirectPermanent /index.htm /en
 
-RedirectMatch 301 ^/frontend/index\.php$ /index.php
+RedirectMatch 301 ^/frontend/index\.php$ /en
 RedirectMatch 301 ^/frontend/login\.php$ /login.php
 RedirectMatch 301 ^/frontend/logout\.php$ /logout.php
 RedirectMatch 301 ^/frontend/internal\.php$ /internal.php

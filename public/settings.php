@@ -51,6 +51,7 @@ try {
     'showQrCode' => $config::$ShowQrCode,
     'apiKey' => $config::$apiKey,
     'otaUpdateSecret' => $config::$otaUpdateSecret,
+    'googleSiteVerification' => $config::$googleSiteVerification,
     'sendEmails' => $config::$sendEmails,
     'myBoards' => array(),
     'allBoards' => array(),
@@ -77,6 +78,7 @@ $varDemoMode = $pageData['demoMode'];
 $varShowQrCode = $pageData['showQrCode'];
 $var_apiKey = $pageData['apiKey'];
 $varOtaUpdateSecret = $pageData['otaUpdateSecret'];
+$varGoogleSiteVerification = $pageData['googleSiteVerification'] ?? $config::$googleSiteVerification;
 $varSend_emails = $pageData['sendEmails'];
 $myBoards = $pageData['myBoards'];
 $allBoards = $pageData['allBoards'];
@@ -1124,6 +1126,18 @@ th.rotated-text > div > span {
                 <label for="applicationName" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.application_name'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
                   <input class="form-control" id="applicationName" name="applicationName" type="text" value="<?php echo $config::$applicationName; ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="googleSiteVerification" class="col col-sm-2 control-label">Google Search Console:</label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="googleSiteVerification" name="googleSiteVerification" type="text" value="<?php echo mds_h($varGoogleSiteVerification); ?>" placeholder="google-site-verification token">
+                  <div class="form-text"><?php echo mds_h(mds_current_language() === 'de' ? 'Nur den content-Wert des Google-Meta-Tags eintragen.' : 'Enter only the content value of the Google verification meta tag.'); ?></div>
                 </div>
               </div>
             </div>

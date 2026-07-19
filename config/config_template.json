@@ -17,6 +17,7 @@
     "imprintAddress": "Street 1\n12345 City\nGermany",
     "imprintEmail": "legal@yourdomain.de",
     "imprintPhone": "+49 0000 000000",
+    "googleSiteVerification": "optional_google_search_console_verification_token",
     "defaultGaugeStyle": "classic",
     "defaultDashboardOnlineOnly": "0",
     "defaultChartWindowDays": "7",

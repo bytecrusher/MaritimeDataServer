@@ -14,6 +14,10 @@
 
   $seoMetadata = mds_seo_metadata($_SERVER['SCRIPT_NAME'] ?? null, mds_current_language());
   $seoStructuredData = mds_seo_website_structured_data($seoMetadata);
+  $seoPageKey = $seoMetadata['pageKey'] ?? null;
+  $publicHomePath = $seoPageKey !== null
+    ? mds_route_path(mds_seo_route('home', mds_current_language()))
+    : mds_route_path('index.php');
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo htmlspecialchars(mds_current_language(), ENT_QUOTES, 'UTF-8'); ?>">
@@ -26,14 +30,28 @@
     <meta name="robots" content="<?php echo htmlspecialchars($seoMetadata['robots'], ENT_QUOTES, 'UTF-8'); ?>">
     <?php if (!empty($seoMetadata['canonical'])) { ?>
       <link rel="canonical" href="<?php echo htmlspecialchars($seoMetadata['canonical'], ENT_QUOTES, 'UTF-8'); ?>">
+      <?php foreach (($seoMetadata['alternates'] ?? array()) as $alternateLanguage => $alternateUrl) { ?>
+        <link rel="alternate" hreflang="<?php echo mds_h($alternateLanguage); ?>" href="<?php echo mds_h($alternateUrl); ?>">
+      <?php } ?>
       <meta property="og:type" content="website">
       <meta property="og:site_name" content="<?php echo htmlspecialchars($seoMetadata['siteName'], ENT_QUOTES, 'UTF-8'); ?>">
       <meta property="og:title" content="<?php echo htmlspecialchars($seoMetadata['title'], ENT_QUOTES, 'UTF-8'); ?>">
       <meta property="og:description" content="<?php echo htmlspecialchars($seoMetadata['description'], ENT_QUOTES, 'UTF-8'); ?>">
       <meta property="og:url" content="<?php echo htmlspecialchars($seoMetadata['canonical'], ENT_QUOTES, 'UTF-8'); ?>">
-      <meta name="twitter:card" content="summary">
+      <meta property="og:locale" content="<?php echo mds_current_language() === 'de' ? 'de_DE' : 'en_US'; ?>">
+      <?php if (!empty($seoMetadata['image'])) { ?>
+        <meta property="og:image" content="<?php echo mds_h($seoMetadata['image']); ?>">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="Maritime Data Server telemetry platform">
+      <?php } ?>
+      <meta name="twitter:card" content="summary_large_image">
       <meta name="twitter:title" content="<?php echo htmlspecialchars($seoMetadata['title'], ENT_QUOTES, 'UTF-8'); ?>">
       <meta name="twitter:description" content="<?php echo htmlspecialchars($seoMetadata['description'], ENT_QUOTES, 'UTF-8'); ?>">
+      <?php if (!empty($seoMetadata['image'])) { ?><meta name="twitter:image" content="<?php echo mds_h($seoMetadata['image']); ?>"><?php } ?>
+    <?php } ?>
+    <?php if (!empty(configuration::$googleSiteVerification)) { ?>
+      <meta name="google-site-verification" content="<?php echo mds_h(configuration::$googleSiteVerification); ?>">
     <?php } ?>
     <?php if (is_array($seoStructuredData)) { ?>
       <script type="application/ld+json"><?php echo json_encode($seoStructuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
@@ -189,7 +207,28 @@
         }
       }
       @media (max-width: 575.98px) {
+        .navbar.mds-navbar .container-fluid {
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .navbar.mds-navbar .navbar-brand {
+          max-width: calc(100% - 3.5rem);
+          gap: 0.45rem;
+          font-size: 1rem;
+          white-space: normal;
+          line-height: 1.1;
+        }
+        .navbar.mds-navbar .navbar-brand img {
+          width: 60px;
+          height: 32px;
+          flex: 0 0 auto;
+        }
+        .navbar.mds-navbar .navbar-toggler {
+          width: 2.75rem;
+          height: 2.75rem;
+        }
         .navbar.mds-navbar .navbar-collapse {
+          flex-basis: 100%;
           padding-top: 0.85rem;
         }
         .navbar.mds-navbar .navbar-nav {
@@ -231,8 +270,8 @@
 <body>
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
   <div class="container-fluid">
-    <a class="navbar-brand" href="<?php echo htmlspecialchars(mds_route_path('index.php'), ENT_QUOTES, 'UTF-8'); ?>">
-      <img src="<?php echo htmlspecialchars(mds_asset_path('img/MDS_Logo_black.png'), ENT_QUOTES, 'UTF-8'); ?>" class="filter-green me-2" height="40" alt="Maritime Data Server logo">
+    <a class="navbar-brand" href="<?php echo mds_h($publicHomePath); ?>">
+      <img src="<?php echo htmlspecialchars(mds_asset_path('img/MDS_Logo_black.png'), ENT_QUOTES, 'UTF-8'); ?>" class="filter-green me-2" width="75" height="40" alt="Maritime Data Server logo">
       Maritime Data Server
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -241,28 +280,17 @@
 
     <?php if ((!myFunctions::is_checked_in()) && (basename($_SERVER['PHP_SELF']) != "login.php")) : ?>
       <div id="navbar" class="navbar-collapse collapse">
-        <form class="navbar-form navbar-right" action="login.php" method="post">
-          <?php echo mds_csrf_input(); ?>
-          <table class="login" role="presentation">
-            <tbody>
-              <tr>
-                <td>
-                  <div class="input-group">
-                    <input class="form-control" placeholder="<?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?>" name="email" type="email" required>
-                  </div>
-                </td>
-                <td><input class="form-control" placeholder="<?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?>" name="password" type="password" value="" required></td>
-                <td><button type="submit" class="btn btn-success"><?php echo htmlspecialchars(mds_t('common.login'), ENT_QUOTES, 'UTF-8'); ?></button></td>
-                <td><a class="btn btn-primary" href="<?php echo htmlspecialchars(mds_route_path('register.php'), ENT_QUOTES, 'UTF-8'); ?>" role="button"><?php echo htmlspecialchars(mds_t('nav.register_now'), ENT_QUOTES, 'UTF-8'); ?></a></td>
-              </tr>
-              <tr>
-                <td><label style="margin-bottom: 0px; font-weight: normal;"><input type="checkbox" name="angemeldet_bleiben" value="remember-me" title="<?php echo htmlspecialchars(mds_t('nav.remember_login'), ENT_QUOTES, 'UTF-8'); ?>" style="margin: 0; vertical-align: middle;" /> <small><?php echo htmlspecialchars(mds_t('nav.remember_login'), ENT_QUOTES, 'UTF-8'); ?></small></label></td>
-                <td><small><a href="<?php echo htmlspecialchars(mds_route_path('resetPassword.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.reset_password'), ENT_QUOTES, 'UTF-8'); ?></a></small></td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
-        </form>
+        <ul class="nav navbar-nav ms-auto">
+          <?php if ($seoPageKey !== null) { ?>
+            <li class="nav-item"><a class="nav-link" href="<?php echo mds_h(mds_route_path(mds_seo_route('features', mds_current_language()))); ?>"><?php echo mds_h(mds_current_language() === 'de' ? 'Funktionen' : 'Features'); ?></a></li>
+            <li class="nav-item"><a class="nav-link" href="<?php echo mds_h(mds_route_path(mds_seo_route('ttn', mds_current_language()))); ?>">TTN</a></li>
+          <?php } ?>
+          <li class="nav-item"><a class="nav-link" href="<?php echo mds_h(mds_route_path('login.php')); ?>"><?php echo mds_h(mds_t('common.login')); ?></a></li>
+          <li class="nav-item"><a class="btn btn-success ms-sm-2" href="<?php echo mds_h(mds_route_path('register.php')); ?>"><?php echo mds_h(mds_t('nav.register_now')); ?></a></li>
+          <?php if ($seoPageKey !== null) { $otherLanguage = mds_current_language() === 'de' ? 'en' : 'de'; ?>
+            <li class="nav-item"><a class="nav-link mds-language-link" hreflang="<?php echo $otherLanguage; ?>" href="<?php echo mds_h(mds_route_path(mds_seo_route($seoPageKey, $otherLanguage))); ?>"><?php echo strtoupper($otherLanguage); ?></a></li>
+          <?php } ?>
+        </ul>
       </div>
 
     <?php elseif (basename($_SERVER['PHP_SELF']) != "login.php") : ?>

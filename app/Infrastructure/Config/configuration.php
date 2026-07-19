@@ -42,6 +42,7 @@ class configuration {
     static $imprintAddress = null;
     static $imprintEmail = null;
     static $imprintPhone = null;
+    static $googleSiteVerification = null;
     
     function __construct() {
         $projectRoot = dirname(__FILE__, 4);
@@ -207,6 +208,7 @@ class configuration {
             self::$imprintAddress = (string)($jsonData['imprintAddress'] ?? '');
             self::$imprintEmail = (string)($jsonData['imprintEmail'] ?? self::$adminEmailAddress ?? self::$systemEmailAddress ?? '');
             self::$imprintPhone = (string)($jsonData['imprintPhone'] ?? '');
+            self::$googleSiteVerification = trim((string)($jsonData['googleSiteVerification'] ?? ''));
 
             self::$config_exist = true;
         } else {
@@ -253,6 +255,7 @@ class configuration {
             self::$imprintAddress = trim((string)($post['imprintAddress'] ?? self::$imprintAddress));
             self::$imprintEmail = trim((string)($post['imprintEmail'] ?? self::$imprintEmail));
             self::$imprintPhone = trim((string)($post['imprintPhone'] ?? self::$imprintPhone));
+            self::$googleSiteVerification = trim((string)($post['googleSiteVerification'] ?? self::$googleSiteVerification));
             $path = $modernConfigDir . '/config.json';
             $jsonString = file_exists($path) ? file_get_contents($path) : false;
             $jsonData = $jsonString !== false ? json_decode($jsonString, true) : array();
@@ -280,6 +283,7 @@ class configuration {
             $jsonData['imprintAddress'] = self::$imprintAddress;
             $jsonData['imprintEmail'] = self::$imprintEmail;
             $jsonData['imprintPhone'] = self::$imprintPhone;
+            $jsonData['googleSiteVerification'] = self::$googleSiteVerification;
             $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
             // Write in the file
             $fp = fopen($path, 'w');
@@ -339,6 +343,8 @@ class configuration {
 
         $knownPrefixes = array(
             '/index.php',
+            '/en/',
+            '/de/',
             '/login.php',
             '/logout.php',
             '/internal.php',
