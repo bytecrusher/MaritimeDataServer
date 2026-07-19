@@ -292,6 +292,7 @@ Optionale Board-Felder:
   - Wakeup-/Standby-Dauern werden primaer aus Telemetrie-Aktivitaet und Payload-Luecken abgeleitet, damit am Ende eines Sendezyklus gemeldete Schlafhinweise die Zeiten nicht vertauschen
   - wenn kein `standbyState` uebertragen wird, versucht MDS weiterhin Wakeup-/Standby-Ereignisse vollstaendig aus Telemetrie-Luecken abzuleiten
   - dabei gilt: nach Ablauf von `offlineDataTimer` ohne neue Nutzdaten wird ein `Standby` angenommen; beim naechsten Datenempfang wird ein `Wakeup` erzeugt
+  - wenn der Payload einen expliziten Sensor `sensorType = WakeupStan` oder `sensorName = WakeupLog` enthaelt, hat dieses Device-Ereignis Vorrang; MDS erzeugt dann keine zusaetzliche inferierte Wakeup-/Standby-Zeile aus Payload-Luecken
 
 ### Sensor-Mapping
 
@@ -675,6 +676,12 @@ Pflicht-Header:
 
 Weitere Header werden geloggt, aber nicht zwingend validiert.
 
+Optionale Channel-Auswahl:
+
+- Query-Parameter `channel=beta|stable|release`
+- oder Header `x-ESP32-OTA-Channel: beta|stable|release`
+- `release` wird wie `stable` behandelt
+
 ### OTA Secret
 
 Der Endpunkt ist durch ein Shared Secret geschuetzt. Der Server erwartet den
@@ -706,13 +713,26 @@ den Header beim OTA-Update mitsenden.
   - wenn die Firmware-Datei fehlt
 - `200`
   - wenn `boardConfig.performUpdate = 1` ist und die lokale Firmware-Datei einen anderen MD5-Hash als `x-ESP32-sketch-md5` hat
+  - liefert `x-SHA256` / `X-SHA256`
+  - liefert, wenn bekannt, `x-Firmware-Version` / `X-Firmware-Version`
+  - liefert `x-MDS-OTA-Channel`
 - `304`
   - wenn keine neuere Firmware vorhanden ist
   - wenn das Board bekannt ist, aber `performUpdate` nicht aktiviert ist
+  - sollte ebenfalls die Version-/SHA256-/Channel-Header liefern, damit ESP-Webinterfaces Serverinformationen anzeigen koennen
 
 ### Dateipfade
 
 - Firmware-Binaerdateien: `var/ota/bin/`
+- Channel-Metadaten fuer ESP-Webinterface und automatischen Download:
+  - `public/ota/bin/web/stable.json`
+  - `public/ota/bin/web/beta.json`
+  - `public/ota/bin/web/firmware-manifest.json`
+- Channel-Binaerdateien und Webpakete:
+  - `public/ota/bin/web/release/<version>/firmware.bin`
+  - `public/ota/bin/web/beta/<version>/firmware.bin`
+  - `public/ota/bin/web/release/<version>/webui-package.tar`
+  - `public/ota/bin/web/beta/<version>/webui-package.tar`
 - OTA-Logs: `var/ota/logs/`
 
 Aktuell wird als Standarddatei `var/ota/bin/firmware.bin` ausgeliefert.

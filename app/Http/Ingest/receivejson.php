@@ -12,7 +12,6 @@ require_once(dirname(__FILE__, 2) . "/../Infrastructure/Logging/writeToLogFuncti
 require_once(dirname(__FILE__, 2) . "/../Application/myFunctions.func.php");
 require_once(dirname(__FILE__, 2) . "/../Domain/Board/board.class.php");
 
-// legacy include removed during public webroot migration
 header('Content-Type: application/json; charset=utf-8');
 
 $config  = new configuration();
@@ -94,7 +93,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     updateBoardFirmwareVersion($macAddressId, $firmwareVersion, $pdo2);
                 }
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
-                syncWakeupStandbyEventFromBoardActivity($boardObj, $boardSensors, $pdo2);
+                $payloadContainsExplicitWakeupEvent = payloadContainsWakeupStandbyEvent($sensors);
+                if (!$payloadContainsExplicitWakeupEvent) {
+                    syncWakeupStandbyEventFromBoardActivity($boardObj, $boardSensors, $pdo2);
+                }
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                 $standbyState = extractStandbyStateFromBoardPayload($boardData);
                 if ($standbyState !== null) {
@@ -110,6 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         'macAddress' => $macAddress,
                         'firmwareVersion' => $firmwareVersion,
                         'standbyState' => $standbyState,
+                        'explicitWakeupEvent' => $payloadContainsExplicitWakeupEvent,
                         'sensorConfigCount' => $boardSensorCount
                     )
                 );
@@ -463,6 +466,27 @@ function extractStandbyStateFromBoardPayload(array $boardData)
     }
 
     return null;
+}
+
+function payloadContainsWakeupStandbyEvent($sensors)
+{
+    if (!is_array($sensors)) {
+        return false;
+    }
+
+    foreach ($sensors as $sensor) {
+        if (!is_array($sensor)) {
+            continue;
+        }
+
+        $sensorType = normalizeSensorLookupValue($sensor['sensorType'] ?? ($sensor['type'] ?? null));
+        $sensorName = normalizeSensorLookupValue($sensor['sensorName'] ?? ($sensor['name'] ?? null));
+        if ($sensorType === 'wakeupstan' || $sensorName === 'wakeuplog') {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function updateBoardFirmwareVersion($boardId, $firmwareVersion, PDO $pdo2)

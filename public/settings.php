@@ -71,7 +71,6 @@ try {
       'activeSensorAlerts' => array(),
     ),
     'migrationStatus' => array(),
-    'legacyStatus' => array(),
   );
 }
 $varDemoMode = $pageData['demoMode'];
@@ -93,7 +92,6 @@ $notificationJobStatus = $notificationOverview['jobStatus'] ?? null;
 $offlineBoardOverview = $notificationOverview['offlineBoards'] ?? array();
 $activeSensorAlertsOverview = $notificationOverview['activeSensorAlerts'] ?? array();
 $migrationStatus = $pageData['migrationStatus'] ?? array();
-$legacyStatus = $pageData['legacyStatus'] ?? array();
 
 include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>
@@ -1322,44 +1320,6 @@ th.rotated-text > div > span {
       </div>
 
       <div role="tabpanel" class="tab-pane" id="migration">
-        <?php if (!empty($legacyStatus)) { ?>
-          <div class="card mb-3 shadow-sm">
-            <div class="card-body">
-              <div class="mb-3">
-                <h5 class="card-title mb-1"><?php echo htmlspecialchars(mds_t('settings.legacy_status'), ENT_QUOTES, 'UTF-8'); ?></h5>
-                <div class="text-muted small"><?php echo htmlspecialchars(mds_t('settings.legacy_status_text'), ENT_QUOTES, 'UTF-8'); ?></div>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                  <thead>
-                    <tr>
-                      <th><?php echo htmlspecialchars(mds_t('common.status'), ENT_QUOTES, 'UTF-8'); ?></th>
-                      <th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th>
-                      <th><?php echo htmlspecialchars(mds_t('common.details'), ENT_QUOTES, 'UTF-8'); ?></th>
-                      <th><?php echo htmlspecialchars(mds_t('common.action'), ENT_QUOTES, 'UTF-8'); ?></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php foreach ($legacyStatus as $legacyStatusRow) { ?>
-                      <tr>
-                        <td>
-                          <?php if (($legacyStatusRow['status'] ?? '') === 'clean') { ?>
-                            <span class="badge bg-success"><?php echo htmlspecialchars(mds_t('settings.legacy_clean'), ENT_QUOTES, 'UTF-8'); ?></span>
-                          <?php } else { ?>
-                            <span class="badge bg-warning text-dark"><?php echo htmlspecialchars(mds_t('settings.legacy_action_required'), ENT_QUOTES, 'UTF-8'); ?></span>
-                          <?php } ?>
-                        </td>
-                        <td><?php echo htmlspecialchars((string)($legacyStatusRow['label'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td><?php echo htmlspecialchars((string)($legacyStatusRow['details'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td><?php echo htmlspecialchars((string)($legacyStatusRow['action'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></td>
-                      </tr>
-                    <?php } ?>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        <?php } ?>
         <?php if (!empty($migrationStatus)) { ?>
           <div class="card mb-3 shadow-sm">
             <div class="card-body">

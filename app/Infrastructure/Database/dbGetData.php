@@ -1,6 +1,6 @@
 <?php
 /**
- * class for get a user with a given email or id (deprecated?)
+ * Query helpers for user, board and sensor data.
  * 
  * @author: Guntmar Hoeche
  * @license: TBD

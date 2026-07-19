@@ -16,5 +16,11 @@
     "files": [
       "app/Domain/Board/get_data.php"
     ]
+  },
+  "scripts": {
+    "test": [
+      "php tests/DeviceEventTimelineCalculatorTest.php",
+      "php tests/SeoMetadataTest.php"
+    ]
   }
 }

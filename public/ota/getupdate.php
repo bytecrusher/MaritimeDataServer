@@ -17,6 +17,78 @@ require_once(dirname(__DIR__, 2) . "/app/Application/myFunctions.func.php");
 
 $otaDefaultFirmwareName = 'firmware';
 
+function normalize_ota_channel($channel) {
+    $normalized = strtolower(trim((string)$channel));
+    if ($normalized === 'release') {
+        return 'stable';
+    }
+    if ($normalized === 'stable' || $normalized === 'beta') {
+        return $normalized;
+    }
+    return 'stable';
+}
+
+function ota_channel_folder($channel) {
+    return normalize_ota_channel($channel) === 'stable' ? 'release' : 'beta';
+}
+
+function safe_join_ota_path($baseDir, $relativePath) {
+    $relativePath = str_replace('\\', '/', trim((string)$relativePath));
+    $relativePath = ltrim($relativePath, '/');
+    if ($relativePath === '' || strpos($relativePath, '..') !== false) {
+        return null;
+    }
+    return rtrim($baseDir, '/') . '/' . $relativePath;
+}
+
+function read_channel_metadata($channel) {
+    $channel = normalize_ota_channel($channel);
+    $metadataPath = __DIR__ . '/bin/web/' . $channel . '.json';
+    if (!is_file($metadataPath)) {
+        return null;
+    }
+
+    $metadata = json_decode((string)file_get_contents($metadataPath), true);
+    if (!is_array($metadata)) {
+        return null;
+    }
+
+    if (isset($metadata[$channel]) && is_array($metadata[$channel])) {
+        $metadata = $metadata[$channel];
+    }
+
+    return $metadata;
+}
+
+function resolve_ota_binary($channel, $defaultFirmwareName) {
+    $channel = normalize_ota_channel($channel);
+    $metadata = read_channel_metadata($channel);
+    if (is_array($metadata) && isset($metadata['firmware'])) {
+        $metadataBinary = safe_join_ota_path(__DIR__ . '/bin/web', $metadata['firmware']);
+        if ($metadataBinary !== null && is_file($metadataBinary)) {
+            return array(
+                'path' => $metadataBinary,
+                'version' => trim((string)($metadata['version'] ?? '')),
+                'sha256' => strtolower(trim((string)($metadata['sha256'] ?? ''))),
+                'channel' => $channel,
+                'source' => 'metadata'
+            );
+        }
+    }
+
+    $fallbackBinary = dirname(__DIR__, 2) . '/var/ota/bin/' . $defaultFirmwareName . '.bin';
+    $versionPath = dirname(__DIR__, 2) . '/var/ota/bin/firmware.version';
+    $sha256Path = dirname(__DIR__, 2) . '/var/ota/bin/firmware.sha256';
+
+    return array(
+        'path' => $fallbackBinary,
+        'version' => is_file($versionPath) ? trim((string)file_get_contents($versionPath)) : '',
+        'sha256' => is_file($sha256Path) ? strtolower(trim((string)file_get_contents($sha256Path))) : '',
+        'channel' => $channel,
+        'source' => 'legacy'
+    );
+}
+
 function check_header($name, $value = false) {
     global $headers;
     $name = strtolower((string)$name);
@@ -56,9 +128,13 @@ function ota_response($statusCode, $message) {
     exit();
 }
 
-function sendFile($path) {
+function sendFile($path, $version = '', $sha256 = '', $channel = '') {
     if (!is_file($path)) {
         ota_response(404, "firmware file not found: " . basename($path));
+    }
+
+    if ($sha256 === '') {
+        $sha256 = hash_file('sha256', $path);
     }
 
     header($_SERVER["SERVER_PROTOCOL"].' 200 OK', true, 200);
@@ -66,6 +142,15 @@ function sendFile($path) {
     header('Content-Disposition: attachment; filename='.basename($path));
     header('Content-Length: '.filesize($path), true);
     header('x-MD5: '.md5_file($path), true);
+    header('x-SHA256: '.$sha256, true);
+    header('X-SHA256: '.$sha256, true);
+    if ($version !== '') {
+        header('x-Firmware-Version: '.$version, true);
+        header('X-Firmware-Version: '.$version, true);
+    }
+    if ($channel !== '') {
+        header('x-MDS-OTA-Channel: '.$channel, true);
+    }
     readfile($path);
 }
 
@@ -112,8 +197,9 @@ if(!$board) {
     ota_response(404, "ESP MAC not configured for updates: " . $espMac);
 }
 
-$firmwareName = $otaDefaultFirmwareName;
-$localBinary = dirname(__DIR__, 2) . "/var/ota/bin/" . $firmwareName . ".bin";
+$requestedChannel = normalize_ota_channel($_GET['channel'] ?? ($headers['x-esp32-ota-channel'] ?? ($headers['x-mds-ota-channel'] ?? 'stable')));
+$otaBinary = resolve_ota_binary($requestedChannel, $otaDefaultFirmwareName);
+$localBinary = $otaBinary['path'];
 if (!is_file($localBinary)) {
     ota_response(404, "firmware file not found: " . basename($localBinary));
 }
@@ -123,21 +209,36 @@ $serverBinaryMd5 = strtolower((string)md5_file($localBinary));
 $currentVersion = trim((string)($headers['x-esp32-version'] ?? ''));
 $knownDeviceVersion = trim((string)($board['firmwareVersion'] ?? ''));
 $performUpdate = (int)($board['performUpdate'] ?? 0) === 1;
+$serverFirmwareVersion = trim((string)($otaBinary['version'] ?? ''));
+$serverFirmwareSha256 = strtolower(trim((string)($otaBinary['sha256'] ?? '')));
+if ($serverFirmwareSha256 === '') {
+    $serverFirmwareSha256 = hash_file('sha256', $localBinary);
+}
 
 write_to_log(array(
     'otaRequest' => 'resolved',
     'boardId' => $board['id'] ?? null,
     'macAddress' => $espMac,
+    'channel' => $requestedChannel,
     'performUpdate' => $performUpdate ? '1' : '0',
     'deviceVersionHeader' => $currentVersion,
     'storedDeviceVersion' => $knownDeviceVersion,
+    'serverFirmwareVersion' => $serverFirmwareVersion,
     'deviceSketchMd5' => $currentSketchMd5,
     'serverBinaryMd5' => $serverBinaryMd5,
+    'serverBinarySha256' => $serverFirmwareSha256,
     'firmwareFile' => basename($localBinary)
 ));
 
 if (!$performUpdate) {
     header('x-MDS-OTA-Status: disabled', true);
+    if ($serverFirmwareVersion !== '') {
+        header('x-Firmware-Version: '.$serverFirmwareVersion, true);
+        header('X-Firmware-Version: '.$serverFirmwareVersion, true);
+    }
+    header('x-SHA256: '.$serverFirmwareSha256, true);
+    header('X-SHA256: '.$serverFirmwareSha256, true);
+    header('x-MDS-OTA-Channel: '.$requestedChannel, true);
     write_to_log("OTA disabled for device: " . $espMac);
     header($_SERVER["SERVER_PROTOCOL"].' 304 Not Modified', true, 304);
     exit();
@@ -145,13 +246,20 @@ if (!$performUpdate) {
 
 if ($currentSketchMd5 !== '' && hash_equals($serverBinaryMd5, $currentSketchMd5)) {
     header('x-MDS-OTA-Status: current', true);
+    if ($serverFirmwareVersion !== '') {
+        header('x-Firmware-Version: '.$serverFirmwareVersion, true);
+        header('X-Firmware-Version: '.$serverFirmwareVersion, true);
+    }
+    header('x-SHA256: '.$serverFirmwareSha256, true);
+    header('X-SHA256: '.$serverFirmwareSha256, true);
+    header('x-MDS-OTA-Channel: '.$requestedChannel, true);
     write_to_log("OTA firmware already current: " . $espMac);
     header($_SERVER["SERVER_PROTOCOL"].' 304 Not Modified', true, 304);
     exit();
 }
 
 write_to_log("send file to " . $espMac);
-sendFile($localBinary);
+sendFile($localBinary, $serverFirmwareVersion, $serverFirmwareSha256, $requestedChannel);
 exit();
 
 function write_to_log($text)

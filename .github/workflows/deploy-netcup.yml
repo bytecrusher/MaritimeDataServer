@@ -28,10 +28,13 @@ jobs:
 
       - name: Validate PHP syntax
         run: |
-          find app bootstrap config public tools -name '*.php' -print0 | xargs -0 -n1 php -l
+          find app bootstrap config public tests tools -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: Install production dependencies
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Run regression tests
+        run: composer test
 
       - name: Validate deployment secrets
         env:
@@ -69,6 +72,7 @@ jobs:
             --exclude='./docu_donotdeploy' \
             --exclude='./docs/db_design/*.sql' \
             --exclude='./node_modules' \
+            --exclude='./tests' \
             --exclude='./var/log/*' \
             --exclude='./var/status/*.json' \
             --exclude='./var/ota/*' \

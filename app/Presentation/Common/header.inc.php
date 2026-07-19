@@ -1,37 +1,46 @@
+<?php
+  $config = new configuration();
+  $publicInstallPath = mds_route_path('install/index.php');
+
+  if (!$config::$config_exist) {
+    if (is_dir(dirname(__DIR__, 3) . '/public/install')) {
+      header('Location: ' . $publicInstallPath);
+      exit();
+    }
+
+    echo htmlspecialchars(mds_t('header.install_missing'), ENT_QUOTES, 'UTF-8');
+    exit();
+  }
+
+  $seoMetadata = mds_seo_metadata($_SERVER['SCRIPT_NAME'] ?? null, mds_current_language());
+  $seoStructuredData = mds_seo_website_structured_data($seoMetadata);
+?>
 <!DOCTYPE html>
 <html lang="<?php echo htmlspecialchars(mds_current_language(), ENT_QUOTES, 'UTF-8'); ?>">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?php echo htmlspecialchars(configuration::$applicationName ?: 'MDS - Maritime Data Server', ENT_QUOTES, 'UTF-8'); ?></title>
+    <title><?php echo htmlspecialchars($seoMetadata['title'], ENT_QUOTES, 'UTF-8'); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars($seoMetadata['description'], ENT_QUOTES, 'UTF-8'); ?>">
+    <meta name="robots" content="<?php echo htmlspecialchars($seoMetadata['robots'], ENT_QUOTES, 'UTF-8'); ?>">
+    <?php if (!empty($seoMetadata['canonical'])) { ?>
+      <link rel="canonical" href="<?php echo htmlspecialchars($seoMetadata['canonical'], ENT_QUOTES, 'UTF-8'); ?>">
+      <meta property="og:type" content="website">
+      <meta property="og:site_name" content="<?php echo htmlspecialchars($seoMetadata['siteName'], ENT_QUOTES, 'UTF-8'); ?>">
+      <meta property="og:title" content="<?php echo htmlspecialchars($seoMetadata['title'], ENT_QUOTES, 'UTF-8'); ?>">
+      <meta property="og:description" content="<?php echo htmlspecialchars($seoMetadata['description'], ENT_QUOTES, 'UTF-8'); ?>">
+      <meta property="og:url" content="<?php echo htmlspecialchars($seoMetadata['canonical'], ENT_QUOTES, 'UTF-8'); ?>">
+      <meta name="twitter:card" content="summary">
+      <meta name="twitter:title" content="<?php echo htmlspecialchars($seoMetadata['title'], ENT_QUOTES, 'UTF-8'); ?>">
+      <meta name="twitter:description" content="<?php echo htmlspecialchars($seoMetadata['description'], ENT_QUOTES, 'UTF-8'); ?>">
+    <?php } ?>
+    <?php if (is_array($seoStructuredData)) { ?>
+      <script type="application/ld+json"><?php echo json_encode($seoStructuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
+    <?php } ?>
     <link rel="icon" type="image/x-icon" href="<?php echo htmlspecialchars(mds_route_path('favicon.ico'), ENT_QUOTES, 'UTF-8'); ?>">
     <?php
-      $config = new configuration();
       include(__DIR__ . "/includes.php");
-
-      if (isset($_SERVER['HTTPS']) &&
-            ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
-            isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-            $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-            $prefix = 'https://';
-        }
-        else {
-            $prefix = 'http://';
-        }
-
-      $actualLink = $prefix . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/');
-      $publicInstallPath = mds_route_path('install/index.php');
-
-      if (!$config::$config_exist) {
-        if (is_dir(dirname(__DIR__, 3) . "/public/install")) {
-          header("Location: " . $publicInstallPath);
-          exit();
-        } else {
-          echo htmlspecialchars(mds_t('header.install_missing'), ENT_QUOTES, 'UTF-8');
-          exit();
-        }
-      }
     ?>
     <style>
       :root {
@@ -223,7 +232,7 @@
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
   <div class="container-fluid">
     <a class="navbar-brand" href="<?php echo htmlspecialchars(mds_route_path('index.php'), ENT_QUOTES, 'UTF-8'); ?>">
-      <img src="<?php echo htmlspecialchars(mds_asset_path('img/MDS_Logo_black.png'), ENT_QUOTES, 'UTF-8'); ?>" class="filter-green me-2" height="40px" />
+      <img src="<?php echo htmlspecialchars(mds_asset_path('img/MDS_Logo_black.png'), ENT_QUOTES, 'UTF-8'); ?>" class="filter-green me-2" height="40" alt="Maritime Data Server logo">
       Maritime Data Server
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">

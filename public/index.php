@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__) . "/app/Application/InternalPageService.php";
 require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
 $userObj = InternalPageService::resolveCurrentUserFromSession();
-include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";    // NOSONAR - Legacy Template-Einbindung
+include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";    // NOSONAR - shared template include
 
 ?>
 <div class="jumbotron" style="padding: 1rem 1rem; margin-bottom: 1rem;">
@@ -38,5 +38,5 @@ include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";    //
 </div>
 
 <?php
-include_once dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php";    // NOSONAR - Legacy Template-Einbindung
+include_once dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php";    // NOSONAR - shared template include
 ?>

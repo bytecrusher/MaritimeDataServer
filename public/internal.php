@@ -71,7 +71,7 @@
     }
   }
 
-  include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - Legacy Template-Einbindung
+  include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - shared template include
 ?>
 <link rel="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/fontawesome.min.css">
@@ -1518,7 +1518,7 @@
             <p class="mb-0 text-muted"><?php echo htmlspecialchars(mds_t('internal.debug_table_text'), ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
         <?php
-            include_once dirname(__DIR__) . "/app/Http/Webhooks/TTN/index.php"; // NOSONAR - Legacy Bootstrap, Autoload nicht verfügbar
+            include_once dirname(__DIR__) . "/app/Http/Webhooks/TTN/index.php"; // NOSONAR - debug bootstrap include
           ?>
         </div>
       </div>
@@ -1527,7 +1527,7 @@
       <div class="container tab-pane fade pl-0" id="mapContainer">
         <div class="row mt-2">
           <div class="container map-shell">
-            <?php include_once __DIR__ . "/openstreetmaps.php"; // NOSONAR - Legacy Template-Einbindung ?>
+            <?php include_once __DIR__ . "/openstreetmaps.php"; // NOSONAR - shared map include ?>
           </div>
         </div>
       </div>
@@ -1714,5 +1714,5 @@
     }
     </script>
   <?php
-    include_once dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php"; // NOSONAR - Legacy Template-Einbindung
+    include_once dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php"; // NOSONAR - shared template include
   ?>

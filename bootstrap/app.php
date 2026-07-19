@@ -17,4 +17,5 @@ require_once $projectRoot . '/app/Support/i18n.func.php';
 mds_enforce_https_if_possible();
 require_once $projectRoot . '/app/Infrastructure/Config/configuration.php';
 require_once $projectRoot . '/app/Support/url_helpers.php';
+require_once $projectRoot . '/app/Support/seo.func.php';
 require_once $projectRoot . '/app/Domain/Board/get_data.php';
