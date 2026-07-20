@@ -307,10 +307,11 @@ body {
 
 .mds-public-hero {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  min-height: clamp(520px, 52vw, 630px);
-  padding: 0;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  aspect-ratio: 1200 / 630;
+  padding: clamp(1.1rem, 2.3vw, 1.75rem);
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 1.75rem;
@@ -320,12 +321,12 @@ body {
 }
 
 .mds-public-hero-art {
-  grid-column: 2;
-  grid-row: 1;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: 58% center;
+  object-fit: contain;
+  object-position: center;
 }
 
 .mds-public-hero::after {
@@ -335,16 +336,18 @@ body {
 .mds-public-hero-copy {
   position: relative;
   z-index: 1;
-  grid-column: 1;
-  grid-row: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  width: 100%;
-  padding: clamp(2.25rem, 5vw, 4.75rem);
+  width: min(50%, 600px);
+  padding: clamp(1.6rem, 3vw, 2.5rem);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 1.35rem;
   background:
     radial-gradient(circle at 14% 12%, rgba(56, 189, 248, 0.16), transparent 18rem),
-    linear-gradient(145deg, #06172d 0%, #0b2440 100%);
+    linear-gradient(145deg, rgba(4, 20, 39, 0.98) 0%, rgba(9, 35, 62, 0.96) 100%);
+  box-shadow: 0 24px 55px rgba(2, 10, 24, 0.28);
+  backdrop-filter: blur(8px);
   text-shadow: none;
 }
 
@@ -694,17 +697,21 @@ body {
 
 @media (max-width: 767.98px) {
   .mds-public-hero {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     min-height: 0;
+    aspect-ratio: auto;
     padding: 0;
   }
 
   .mds-public-hero-copy {
-    grid-column: 1;
-    grid-row: 1;
+    order: 1;
     width: 100%;
     padding: 2.25rem 1.35rem;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
     text-shadow: none;
   }
 
@@ -713,8 +720,9 @@ body {
   }
 
   .mds-public-hero-art {
-    grid-column: 1;
-    grid-row: 2;
+    position: relative;
+    inset: auto;
+    order: 2;
     width: 100%;
     height: auto;
     margin: 0;
@@ -1250,7 +1258,7 @@ body.mds-app-shell .mds-site-footer a {
 }
 
 .mds-public-hero-copy h1 {
-  font-size: clamp(2.25rem, 4.4vw, 4rem);
+  font-size: clamp(2.25rem, 3.8vw, 3.4rem);
 }
 
 @media (max-width: 767.98px) {
