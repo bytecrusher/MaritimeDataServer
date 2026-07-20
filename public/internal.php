@@ -73,8 +73,8 @@
 
   include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php"; // NOSONAR - shared template include
 ?>
-<link rel="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
-<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/fontawesome.min.css">
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/brands.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/solid.css" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/js/brands.js"></script>
@@ -897,7 +897,11 @@
 
   /* Telemetry workspace refresh */
   .mds-page-internal .main-container {
-    width: min(1380px, calc(100% - 24px));
+    width: min(1200px, calc(100% - 24px));
+  }
+  .mds-page-internal .main-container > .container {
+    width: 100%;
+    max-width: none;
   }
   .internal-hero {
     display: grid;
@@ -907,7 +911,7 @@
     min-height: 210px;
     padding: clamp(1.75rem, 4vw, 3rem);
     margin-bottom: 1.25rem;
-    border-radius: 1.5rem;
+    border-radius: 1.75rem;
     background:
       linear-gradient(rgba(125, 211, 252, 0.05) 1px, transparent 1px),
       linear-gradient(90deg, rgba(125, 211, 252, 0.05) 1px, transparent 1px),
@@ -996,8 +1000,7 @@
     gap: 0.3rem;
     padding: 0.55rem;
     border: 1px solid rgba(15, 23, 42, 0.09);
-    border-bottom: 0;
-    border-radius: 1.25rem 1.25rem 0 0;
+    border-radius: 1.25rem;
     background: rgba(255, 255, 255, 0.82);
     box-shadow: 0 15px 35px rgba(15, 23, 42, 0.07);
     backdrop-filter: blur(16px);
@@ -1022,15 +1025,15 @@
     color: #a7f3d0;
   }
   .internal-tab-shell {
-    padding: 0 0 1.5rem;
-    border-color: rgba(15, 23, 42, 0.08);
-    border-radius: 0 0 1.25rem 1.25rem;
-    background: rgba(255, 255, 255, 0.62);
-    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.08);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .internal-tab-shell > .tab-pane {
     max-width: none;
-    padding: clamp(1rem, 2.3vw, 1.75rem);
+    padding: 1.25rem 0 0;
   }
   .dashboard-shell {
     gap: 1.25rem;
@@ -1038,6 +1041,7 @@
   }
   .dashboard-toolbar {
     position: relative;
+    justify-content: flex-end;
     padding: 0.8rem;
     border-radius: 1.1rem;
     background: rgba(241, 245, 249, 0.86);
@@ -1193,7 +1197,7 @@
       padding: 0.65rem 0.8rem;
     }
     .internal-tab-shell > .tab-pane {
-      padding: 0.75rem;
+      padding: 0.85rem 0 0;
     }
     .dashboard-toolbar,
     .dashboard-toolbar-meta {
@@ -1399,10 +1403,6 @@
       <div class="container tab-pane fade show active position-relative" id="dashboard">
         <div class="dashboard-shell">
           <div class="dashboard-toolbar">
-            <div class="dashboard-toolbar-meta">
-              <span class="dashboard-stat-pill"><strong><?php echo count($boardObjsArray); ?></strong> <?php echo htmlspecialchars(mds_t('common.devices'), ENT_QUOTES, 'UTF-8'); ?></span>
-              <span class="dashboard-stat-pill"><strong><?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</strong> <?php echo htmlspecialchars(mds_t('common.refresh'), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
             <div class="dashboard-toolbar-meta">
               <button type="button" class="dashboard-layout-button" id="click_lockUnlock" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
                 <i class="bi bi-lock-fill" aria-hidden="true"></i><span><?php echo htmlspecialchars(mds_current_language() === 'de' ? 'Layout' : 'Layout', ENT_QUOTES, 'UTF-8'); ?></span>

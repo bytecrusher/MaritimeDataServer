@@ -25,6 +25,7 @@
     $mdsBodyClasses = array_merge($mdsBodyClasses, preg_split('/\s+/', trim((string)$mdsBodyClass)) ?: array());
   }
   $mdsBodyClasses = array_values(array_unique(array_filter($mdsBodyClasses)));
+  $mdsCurrentPage = basename($_SERVER['PHP_SELF'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo htmlspecialchars(mds_current_language(), ENT_QUOTES, 'UTF-8'); ?>">
@@ -127,6 +128,12 @@
         color: #fff !important;
         background: rgba(255, 255, 255, 0.08);
         transform: translateY(-1px);
+      }
+      .navbar.mds-navbar .nav-link.active,
+      .navbar.mds-navbar .nav-link[aria-current="page"] {
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.11);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
       }
       .navbar.mds-navbar .navbar-nav {
         align-items: center;
@@ -305,8 +312,8 @@
     <?php elseif (basename($_SERVER['PHP_SELF']) != "login.php") : ?>
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav mr-auto navbar-right">
-          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('internal.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.my_sensors'), ENT_QUOTES, 'UTF-8'); ?></a></li>
-          <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('settings.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.settings'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class="nav-item"><a class="nav-link<?php echo $mdsCurrentPage === 'internal.php' ? ' active' : ''; ?>"<?php echo $mdsCurrentPage === 'internal.php' ? ' aria-current="page"' : ''; ?> href="<?php echo htmlspecialchars(mds_route_path('internal.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.my_sensors'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+          <li class="nav-item"><a class="nav-link<?php echo $mdsCurrentPage === 'settings.php' ? ' active' : ''; ?>"<?php echo $mdsCurrentPage === 'settings.php' ? ' aria-current="page"' : ''; ?> href="<?php echo htmlspecialchars(mds_route_path('settings.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.settings'), ENT_QUOTES, 'UTF-8'); ?></a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo htmlspecialchars(mds_route_path('logout.php'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mds_t('nav.logout'), ENT_QUOTES, 'UTF-8'); ?></a></li>
           <?php if ($config::$ShowQrCode == "1") { ?>
           <li class="nav-item mds-qr-slot">
