@@ -339,7 +339,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  width: min(50%, 600px);
+  width: min(46%, 560px);
   padding: clamp(1.6rem, 3vw, 2.5rem);
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 1.35rem;
@@ -1259,6 +1259,43 @@ body.mds-app-shell .mds-site-footer a {
 
 .mds-public-hero-copy h1 {
   font-size: clamp(2.25rem, 3.8vw, 3.4rem);
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .mds-public-hero {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    aspect-ratio: auto;
+    padding: 0;
+  }
+
+  .mds-public-hero-copy {
+    order: 1;
+    width: 100%;
+    padding: clamp(2.5rem, 7vw, 4.5rem);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .mds-public-hero-copy h1 {
+    max-width: 760px;
+    font-size: clamp(2.6rem, 6vw, 4.2rem);
+  }
+
+  .mds-public-hero-copy p {
+    max-width: 760px;
+  }
+
+  .mds-public-hero-art {
+    position: relative;
+    inset: auto;
+    order: 2;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
 }
 
 @media (max-width: 767.98px) {
