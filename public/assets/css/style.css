@@ -286,9 +286,22 @@ body {
 }
 
 /* Public, indexable product pages */
+.mds-public-page {
+  background:
+    radial-gradient(circle at 8% 18%, rgba(56, 189, 248, 0.08), transparent 24rem),
+    radial-gradient(circle at 92% 62%, rgba(101, 184, 75, 0.07), transparent 28rem),
+    linear-gradient(180deg, #f4f7fb 0%, #edf2f7 100%);
+}
+
+.mds-public-page .mds-navbar {
+  position: sticky;
+  top: 0.7rem;
+  z-index: 1020;
+}
+
 .mds-public-main {
   width: min(1200px, calc(100% - 24px));
-  margin: 0 auto 3rem;
+  margin: 0 auto;
 }
 
 .mds-public-hero {
@@ -389,7 +402,7 @@ body {
 }
 
 .mds-public-section {
-  padding: clamp(3rem, 7vw, 6rem) 0;
+  padding: clamp(4.5rem, 9vw, 8rem) 0;
 }
 
 .mds-section-heading {
@@ -397,7 +410,7 @@ body {
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   gap: 2rem;
   align-items: end;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
 }
 
 .mds-section-heading h2,
@@ -422,6 +435,12 @@ body {
   gap: 1rem;
 }
 
+.mds-feature-grid {
+  gap: 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.16);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.16);
+}
+
 .mds-feature-card,
 .mds-topic-card {
   padding: clamp(1.4rem, 3vw, 2rem);
@@ -431,10 +450,50 @@ body {
   box-shadow: 0 16px 42px rgba(15, 23, 42, 0.06);
 }
 
+.mds-feature-card {
+  position: relative;
+  min-height: 260px;
+  padding: clamp(1.75rem, 4vw, 3rem);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color 220ms ease, transform 220ms ease;
+}
+
+.mds-feature-card:nth-child(odd) {
+  border-right: 1px solid rgba(15, 23, 42, 0.16);
+}
+
+.mds-feature-card:nth-child(-n + 2) {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.16);
+}
+
+.mds-feature-card:hover {
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.mds-feature-number {
+  display: block;
+  margin-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  color: #15803d;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
 .mds-feature-card h3,
 .mds-topic-card h2 {
   margin-bottom: 0.65rem;
   font-size: 1.25rem;
+}
+
+.mds-feature-card h3 {
+  margin-bottom: 0.75rem;
+  color: #0f172a;
+  font-size: clamp(1.45rem, 2.5vw, 2rem);
+  letter-spacing: -0.035em;
 }
 
 .mds-feature-card p,
@@ -443,24 +502,152 @@ body {
   line-height: 1.65;
 }
 
+.mds-feature-card p {
+  max-width: 30rem;
+  margin-bottom: 1.4rem;
+  font-size: 1.02rem;
+}
+
 .mds-feature-card a,
 .mds-related a {
   font-weight: 700;
   text-decoration: none;
 }
 
+.mds-feature-card a,
+.mds-closing a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.mds-feature-card svg,
+.mds-closing svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 180ms ease;
+}
+
+.mds-feature-card a:hover svg,
+.mds-closing a:hover svg {
+  transform: translateX(0.2rem);
+}
+
 .mds-public-proof {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
   align-items: center;
-  gap: 2rem;
-  padding: clamp(2rem, 5vw, 4rem);
-  border-radius: 1.5rem;
-  background: linear-gradient(135deg, #e8f2ed, #eef6fb);
+  gap: clamp(2.5rem, 7vw, 6rem);
+  padding: clamp(2.5rem, 7vw, 5.5rem);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 1.75rem;
+  background:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(135deg, #0f172a, #172b40);
+  background-size: 40px 40px, 40px 40px, auto;
+  color: #fff;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.15);
 }
 
 .mds-public-proof .mds-eyebrow {
-  color: #15803d;
+  color: #86efac;
+}
+
+.mds-public-proof h2 {
+  margin: 0.55rem 0 1rem;
+}
+
+.mds-public-proof p {
+  max-width: 42rem;
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.mds-proof-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.mds-proof-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(241, 245, 249, 0.92);
+  font-weight: 650;
+}
+
+.mds-proof-list span {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #65b84b;
+  box-shadow: 0 0 0 0.3rem rgba(101, 184, 75, 0.13);
+}
+
+.mds-closing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2rem;
+  margin: clamp(4.5rem, 9vw, 8rem) 0 0;
+  padding: clamp(2rem, 5vw, 3.5rem) 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.16);
+}
+
+.mds-closing h2 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: -0.045em;
+}
+
+.mds-closing p {
+  margin: 0;
+  color: #475569;
+  font-size: 1.06rem;
+}
+
+.mds-closing .btn {
+  min-width: 12rem;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.mds-public-page .mds-footer-divider {
+  margin: 0;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.mds-public-page .mds-footer-container {
+  padding-top: 1.75rem;
+}
+
+.mds-public-page .mds-site-footer {
+  align-items: center;
+  color: #64748b !important;
+}
+
+.mds-public-page .mds-site-footer a {
+  color: #334155;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.mds-public-page .mds-site-footer a:hover {
+  color: #0f766e;
 }
 
 .mds-topic-hero {
@@ -543,8 +730,36 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .mds-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mds-feature-card {
+    min-height: 0;
+    padding: 2rem 0.3rem;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.14);
+  }
+
+  .mds-feature-card:last-child {
+    border-bottom: 0;
+  }
+
+  .mds-feature-number {
+    margin-bottom: 1.5rem;
+  }
+
   .mds-public-section {
-    padding: 3rem 0;
+    padding: 4rem 0;
+  }
+
+  .mds-closing {
+    grid-template-columns: 1fr;
+    margin-top: 4rem;
+  }
+
+  .mds-closing .btn {
+    width: 100%;
   }
 
   .mds-topic-hero {

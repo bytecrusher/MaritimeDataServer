@@ -267,7 +267,7 @@
     </style>
   </head>
 
-<body>
+<body<?php echo !empty($mdsBodyClass) ? ' class="' . mds_h($mdsBodyClass) . '"' : ''; ?>>
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
   <div class="container-fluid">
     <a class="navbar-brand" href="<?php echo mds_h($publicHomePath); ?>">

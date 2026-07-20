@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/app/Domain/User/user.class.php';
 $userObj = session_status() === PHP_SESSION_ACTIVE ? InternalPageService::resolveCurrentUserFromSession() : null;
 $mdsPageNeedsJquery = false;
 $mdsPageNeedsBootstrapIcons = false;
+$mdsBodyClass = 'mds-public-page';
 $language = mds_current_language();
 $isGerman = $language === 'de';
 
@@ -29,6 +30,10 @@ $content = $isGerman ? array(
     ),
     'proofTitle' => 'Für reale Geräteflotten entwickelt',
     'proofText' => 'Boards können mehrere Sensortypen kombinieren, zeitweise offline sein und Daten über unterschiedliche Übertragungswege senden. Rollen, Freigaben, Schwellwertalarme und Aufbewahrungsregeln unterstützen den dauerhaften Betrieb.',
+    'proofItems' => array('Mehrere Übertragungswege', 'Granulare Freigaben', 'Konfigurierbare Alarme'),
+    'closingTitle' => 'Bereit für die ersten Sensordaten?',
+    'closingText' => 'Konto anlegen, Board verbinden und Telemetrie in wenigen Schritten sichtbar machen.',
+    'closingCta' => 'MDS ausprobieren',
 ) : array(
     'eyebrow' => 'Open-source telemetry platform',
     'title' => 'Turn maritime sensor data into clear decisions.',
@@ -45,6 +50,10 @@ $content = $isGerman ? array(
     ),
     'proofTitle' => 'Built for real device fleets',
     'proofText' => 'Boards can combine several sensor types, spend time offline and use different transmission paths. Roles, sharing, threshold alerts and retention controls support reliable long-term operation.',
+    'proofItems' => array('Multiple transmission paths', 'Granular sharing', 'Configurable alerts'),
+    'closingTitle' => 'Ready for your first sensor data?',
+    'closingText' => 'Create an account, connect a board and make telemetry visible in a few focused steps.',
+    'closingCta' => 'Try MDS',
 );
 
 include_once dirname(__DIR__) . '/app/Presentation/Common/header.inc.php';
@@ -69,22 +78,34 @@ include_once dirname(__DIR__) . '/app/Presentation/Common/header.inc.php';
       <p><?php echo mds_h($content['sectionText']); ?></p>
     </div>
     <div class="mds-feature-grid">
-      <?php foreach ($content['cards'] as $card) { ?>
+      <?php foreach ($content['cards'] as $index => $card) { ?>
         <article class="mds-feature-card">
+          <span class="mds-feature-number" aria-hidden="true"><?php echo str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT); ?></span>
           <h3><?php echo mds_h($card[0]); ?></h3>
           <p><?php echo mds_h($card[1]); ?></p>
-          <a href="<?php echo mds_h(mds_route_path(mds_seo_route($card[2], $language))); ?>"><?php echo mds_h($isGerman ? 'Mehr erfahren' : 'Learn more'); ?> <span aria-hidden="true">&rarr;</span></a>
+          <a href="<?php echo mds_h(mds_route_path(mds_seo_route($card[2], $language))); ?>"><?php echo mds_h($isGerman ? 'Mehr erfahren' : 'Learn more'); ?><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M4 10h11M11 6l4 4-4 4"/></svg></a>
         </article>
       <?php } ?>
     </div>
   </section>
 
   <section class="mds-public-proof">
-    <div>
+    <div class="mds-proof-copy">
       <span class="mds-eyebrow"><?php echo mds_h($isGerman ? 'Praxisnah' : 'Operational by design'); ?></span>
       <h2><?php echo mds_h($content['proofTitle']); ?></h2>
+      <p><?php echo mds_h($content['proofText']); ?></p>
     </div>
-    <p><?php echo mds_h($content['proofText']); ?></p>
+    <ul class="mds-proof-list">
+      <?php foreach ($content['proofItems'] as $item) { ?><li><span aria-hidden="true"></span><?php echo mds_h($item); ?></li><?php } ?>
+    </ul>
+  </section>
+
+  <section class="mds-closing" aria-labelledby="closing-heading">
+    <div>
+      <h2 id="closing-heading"><?php echo mds_h($content['closingTitle']); ?></h2>
+      <p><?php echo mds_h($content['closingText']); ?></p>
+    </div>
+    <a class="btn btn-primary btn-lg" href="<?php echo mds_h(mds_route_path('register.php')); ?>"><?php echo mds_h($content['closingCta']); ?><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M4 10h11M11 6l4 4-4 4"/></svg></a>
   </section>
 </main>
 <?php include_once dirname(__DIR__) . '/app/Presentation/Common/footer.inc.php'; ?>
