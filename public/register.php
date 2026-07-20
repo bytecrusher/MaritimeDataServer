@@ -89,26 +89,9 @@ if (count($_POST) > 0) {
         }
     }
 }
+require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
+include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
 ?>
-<html>
-<head>
-<?php
-	require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
-	include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
-?>
-<title><?php echo htmlspecialchars(mds_t('register.title'), ENT_QUOTES, 'UTF-8'); ?></title>
-<style>
-.gender-radio {
-    width: auto;
-}
-
-#loader-icon {
-    margin-left: 80px;
-    display: none;
-}
-</style>
-</head>
-<body>
     <?php
     if(isset($error_msg) && !empty($error_msg)) {
         echo $error_msg;
@@ -166,5 +149,3 @@ if (count($_POST) > 0) {
 <?php
     include(dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php")
 ?>
-</body>
-</html>

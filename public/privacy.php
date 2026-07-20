@@ -6,6 +6,7 @@ mds_start_session_if_present();
 mds_apply_public_cache_headers();
 $mdsPageNeedsJquery = false;
 $mdsPageNeedsBootstrapIcons = false;
+$mdsBodyClass = 'mds-public-page';
 
 $config = new configuration();
 $privacyContact = trim((string)($config::$privacyContactEmail ?: $config::$adminEmailAddress ?: $config::$systemEmailAddress));

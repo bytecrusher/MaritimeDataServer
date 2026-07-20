@@ -6,6 +6,7 @@ mds_apply_public_cache_headers();
 require_once dirname(__DIR__) . '/app/Application/myFunctions.func.php';
 $mdsPageNeedsJquery = false;
 $mdsPageNeedsBootstrapIcons = false;
+$mdsBodyClass = 'mds-public-page';
 $language = mds_current_language();
 $isGerman = $language === 'de';
 $topic = (string)($_GET['topic'] ?? 'features');

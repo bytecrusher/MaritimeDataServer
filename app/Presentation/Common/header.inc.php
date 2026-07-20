@@ -18,6 +18,13 @@
   $publicHomePath = $seoPageKey !== null
     ? mds_route_path(mds_seo_route('home', mds_current_language()))
     : mds_route_path('index.php');
+  $mdsPageSlug = strtolower((string)pathinfo(basename($_SERVER['PHP_SELF'] ?? 'page'), PATHINFO_FILENAME));
+  $mdsPageSlug = preg_replace('/[^a-z0-9-]+/', '-', $mdsPageSlug) ?: 'page';
+  $mdsBodyClasses = array('mds-app-shell', 'mds-page-' . $mdsPageSlug);
+  if (!empty($mdsBodyClass)) {
+    $mdsBodyClasses = array_merge($mdsBodyClasses, preg_split('/\s+/', trim((string)$mdsBodyClass)) ?: array());
+  }
+  $mdsBodyClasses = array_values(array_unique(array_filter($mdsBodyClasses)));
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo htmlspecialchars(mds_current_language(), ENT_QUOTES, 'UTF-8'); ?>">
@@ -267,16 +274,18 @@
     </style>
   </head>
 
-<body<?php echo !empty($mdsBodyClass) ? ' class="' . mds_h($mdsBodyClass) . '"' : ''; ?>>
+<body class="<?php echo mds_h(implode(' ', $mdsBodyClasses)); ?>">
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
   <div class="container-fluid">
     <a class="navbar-brand" href="<?php echo mds_h($publicHomePath); ?>">
       <img src="<?php echo htmlspecialchars(mds_asset_path('img/MDS_Logo_black.png'), ENT_QUOTES, 'UTF-8'); ?>" class="filter-green me-2" width="75" height="40" alt="Maritime Data Server logo">
       Maritime Data Server
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <?php if (basename($_SERVER['PHP_SELF']) != "login.php") { ?>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    <?php } ?>
 
     <?php if ((!myFunctions::is_checked_in()) && (basename($_SERVER['PHP_SELF']) != "login.php")) : ?>
       <div id="navbar" class="navbar-collapse collapse">
