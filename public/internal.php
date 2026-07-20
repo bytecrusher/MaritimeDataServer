@@ -894,6 +894,322 @@
       border-radius: 1rem;
     }
   }
+
+  /* Telemetry workspace refresh */
+  .mds-page-internal .main-container {
+    width: min(1380px, calc(100% - 24px));
+  }
+  .internal-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 2rem;
+    min-height: 210px;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    margin-bottom: 1.25rem;
+    border-radius: 1.5rem;
+    background:
+      linear-gradient(rgba(125, 211, 252, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125, 211, 252, 0.05) 1px, transparent 1px),
+      radial-gradient(circle at 86% 18%, rgba(34, 211, 238, 0.22), transparent 22rem),
+      linear-gradient(135deg, #071a31 0%, #102d47 58%, #12445a 100%);
+    background-size: 36px 36px, 36px 36px, auto, auto;
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+  }
+  .internal-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 5px;
+    background: linear-gradient(180deg, #34d399, #22d3ee);
+  }
+  .internal-hero-copy,
+  .internal-hero-status {
+    position: relative;
+    z-index: 1;
+  }
+  .internal-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.7rem;
+    color: #86efac;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+  .internal-hero-eyebrow::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 0 0.32rem rgba(52, 211, 153, 0.12);
+  }
+  .internal-hero h1 {
+    max-width: 780px;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.45rem);
+    line-height: 1.02;
+  }
+  .internal-hero p {
+    max-width: 680px;
+    margin-top: 0.85rem;
+    color: rgba(226, 232, 240, 0.86);
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+  .internal-hero-status {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 0.65rem;
+  }
+  .internal-hero-stat {
+    min-width: 140px;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 1rem;
+    background: rgba(3, 16, 35, 0.44);
+    backdrop-filter: blur(12px);
+  }
+  .internal-hero-stat strong,
+  .internal-hero-stat span {
+    display: block;
+  }
+  .internal-hero-stat strong {
+    color: #fff;
+    font-size: 1.45rem;
+    line-height: 1;
+  }
+  .internal-hero-stat span {
+    margin-top: 0.4rem;
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  #internalTabs {
+    gap: 0.3rem;
+    padding: 0.55rem;
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-bottom: 0;
+    border-radius: 1.25rem 1.25rem 0 0;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.07);
+    backdrop-filter: blur(16px);
+  }
+  #internalTabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.72rem 1rem;
+    border-radius: 0.85rem;
+  }
+  #internalTabs .nav-link i {
+    color: #64748b;
+    font-size: 1rem;
+  }
+  #internalTabs .nav-link.active {
+    color: #fff;
+    background: linear-gradient(135deg, #0f766e, #087a99);
+    box-shadow: 0 10px 24px rgba(8, 122, 153, 0.22);
+  }
+  #internalTabs .nav-link.active i {
+    color: #a7f3d0;
+  }
+  .internal-tab-shell {
+    padding: 0 0 1.5rem;
+    border-color: rgba(15, 23, 42, 0.08);
+    border-radius: 0 0 1.25rem 1.25rem;
+    background: rgba(255, 255, 255, 0.62);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.08);
+  }
+  .internal-tab-shell > .tab-pane {
+    max-width: none;
+    padding: clamp(1rem, 2.3vw, 1.75rem);
+  }
+  .dashboard-shell {
+    gap: 1.25rem;
+    padding: 0;
+  }
+  .dashboard-toolbar {
+    position: relative;
+    padding: 0.8rem;
+    border-radius: 1.1rem;
+    background: rgba(241, 245, 249, 0.86);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  .dashboard-stat-pill {
+    min-height: 2.7rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 0.8rem;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  }
+  .dashboard-toolbar .form-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 2.7rem;
+    padding: 0.45rem 0.8rem 0.45rem 2.8rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.8rem;
+    background: #fff;
+  }
+  .dashboard-layout-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.7rem;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.8rem;
+    background: #fff;
+    color: #334155;
+    font-weight: 700;
+  }
+  .dashboard-layout-button:hover,
+  .dashboard-layout-button:focus-visible {
+    border-color: rgba(8, 122, 153, 0.25);
+    color: #087a99;
+  }
+  .dashboard-layout-button i {
+    color: #087a99 !important;
+    font-size: 1rem !important;
+  }
+  .dashboard-board-card {
+    position: relative;
+    border-radius: 1.35rem;
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow: 0 22px 55px rgba(15, 23, 42, 0.09);
+  }
+  .dashboard-board-card::before {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #34d399, #0f766e);
+  }
+  .dashboard-board-card.is-offline::before {
+    background: linear-gradient(180deg, #fb7185, #be123c);
+  }
+  .dashboard-board-card.is-offline {
+    opacity: 1;
+  }
+  .dashboard-board-header {
+    padding: 1.25rem 1.35rem;
+    background:
+      radial-gradient(circle at 90% 10%, rgba(34, 167, 196, 0.08), transparent 18rem),
+      linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  }
+  .dashboard-board-title h3 {
+    font-size: 1.35rem;
+  }
+  .dashboard-board-subtitle {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.025em;
+  }
+  .dashboard-board-badges .badge {
+    border-radius: 999px;
+  }
+  .dashboard-board-gauges {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    padding: 1.2rem;
+    background: rgba(248, 250, 252, 0.72);
+  }
+  .dashboard-gauge-card {
+    min-height: 310px;
+    border-radius: 1.15rem;
+    border-color: rgba(15, 23, 42, 0.1);
+    background:
+      radial-gradient(circle at 90% 8%, rgba(34, 167, 196, 0.10), transparent 10rem),
+      linear-gradient(180deg, #fff 0%, #f3f7fa 100%);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.055);
+  }
+  .dashboard-gauge-headline strong {
+    font-size: 1.12rem;
+  }
+  .dashboard-gauge-value-number {
+    color: #071a31;
+    font-size: 2.15rem;
+  }
+  .tab-section-card {
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
+  }
+  .tab-section-title h3 {
+    font-size: 1.25rem;
+  }
+  .chart-scroll-shell,
+  .chart-panel-surface,
+  .event-detail-disclosure,
+  #mapContainer .map-shell {
+    border-radius: 1.1rem;
+  }
+  @media (max-width: 991.98px) {
+    .internal-hero {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+    .internal-hero-status {
+      width: min(100%, 340px);
+    }
+    #internalTabs {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+  }
+  @media (max-width: 767.98px) {
+    .mds-page-internal .main-container {
+      width: calc(100% - 20px);
+    }
+    .internal-hero {
+      gap: 1.35rem;
+      padding: 1.5rem;
+      border-radius: 1.2rem;
+    }
+    .internal-hero h1 {
+      font-size: clamp(1.85rem, 10vw, 2.65rem);
+    }
+    .internal-hero-status {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+    .internal-hero-stat {
+      min-width: 0;
+      padding: 0.85rem;
+    }
+    #internalTabs .nav-link {
+      padding: 0.65rem 0.8rem;
+    }
+    .internal-tab-shell > .tab-pane {
+      padding: 0.75rem;
+    }
+    .dashboard-toolbar,
+    .dashboard-toolbar-meta {
+      width: 100%;
+    }
+    .dashboard-toolbar-meta:last-child {
+      justify-content: space-between;
+    }
+    .dashboard-board-header {
+      padding: 1rem;
+    }
+    .dashboard-board-gauges {
+      grid-template-columns: 1fr;
+      padding: 0.8rem;
+    }
+  }
 </style>
 
 <script>
@@ -1026,6 +1342,8 @@
 
   <div class="main-container">
   <div class="internal-hero">
+    <div class="internal-hero-copy">
+      <span class="internal-hero-eyebrow"><?php echo htmlspecialchars(mds_t('internal.dashboard'), ENT_QUOTES, 'UTF-8'); ?></span>
       <h1><?php echo htmlspecialchars(mds_t('internal.welcome'), ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($currentUser->getFirstName(), ENT_QUOTES, 'UTF-8'); ?>
       <?php
       if (configuration::$demoMode) {
@@ -1033,6 +1351,11 @@
       }
       ?></h1>
       <p><?php echo htmlspecialchars(mds_t('internal.hero_text'), ENT_QUOTES, 'UTF-8'); ?></p>
+    </div>
+    <div class="internal-hero-status" aria-label="<?php echo htmlspecialchars(mds_t('internal.dashboard'), ENT_QUOTES, 'UTF-8'); ?>">
+      <div class="internal-hero-stat"><strong><?php echo count($boardObjsArray); ?></strong><span><?php echo htmlspecialchars(mds_t('common.devices'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+      <div class="internal-hero-stat"><strong><?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</strong><span><?php echo htmlspecialchars(mds_t('common.refresh'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+    </div>
   </div>
   <div class="container" style="padding: 0px">
     <div id="alert-container">
@@ -1050,21 +1373,21 @@
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" id="internalTabs" role="tablist">
       <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab"><?php echo htmlspecialchars(mds_t('internal.dashboard'), ENT_QUOTES, 'UTF-8'); ?></a>
+        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i><?php echo htmlspecialchars(mds_t('internal.dashboard'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#charts" role="tab"><?php echo htmlspecialchars(mds_t('internal.charts'), ENT_QUOTES, 'UTF-8'); ?></a>
+        <a class="nav-link" data-bs-toggle="tab" href="#charts" role="tab"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><?php echo htmlspecialchars(mds_t('internal.charts'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#boards" role="tab"><?php echo htmlspecialchars(mds_t('common.boards'), ENT_QUOTES, 'UTF-8'); ?></a>
+        <a class="nav-link" data-bs-toggle="tab" href="#boards" role="tab"><i class="bi bi-cpu-fill" aria-hidden="true"></i><?php echo htmlspecialchars(mds_t('common.boards'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab"><?php echo htmlspecialchars(mds_t('internal.map'), ENT_QUOTES, 'UTF-8'); ?></a>
+        <a class="nav-link" id="hrefmap" data-bs-toggle="tab" href="#mapContainer" role="tab"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i><?php echo htmlspecialchars(mds_t('internal.map'), ENT_QUOTES, 'UTF-8'); ?></a>
       </li>
       <?php
         if(myFunctions::isUserAdmin((int)$currentUser->getId()) ) {
       ?>
-        <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab'><?php echo htmlspecialchars(mds_t('internal.debug'), ENT_QUOTES, 'UTF-8'); ?></a></li>
+        <li class='nav-item'><a class='nav-link' data-bs-toggle='tab' href='#debug' role='tab'><i class='bi bi-terminal-fill' aria-hidden='true'></i><?php echo htmlspecialchars(mds_t('internal.debug'), ENT_QUOTES, 'UTF-8'); ?></a></li>
         <?php
         }
         ?>
@@ -1074,10 +1397,6 @@
 
       <!-- Show dashboard -->
       <div class="container tab-pane fade show active position-relative" id="dashboard">
-        <div class="position-absolute" id="click_lockUnlock" style="top: -40px; right: 0px;" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
-          <i class="bi bi-lock-fill" style="font-size:20px; color: #007bff"></i>
-        </div>
-
         <div class="dashboard-shell">
           <div class="dashboard-toolbar">
             <div class="dashboard-toolbar-meta">
@@ -1085,6 +1404,9 @@
               <span class="dashboard-stat-pill"><strong><?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</strong> <?php echo htmlspecialchars(mds_t('common.refresh'), ENT_QUOTES, 'UTF-8'); ?></span>
             </div>
             <div class="dashboard-toolbar-meta">
+              <button type="button" class="dashboard-layout-button" id="click_lockUnlock" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
+                <i class="bi bi-lock-fill" aria-hidden="true"></i><span><?php echo htmlspecialchars(mds_current_language() === 'de' ? 'Layout' : 'Layout', ENT_QUOTES, 'UTF-8'); ?></span>
+              </button>
               <div class="form-check form-switch m-0">
                 <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle" <?php if ((int)$dashboardOnlineOnlyDefault === 1) { echo 'checked'; } ?>>
                 <label class="form-check-label" for="dashboard-online-only-toggle"><?php echo htmlspecialchars(mds_t('internal.only_online_devices'), ENT_QUOTES, 'UTF-8'); ?></label>
@@ -1547,8 +1869,9 @@
 </div>
     <script>
       $('#click_lockUnlock').click(function() {
-        $("i", this).toggleClass("bi bi-lock-fill bi bi-unlock-fill");
-        if (($("i", this).attr('class') ) == "bi bi-unlock-fill") {
+        const layoutIcon = $("i", this);
+        layoutIcon.toggleClass("bi-lock-fill bi-unlock-fill");
+        if (layoutIcon.hasClass("bi-unlock-fill")) {
           $('.gauge-container').css("cursor", "move");
           $(".card-block").sortable();
           $(".card-block").sortable( "option", "disabled", false );
