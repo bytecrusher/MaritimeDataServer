@@ -51,6 +51,7 @@ include_once dirname(__DIR__) . '/app/Presentation/Common/header.inc.php';
 ?>
 <main class="mds-public-main">
   <section class="mds-public-hero">
+    <img class="mds-public-hero-art" src="<?php echo mds_h(mds_asset_path('img/mds-social-preview.png')); ?>" width="1200" height="630" alt="<?php echo mds_h($isGerman ? 'Segelboot und Boje mit ESP32-, LoRaWAN-, GPS- und Telemetrie-Verbindungen' : 'Sailboat and buoy connected through ESP32, LoRaWAN, GPS and telemetry'); ?>" fetchpriority="high">
     <div class="mds-public-hero-copy">
       <span class="mds-eyebrow"><?php echo mds_h($content['eyebrow']); ?></span>
       <h1><?php echo mds_h($content['title']); ?></h1>
@@ -60,7 +61,6 @@ include_once dirname(__DIR__) . '/app/Presentation/Common/header.inc.php';
         <a class="btn btn-outline-light btn-lg" href="<?php echo mds_h(mds_route_path(mds_seo_route('ttn', $language))); ?>"><?php echo mds_h($content['secondary']); ?></a>
       </div>
     </div>
-    <img src="<?php echo mds_h(mds_asset_path('img/img_ESP32.png')); ?>" width="200" height="200" alt="<?php echo mds_h($isGerman ? 'ESP32-Sensormodul für maritime Telemetrie' : 'ESP32 sensor module for maritime telemetry'); ?>">
   </section>
 
   <section class="mds-public-section" aria-labelledby="data-path-heading">
