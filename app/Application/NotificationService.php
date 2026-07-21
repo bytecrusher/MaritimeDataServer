@@ -81,10 +81,46 @@ class NotificationService
         writeToLogFunction::info(
             'Attempting test notification email.',
             __FILE__,
-            array('to' => $toEmail, 'scope' => $scope)
+            array(
+                'to' => self::maskEmailAddress($toEmail),
+                'recipientDomain' => self::emailDomain($toEmail),
+                'scope' => $scope,
+            )
         );
 
-        return self::sendEmail($toEmail, $subject, $message, $config);
+        return self::sendTransactionalEmail($toEmail, $subject, $message, 'test-' . $scope, $config);
+    }
+
+    /**
+     * Sends account-related mail independently from optional alert notifications.
+     */
+    public static function sendTransactionalEmail($toEmail, $subject, $message, $purpose, $config = null)
+    {
+        $config = $config ?: new configuration();
+        $toEmail = trim((string)$toEmail);
+        $subject = trim((string)$subject);
+        $purpose = trim((string)$purpose) ?: 'transactional';
+
+        if (!filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+            writeToLogFunction::warning(
+                'Transactional email rejected because the recipient address is invalid.',
+                __FILE__,
+                array('purpose' => $purpose, 'to' => self::maskEmailAddress($toEmail))
+            );
+            return false;
+        }
+
+        writeToLogFunction::info(
+            'Transactional email delivery requested.',
+            __FILE__,
+            array(
+                'purpose' => $purpose,
+                'to' => self::maskEmailAddress($toEmail),
+                'recipientDomain' => self::emailDomain($toEmail),
+            )
+        );
+
+        return self::sendEmail($toEmail, $subject, (string)$message, $config, $purpose);
     }
 
     public static function getNotificationStatusOverview($userId = null, $isAdmin = false)
@@ -513,45 +549,118 @@ class NotificationService
         ));
     }
 
-    private static function sendEmail($toEmail, $subject, $message, $config)
+    private static function sendEmail($toEmail, $subject, $message, $config, $purpose = 'notification')
     {
         $fromAddress = trim((string)($config::$systemEmailAddress ?: $config::$adminEmailAddress));
-        if ($fromAddress === '') {
-            $fromAddress = 'noreply@localhost';
+        if (!filter_var($fromAddress, FILTER_VALIDATE_EMAIL)) {
+            writeToLogFunction::warning(
+                'Email could not be sent because the configured sender address is invalid.',
+                __FILE__,
+                array(
+                    'purpose' => $purpose,
+                    'configuredSender' => self::maskEmailAddress($fromAddress),
+                )
+            );
+            return false;
         }
 
-        $applicationName = trim((string)$config::$applicationName);
+        $applicationName = preg_replace('/[\r\n]+/', ' ', trim((string)$config::$applicationName));
         if ($applicationName === '') {
             $applicationName = 'Maritime Data Server';
         }
+        $subject = preg_replace('/[\r\n]+/', ' ', trim((string)$subject));
 
-        $mailHeaders = "From: " . $applicationName . "<" . $fromAddress . ">\r\n";
+        $mailHeaders = "From: " . $applicationName . " <" . $fromAddress . ">\r\n";
         $mailHeaders .= "Reply-To: " . $applicationName . " <" . $fromAddress . ">\r\n";
+        $mailHeaders .= "MIME-Version: 1.0\r\n";
         $mailHeaders .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
-        writeToLogFunction::debug(
+        $diagnostics = array(
+            'purpose' => $purpose,
+            'to' => self::maskEmailAddress($toEmail),
+            'recipientDomain' => self::emailDomain($toEmail),
+            'from' => self::maskEmailAddress($fromAddress),
+            'senderDomain' => self::emailDomain($fromAddress),
+            'subject' => $subject,
+            'phpSapi' => PHP_SAPI,
+            'sendmailPath' => (string)ini_get('sendmail_path'),
+            'smtpHost' => (string)ini_get('SMTP'),
+            'smtpPort' => (string)ini_get('smtp_port'),
+        );
+
+        self::logSenderDomainWarning($fromAddress, $purpose);
+        writeToLogFunction::info(
             'Calling PHP mail().',
             __FILE__,
-            array(
-                'to' => $toEmail,
-                'from' => $fromAddress,
-                'subject' => $subject,
-            )
+            $diagnostics
         );
+
+        error_clear_last();
         $sent = mail($toEmail, $subject, $message, $mailHeaders);
+        $mailError = error_get_last();
         if (!$sent) {
             writeToLogFunction::warning(
-                'Notification email could not be sent.',
+                'PHP mail() rejected the email.',
                 $_SERVER["SCRIPT_FILENAME"] ?? __FILE__,
+                array_merge($diagnostics, array(
+                    'phpError' => is_array($mailError) ? (string)($mailError['message'] ?? '') : '',
+                ))
+            );
+            return false;
+        }
+
+        writeToLogFunction::info(
+            'PHP mail() accepted the email for local delivery.',
+            __FILE__,
+            array_merge($diagnostics, array(
+                'deliveryNote' => 'Acceptance does not confirm delivery to the recipient mailbox.',
+            ))
+        );
+
+        return true;
+    }
+
+    private static function logSenderDomainWarning($fromAddress, $purpose)
+    {
+        $senderDomain = self::emailDomain($fromAddress);
+        $requestHost = strtolower((string)preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+        if ($senderDomain === '' || $requestHost === '' || $requestHost === 'localhost') {
+            return;
+        }
+
+        $domainMatches = $requestHost === $senderDomain
+            || substr($requestHost, -(strlen($senderDomain) + 1)) === '.' . $senderDomain
+            || substr($senderDomain, -(strlen($requestHost) + 1)) === '.' . $requestHost;
+        if (!$domainMatches) {
+            writeToLogFunction::warning(
+                'Configured email sender domain differs from the application host; SPF or DMARC may reject delivery.',
+                __FILE__,
                 array(
-                    'to' => $toEmail,
-                    'from' => $fromAddress,
-                    'subject' => $subject,
+                    'purpose' => $purpose,
+                    'senderDomain' => $senderDomain,
+                    'applicationHost' => $requestHost,
                 )
             );
         }
+    }
 
-        return $sent;
+    private static function maskEmailAddress($emailAddress)
+    {
+        $emailAddress = trim((string)$emailAddress);
+        $separator = strrpos($emailAddress, '@');
+        if ($separator === false) {
+            return $emailAddress === '' ? '' : substr($emailAddress, 0, 1) . '***';
+        }
+
+        $localPart = substr($emailAddress, 0, $separator);
+        $domain = substr($emailAddress, $separator + 1);
+        return substr($localPart, 0, 1) . '***@' . $domain;
+    }
+
+    private static function emailDomain($emailAddress)
+    {
+        $separator = strrpos((string)$emailAddress, '@');
+        return $separator === false ? '' : strtolower(substr((string)$emailAddress, $separator + 1));
     }
 
     private static function buildSubject($config, $suffix)

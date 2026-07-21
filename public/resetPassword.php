@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . "/app/Infrastructure/Database/dbConfig.func.php"
 require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
 require_once dirname(__DIR__) . "/app/Application/dbUpdateData.php";
+require_once dirname(__DIR__) . "/app/Application/NotificationService.php";
 include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
 require_once dirname(__DIR__) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
 $config  = new configuration();
@@ -50,7 +51,6 @@ $config  = new configuration();
 				
 				$mailTo = strval($user->getEmail());
 				$reference = "New password for your account on " . $config::$applicationName;
-				$from = "From: " . $config::$applicationName . " <" . $config::$systemEmailAddress . ">";
 				$url_passwordCode = myFunctions::getSiteURL() . 'resetPassword.php?userId=' . $user->getId() . '&code=' . $passwordCode . "&action=reset";
 				$text = "Hi " . $user->getFirstName() . ",\r\n";
 				$text .= "you requested a new password for your account on " . $config::$applicationName . "\r\n \r\n";
@@ -58,9 +58,13 @@ $config  = new configuration();
 					$text .= "You can ignore this mail, if remember your password again, or didn't requested a new password.\r\n \r\n";
 					$text .= "best regards,\r\n";
 					$text .= "your " . $config::$applicationName . " Team\r\n";
-					if (!mail($mailTo, $reference, $text, $from)) {
-						writeToLogFunction::write_to_log("Error: Unable to send email to: " . $mailTo, $_SERVER["SCRIPT_FILENAME"]);
-					}
+					NotificationService::sendTransactionalEmail(
+						$mailTo,
+						$reference,
+						$text,
+						'password-reset',
+						$config
+					);
 					}
 					echo "If the email address is known, a password reset link has been sent.";
 					$showForm = false;

@@ -3,10 +3,40 @@ require_once dirname(__DIR__) . "/bootstrap/app.php";
 mds_start_session();
 require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
 require_once dirname(__DIR__) . "/app/Application/dbUpdateData.php";
-//require_once(__DIR__ . "/../../configuration.php");
+require_once dirname(__DIR__) . "/app/Application/NotificationService.php";
+require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
 
 $config = new configuration();
-$var_AdminEmailAddress = $config::$adminEmailAddress;
+
+$sendActivationEmail = static function ($userId, $toEmail, $firstName) use ($config) {
+    $actualLink = mds_absolute_url('activate.php?id=' . (int)$userId);
+    $applicationName = trim((string)$config::$applicationName) ?: 'Maritime Data Server';
+    if (mds_current_language() === 'de') {
+        $subject = $applicationName . ' - Konto aktivieren';
+        $content = "Hallo " . trim((string)$firstName) . ",\n\n";
+        $content .= "oeffne den folgenden Link, um dein Konto zu aktivieren:\n" . $actualLink . "\n\n";
+        $content .= "Dein Maritime Data Server Team\n";
+    } else {
+        $subject = $applicationName . ' - Account activation';
+        $content = "Hi " . trim((string)$firstName) . ",\n\n";
+        $content .= "open the following link to activate your account:\n" . $actualLink . "\n\n";
+        $content .= "Your Maritime Data Server team\n";
+    }
+
+    $sent = NotificationService::sendTransactionalEmail(
+        $toEmail,
+        $subject,
+        $content,
+        'account-activation',
+        $config
+    );
+    writeToLogFunction::info(
+        'Registration activation email dispatch finished.',
+        __FILE__,
+        array('userId' => (int)$userId, 'acceptedByPhpMail' => $sent)
+    );
+    return $sent;
+};
 
 if (count($_POST) > 0) {
     if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
@@ -37,7 +67,7 @@ if (count($_POST) > 0) {
         }
     }
     /* Password Matching Validation */
-    if ($_POST['password'] != $_POST['confirm_password']) {
+    if (($_POST['password'] ?? '') !== ($_POST['confirm_password'] ?? '')) {
         $message = 'Passwords should be same<br>';
         $type = "error";
     }
@@ -59,37 +89,37 @@ if (count($_POST) > 0) {
     }
 
     if (! isset($message)) {
-        $dbData = myFunctions::isUserRegistered($_POST["userEmail"]);
+        $userEmail = strtolower(trim((string)$_POST["userEmail"]));
+        $dbData = myFunctions::isUserRegistered($userEmail);
 
         if (!$dbData) {
             $hashedPassword = password_hash(($_POST["password"]), PASSWORD_DEFAULT);
 
-            $current_id = dbUpdateData::insertUser($_POST["userEmail"], $hashedPassword, $_POST["firstName"], $_POST["lastName"]);
+            $current_id = dbUpdateData::insertUser($userEmail, $hashedPassword, $_POST["firstName"], $_POST["lastName"]);
 
             if (! empty($current_id)) {
-                $actual_link = mds_absolute_url('activate.php?id=' . $current_id);
-                $toEmail = $_POST["userEmail"];
-                $subject = "User Registration Activation Email";
-                $content = "Hi " . $_POST["firstName"] . " click this link to activate your account. <a href='" . $actual_link . "'>" . $actual_link . "</a><br>Your MDS Team.";
-                $mailHeaders = "From: MDS User Registration <" . $var_AdminEmailAddress . ">\r\n";
-                $mailHeaders .= "Reply-To: " . $var_AdminEmailAddress . "\r\n";
-                $mailHeaders .= "Content-Type: text/html\r\n";                
-
-                if (mail($toEmail, $subject, $content, $mailHeaders)) {
-                    $message = "You have registered and the activation mail is sent to your email. Click the activation link to activate you account.";
-                    $type = "success";
-                }
+                $mailAccepted = $sendActivationEmail($current_id, $userEmail, $_POST["firstName"]);
+                $message = $mailAccepted ? mds_t('register.activation_mail_queued') : mds_t('register.activation_mail_failed');
+                $type = $mailAccepted ? "success" : "error";
                 unset($_POST);
             } else {
                 $message = "problem in registration. Try Again!";
+                $type = "error";
             }
         } else {
-            $message = "User Email is already in use.";
-            $type = "error";
+            $existingUser = new user($userEmail);
+            if (!(bool)$existingUser->isActive()) {
+                $mailAccepted = $sendActivationEmail($existingUser->getId(), $existingUser->getEmail(), $existingUser->getFirstName());
+                $message = $mailAccepted ? mds_t('register.activation_mail_queued') : mds_t('register.activation_mail_failed');
+                $type = $mailAccepted ? "success" : "error";
+                unset($_POST);
+            } else {
+                $message = mds_t('register.email_in_use');
+                $type = "error";
+            }
         }
     }
 }
-require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
 include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
 ?>
     <?php

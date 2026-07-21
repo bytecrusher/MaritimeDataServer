@@ -1114,7 +1114,8 @@ th.rotated-text > div > span {
               <div class="row">
                 <label for="systemEmailAddress" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.system_email_sender'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
-                  <input class="form-control" id="systemEmailAddress" name="systemEmailAddress" type="text" value="<?php echo $config::$systemEmailAddress; ?>" required>
+                  <input class="form-control" id="systemEmailAddress" name="systemEmailAddress" type="email" value="<?php echo mds_h($config::$systemEmailAddress); ?>" required>
+                  <div class="form-text"><?php echo htmlspecialchars(mds_t('settings.system_email_sender_help'), ENT_QUOTES, 'UTF-8'); ?></div>
                 </div>
               </div>
             </div>

@@ -370,6 +370,22 @@ Verhalten bei neuen oder unvollstaendig provisionierten Boards:
 
 ## Benachrichtigungen
 
+### Registrierung und Passwort-Reset
+
+Aktivierungs- und Passwort-Reset-Mails werden als transaktionale Mails versendet. Sie sind nicht von der Einstellung `sendEmails` fuer optionale Board- und Sensoralarme abhaengig. Als Absender wird primaer `systemEmailAddress` verwendet.
+
+Fuer Netcup/Plesk sollte `systemEmailAddress` eine gueltige Adresse der eigenen Domain sein, beispielsweise `noreply@derguntmar.de`. Eine fremde Absenderdomain wie GMX kann wegen SPF oder DMARC abgewiesen werden, obwohl PHP die Mail zuvor angenommen hat.
+
+Die Logansicht unterscheidet folgende Faelle:
+
+- `Transactional email delivery requested`: MDS hat einen Versand gestartet.
+- `Calling PHP mail()`: verwendeter Transport und maskierte Adressen werden protokolliert.
+- `PHP mail() accepted the email for local delivery`: der lokale Mailserver hat die Nachricht angenommen; dies ist noch keine Zustellbestaetigung des Empfaengers.
+- `PHP mail() rejected the email`: PHP oder der lokale Mailtransport hat den Versand abgelehnt.
+- `Configured email sender domain differs ...`: die Absenderdomain passt nicht zur Website und sollte geprueft werden.
+
+Bei einem bereits registrierten, aber noch nicht aktivierten Konto kann das Registrierungsformular erneut abgesendet werden. MDS versendet dann eine neue Aktivierungsmail, statt den Account dauerhaft zu blockieren.
+
 ### Offline-Benachrichtigungen
 
 Offline-Mails werden ueber diesen Wartungspfad verarbeitet:
