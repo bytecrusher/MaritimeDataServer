@@ -8,6 +8,7 @@ require_once(__DIR__ . '/../Domain/Board/get_data.php');
 class NotificationService
 {
     private const STATUS_FILE = __DIR__ . '/../../var/status/notification_status.json';
+    private static $lastDeliveryReport = null;
 
     public static function sendPendingNotifications()
     {
@@ -102,6 +103,11 @@ class NotificationService
         $purpose = trim((string)$purpose) ?: 'transactional';
 
         if (!filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+            self::$lastDeliveryReport = array(
+                'status' => 'invalid_recipient',
+                'purpose' => $purpose,
+                'message' => 'The recipient address is invalid.',
+            );
             writeToLogFunction::warning(
                 'Transactional email rejected because the recipient address is invalid.',
                 __FILE__,
@@ -121,6 +127,31 @@ class NotificationService
         );
 
         return self::sendEmail($toEmail, $subject, (string)$message, $config, $purpose);
+    }
+
+    public static function getLastDeliveryReport()
+    {
+        return self::$lastDeliveryReport;
+    }
+
+    public static function getMailConfigurationDiagnostics($config = null)
+    {
+        $config = $config ?: new configuration();
+        $fromAddress = trim((string)($config::$systemEmailAddress ?: $config::$adminEmailAddress));
+        $senderDomain = self::emailDomain($fromAddress);
+        $requestHost = self::requestHost();
+
+        return array(
+            'sender' => self::maskEmailAddress($fromAddress),
+            'senderDomain' => $senderDomain,
+            'senderValid' => filter_var($fromAddress, FILTER_VALIDATE_EMAIL) !== false,
+            'applicationHost' => $requestHost,
+            'senderMatchesHost' => self::senderDomainMatchesHost($senderDomain, $requestHost),
+            'mailFunctionAvailable' => function_exists('mail'),
+            'sendmailPath' => (string)ini_get('sendmail_path'),
+            'smtpHost' => (string)ini_get('SMTP'),
+            'smtpPort' => (string)ini_get('smtp_port'),
+        );
     }
 
     public static function getNotificationStatusOverview($userId = null, $isAdmin = false)
@@ -553,6 +584,11 @@ class NotificationService
     {
         $fromAddress = trim((string)($config::$systemEmailAddress ?: $config::$adminEmailAddress));
         if (!filter_var($fromAddress, FILTER_VALIDATE_EMAIL)) {
+            self::$lastDeliveryReport = array(
+                'status' => 'invalid_sender',
+                'purpose' => $purpose,
+                'message' => 'The configured sender address is invalid.',
+            );
             writeToLogFunction::warning(
                 'Email could not be sent because the configured sender address is invalid.',
                 __FILE__,
@@ -599,6 +635,13 @@ class NotificationService
         $sent = mail($toEmail, $subject, $message, $mailHeaders);
         $mailError = error_get_last();
         if (!$sent) {
+            self::$lastDeliveryReport = array(
+                'status' => 'rejected',
+                'purpose' => $purpose,
+                'message' => is_array($mailError) && !empty($mailError['message'])
+                    ? (string)$mailError['message']
+                    : 'PHP mail() rejected the message.',
+            );
             writeToLogFunction::warning(
                 'PHP mail() rejected the email.',
                 $_SERVER["SCRIPT_FILENAME"] ?? __FILE__,
@@ -617,21 +660,24 @@ class NotificationService
             ))
         );
 
+        self::$lastDeliveryReport = array(
+            'status' => 'accepted',
+            'purpose' => $purpose,
+            'message' => 'PHP accepted the message for local delivery; recipient delivery is not confirmed.',
+        );
+
         return true;
     }
 
     private static function logSenderDomainWarning($fromAddress, $purpose)
     {
         $senderDomain = self::emailDomain($fromAddress);
-        $requestHost = strtolower((string)preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+        $requestHost = self::requestHost();
         if ($senderDomain === '' || $requestHost === '' || $requestHost === 'localhost') {
             return;
         }
 
-        $domainMatches = $requestHost === $senderDomain
-            || substr($requestHost, -(strlen($senderDomain) + 1)) === '.' . $senderDomain
-            || substr($senderDomain, -(strlen($requestHost) + 1)) === '.' . $requestHost;
-        if (!$domainMatches) {
+        if (!self::senderDomainMatchesHost($senderDomain, $requestHost)) {
             writeToLogFunction::warning(
                 'Configured email sender domain differs from the application host; SPF or DMARC may reject delivery.',
                 __FILE__,
@@ -661,6 +707,22 @@ class NotificationService
     {
         $separator = strrpos((string)$emailAddress, '@');
         return $separator === false ? '' : strtolower(substr((string)$emailAddress, $separator + 1));
+    }
+
+    private static function requestHost()
+    {
+        return strtolower((string)preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+    }
+
+    private static function senderDomainMatchesHost($senderDomain, $requestHost)
+    {
+        if ($senderDomain === '' || $requestHost === '' || $requestHost === 'localhost') {
+            return true;
+        }
+
+        return $requestHost === $senderDomain
+            || substr($requestHost, -(strlen($senderDomain) + 1)) === '.' . $senderDomain
+            || substr($senderDomain, -(strlen($requestHost) + 1)) === '.' . $requestHost;
     }
 
     private static function buildSubject($config, $suffix)

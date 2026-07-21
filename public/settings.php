@@ -94,6 +94,7 @@ $notificationJobStatus = $notificationOverview['jobStatus'] ?? null;
 $offlineBoardOverview = $notificationOverview['offlineBoards'] ?? array();
 $activeSensorAlertsOverview = $notificationOverview['activeSensorAlerts'] ?? array();
 $migrationStatus = $pageData['migrationStatus'] ?? array();
+$mailDiagnostics = NotificationService::getMailConfigurationDiagnostics($config);
 
 include_once dirname(__DIR__) . "/app/Presentation/Common/header.inc.php";
 ?>
@@ -399,7 +400,7 @@ th.rotated-text > div > span {
             <div class="row">
               <div class="col-sm-offset-2 col-sm-10">
               <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
-              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailUser"><?php echo htmlspecialchars(mds_t('settings.send_test_mail'), ENT_QUOTES, 'UTF-8'); ?></button>
+              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailUser" formmethod="post" formnovalidate><?php echo htmlspecialchars(mds_t('settings.send_test_mail'), ENT_QUOTES, 'UTF-8'); ?></button>
               </div>
             </div>
           </div>
@@ -1121,6 +1122,31 @@ th.rotated-text > div > span {
             </div>
           </div>
 
+          <?php
+            $mailDiagnosticsOk = !empty($mailDiagnostics['senderValid'])
+              && !empty($mailDiagnostics['senderMatchesHost'])
+              && !empty($mailDiagnostics['mailFunctionAvailable']);
+          ?>
+          <div class="alert <?php echo $mailDiagnosticsOk ? 'alert-success' : 'alert-warning'; ?>" role="status">
+            <strong><?php echo htmlspecialchars(mds_t('settings.mail_diagnostics'), ENT_QUOTES, 'UTF-8'); ?></strong>
+            <div class="mt-2 small">
+              <?php echo htmlspecialchars(mds_t('settings.mail_sender_status'), ENT_QUOTES, 'UTF-8'); ?>:
+              <strong><?php echo htmlspecialchars((string)($mailDiagnostics['sender'] ?: '-'), ENT_QUOTES, 'UTF-8'); ?></strong>
+              (<?php echo !empty($mailDiagnostics['senderValid']) ? 'OK' : htmlspecialchars(mds_t('settings.mail_invalid'), ENT_QUOTES, 'UTF-8'); ?>)
+            </div>
+            <div class="small">
+              <?php echo htmlspecialchars(mds_t('settings.mail_domain_status'), ENT_QUOTES, 'UTF-8'); ?>:
+              <strong><?php echo !empty($mailDiagnostics['senderMatchesHost']) ? 'OK' : htmlspecialchars(mds_t('settings.mail_domain_mismatch'), ENT_QUOTES, 'UTF-8'); ?></strong>
+            </div>
+            <div class="small">
+              PHP mail(): <strong><?php echo !empty($mailDiagnostics['mailFunctionAvailable']) ? 'OK' : htmlspecialchars(mds_t('settings.mail_unavailable'), ENT_QUOTES, 'UTF-8'); ?></strong>
+              <?php if (!empty($mailDiagnostics['sendmailPath'])) { ?>
+                &middot; <code><?php echo htmlspecialchars((string)$mailDiagnostics['sendmailPath'], ENT_QUOTES, 'UTF-8'); ?></code>
+              <?php } ?>
+            </div>
+            <div class="mt-2 small"><?php echo htmlspecialchars(mds_t('settings.mail_test_save_hint'), ENT_QUOTES, 'UTF-8'); ?></div>
+          </div>
+
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
@@ -1328,7 +1354,7 @@ th.rotated-text > div > span {
           <div class="form-group">
             <div class="col col-sm-offset-2 col-sm-10">
               <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
-              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailSystem"><?php echo htmlspecialchars(mds_t('settings.system_test_mail'), ENT_QUOTES, 'UTF-8'); ?></button>
+              <button type="submit" class="btn btn-outline-secondary ms-2" formaction="?save=testMailSystem" formmethod="post" formnovalidate><?php echo htmlspecialchars(mds_t('settings.system_test_mail'), ENT_QUOTES, 'UTF-8'); ?></button>
             </div>
           </div>
         </form>

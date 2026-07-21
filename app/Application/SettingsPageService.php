@@ -97,16 +97,16 @@ class SettingsPageService
             }
         } elseif ($save === 'testMailUser') {
             if (NotificationService::sendTestEmail($userObj->getEmail(), $config, 'user-settings')) {
-                $result['success_msg'] = 'Test email sent to your user address.';
+                $result['success_msg'] = mds_t('settings.test_mail_accepted');
             } else {
-                $result['error_msg'] = 'Test email could not be sent.';
+                $result['error_msg'] = self::mailDeliveryErrorMessage();
             }
         } elseif ($save === 'testMailSystem') {
-            $targetEmail = trim((string)($config::$systemEmailAddress ?: $config::$adminEmailAddress ?: $userObj->getEmail()));
+            $targetEmail = trim((string)$userObj->getEmail());
             if (NotificationService::sendTestEmail($targetEmail, $config, 'admin-settings')) {
-                $result['success_msg'] = 'System test email sent.';
+                $result['success_msg'] = mds_t('settings.test_mail_accepted');
             } else {
-                $result['error_msg'] = 'System test email could not be sent.';
+                $result['error_msg'] = self::mailDeliveryErrorMessage();
             }
         } elseif ($save === 'runAutomaticMigrations') {
             try {
@@ -129,6 +129,13 @@ class SettingsPageService
         }
 
         return $result;
+    }
+
+    private static function mailDeliveryErrorMessage()
+    {
+        $report = NotificationService::getLastDeliveryReport();
+        $reason = is_array($report) ? trim((string)($report['message'] ?? '')) : '';
+        return mds_t('settings.test_mail_failed') . ($reason !== '' ? ' ' . $reason : '');
     }
 
     public static function handleBoardFormSubmission($userObj, $post)
