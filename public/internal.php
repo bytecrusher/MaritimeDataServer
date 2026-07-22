@@ -1037,17 +1037,17 @@
     padding: 1.25rem 0 0;
   }
   .dashboard-shell {
-    gap: 0.85rem;
+    gap: 1.25rem;
     padding: 0;
   }
   .dashboard-toolbar {
     position: relative;
     justify-content: flex-end;
-    padding: 0.1rem 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+    padding: 0.8rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1.1rem;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
   }
   .dashboard-stat-pill {
     min-height: 2.7rem;
