@@ -1025,7 +1025,7 @@
   #internalTabs .nav-link.active i {
     color: #a7f3d0;
   }
-  .internal-tab-shell {
+  body.mds-app-shell.mds-page-internal .internal-tab-shell {
     padding: 0;
     border: 0;
     border-radius: 0;
