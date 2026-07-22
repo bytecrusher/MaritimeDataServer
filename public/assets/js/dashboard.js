@@ -147,6 +147,8 @@ function getGaugeStyleConfig(gaugeStyle) {
 }
 
 function initializeDashboardToolbar() {
+  initializeDashboardGaugeToggles();
+
   const onlineToggle = document.getElementById('dashboard-online-only-toggle');
   if (!onlineToggle) {
     return;
@@ -156,6 +158,57 @@ function initializeDashboardToolbar() {
   onlineToggle.addEventListener('change', function () {
     toggleDashboardOnlineOnly(onlineToggle.checked);
   });
+}
+
+function initializeDashboardGaugeToggles() {
+  document.querySelectorAll('[data-dashboard-gauge-toggle]').forEach(function (toggle) {
+    const boardId = toggle.dataset.boardId || '';
+    let collapsed = false;
+
+    try {
+      collapsed = window.localStorage.getItem('mds.dashboard.gauges.collapsed.' + boardId) === '1';
+    } catch (error) {
+      collapsed = false;
+    }
+
+    setDashboardGaugeSection(toggle, collapsed);
+    toggle.addEventListener('click', function () {
+      const shouldCollapse = toggle.getAttribute('aria-expanded') === 'true';
+      setDashboardGaugeSection(toggle, shouldCollapse);
+      try {
+        window.localStorage.setItem('mds.dashboard.gauges.collapsed.' + boardId, shouldCollapse ? '1' : '0');
+      } catch (error) {
+        // The toggle remains functional when browser storage is unavailable.
+      }
+    });
+  });
+}
+
+function setDashboardGaugeSection(toggle, collapsed) {
+  const targetId = toggle.getAttribute('aria-controls');
+  const gaugeSection = targetId ? document.getElementById(targetId) : null;
+  if (!gaugeSection) {
+    return;
+  }
+
+  const boardCard = toggle.closest('.dashboard-board-card');
+  const label = collapsed ? toggle.dataset.showLabel : toggle.dataset.hideLabel;
+  const icon = toggle.querySelector('i');
+  const labelNode = toggle.querySelector('span');
+
+  gaugeSection.hidden = collapsed;
+  toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  toggle.title = label || '';
+  if (boardCard) {
+    boardCard.classList.toggle('is-gauges-collapsed', collapsed);
+  }
+  if (labelNode) {
+    labelNode.textContent = label || '';
+  }
+  if (icon) {
+    icon.classList.toggle('bi-chevron-down', collapsed);
+    icon.classList.toggle('bi-chevron-up', !collapsed);
+  }
 }
 
 function toggleDashboardOnlineOnly(onlineOnly) {

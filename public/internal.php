@@ -836,17 +836,54 @@
     .chart-device-filter > * {
       flex: 0 0 auto;
     }
+    .chart-panel + .chart-panel {
+      margin-top: 0.7rem;
+    }
+    .chart-panel .tab-section-title p {
+      display: none;
+    }
+    .chart-panel-surface {
+      padding: 0.75rem;
+    }
+    .chart-panel-surface.mb-4 {
+      margin-bottom: 0.8rem !important;
+    }
+    .chart-scroll-shell,
+    .event-summary-chart-shell {
+      overflow-x: hidden;
+    }
     .chart-scroll-inner {
-      min-width: 820px;
-      height: 430px;
-      padding: 0.75rem 0.85rem 0.7rem;
+      width: 100%;
+      min-width: 0;
+      height: 280px;
+      padding: 0.55rem 0.45rem 0.45rem;
     }
     .chart-mobile-hint {
-      display: block;
+      display: none;
     }
     .event-chart-scroll-inner {
-      min-width: 760px;
-      height: 390px;
+      width: 100%;
+      min-width: 0;
+      height: 280px;
+    }
+    .event-window-summary {
+      display: flex;
+      gap: 0.65rem;
+      overflow-x: auto;
+      padding-bottom: 0.35rem;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+    }
+    .event-window-card {
+      flex: 0 0 min(82vw, 280px);
+      scroll-snap-align: start;
+    }
+    .event-window-control {
+      width: 100%;
+      min-width: 0;
+    }
+    .event-chart-legend {
+      margin-bottom: 0.45rem;
     }
   }
   #chart-container-debug {
@@ -1133,6 +1170,36 @@
   .dashboard-board-badges .badge {
     border-radius: 999px;
   }
+  .dashboard-board-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.25rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 750;
+    transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+  }
+  .dashboard-board-toggle:hover,
+  .dashboard-board-toggle:focus-visible {
+    border-color: rgba(8, 122, 153, 0.35);
+    background: #fff;
+    color: #087a99;
+  }
+  .dashboard-board-toggle i {
+    transition: transform 180ms ease;
+  }
+  .dashboard-board-card.is-gauges-collapsed .dashboard-board-header {
+    border-bottom-color: transparent;
+  }
+  .dashboard-board-gauges[hidden] {
+    display: none !important;
+  }
   .dashboard-board-gauges {
     grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
     gap: 0.9rem;
@@ -1327,6 +1394,21 @@
     }
     .dashboard-gauge-card {
       min-height: 260px;
+    }
+    .dashboard-board-toggle {
+      width: 2.25rem;
+      padding: 0.4rem;
+    }
+    .dashboard-board-toggle span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   }
 </style>
@@ -1558,6 +1640,20 @@
                             <?php echo htmlspecialchars($boardEventStatus['modeLabel'], ENT_QUOTES, 'UTF-8'); ?>
                           </span>
                         <?php } ?>
+                        <button
+                          type="button"
+                          class="dashboard-board-toggle"
+                          data-dashboard-gauge-toggle
+                          data-board-id="<?php echo $singleRowmyboard->getId(); ?>"
+                          data-show-label="<?php echo htmlspecialchars(mds_t('common.show_gauges'), ENT_QUOTES, 'UTF-8'); ?>"
+                          data-hide-label="<?php echo htmlspecialchars(mds_t('common.hide_gauges'), ENT_QUOTES, 'UTF-8'); ?>"
+                          aria-expanded="true"
+                          aria-controls="gaugescontainer<?php echo $singleRowmyboard->getId(); ?>"
+                          title="<?php echo htmlspecialchars(mds_t('common.hide_gauges'), ENT_QUOTES, 'UTF-8'); ?>"
+                        >
+                          <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                          <span><?php echo htmlspecialchars(mds_t('common.hide_gauges'), ENT_QUOTES, 'UTF-8'); ?></span>
+                        </button>
                       </div>
                     </div>
                     <div class="card-block dashboard-board-gauges" id="gaugescontainer<?php echo $singleRowmyboard->getId() ?>">

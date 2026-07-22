@@ -88,9 +88,12 @@ function mdsLineChartOptions() {
         },
         ticks: {
           autoSkip: true,
-          maxTicksLimit: isMobile ? 6 : 10,
+          maxTicksLimit: isMobile ? 4 : 10,
           maxRotation: 0,
           color: '#64748b',
+          font: {
+            size: isMobile ? 10 : 12,
+          },
           callback: function (value) {
             return mdsFormatChartXAxisLabel(this.getLabelForValue(value));
           },
@@ -98,8 +101,11 @@ function mdsLineChartOptions() {
       },
       y: {
         ticks: {
-          maxTicksLimit: isMobile ? 6 : 8,
+          maxTicksLimit: isMobile ? 5 : 8,
           color: '#475569',
+          font: {
+            size: isMobile ? 10 : 12,
+          },
         },
         grid: {
           color: 'rgba(148, 163, 184, 0.16)',
@@ -110,11 +116,19 @@ function mdsLineChartOptions() {
 }
 
 function mdsEventChartHeight() {
-  return mdsIsMobileChartViewport() ? '390px' : '320px';
+  return mdsIsMobileChartViewport() ? '280px' : '320px';
 }
 
 function mdsEventTimelineChartHeight() {
-  return mdsIsMobileChartViewport() ? '390px' : '300px';
+  return mdsIsMobileChartViewport() ? '280px' : '300px';
+}
+
+function mdsCompactEventLaneLabel(label) {
+  const value = String(label || '');
+  if (!mdsIsMobileChartViewport() || value.length <= 14) {
+    return value;
+  }
+  return value.substring(0, 13) + '…';
 }
 
 function mdsEventChartInner(canvasId) {
@@ -128,9 +142,10 @@ function mdsSetEventTimelineChartHeight(visibleLaneCount) {
     return;
   }
 
-  const baseHeight = mdsIsMobileChartViewport() ? 390 : 320;
-  const laneHeight = mdsIsMobileChartViewport() ? 78 : 64;
-  const dynamicHeight = Math.max(baseHeight, (Math.max(1, visibleLaneCount) * laneHeight) + 120);
+  const baseHeight = mdsIsMobileChartViewport() ? 280 : 320;
+  const laneHeight = mdsIsMobileChartViewport() ? 48 : 64;
+  const verticalPadding = mdsIsMobileChartViewport() ? 90 : 120;
+  const dynamicHeight = Math.max(baseHeight, (Math.max(1, visibleLaneCount) * laneHeight) + verticalPadding);
   eventTimelineInner.style.height = dynamicHeight + 'px';
 }
 
@@ -501,7 +516,7 @@ function initializeEventSummaryChart() {
           },
           ticks: {
             color: '#475569',
-            maxTicksLimit: mdsIsMobileChartViewport() ? 6 : 10,
+            maxTicksLimit: mdsIsMobileChartViewport() ? 4 : 10,
             font: {
               weight: '600',
             }
@@ -512,7 +527,7 @@ function initializeEventSummaryChart() {
           beginAtZero: true,
           ticks: {
             color: '#64748b',
-            maxTicksLimit: mdsIsMobileChartViewport() ? 6 : 8,
+            maxTicksLimit: mdsIsMobileChartViewport() ? 5 : 8,
             callback: function (value) {
               return Number(value).toFixed(1) + ' h';
             }
@@ -521,7 +536,7 @@ function initializeEventSummaryChart() {
             color: 'rgba(148, 163, 184, 0.18)',
           },
           title: {
-            display: true,
+            display: !mdsIsMobileChartViewport(),
             text: mdsLabel('hoursPerDay', 'Hours per day'),
             color: '#475569',
           }
@@ -614,7 +629,7 @@ function initializeEventTimeline24hChart() {
           ticks: {
             color: '#475569',
             maxRotation: 0,
-            maxTicksLimit: mdsIsMobileChartViewport() ? 6 : 10,
+            maxTicksLimit: mdsIsMobileChartViewport() ? 4 : 10,
             callback: function (value) {
               return formatEventTimelineAxisLabel(value);
             },
@@ -631,7 +646,8 @@ function initializeEventTimeline24hChart() {
               if (Math.abs(Number(value) - laneIndex) > 0.01) {
                 return '';
               }
-              return (window.eventTimelineLaneLabels && window.eventTimelineLaneLabels[laneIndex]) ? window.eventTimelineLaneLabels[laneIndex] : '';
+              const laneLabel = (window.eventTimelineLaneLabels && window.eventTimelineLaneLabels[laneIndex]) ? window.eventTimelineLaneLabels[laneIndex] : '';
+              return mdsCompactEventLaneLabel(laneLabel);
             }
           },
           grid: {
@@ -1143,12 +1159,13 @@ function refreshResponsiveChartOptions() {
 
   if (window.eventSummaryChart) {
     window.eventSummaryChart.options.plugins.legend.display = !mdsIsMobileChartViewport();
-    window.eventSummaryChart.options.scales.x.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 6 : 10;
-    window.eventSummaryChart.options.scales.y.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 6 : 8;
+    window.eventSummaryChart.options.scales.x.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 4 : 10;
+    window.eventSummaryChart.options.scales.y.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 5 : 8;
+    window.eventSummaryChart.options.scales.y.title.display = !mdsIsMobileChartViewport();
   }
   if (window.eventTimeline24hChart) {
     window.eventTimeline24hChart.options.plugins.legend.display = !mdsIsMobileChartViewport();
-    window.eventTimeline24hChart.options.scales.x.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 6 : 10;
+    window.eventTimeline24hChart.options.scales.x.ticks.maxTicksLimit = mdsIsMobileChartViewport() ? 4 : 10;
     window.eventTimeline24hChart.options.scales.y.max = Math.max(0.5, (Array.isArray(window.eventTimelineLaneLabels) ? window.eventTimelineLaneLabels.length : 1) - 0.5);
   }
 }
