@@ -478,38 +478,75 @@ class dbUpdateData {
     }
   }
 
-  /**
-  * Update Board.
-  * @return bool — TRUE on success or FALSE on failure.
-  * @throws Exception — Return Exception message on error.
-  */
-  public static function removeBoardOwner($post) {
+  public static function deleteBoard($boardId) {
     $pdo = dbConfig::getInstance();
-   	 if (!isset($post['performUpdate'])) {
-   		$performUpdate = 0;
-   	 } else {
-   		$performUpdate = 1;
-   	 }
-   	 if (!isset($post['alarmOnUnavailable'])) {
-   		$alarmOnUnavailable = 0;
-   	 } else {
-   		$alarmOnUnavailable = 1;
-   	 }
-    if (!isset($post['onDashboard'])) {
-      $onDashboard = 0;
-    } else {
-      $onDashboard = 1;
+    $boardId = (int)$boardId;
+    if ($boardId <= 0) {
+      throw new InvalidArgumentException('A valid board ID is required.');
     }
-    if ($post['ownerId'] == "") {
-      $post['ownerId'] = null;
-    }
+
+    $deletionCounts = array();
     try {
-      $statement2 = $pdo->prepare("UPDATE boardConfig SET ownerUserId=NULL WHERE id=?");
-      return $statement2->execute(array($post['id']));
-    } catch (PDOException $e) {
-      writeToLogFunction::write_to_log("Error: Board not updated successfully for user id: " . $post['ownerId'], $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-      throw new Exception('Board not updated successfully.');
+      $pdo->beginTransaction();
+
+      $boardStatement = $pdo->prepare("SELECT id, name, macAddress FROM boardConfig WHERE id = ? FOR UPDATE");
+      $boardStatement->execute(array($boardId));
+      $board = $boardStatement->fetch(PDO::FETCH_ASSOC);
+      if (!$board) {
+        throw new RuntimeException('Board does not exist.');
+      }
+
+      $sensorStatement = $pdo->prepare("SELECT id FROM sensorConfig WHERE boardId = ?");
+      $sensorStatement->execute(array($boardId));
+      $sensorIds = array_map('intval', $sensorStatement->fetchAll(PDO::FETCH_COLUMN));
+
+      if (!empty($sensorIds)) {
+        $sensorPlaceholders = implode(',', array_fill(0, count($sensorIds), '?'));
+        foreach (array('sensor_permissions', 'sensorData', 'sensorChannelConfig') as $tableName) {
+          if (($tableName === 'sensor_permissions') && !self::tableExists($pdo, $tableName)) {
+            continue;
+          }
+          $foreignKeyColumn = $tableName === 'sensorChannelConfig' ? 'sensorConfigId' : 'sensorId';
+          $deleteStatement = $pdo->prepare("DELETE FROM `" . $tableName . "` WHERE `" . $foreignKeyColumn . "` IN (" . $sensorPlaceholders . ")");
+          $deleteStatement->execute($sensorIds);
+          $deletionCounts[$tableName] = $deleteStatement->rowCount();
+        }
+      }
+
+      $deleteSensors = $pdo->prepare("DELETE FROM sensorConfig WHERE boardId = ?");
+      $deleteSensors->execute(array($boardId));
+      $deletionCounts['sensorConfig'] = $deleteSensors->rowCount();
+
+      if (self::tableExists($pdo, 'board_permissions')) {
+        $deletePermissions = $pdo->prepare("DELETE FROM board_permissions WHERE boardId = ?");
+        $deletePermissions->execute(array($boardId));
+        $deletionCounts['board_permissions'] = $deletePermissions->rowCount();
+      }
+
+      $deleteBoard = $pdo->prepare("DELETE FROM boardConfig WHERE id = ?");
+      $deleteBoard->execute(array($boardId));
+      if ($deleteBoard->rowCount() !== 1) {
+        throw new RuntimeException('Board row was not deleted.');
+      }
+
+      $pdo->commit();
+      writeToLogFunction::info('Board and dependent data deleted.', __FILE__, array(
+        'boardId' => $boardId,
+        'boardName' => $board['name'] ?? null,
+        'macAddress' => $board['macAddress'] ?? null,
+        'deletedRows' => $deletionCounts,
+      ));
+      return true;
+    } catch (Throwable $e) {
+      if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+      }
+      writeToLogFunction::error('Board deletion transaction failed.', __FILE__, array(
+        'boardId' => $boardId,
+        'deletedRowsBeforeRollback' => $deletionCounts,
+        'error' => $e->getMessage(),
+      ));
+      throw new RuntimeException('Board could not be deleted.', 0, $e);
     }
   }
 

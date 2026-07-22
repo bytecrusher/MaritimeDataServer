@@ -137,6 +137,80 @@ th.rotated-text > div > span {
     background: white;
 }
 
+.settings-log-disclosure {
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.settings-log-disclosure > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+    list-style: none;
+    color: #0f172a;
+    font-weight: 750;
+}
+
+.settings-log-disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+
+.settings-log-disclosure > summary::after {
+    content: "";
+    flex: 0 0 auto;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 180ms ease;
+}
+
+.settings-log-disclosure[open] > summary::after {
+    transform: rotate(225deg);
+}
+
+.settings-log-disclosure[open] > summary {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.settings-log-disclosure-body {
+    padding: 1rem;
+}
+
+.settings-log-table-scroll {
+    max-height: 360px;
+    overflow: auto;
+    scrollbar-width: thin;
+}
+
+.settings-log-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+}
+
+.settings-log-disclosure code {
+    overflow-wrap: anywhere;
+}
+
+#settings-log-content {
+    display: block;
+    width: 100%;
+    height: min(52vh, 460px);
+    min-height: 280px;
+    resize: vertical;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    scrollbar-width: thin;
+}
+
 @media (max-width: 767.98px) {
     .settings-tabs {
         gap: 0.35rem;
@@ -1425,11 +1499,16 @@ th.rotated-text > div > span {
 
       <!-- Modification of Log -->
       <div role="tabpanel" class="tab-pane" id="log">
-        <div class="card mb-3 shadow-sm">
-          <div class="card-body">
+        <details class="settings-log-disclosure mb-3">
+          <summary>
+            <span><?php echo htmlspecialchars(mds_t('settings.ota_update_log'), ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="badge text-bg-light"><?php echo count($otaUpdateLogs['entries'] ?? array()); ?></span>
+          </summary>
+          <div class="settings-log-disclosure-body">
+        <div class="card border-0 shadow-none mb-0">
+          <div class="card-body p-0">
             <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
               <div>
-                <h5 class="card-title mb-1"><?php echo htmlspecialchars(mds_t('settings.ota_update_log'), ENT_QUOTES, 'UTF-8'); ?></h5>
                 <div class="text-muted small"><?php echo htmlspecialchars(mds_t('settings.ota_update_log_text'), ENT_QUOTES, 'UTF-8'); ?></div>
               </div>
               <?php if (!empty($otaUpdateLogs['path'])) { ?>
@@ -1437,7 +1516,7 @@ th.rotated-text > div > span {
               <?php } ?>
             </div>
             <?php if (!empty($otaUpdateLogs['entries'])) { ?>
-              <div class="table-responsive">
+              <div class="table-responsive settings-log-table-scroll">
                 <table class="table table-sm align-middle mb-0">
                   <thead>
                     <tr>
@@ -1479,8 +1558,15 @@ th.rotated-text > div > span {
             <?php } ?>
           </div>
         </div>
-        <div class="panel panel-default p-2"><?php echo htmlspecialchars(mds_t('settings.log_hint'), ENT_QUOTES, 'UTF-8'); ?></div>
-        <div class="panel panel-default p-2">
+          </div>
+        </details>
+        <details class="settings-log-disclosure" id="settings-month-log" open>
+          <summary>
+            <span><?php echo htmlspecialchars(mds_t('settings.log_current_month'), ENT_QUOTES, 'UTF-8'); ?></span>
+            <span id="log-summary-count" class="badge text-bg-light"></span>
+          </summary>
+          <div class="settings-log-disclosure-body">
+          <div class="text-muted small mb-3"><?php echo htmlspecialchars(mds_t('settings.log_hint'), ENT_QUOTES, 'UTF-8'); ?></div>
           <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
             <span class="text-muted small"><?php echo htmlspecialchars(mds_t('settings.log_filter'), ENT_QUOTES, 'UTF-8'); ?></span>
             <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="<?php echo htmlspecialchars(mds_t('settings.log_filter'), ENT_QUOTES, 'UTF-8'); ?>">
@@ -1502,8 +1588,9 @@ th.rotated-text > div > span {
             </div>
             <span id="log-filter-count" class="text-muted small"></span>
           </div>
-          <textarea id="settings-log-content" style="height: 400px; width: 100%; font-family: monospace;" readonly><?php echo htmlspecialchars($currentLogContent); ?></textarea>
-        </div>
+          <textarea id="settings-log-content" readonly><?php echo htmlspecialchars($currentLogContent); ?></textarea>
+          </div>
+        </details>
       </div>
     </div>
   </div>
@@ -1551,6 +1638,17 @@ th.rotated-text > div > span {
     var rawLogContent = <?php echo json_encode((string)$currentLogContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
     var logTextarea = $('#settings-log-content');
     var logCount = $('#log-filter-count');
+    var logSummaryCount = $('#log-summary-count');
+
+    function scrollLogToLatestEntry() {
+      var logElement = logTextarea.get(0);
+      if (!logElement) {
+        return;
+      }
+      window.requestAnimationFrame(function() {
+        logElement.scrollTop = logElement.scrollHeight;
+      });
+    }
 
     function applyLogFilter(level) {
       var logLines = rawLogContent.split(/\r?\n/);
@@ -1563,13 +1661,24 @@ th.rotated-text > div > span {
       }
 
       logTextarea.val(filteredLines.join('\n'));
-      logCount.text(filteredLines.filter(function(line) {
+      var visibleEntryCount = filteredLines.filter(function(line) {
         return line.trim() !== '';
-      }).length + ' ' + <?php echo json_encode(mds_t('settings.log_filter_entries'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>);
+      }).length;
+      var countText = visibleEntryCount + ' ' + <?php echo json_encode(mds_t('settings.log_filter_entries'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+      logCount.text(countText);
+      logSummaryCount.text(visibleEntryCount);
+      scrollLogToLatestEntry();
     }
 
     $('input[name="logLevelFilter"]').on('change', function() {
       applyLogFilter($(this).val());
+    });
+
+    $('#settingsTabs a[href="#log"]').on('shown.bs.tab', scrollLogToLatestEntry);
+    $('#settings-month-log').on('toggle', function() {
+      if (this.open) {
+        scrollLogToLatestEntry();
+      }
     });
 
     applyLogFilter('ALL');

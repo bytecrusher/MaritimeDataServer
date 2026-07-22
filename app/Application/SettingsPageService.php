@@ -159,14 +159,23 @@ class SettingsPageService
                 $result['error_msg'] = 'Error while saving board changes.';
             }
         } elseif (isset($post['submit_formBoards_remove'])) {
+            $boardId = (int)($post['id'] ?? 0);
             try {
-                if (!myFunctions::canUserManageBoardAccess((int)$userObj->getId(), (int)($post['id'] ?? 0))) {
+                if (!myFunctions::canUserManageBoardAccess((int)$userObj->getId(), $boardId)) {
                     throw new RuntimeException('Access denied.');
                 }
-                dbUpdateData::removeBoardOwner($post);
-                $result['success_msg'] = 'Board successfully removed.';
-            } catch (Exception $e) {
-                $result['error_msg'] = 'Error while removing board.';
+                if (!dbUpdateData::deleteBoard($boardId)) {
+                    throw new RuntimeException('Board deletion returned no success result.');
+                }
+                $result['success_msg'] = mds_t('settings.board_removed');
+            } catch (Throwable $e) {
+                writeToLogFunction::error('Board removal request failed.', __FILE__, array(
+                    'boardId' => $boardId,
+                    'actorUserId' => (int)$userObj->getId(),
+                    'error' => $e->getMessage(),
+                    'cause' => $e->getPrevious() ? $e->getPrevious()->getMessage() : null,
+                ));
+                $result['error_msg'] = mds_t('settings.board_remove_failed');
             }
         }
 
