@@ -953,11 +953,12 @@
     background: #34d399;
     box-shadow: 0 0 0 0.32rem rgba(52, 211, 153, 0.12);
   }
-  .internal-hero h1 {
+  .mds-page-internal .internal-hero h1 {
     max-width: 780px;
-    color: #fff;
+    color: #f8fafc !important;
     font-size: clamp(2rem, 4vw, 3.45rem);
     line-height: 1.02;
+    text-shadow: 0 2px 20px rgba(2, 8, 23, 0.28);
   }
   .internal-hero p {
     max-width: 680px;
@@ -968,7 +969,7 @@
   }
   .internal-hero-status {
     display: grid;
-    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    grid-template-columns: minmax(140px, 1fr);
     gap: 0.65rem;
   }
   .internal-hero-stat {
@@ -1043,9 +1044,10 @@
     position: relative;
     justify-content: flex-end;
     padding: 0.8rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 1.1rem;
-    background: rgba(241, 245, 249, 0.86);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
   }
   .dashboard-stat-pill {
     min-height: 2.7rem;
@@ -1089,7 +1091,8 @@
     position: relative;
     border-radius: 1.35rem;
     border-color: rgba(15, 23, 42, 0.1);
-    box-shadow: 0 22px 55px rgba(15, 23, 42, 0.09);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
   }
   .dashboard-board-card::before {
     content: "";
@@ -1116,35 +1119,130 @@
   .dashboard-board-title h3 {
     font-size: 1.35rem;
   }
-  .dashboard-board-subtitle {
-    font-family: "SFMono-Regular", Consolas, monospace;
-    font-size: 0.8rem;
-    letter-spacing: 0.025em;
+  .dashboard-board-summary {
+    margin-top: 0.3rem;
+  }
+  .dashboard-board-summary span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 650;
   }
   .dashboard-board-badges .badge {
     border-radius: 999px;
   }
   .dashboard-board-gauges {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-    padding: 1.2rem;
-    background: rgba(248, 250, 252, 0.72);
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+    gap: 0.9rem;
+    padding: 1rem;
+    background:
+      linear-gradient(rgba(15, 118, 110, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 118, 110, 0.025) 1px, transparent 1px),
+      #f8fafc;
+    background-size: 28px 28px, 28px 28px, auto;
   }
   .dashboard-gauge-card {
-    min-height: 310px;
-    border-radius: 1.15rem;
+    min-height: 275px;
+    padding: 1.1rem;
+    overflow: hidden;
+    border-radius: 1.1rem;
     border-color: rgba(15, 23, 42, 0.1);
     background:
-      radial-gradient(circle at 90% 8%, rgba(34, 167, 196, 0.10), transparent 10rem),
-      linear-gradient(180deg, #fff 0%, #f3f7fa 100%);
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.055);
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--gauge-accent, #22a7c4) 11%, transparent), transparent 9rem),
+      linear-gradient(160deg, #fff 0%, #f3f7fa 100%);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  }
+  .dashboard-gauge-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 1.1rem;
+    left: 1.1rem;
+    height: 3px;
+    border-radius: 0 0 999px 999px;
+    background: var(--gauge-accent, #22a7c4);
+    opacity: 0.82;
+  }
+  .dashboard-gauge-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--gauge-accent, #22a7c4) 35%, rgba(15, 23, 42, 0.1));
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.09);
+  }
+  .dashboard-gauge-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
   }
   .dashboard-gauge-headline strong {
-    font-size: 1.12rem;
+    color: #0b2038;
+    font-size: 1.05rem;
+  }
+  .dashboard-gauge-headline span {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 650;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+  }
+  .dashboard-gauge-value {
+    justify-content: flex-end;
+    text-align: right;
   }
   .dashboard-gauge-value-number {
     color: #071a31;
-    font-size: 2.15rem;
+    font-size: clamp(1.65rem, 3vw, 2.15rem);
+    font-variant-numeric: tabular-nums;
+  }
+  .dashboard-gauge-value-unit {
+    color: #475569;
+    font-size: 0.9rem;
+  }
+  .dashboard-gauge-visual {
+    min-height: 150px;
+    height: 150px;
+    margin-top: 0;
+  }
+  .dashboard-gauge-card .gauge,
+  .dashboard-gauge-card svg.gauge {
+    max-width: 230px;
+    max-height: 155px;
+  }
+  .dashboard-gauge-card .gauge .dial {
+    stroke: #dbe6ee;
+  }
+  .dashboard-gauge-card .gauge .value {
+    filter: drop-shadow(0 2px 3px rgba(15, 23, 42, 0.12));
+    stroke-linecap: round;
+  }
+  .dashboard-gauge-scale {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.15rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.07);
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .dashboard-gauge-scale span {
+    display: grid;
+    gap: 0.15rem;
+  }
+  .dashboard-gauge-scale span:last-child {
+    text-align: right;
+  }
+  .dashboard-gauge-scale small {
+    color: #94a3b8;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    line-height: 1;
+    text-transform: uppercase;
   }
   .tab-section-card {
     padding: clamp(1rem, 2.5vw, 1.5rem);
@@ -1178,12 +1276,18 @@
       width: calc(100% - 20px);
     }
     .internal-hero {
-      gap: 1.35rem;
-      padding: 1.5rem;
+      gap: 1rem;
+      padding: 1.35rem;
       border-radius: 1.2rem;
     }
-    .internal-hero h1 {
-      font-size: clamp(1.85rem, 10vw, 2.65rem);
+    .mds-page-internal .internal-hero h1 {
+      font-size: clamp(2rem, 9vw, 2.65rem);
+      line-height: 1.04;
+    }
+    .internal-hero p {
+      margin-top: 0.7rem;
+      font-size: 0.98rem;
+      line-height: 1.5;
     }
     .internal-hero-status {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1191,10 +1295,18 @@
     }
     .internal-hero-stat {
       min-width: 0;
-      padding: 0.85rem;
+      padding: 0.75rem 0.85rem;
+    }
+    .internal-hero-stat strong {
+      font-size: 1.25rem;
+    }
+    .internal-hero-stat span {
+      font-size: 0.68rem;
     }
     #internalTabs .nav-link {
-      padding: 0.65rem 0.8rem;
+      gap: 0.4rem;
+      padding: 0.62rem 0.72rem;
+      font-size: 0.86rem;
     }
     .internal-tab-shell > .tab-pane {
       padding: 0.85rem 0 0;
@@ -1212,6 +1324,9 @@
     .dashboard-board-gauges {
       grid-template-columns: 1fr;
       padding: 0.8rem;
+    }
+    .dashboard-gauge-card {
+      min-height: 260px;
     }
   }
 </style>
@@ -1358,7 +1473,6 @@
     </div>
     <div class="internal-hero-status" aria-label="<?php echo htmlspecialchars(mds_t('internal.dashboard'), ENT_QUOTES, 'UTF-8'); ?>">
       <div class="internal-hero-stat"><strong><?php echo count($boardObjsArray); ?></strong><span><?php echo htmlspecialchars(mds_t('common.devices'), ENT_QUOTES, 'UTF-8'); ?></span></div>
-      <div class="internal-hero-stat"><strong><?php echo (int)$dashboardUpdateIntervalMs / 1000; ?>s</strong><span><?php echo htmlspecialchars(mds_t('common.refresh'), ENT_QUOTES, 'UTF-8'); ?></span></div>
     </div>
   </div>
   <div class="container" style="padding: 0px">
@@ -1432,11 +1546,8 @@
                     <div class="dashboard-board-header">
                       <div class="dashboard-board-title">
                         <h3><?php echo htmlspecialchars($singleRowmyboard->getName(), ENT_QUOTES, 'UTF-8'); ?></h3>
-                        <div class="dashboard-board-subtitle"><?php echo htmlspecialchars($singleRowmyboard->getMacAddress(), ENT_QUOTES, 'UTF-8'); ?></div>
                         <div class="dashboard-board-summary">
-                          <span><?php echo htmlspecialchars(mds_t('internal.update_every', array((int)$dashboardUpdateIntervalMs / 1000)), ENT_QUOTES, 'UTF-8'); ?></span>
-                          <span><?php echo htmlspecialchars(mds_t('internal.offline_timer', array((int)$singleRowmyboard->getOfflineDataTimer())), ENT_QUOTES, 'UTF-8'); ?></span>
-                          <span><?php echo htmlspecialchars(mds_t('internal.firmware_version', array($singleRowmyboard->getFirmwareVersion() ?: '-')), ENT_QUOTES, 'UTF-8'); ?></span>
+                          <span><i class="bi bi-cloud-arrow-down" aria-hidden="true"></i><?php echo htmlspecialchars(mds_t('internal.firmware_version', array($singleRowmyboard->getFirmwareVersion() ?: '-')), ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
                       </div>
                       <div class="dashboard-board-badges">
@@ -1508,9 +1619,9 @@
                               <i id='click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'></i>
                             </div>
                             <div class="dashboard-gauge-visual"></div>
-                            <div class="dashboard-gauge-meta">
-                              <span><?php echo htmlspecialchars($singleRowmyboard->getName(), ENT_QUOTES, 'UTF-8'); ?></span>
-                              <span><?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
+                            <div class="dashboard-gauge-scale" aria-label="Gauge range">
+                              <span><small><?php echo htmlspecialchars(mds_t('common.minimum'), ENT_QUOTES, 'UTF-8'); ?></small><?php echo htmlspecialchars(number_format((float)$SensorChannelConfigSingle['GaugeMinValue'], 1, '.', ''), ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
+                              <span><small><?php echo htmlspecialchars(mds_t('common.maximum'), ENT_QUOTES, 'UTF-8'); ?></small><?php echo htmlspecialchars(number_format((float)$SensorChannelConfigSingle['GaugeMaxValue'], 1, '.', ''), ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
                           </div>
                           <?php

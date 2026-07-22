@@ -35,6 +35,9 @@ function initializeDashboardCards() {
     }
 
     card.classList.add('dashboard-gauge-style-' + gaugeStyle);
+    if (/^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%]+\))$/i.test(normalColor)) {
+      card.style.setProperty('--gauge-accent', normalColor);
+    }
 
     const gaugeStyleConfig = getGaugeStyleConfig(gaugeStyle);
 
@@ -48,6 +51,7 @@ function initializeDashboardCards() {
       viewBox: gaugeStyleConfig.viewBox,
       id: gaugeKey,
       gaugeClass: gaugeStyleConfig.gaugeClass,
+      showValue: false,
       color: function (value) {
         if (value < lowThreshold) {
           return lowColor;
