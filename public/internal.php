@@ -1621,6 +1621,11 @@
                     return myFunctions::canUserAccessSensor((int)$currentUser->getId(), (int)($sensorRow['id'] ?? 0));
                   }));
                 }
+                $sensorMaxAgeMinutes = max(1, (int)$singleRowmyboard->getOfflineDataTimer());
+                $sensorActivitySummary = myFunctions::getSensorActivitySummary(
+                  array_column($mySensors2 ?: array(), 'id'),
+                  $sensorMaxAgeMinutes
+                );
                 $boardEventStatus = $eventStatusByBoard[$singleRowmyboard->getId()] ?? null;
                 $boardGaugeCount = 0;
                 ?>
@@ -1634,7 +1639,10 @@
                       </div>
                       <div class="dashboard-board-badges">
                         <span class="badge <?php echo $deviceOnline ? 'bg-success' : 'bg-danger'; ?>"><?php echo htmlspecialchars($deviceOnline ? mds_t('common.online') : mds_t('common.offline'), ENT_QUOTES, 'UTF-8'); ?></span>
-                        <span class="badge text-bg-light"><?php echo is_array($mySensors2) ? count($mySensors2) : 0; ?> <?php echo htmlspecialchars(mds_t('common.sensors'), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span
+                          class="badge text-bg-light"
+                          title="<?php echo htmlspecialchars(mds_t('internal.sensor_activity_hint', array($sensorActivitySummary['configured'], $sensorActivitySummary['withData'], $sensorActivitySummary['current'])), ENT_QUOTES, 'UTF-8'); ?>"
+                        ><?php echo htmlspecialchars(mds_t('internal.sensor_activity_badge', array($sensorActivitySummary['current'], $sensorActivitySummary['configured'])), ENT_QUOTES, 'UTF-8'); ?></span>
                         <?php if (is_array($boardEventStatus) && !empty($boardEventStatus['modeLabel'])) { ?>
                           <span class="badge <?php echo !empty($boardEventStatus['persistentOnline']) ? 'mds-persistent-online-badge' : 'mds-standby-badge'; ?>">
                             <?php echo htmlspecialchars($boardEventStatus['modeLabel'], ENT_QUOTES, 'UTF-8'); ?>
@@ -1673,6 +1681,8 @@
                         $SensorChannelConfigSingle = myFunctions::getSensorChannelConfig($singleRowMySensors['id'], $i);
                         $currentChannelValue = $singleRowMySensorsLastTimeSeen['value' . $i] ?? null;
                         $numericCurrentChannelValue = is_numeric($currentChannelValue) ? (float)$currentChannelValue : null;
+                        $sensorReadingTimestamp = strtotime((string)($singleRowMySensorsLastTimeSeen['reading_time'] ?? ''));
+                        $sensorDataCurrent = $sensorReadingTimestamp !== false && $sensorReadingTimestamp >= time() - ($sensorMaxAgeMinutes * 60);
                         $unitValue = html_entity_decode((string)($sensortype['siUnitVal' . $i] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
                         if (($mySensors != null) && (is_array($SensorChannelConfigSingle)) && ($SensorChannelConfigSingle['onDashboard'] == 1) && ($numericCurrentChannelValue !== null)) {
                           $boardGaugeCount++;
@@ -1680,7 +1690,7 @@
                           <div
                             id='gauge<?php echo $singleRowMySensors['id'] . "." . $i; ?>'
                             data-id="<?php echo $SensorChannelConfigSingle['DashboardOrderNr']; ?>"
-                            class='ui-state-default dashboard-gauge-card gauge-container <?php if(!$deviceOnline) { echo "disabled"; } ?>'
+                            class='ui-state-default dashboard-gauge-card gauge-container <?php if(!$deviceOnline || !$sensorDataCurrent) { echo "disabled"; } ?>'
                             data-gauge-key="<?php echo $singleRowMySensors['id'] . "." . $i; ?>"
                             data-sensor-id="<?php echo $singleRowMySensors['id']; ?>"
                             data-typ-id="<?php echo $singleRowMySensors['typId']; ?>"

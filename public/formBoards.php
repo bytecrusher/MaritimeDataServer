@@ -25,10 +25,36 @@
     die();
   }
 
+  $success_msg = null;
+  $error_msg = null;
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_unused_sensor_cleanup'])) {
+    try {
+      $cleanupCounts = BoardFormPageService::cleanupUnusedSensors(
+        $currentUser,
+        $pageData['boardId'],
+        SensorCleanupService::DEFAULT_STALE_DAYS
+      );
+      $success_msg = mds_t('form.board.sensor_cleanup_success', array(
+        (int)($cleanupCounts['sensorConfig'] ?? 0),
+        (int)($cleanupCounts['sensorData'] ?? 0),
+      ));
+      $pageData = BoardFormPageService::buildPageData($currentUser, $pageData['boardId']);
+    } catch (Throwable $e) {
+      $error_msg = mds_t('form.board.sensor_cleanup_error');
+    }
+  }
+
   $varId = $pageData['boardId'];
   $singleRowBoardId = $pageData['boardRow'];
   $boardObj = $pageData['boardObj'];
   $mySensors = $pageData['sensors'];
+  $sensorOverview = $pageData['sensorOverview'];
+  $sensorOverviewById = array();
+  foreach ($sensorOverview as $sensorStatus) {
+    $sensorOverviewById[(int)$sensorStatus['id']] = $sensorStatus;
+  }
+  $cleanupCandidateCount = (int)$pageData['cleanupCandidateCount'];
+  $canCleanupSensors = !empty($pageData['canCleanupSensors']);
   $allUsers = $pageData['allUsers'];
   $isAdmin = $pageData['isAdmin'];
 
@@ -49,6 +75,13 @@
 </div>
 
 <div class="container main-container">
+  <?php if ($success_msg !== null) { ?>
+    <div class="alert alert-success" role="alert"><?php echo mds_h($success_msg); ?></div>
+  <?php } ?>
+  <?php if ($error_msg !== null) { ?>
+    <div class="alert alert-danger" role="alert"><?php echo mds_h($error_msg); ?></div>
+  <?php } ?>
+
   <ul class="nav nav-tabs" role="tablist">
     <li class="nav-item" role="presentation"><a class="nav-link active" href="#board" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.board'), ENT_QUOTES, 'UTF-8'); ?></a></li>
     <li class="nav-item" role="presentation"><a class="nav-link" href="#sensors" role="tab" data-bs-toggle="tab"><?php echo htmlspecialchars(mds_t('common.sensors'), ENT_QUOTES, 'UTF-8'); ?></a></li>
@@ -199,10 +232,11 @@
   </div>
 
     <div role="tabpanel" class="tab-pane" id="sensors">
-      <table class="table table-bordered">
+      <div class="table-responsive">
+      <table class="table table-bordered align-middle">
         <thead>
           <tr>
-            <th>#</th><th>sensor id</th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_type'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_address'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.group_name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.show_dashboard'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.edit'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th>#</th><th>sensor id</th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_type'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_address'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.group_name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.board.last_data'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.board.sensor_status'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.show_dashboard'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.edit'), ENT_QUOTES, 'UTF-8'); ?></th>
           </tr>
         </thead>
       <tbody>
@@ -212,14 +246,30 @@
         $Sensorname = null;
         foreach($mySensors as $singleRowMySensor) {
           $Sensorname = myFunctions::getSensorType($singleRowMySensor['typId']);
+          $sensorId = (int)$singleRowMySensor['id'];
+          $status = $sensorOverviewById[$sensorId] ?? array();
+          $statusReason = $status['cleanupReason'] ?? 'current';
+          $statusLabels = array(
+            'current' => array('success', 'form.board.sensor_current'),
+            'stale' => array('warning text-dark', 'form.board.sensor_stale'),
+            'never' => array('secondary', 'form.board.sensor_never'),
+            'protected' => array('info text-dark', 'form.board.sensor_protected'),
+            'alert' => array('info text-dark', 'form.board.sensor_alert_protected'),
+          );
+          $statusLabel = $statusLabels[$statusReason] ?? $statusLabels['current'];
+          $lastReading = empty($status['lastReading'])
+            ? mds_t('form.board.sensor_never')
+            : date('d.m.Y H:i:s', strtotime($status['lastReading']));
           echo "<tr>";
           echo "<td>".$count++."</td>";
-          echo "<td>". $singleRowMySensor['id'] . "</td>";
-          echo "<td>". $Sensorname['name'] . ", " . $Sensorname['description'] . "</td>";
-          echo "<td>". $singleRowMySensor['sensorAddress'] . "</td>";
-          echo "<td>".$singleRowMySensor['name']."</td>";
-          echo "<td>".$singleRowMySensor['description']."</td>";
-          echo "<td>".$singleRowMySensor['locationOfMeasurement']."</td>";
+          echo "<td>". $sensorId . "</td>";
+          echo "<td>". mds_h(($Sensorname['name'] ?? '') . ", " . ($Sensorname['description'] ?? '')) . "</td>";
+          echo "<td>". mds_h($singleRowMySensor['sensorAddress'] ?? '') . "</td>";
+          echo "<td>".mds_h($singleRowMySensor['name'] ?? '')."</td>";
+          echo "<td>".mds_h($singleRowMySensor['description'] ?? '')."</td>";
+          echo "<td>".mds_h($singleRowMySensor['locationOfMeasurement'] ?? '')."</td>";
+          echo "<td class='text-nowrap'>".mds_h($lastReading)."</td>";
+          echo "<td><span class='badge bg-".mds_h($statusLabel[0])."'>".mds_h(mds_t($statusLabel[1]))."</span></td>";
           if(isset($singleRowMySensor['onDashboard']) && $singleRowMySensor['onDashboard'] == '1')
           {
             echo "<td><input type='checkbox' id='onDashboard' name='onDashboard' value=" . $singleRowMySensor['onDashboard'] . " checked=" . $singleRowMySensor['onDashboard'] . " disabled></td>";
@@ -228,11 +278,35 @@
           {
             echo "<td><input type='checkbox' id='onDashboard' name='onDashboard' value='1' disabled></td>";
           }
-          echo "<td><a href=\"formSensors.php?id=" . $singleRowMySensor['id'] . "&boardId=" . $_GET['id'] . "\"><i class='bi bi-pencil-fill'> </i></td>";
+          echo "<td><a href=\"formSensors.php?id=" . $sensorId . "&boardId=" . $varId . "\"><i class='bi bi-pencil-fill'> </i></a></td>";
           echo "</tr>";
         }
       ?>
       </tbody></table>
+      </div>
+
+      <?php if ($canCleanupSensors) { ?>
+        <section class="card mt-4 mb-4">
+          <div class="card-body">
+            <h2 class="h5"><?php echo mds_h(mds_t('form.board.sensor_cleanup_title')); ?></h2>
+            <p class="text-muted mb-3"><?php echo mds_h(mds_t('form.board.sensor_cleanup_hint', array(SensorCleanupService::DEFAULT_STALE_DAYS))); ?></p>
+            <?php if ($cleanupCandidateCount > 0) { ?>
+              <form method="post" action="formBoards.php?id=<?php echo $varId; ?>#sensors">
+                <?php echo mds_csrf_input(); ?>
+                <button
+                  type="submit"
+                  class="btn btn-danger"
+                  name="submit_unused_sensor_cleanup"
+                  value="1"
+                  onclick="return confirm(<?php echo mds_h(json_encode(mds_t('form.board.sensor_cleanup_confirm', array($cleanupCandidateCount, SensorCleanupService::DEFAULT_STALE_DAYS)), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>);"
+                ><?php echo mds_h(mds_t('form.board.sensor_cleanup_button', array($cleanupCandidateCount))); ?></button>
+              </form>
+            <?php } else { ?>
+              <div class="alert alert-success mb-0" role="status"><?php echo mds_h(mds_t('form.board.sensor_cleanup_none')); ?></div>
+            <?php } ?>
+          </div>
+        </section>
+      <?php } ?>
     </div>
   </div>
 </div>
@@ -243,6 +317,17 @@
       e.preventDefault();
     }
   }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.location.hash !== '#sensors' || typeof bootstrap === 'undefined') {
+      return;
+    }
+    var trigger = document.querySelector('[href="#sensors"]');
+    if (trigger) {
+      bootstrap.Tab.getOrCreateInstance(trigger).show();
+    }
+  });
 </script>
 <?php
   include(dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php");

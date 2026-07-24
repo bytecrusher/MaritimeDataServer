@@ -324,6 +324,40 @@ class myFunctions {
     return $sensorsOfBoard;
   }
 
+  public static function getSensorActivitySummary(array $sensorIds, $maxAgeMinutes) {
+    $sensorIds = self::normalizeIntList($sensorIds);
+    $summary = array(
+      'configured' => count($sensorIds),
+      'withData' => 0,
+      'current' => 0,
+    );
+    if (empty($sensorIds)) {
+      return $summary;
+    }
+
+    $maxAgeMinutes = max(1, (int)$maxAgeMinutes);
+    $placeholders = implode(', ', array_fill(0, count($sensorIds), '?'));
+    $pdo = dbConfig::getInstance();
+    $statement = $pdo->prepare(
+      "SELECT sensorId, MAX(reading_time) AS lastReading
+       FROM sensorData
+       WHERE sensorId IN ($placeholders)
+       GROUP BY sensorId"
+    );
+    $statement->execute($sensorIds);
+    $latestReadings = $statement->fetchAll(PDO::FETCH_ASSOC);
+    $summary['withData'] = count($latestReadings);
+    $currentThreshold = time() - ($maxAgeMinutes * 60);
+    foreach ($latestReadings as $latestReading) {
+      $readingTimestamp = strtotime((string)($latestReading['lastReading'] ?? ''));
+      if ($readingTimestamp !== false && $readingTimestamp >= $currentThreshold) {
+        $summary['current']++;
+      }
+    }
+
+    return $summary;
+  }
+
   /*
   * Get the lastet sensor data of a given sensor id.
   */
