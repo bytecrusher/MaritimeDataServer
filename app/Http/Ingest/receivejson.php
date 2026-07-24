@@ -10,6 +10,7 @@ require_once(dirname(__FILE__, 2) . "/../Infrastructure/Database/dbConfig.func.p
 require_once(dirname(__FILE__, 2) . '/../Infrastructure/Config/configuration.php');
 require_once(dirname(__FILE__, 2) . "/../Infrastructure/Logging/writeToLogFunction.func.php");
 require_once(dirname(__FILE__, 2) . "/../Application/myFunctions.func.php");
+require_once(dirname(__FILE__, 2) . "/../Application/SensorNamingService.php");
 require_once(dirname(__FILE__, 2) . "/../Domain/Board/board.class.php");
 
 header('Content-Type: application/json; charset=utf-8');
@@ -279,6 +280,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     );
                                 }
                             }
+                        }
+                        if ($sensorId !== null) {
+                            repairLegacyDuplicatedChannelNames(
+                                $pdo2,
+                                $sensorId,
+                                $sensor['sensorType'] ?? ($sensor['type'] ?? null),
+                                $sensor['sensorName'] ?? ($sensor['name'] ?? null)
+                            );
                         }
                         $date = test_input($sensor["date"]);
                         $time = test_input($sensor["time"]);
@@ -1021,6 +1030,9 @@ function ensureBoardSensorConfigExists(array $sensor, $boardId, array &$boardSen
             $renameStatement = $pdo2->prepare("UPDATE sensorConfig SET name = ? WHERE id = ?");
             $renameStatement->execute(array($sensorName, $createdSensorId));
         }
+        if ($createdSensorId) {
+            applyPayloadSensorNamingDefaults($pdo2, $createdSensorId, $canonicalTypeName, $sensorName);
+        }
         $boardSensors = myFunctions::getAllSensorsOfBoard($boardId);
     } catch (Throwable $ex) {
         writeToLogFunction::exception(
@@ -1047,6 +1059,78 @@ function ensureBoardSensorConfigExists(array $sensor, $boardId, array &$boardSen
         ),
         $boardSensors,
         $usedBoardSensorIds
+    );
+}
+
+function applyPayloadSensorNamingDefaults(PDO $pdo, $sensorConfigId, $sensorType, $sensorName)
+{
+    $channelNames = SensorNamingService::defaultChannelNames($sensorType, $sensorName);
+    foreach ($channelNames as $channelNr => $channelName) {
+        $statement = $pdo->prepare(
+            "UPDATE sensorChannelConfig SET name = ? WHERE sensorConfigId = ? AND channelNr = ?"
+        );
+        $statement->execute(array($channelName, (int)$sensorConfigId, (int)$channelNr));
+    }
+
+    $usedChannelCount = SensorNamingService::defaultUsedChannelCount($sensorType, $sensorName);
+    if ($usedChannelCount !== null) {
+        $statement = $pdo->prepare("UPDATE sensorConfig SET NrOfUsedSensors = ? WHERE id = ?");
+        $statement->execute(array($usedChannelCount, (int)$sensorConfigId));
+
+        $statement = $pdo->prepare(
+            "UPDATE sensorChannelConfig SET onDashboard = CASE WHEN channelNr <= ? THEN onDashboard ELSE 0 END WHERE sensorConfigId = ?"
+        );
+        $statement->execute(array($usedChannelCount, (int)$sensorConfigId));
+    }
+}
+
+function repairLegacyDuplicatedChannelNames(PDO $pdo, $sensorConfigId, $sensorType, $sensorName)
+{
+    $channelNames = SensorNamingService::defaultChannelNames($sensorType, $sensorName);
+    $usedChannelCount = SensorNamingService::defaultUsedChannelCount($sensorType, $sensorName);
+    if (empty($channelNames) || $usedChannelCount === null) {
+        return;
+    }
+
+    $statement = $pdo->prepare(
+        "SELECT channelNr, name FROM sensorChannelConfig WHERE sensorConfigId = ? AND channelNr <= ? ORDER BY channelNr"
+    );
+    $statement->execute(array((int)$sensorConfigId, $usedChannelCount));
+    $storedChannels = $statement->fetchAll(PDO::FETCH_ASSOC);
+    if (count($storedChannels) !== $usedChannelCount) {
+        return;
+    }
+
+    $normalizedGroupName = normalizeSensorLookupValue($sensorName);
+    if ($normalizedGroupName === null) {
+        return;
+    }
+
+    $legacyTypeNames = SensorNamingService::legacyTypeChannelNames($sensorType);
+    $allNamesDuplicateTheGroup = true;
+    $allNamesMatchLegacyDefaults = !empty($legacyTypeNames);
+    foreach ($storedChannels as $storedChannel) {
+        $channelNr = (int)$storedChannel['channelNr'];
+        $storedName = normalizeSensorLookupValue($storedChannel['name'] ?? null);
+        $legacyName = normalizeSensorLookupValue($legacyTypeNames[$channelNr] ?? null);
+        $allNamesDuplicateTheGroup = $allNamesDuplicateTheGroup && $storedName === $normalizedGroupName;
+        $allNamesMatchLegacyDefaults = $allNamesMatchLegacyDefaults && $storedName === $legacyName;
+    }
+
+    if (!$allNamesDuplicateTheGroup && !$allNamesMatchLegacyDefaults) {
+        return;
+    }
+
+    applyPayloadSensorNamingDefaults($pdo, $sensorConfigId, $sensorType, $sensorName);
+    writeToLogFunction::info(
+        'Legacy duplicated sensor channel names repaired from payload semantics.',
+        $_SERVER["SCRIPT_FILENAME"],
+        array(
+            'sensorId' => (int)$sensorConfigId,
+            'sensorType' => $sensorType,
+            'sensorName' => $sensorName,
+            'channelNames' => $channelNames
+        )
     );
 }
 

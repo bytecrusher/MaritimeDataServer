@@ -20,6 +20,7 @@
   "scripts": {
     "test": [
       "php tests/DeviceEventTimelineCalculatorTest.php",
+      "php tests/SensorNamingServiceTest.php",
       "php tests/SeoMetadataTest.php"
     ]
   }

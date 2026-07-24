@@ -87,6 +87,10 @@ if(strlen($ttn_post) > 0) {
 
     $uplinkMessage = $data->uplink_message;
     $decodedPayload = ttnExtractMeasurementPayload($uplinkMessage);
+    $payloadType = (string)ttnPayloadValue($decodedPayload, array('payloadType'), 'measurements');
+    $payloadSchema = (int)ttnPayloadValue($decodedPayload, array('payloadSchema'), 1);
+    $isDeviceConfigPayload = $payloadType === 'deviceConfig';
+    $isNamedMeasurementPayload = $payloadType === 'measurements' && $payloadSchema >= 2;
     $sensor_raw_payload = $uplinkMessage->frm_payload ?? null;
     $bestRxMetadata = ttnSelectBestRxMetadata($uplinkMessage->rx_metadata ?? array());
 
@@ -108,6 +112,21 @@ if(strlen($ttn_post) > 0) {
     $sensor_battery = ttnPayloadValue($decodedPayload, array('BatV', 'voltage', 'battery'), 0);
     $sensor_temperature = ttnPayloadValue($decodedPayload, array('temperature', 'TempC_SHT', 'air.temperature'), 0);
     $sensor_battery2 = ttnPayloadValue($decodedPayload, array('voltage2'), 0);
+    $sensor_battery_capacity = ttnPayloadValue($decodedPayload, array('batteryCapacity'), 0);
+    $sensor_tank1_adc = ttnPayloadValue($decodedPayload, array('tank1Adc'), 0);
+    $sensor_tank2_adc = ttnPayloadValue($decodedPayload, array('tank2Adc'), 0);
+    $sensor_speed = ttnPayloadValue($decodedPayload, array('speed'), 0);
+    $sensor_course = ttnPayloadValue($decodedPayload, array('course'), 0);
+    $sensor_vedirect_voltage = ttnPayloadValue($decodedPayload, array('vedirectVoltage'), 0);
+    $sensor_vedirect_current = ttnPayloadValue($decodedPayload, array('vedirectCurrent'), 0);
+    $sensor_vedirect_temperature = ttnPayloadValue($decodedPayload, array('vedirectTemperature'), 0);
+    $environment_present = ttnNormalizeBooleanValue(ttnPayloadValue($decodedPayload, array('environmentPresent'), false)) === true;
+    $vedirect_present = ttnNormalizeBooleanValue(ttnPayloadValue($decodedPayload, array('vedirectPresent'), false)) === true;
+    $wakeup_event_present = ttnNormalizeBooleanValue(ttnPayloadValue($decodedPayload, array('wakeupEventPresent'), false)) === true;
+    $standby_event_epoch = (int)ttnPayloadValue($decodedPayload, array('standbyEpoch'), 0);
+    $wakeup_event_epoch = (int)ttnPayloadValue($decodedPayload, array('wakeupEpoch'), 0);
+    $standby_event_cause = trim((string)ttnPayloadValue($decodedPayload, array('standbyCause'), ''));
+    $wakeup_event_cause = trim((string)ttnPayloadValue($decodedPayload, array('wakeupCause'), ''));
     $firmwareVersion = ttnFirmwareVersion($decodedPayload);
     $standbyState = ttnStandbyState($decodedPayload);
     $payloadMacAddress = ttnMacAddress($decodedPayload);
@@ -132,6 +151,8 @@ if(strlen($ttn_post) > 0) {
             'ttnDevEui' => $ttn_dev_eui,
             'payloadMacAddress' => $payloadMacAddress,
             'frameCounter' => $frame_counter,
+            'payloadType' => $payloadType,
+            'payloadSchema' => $payloadSchema,
             'hasDecodedPayload' => isset($uplinkMessage->decoded_payload),
             'hasNormalizedPayload' => isset($uplinkMessage->normalized_payload)
         )
@@ -267,6 +288,7 @@ if(strlen($ttn_post) > 0) {
     
     $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
     $createdSensors = false;
+    if (!$isDeviceConfigPayload && !$isNamedMeasurementPayload) {
     if(array_search('GPS', array_column($allSensorsOfBoard, 'sensorTypesName')) === false) {
       writeToLogFunction::info('Sensor GPS does not exist. Will now create it.', $_SERVER["SCRIPT_FILENAME"], array('boardId' => $singleRowBoardIdbyTTN['id']));
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "GPS", "GPS");
@@ -312,6 +334,7 @@ if(strlen($ttn_post) > 0) {
     if ($createdSensors) {
       $allSensorsOfBoard = myFunctions::getAllSensorsOfBoard($singleRowBoardIdbyTTN['id']);
     }
+    }
 
     $url = $config::$baseurl . '/ingest/receivejson.php';
     $ch = curl_init($url);
@@ -340,7 +363,71 @@ if(strlen($ttn_post) > 0) {
     $sensor1 = $sensor2 = $sensor3 = null;
     $sensors = array();
 
-    foreach($allSensorsOfBoard AS $eachsensor) {
+    if ($isNamedMeasurementPayload) {
+      $commonSensorFields = array(
+        "date" => $dateNow,
+        "time" => $timeNow,
+        "transmissionPath" => "2"
+      );
+      $sensors[] = array_merge($commonSensorFields, array(
+        "sensorType" => "ADC", "type" => "ADC", "sensorName" => "Battery", "name" => "Battery",
+        "value1" => $sensor_battery, "value2" => $sensor_battery_capacity, "value3" => 0, "value4" => 0
+      ));
+      $sensors[] = array_merge($commonSensorFields, array(
+        "sensorType" => "ADC", "type" => "ADC", "sensorName" => "Tanks", "name" => "Tanks",
+        "value1" => $sensor_level1, "value2" => $sensor_tank1_adc,
+        "value3" => $sensor_level2, "value4" => $sensor_tank2_adc
+      ));
+      $sensors[] = array_merge($commonSensorFields, array(
+        "sensorType" => "Digital", "type" => "Digital", "sensorName" => "Status", "name" => "Status",
+        "value1" => $sensor_alarm1, "value2" => $sensor_relay,
+        "value3" => $sensor_temperature_2, "value4" => 0
+      ));
+      $sensors[] = array_merge($commonSensorFields, array(
+        "sensorType" => "GPS", "type" => "GPS", "sensorName" => "GPS", "name" => "GPS",
+        "value1" => $sensor_latitude, "value2" => $sensor_longitude,
+        "value3" => $sensor_speed, "value4" => $sensor_course
+      ));
+      if ($environment_present) {
+        $sensors[] = array_merge($commonSensorFields, array(
+          "sensorType" => "BME280", "type" => "BME280", "sensorName" => "Environment", "name" => "Environment",
+          "value1" => $sensor_temperature, "value2" => $sensor_humidity,
+          "value3" => $sensor_pressure, "value4" => $sensor_altitude
+        ));
+        $sensors[] = array_merge($commonSensorFields, array(
+          "sensorType" => "BME280", "type" => "BME280", "sensorName" => "Dewpoint", "name" => "Dewpoint",
+          "value1" => $sensor_dewpoint, "value2" => 0, "value3" => 0, "value4" => 0
+        ));
+      }
+      if ($vedirect_present) {
+        $sensors[] = array_merge($commonSensorFields, array(
+          "sensorType" => "DS2438", "type" => "DS2438", "sensorName" => "VEdirect", "name" => "VEdirect",
+          "value1" => $sensor_vedirect_voltage, "value2" => $sensor_vedirect_current,
+          "value3" => $sensor_vedirect_temperature, "value4" => 0
+        ));
+      }
+      $sensors[] = array_merge($commonSensorFields, array(
+        "sensorType" => "Lora", "type" => "Lora", "sensorName" => "Lora", "name" => "Lora",
+        "value1" => $gtw_id, "value2" => $gtw_rssi, "value3" => $gtw_snr, "value4" => $frame_counter
+      ));
+      if ($wakeup_event_present && $standby_event_epoch > 0 && $wakeup_event_epoch >= $standby_event_epoch) {
+        $sensors[] = array_merge($commonSensorFields, array(
+          "sensorType" => "WakeupStan", "type" => "WakeupStan", "sensorName" => "WakeupLog", "name" => "WakeupLog",
+          "value1" => $standby_event_cause,
+          "value2" => date("d.m.Y H:i:s", $standby_event_epoch),
+          "value3" => $wakeup_event_cause,
+          "value4" => date("d.m.Y H:i:s", $wakeup_event_epoch)
+        ));
+      } elseif ($wakeup_event_present) {
+        writeToLogFunction::warning(
+          'Ignoring invalid explicit LoRa wakeup event.',
+          $_SERVER["SCRIPT_FILENAME"],
+          array('standbyEpoch' => $standby_event_epoch, 'wakeupEpoch' => $wakeup_event_epoch)
+        );
+      }
+    }
+
+    if (!$isDeviceConfigPayload && !$isNamedMeasurementPayload) foreach($allSensorsOfBoard AS $eachsensor) {
       $sensor1 = null;
       //writeToLogFunction::write_to_log($eachsensor['boardid'], $_SERVER["SCRIPT_FILENAME"]);
       //if ($eachsensor['ttn_payload_id'] != null) {

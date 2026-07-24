@@ -202,7 +202,7 @@
       <table class="table table-bordered">
         <thead>
           <tr>
-            <th>#</th><th>sensor id</th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_type'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_address'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.show_dashboard'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.edit'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th>#</th><th>sensor id</th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_type'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.sensor_address'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.group_name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.description'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.location'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('form.sensor.show_dashboard'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.edit'), ENT_QUOTES, 'UTF-8'); ?></th>
           </tr>
         </thead>
       <tbody>

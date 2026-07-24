@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/SensorNamingService.php';
 /**
  * class for updating data into DB
  * 
@@ -557,37 +558,52 @@ class dbUpdateData {
   */
   public static function updateSensor($post) {
     $pdo = dbConfig::getInstance();
-    if (!isset($post['onDashboard'])) {
-      $post['onDashboard'] = 0;
+    $sensorId = (int)($post['id'] ?? 0);
+    $usedChannelCount = max(1, min(4, (int)($post['NrOfUsedSensors'] ?? 1)));
+    $onDashboard = isset($post['onDashboard']) ? 1 : 0;
+
+    if ($sensorId <= 0) {
+      throw new InvalidArgumentException('Invalid sensor id.');
     }
+
     try {
+      $pdo->beginTransaction();
       $statement2 = $pdo->prepare("UPDATE sensorConfig SET name=?, description=?, typId=?, locationOfMeasurement=?, NrOfUsedSensors=?, onDashboard=? WHERE id=?");
-      $returnStatement = $statement2->execute(array($post['name'], $post['description'], $post['typId'], $post['locationOfMeasurement'], $post['NrOfUsedSensors'], $post['onDashboard'], $post['id']));
-    } catch (PDOException $e) {
-      writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
-      writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-      throw new Exception('Sensor not updated successfully.');
-    }
-    for ($i = 1; $i <= $post['NrOfUsedSensors']; $i++) {
-      if (!isset($post['Value' . $i . 'onDashboard'])) {
-        $myVar['onDashboard'] = 0;
-      } else {
-        $myVar['onDashboard'] = 1;
-      }
-      $myVar['id'] = $post['id'];
-      //$myVar['name'] = $post['nameValue' . $i];
-      $myVar['name'] = $post['name'];
-      try {
+      $statement2->execute(array(
+        trim((string)($post['name'] ?? '')),
+        trim((string)($post['description'] ?? '')),
+        (int)($post['typId'] ?? 0),
+        trim((string)($post['locationOfMeasurement'] ?? '')),
+        $usedChannelCount,
+        $onDashboard,
+        $sensorId
+      ));
+
+      for ($i = 1; $i <= $usedChannelCount; $i++) {
+        $channelOnDashboard = isset($post['Value' . $i . 'onDashboard']) ? 1 : 0;
+        $channelName = SensorNamingService::submittedChannelName($post, $i);
         writeToLogFunction::write_to_log("updateSensor Channel nr: " . $i, $_SERVER["SCRIPT_FILENAME"]);
-        $statement2 = $pdo->prepare("UPDATE sensorChannelConfig  SET onDashboard=? ,name=? WHERE sensorConfigId=? AND channelNr=?");
-        $statement2->execute(array($myVar['onDashboard'], $myVar['name'], $myVar['id'], $i));
-      } catch (PDOException $e) {
-        writeToLogFunction::write_to_log("Error: Sensor not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
-        writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-        throw new Exception('Sensor not updated successfully.');
+        if ($channelName === null) {
+          $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET onDashboard=? WHERE sensorConfigId=? AND channelNr=?");
+          $statement2->execute(array($channelOnDashboard, $sensorId, $i));
+        } else {
+          $statement2 = $pdo->prepare("UPDATE sensorChannelConfig SET onDashboard=?, name=? WHERE sensorConfigId=? AND channelNr=?");
+          $statement2->execute(array($channelOnDashboard, $channelName, $sensorId, $i));
+        }
       }
+
+      $pdo->commit();
+      return true;
+    } catch (Throwable $e) {
+      if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+      }
+      writeToLogFunction::error('Sensor configuration could not be saved.', $_SERVER["SCRIPT_FILENAME"], array(
+        'sensorId' => $sensorId,
+        'error' => $e->getMessage()
+      ));
+      throw new Exception('Sensor not updated successfully.', 0, $e);
     }
-    return $returnStatement;
   }
 
     /**

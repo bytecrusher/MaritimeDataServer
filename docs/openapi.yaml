@@ -747,13 +747,13 @@ components:
           type: string
         sensorType:
           type: string
-          description: Empfohlener Typ-Hinweis, z. B. ADC, BME280, GPS
+          description: Technischer Typ, z. B. ADC, BME280 oder GPS
         type:
           type: string
           description: Alias für sensorType
         sensorName:
           type: string
-          description: Friendly Name, wichtig bei mehreren Sensoren desselben Typs
+          description: Name der Sensorgruppe, z. B. Battery oder Tanks; einzelne Kanalnamen werden serverseitig konfiguriert
         name:
           type: string
           description: Alias für sensorName

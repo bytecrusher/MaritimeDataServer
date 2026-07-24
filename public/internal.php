@@ -1704,7 +1704,19 @@
                             <div class="dashboard-gauge-top">
                               <div class="dashboard-gauge-headline">
                                 <strong><?php echo htmlspecialchars($SensorChannelConfigSingle['name'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                                <span><?php echo htmlspecialchars($singleRowMySensors['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                <span>
+                                  <?php
+                                    $gaugeGroupLabel = trim((string)$singleRowMySensors['name']);
+                                    $gaugeTypeLabel = trim((string)$singleRowMySensors['typename']);
+                                    echo htmlspecialchars(
+                                      strcasecmp($gaugeGroupLabel, $gaugeTypeLabel) === 0
+                                        ? $gaugeGroupLabel
+                                        : $gaugeGroupLabel . ' · ' . $gaugeTypeLabel,
+                                      ENT_QUOTES,
+                                      'UTF-8'
+                                    );
+                                  ?>
+                                </span>
                               </div>
                               <div class="dashboard-gauge-value">
                                 <span class="dashboard-gauge-value-number"><?php echo htmlspecialchars(number_format($numericCurrentChannelValue, 2, '.', ''), ENT_QUOTES, 'UTF-8'); ?></span>

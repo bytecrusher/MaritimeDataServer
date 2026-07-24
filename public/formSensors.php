@@ -154,7 +154,7 @@
           ?>
 
           <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('form.sensor.group_name'), ENT_QUOTES, 'UTF-8'); ?></span>
             <input type='text' class='col col-sm-4 form-control' id='name' name='name' value='<?php echo mds_h($SensorConfig['name']); ?>'>
           </div>
 
@@ -194,7 +194,7 @@
               <fieldset class="border p-2 mb-3 mySensorsFieldset">
                 <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('form.sensor.value'), ENT_QUOTES, 'UTF-8'); ?> / <?php echo htmlspecialchars(mds_t('form.sensor.channel'), ENT_QUOTES, 'UTF-8'); ?> <?php echo $singleSensorChannelConfig['channelNr']; ?></legend>
                 <div class='input-group mb-3'>
-                  <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></span>
+                  <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.channel_name'), ENT_QUOTES, 'UTF-8'); ?></span>
                   <input type='text' class='col col-sm-4 form-control' id='nameValue<?php echo (int)$singleSensorChannelConfig['channelNr']; ?>' name='nameValue<?php echo (int)$singleSensorChannelConfig['channelNr']; ?>' value='<?php echo mds_h($singleSensorChannelConfig['name']); ?>'>
                 </div>
 
@@ -236,7 +236,7 @@
             </div>
 
             <div class='input-group mb-3'>
-              <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('common.name'), ENT_QUOTES, 'UTF-8'); ?></span>
+              <span class='input-group-text' style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.channel_name'), ENT_QUOTES, 'UTF-8'); ?></span>
               <input type='text' class='col col-sm-4 form-control' id='nameValue' name='nameValue' value='<?php echo mds_h($mySingleSensorChannelConfig['name']); ?>'>
             </div>
 

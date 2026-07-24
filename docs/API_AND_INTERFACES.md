@@ -163,6 +163,13 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 - `temperature`
 - `voltage`
 - `voltage2`
+- `batteryCapacity`
+- `tank1Adc`
+- `tank2Adc`
+- `speed`
+- `course`
+- `environmentPresent`
+- `vedirectPresent`
 - alternativ auch:
   - `Hum_SHT`
   - `TempC_SHT`
@@ -182,8 +189,11 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
    - wird ein Board automatisch angelegt
    - wenn `macAddress` vorhanden ist, wird diese direkt als Board-MAC gespeichert
    - alte automatisch angelegte TTN-Boards mit `fakeMacAddress...` werden beim naechsten passenden Uplink auf die echte MAC migriert
-5. Falls notwendige Sensoren fehlen:
-   - werden `GPS`, `Lora`, `ADC`, `DS18B20`, `BME280`, `DS2438`, `Digital` automatisch angelegt
+5. Bei modernen Mess-Payloads (`payloadType = measurements`, Schema 2 oder neuer):
+   - verwendet MDS die Gruppen `Battery`, `Tanks`, `Status`, `GPS`, `Environment`, `Dewpoint`, `VEdirect` und `Lora`
+   - `sensorType` bleibt der technische Typ wie `ADC`; `sensorName` bezeichnet die Gruppe wie `Battery`
+   - fehlende Gruppen werden durch den Ingest automatisch angelegt
+   - alte Payloads bleiben ueber die bisherige typbasierte Zuordnung kompatibel
 6. MDS baut eine interne JSON-Payload
 7. MDS sendet diese intern an `/ingest/receivejson.php`
 8. Dort werden die Werte in `sensorData` gespeichert
@@ -203,11 +213,23 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
   },
   "sensors": [
     {
-      "sensorId": 12,
-      "value1": 23.5,
-      "value2": 56.1,
-      "value3": 1012,
-      "value4": 14.2,
+      "sensorType": "ADC",
+      "sensorName": "Battery",
+      "value1": 12.7,
+      "value2": 94,
+      "value3": 0,
+      "value4": 0,
+      "date": "22.04.2026",
+      "time": "09:30:15",
+      "transmissionPath": "2"
+    },
+    {
+      "sensorType": "ADC",
+      "sensorName": "Tanks",
+      "value1": 75,
+      "value2": 3120,
+      "value3": 42,
+      "value4": 1850,
       "date": "22.04.2026",
       "time": "09:30:15",
       "transmissionPath": "2"
@@ -218,7 +240,8 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 
 Hinweis:
 
-- die interne TTN-Bridge sendet weiterhin `sensorId`
+- die interne TTN-Bridge sendet fuer moderne Payloads `sensorType` und `sensorName`; die Datenbank-ID wird vom Ingest aufgeloest
+- alte TTN-Payloads koennen weiterhin ueber vorhandene `sensorId`-Zuordnungen verarbeitet werden
 - fuer externe Geraete ist `sensorId` inzwischen optional
 - wenn `decoded_payload` einen Zustandswert wie `standbyState`, `standby_state`, `powerState`, `deviceState` oder `sleepState` enthaelt, wird dieser in `board.standbyState` an `/ingest/receivejson.php` weitergereicht
 
@@ -355,6 +378,8 @@ Empfehlung fuer externe Devices:
 - `sensorName` ebenfalls mitsenden, wenn mehrere Sensoren desselben Typs auf einem Board existieren koennen, z. B. `ADC/Battery` und `ADC/Tanks`
 - gute Werte sind z. B. `BME280`, `ADC`, `GPS`, `DS18B20`, `Digital`, `DS2438`, `Lora`
 - dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
+- einzelne Messwert-/Kanalnamen wie `Voltage`, `Capacity` oder `Tank 1` werden in `sensorChannelConfig` verwaltet und koennen in den Sensor-Einstellungen frei angepasst werden
+- LoRa Boat Monitor uebertraegt Gruppen-, aber keine frei konfigurierten Kanalnamen; beim automatischen Anlegen vergibt MDS daher passende Standard-Kanalnamen
 - wenn am Operation Mode Input 12 V anliegen und das Device absichtlich dauerhaft online bleibt, `board.standbyState = "always_online"` mitsenden
 - wenn das Device gerade aufgeweckt wurde, kann `board.standbyState = "wakeup"` als Zustands-Hinweis mitgesendet werden
 - wenn das Device gerade in den Schlafzustand gegangen ist oder sich dort befindet, kann `board.standbyState = "standby"` als Zustands-Hinweis mitgesendet werden
