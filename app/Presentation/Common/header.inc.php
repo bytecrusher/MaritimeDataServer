@@ -258,6 +258,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        position: relative;
         gap: 1rem;
         padding: 0.95rem 1rem;
         border-radius: var(--mds-radius);
@@ -276,6 +277,9 @@
         color: #92400e;
       }
       .mds-alert .btn-close {
+        position: static;
+        flex: 0 0 auto;
+        padding: 0.5rem;
         margin: 0;
       }
     </style>
