@@ -40,7 +40,7 @@
       try {
         $updateSensorReturn = dbUpdateData::updateSensor($_POST);
         $success_msg = mds_t('form.sensor.saved');
-        $newURL = "formBoards.php?id=" . $_POST['macAddress'];
+        $newURL = "formBoards.php?id=" . (int)($_POST['boardId'] ?? 0);
         header('Location: '.$newURL);
         // ToDo: send error or success mgs to header.
         $_GET = $_POST;
@@ -136,10 +136,7 @@
           }
           ?>
 
-          <div class="input-group mb-3">
-            <span class="input-group-text" style="width: 50%"><?php echo htmlspecialchars(mds_t('settings.mac_address'), ENT_QUOTES, 'UTF-8'); ?></span>
-            <input type='text' class='col col-sm-4 form-control' style="background:#e9ecef" id='macAddress' name='macAddress' value='<?php echo mds_h($SensorConfig['boardId']); ?>'>
-          </div>
+          <input type='hidden' id='boardId' name='boardId' value='<?php echo (int)$SensorConfig['boardId']; ?>'>
 
           <?php
             if ($SensorType['hasAddress'] == 1) {
