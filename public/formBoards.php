@@ -27,7 +27,23 @@
 
   $success_msg = null;
   $error_msg = null;
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_unused_sensor_cleanup'])) {
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_sensor_group_delete'])) {
+    $deletedSensorId = (int)($_POST['sensor_id'] ?? 0);
+    try {
+      $deleteCounts = BoardFormPageService::deleteSensorGroup(
+        $currentUser,
+        $pageData['boardId'],
+        $deletedSensorId
+      );
+      $success_msg = mds_t('form.board.sensor_delete_success', array(
+        $deletedSensorId,
+        (int)($deleteCounts['sensorData'] ?? 0),
+      ));
+      $pageData = BoardFormPageService::buildPageData($currentUser, $pageData['boardId']);
+    } catch (Throwable $e) {
+      $error_msg = mds_t('form.board.sensor_delete_error');
+    }
+  } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_unused_sensor_cleanup'])) {
     try {
       $cleanupCounts = BoardFormPageService::cleanupUnusedSensors(
         $currentUser,
@@ -278,7 +294,21 @@
           {
             echo "<td><input type='checkbox' id='onDashboard' name='onDashboard' value='1' disabled></td>";
           }
-          echo "<td><a href=\"formSensors.php?id=" . $sensorId . "&boardId=" . $varId . "\"><i class='bi bi-pencil-fill'> </i></a></td>";
+          $sensorDisplayName = trim((string)($singleRowMySensor['name'] ?? ''));
+          if ($sensorDisplayName === '') {
+            $sensorDisplayName = (string)($Sensorname['name'] ?? ('Sensor ' . $sensorId));
+          }
+          $deleteConfirmation = mds_t('form.board.sensor_delete_confirm', array($sensorDisplayName, $sensorId));
+          echo "<td><div class='d-flex gap-2 align-items-center'>";
+          echo "<a class='btn btn-sm btn-outline-primary' href=\"formSensors.php?id=" . $sensorId . "&boardId=" . $varId . "\" title='" . mds_h(mds_t('common.edit')) . "' aria-label='" . mds_h(mds_t('common.edit')) . "'><i class='bi bi-pencil-fill'></i></a>";
+          if ($canCleanupSensors) {
+            echo "<form method='post' action='formBoards.php?id=" . $varId . "#sensors' class='m-0'>";
+            echo mds_csrf_input();
+            echo "<input type='hidden' name='sensor_id' value='" . $sensorId . "'>";
+            echo "<button type='submit' class='btn btn-sm btn-outline-danger' name='submit_sensor_group_delete' value='1' title='" . mds_h(mds_t('form.board.sensor_delete')) . "' aria-label='" . mds_h(mds_t('form.board.sensor_delete')) . "' onclick='return confirm(" . mds_h(json_encode($deleteConfirmation, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . ");'><i class='bi bi-trash-fill'></i></button>";
+            echo "</form>";
+          }
+          echo "</div></td>";
           echo "</tr>";
         }
       ?>

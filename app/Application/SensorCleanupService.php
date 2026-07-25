@@ -37,7 +37,7 @@ class SensorCleanupService
                      WHERE sensorData.sensorId = sensorConfig.id) AS lastReading,
                     $alertSelect
              FROM sensorConfig
-             INNER JOIN sensorTypes ON sensorTypes.id = sensorConfig.typId
+             LEFT JOIN sensorTypes ON sensorTypes.id = sensorConfig.typId
              $alertJoin
              WHERE sensorConfig.boardId = ?
              ORDER BY sensorConfig.id"
@@ -106,25 +106,7 @@ class SensorCleanupService
                 return array('sensorConfig' => 0, 'sensorData' => 0, 'sensorChannelConfig' => 0, 'sensor_permissions' => 0);
             }
 
-            $placeholders = implode(',', array_fill(0, count($sensorIds), '?'));
-
-            if (self::tableExists($pdo, 'sensor_permissions')) {
-                $statement = $pdo->prepare("DELETE FROM sensor_permissions WHERE sensorId IN ($placeholders)");
-                $statement->execute($sensorIds);
-                $counts['sensor_permissions'] = $statement->rowCount();
-            } else {
-                $counts['sensor_permissions'] = 0;
-            }
-
-            foreach (array('sensorData' => 'sensorId', 'sensorChannelConfig' => 'sensorConfigId') as $table => $column) {
-                $statement = $pdo->prepare("DELETE FROM `$table` WHERE `$column` IN ($placeholders)");
-                $statement->execute($sensorIds);
-                $counts[$table] = $statement->rowCount();
-            }
-
-            $statement = $pdo->prepare("DELETE FROM sensorConfig WHERE boardId = ? AND id IN ($placeholders)");
-            $statement->execute(array_merge(array($boardId), $sensorIds));
-            $counts['sensorConfig'] = $statement->rowCount();
+            $counts = self::deleteSensorRows($pdo, $boardId, $sensorIds);
             if ($counts['sensorConfig'] !== count($sensorIds)) {
                 throw new RuntimeException('Not all selected sensor configurations were deleted.');
             }
@@ -152,6 +134,93 @@ class SensorCleanupService
             ));
             throw new RuntimeException('Unused sensors could not be deleted.', 0, $e);
         }
+    }
+
+    public static function deleteSensorGroup($boardId, $sensorId, $actorUserId)
+    {
+        $boardId = (int)$boardId;
+        $sensorId = (int)$sensorId;
+        $actorUserId = (int)$actorUserId;
+        if ($boardId <= 0 || $sensorId <= 0 || $actorUserId <= 0) {
+            throw new InvalidArgumentException('A valid board, sensor and actor are required.');
+        }
+
+        $pdo = dbConfig::getInstance();
+        $counts = array();
+        try {
+            $pdo->beginTransaction();
+            $statement = $pdo->prepare(
+                'SELECT sensorConfig.id, sensorConfig.name, sensorTypes.name AS typeName
+                 FROM sensorConfig
+                 LEFT JOIN sensorTypes ON sensorTypes.id = sensorConfig.typId
+                 WHERE sensorConfig.id = ? AND sensorConfig.boardId = ?
+                 FOR UPDATE'
+            );
+            $statement->execute(array($sensorId, $boardId));
+            $sensor = $statement->fetch(PDO::FETCH_ASSOC);
+            if (!$sensor) {
+                throw new RuntimeException('Sensor group not found on this board.');
+            }
+
+            $counts = self::deleteSensorRows($pdo, $boardId, array($sensorId));
+            if ($counts['sensorConfig'] !== 1) {
+                throw new RuntimeException('The selected sensor configuration was not deleted.');
+            }
+
+            $pdo->commit();
+            writeToLogFunction::info('Sensor group and related data deleted.', __FILE__, array(
+                'boardId' => $boardId,
+                'sensorId' => $sensorId,
+                'sensorName' => $sensor['name'] ?? null,
+                'sensorType' => $sensor['typeName'] ?? null,
+                'actorUserId' => $actorUserId,
+                'deletedRows' => $counts,
+            ));
+            return $counts;
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            writeToLogFunction::error('Sensor group deletion failed.', __FILE__, array(
+                'boardId' => $boardId,
+                'sensorId' => $sensorId,
+                'actorUserId' => $actorUserId,
+                'deletedRowsBeforeRollback' => $counts,
+                'error' => $e->getMessage(),
+            ));
+            throw new RuntimeException('Sensor group could not be deleted.', 0, $e);
+        }
+    }
+
+    private static function deleteSensorRows(PDO $pdo, $boardId, array $sensorIds)
+    {
+        $sensorIds = array_values(array_unique(array_filter(array_map('intval', $sensorIds), function ($id) {
+            return $id > 0;
+        })));
+        if (empty($sensorIds)) {
+            return array('sensorConfig' => 0, 'sensorData' => 0, 'sensorChannelConfig' => 0, 'sensor_permissions' => 0);
+        }
+
+        $placeholders = implode(',', array_fill(0, count($sensorIds), '?'));
+        $counts = array();
+        if (self::tableExists($pdo, 'sensor_permissions')) {
+            $statement = $pdo->prepare("DELETE FROM sensor_permissions WHERE sensorId IN ($placeholders)");
+            $statement->execute($sensorIds);
+            $counts['sensor_permissions'] = $statement->rowCount();
+        } else {
+            $counts['sensor_permissions'] = 0;
+        }
+
+        foreach (array('sensorData' => 'sensorId', 'sensorChannelConfig' => 'sensorConfigId') as $table => $column) {
+            $statement = $pdo->prepare("DELETE FROM `$table` WHERE `$column` IN ($placeholders)");
+            $statement->execute($sensorIds);
+            $counts[$table] = $statement->rowCount();
+        }
+
+        $statement = $pdo->prepare("DELETE FROM sensorConfig WHERE boardId = ? AND id IN ($placeholders)");
+        $statement->execute(array_merge(array((int)$boardId), $sensorIds));
+        $counts['sensorConfig'] = $statement->rowCount();
+        return $counts;
     }
 
     private static function cleanupReason($typeName, $lastReading, $hasActiveAlert, $cutoffTimestamp)

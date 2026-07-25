@@ -57,4 +57,18 @@ class BoardFormPageService
             $staleDays
         );
     }
+
+    public static function deleteSensorGroup($currentUser, $boardId, $sensorId)
+    {
+        $boardId = (int)$boardId;
+        if (!myFunctions::canUserManageBoardAccess((int)$currentUser->getId(), $boardId)) {
+            throw new RuntimeException('Access denied.');
+        }
+
+        return SensorCleanupService::deleteSensorGroup(
+            $boardId,
+            (int)$sensorId,
+            (int)$currentUser->getId()
+        );
+    }
 }
