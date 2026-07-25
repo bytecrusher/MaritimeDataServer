@@ -216,21 +216,25 @@ class myFunctions {
     return $board ?: null;
   }
 
-  public static function getBoardByTTN($ttnAppId, $ttnDevId, $ttnDeviceId = null) {
-    if (($ttnAppId == null) || (($ttnDevId == null) && ($ttnDeviceId == null))) {
+  public static function getBoardByTTN($ttnAppId, $ttnDevEui, $ttnDeviceId = null) {
+    if (($ttnAppId == null) || (($ttnDevEui == null) && ($ttnDeviceId == null))) {
       return null;
     }
 
     $pdo = dbConfig::getInstance();
-    $sql = "SELECT * FROM boardConfig WHERE ttnAppId = ? AND (ttnDevId = ?";
-    $params = array($ttnAppId, $ttnDevId);
-
-    if ($ttnDeviceId != null) {
-      $sql .= " OR ttnDevId = ?";
-      $params[] = $ttnDeviceId;
+    if ($ttnDeviceId != null && $ttnDeviceId !== '') {
+      // TTN's device_id is the stable application identifier. Prefer its exact
+      // match over a legacy DevEUI-only row when both still exist.
+      $sql = "SELECT * FROM boardConfig
+              WHERE ttnAppId = ? AND (ttnDevId = ? OR ttnDevId = ?)
+              ORDER BY CASE WHEN ttnDevId = ? THEN 0 ELSE 1 END, id
+              LIMIT 1";
+      $params = array($ttnAppId, $ttnDeviceId, $ttnDevEui, $ttnDeviceId);
+    } else {
+      $sql = "SELECT * FROM boardConfig WHERE ttnAppId = ? AND ttnDevId = ? ORDER BY id LIMIT 1";
+      $params = array($ttnAppId, $ttnDevEui);
     }
 
-    $sql .= ") ORDER BY id LIMIT 1";
     $myBoards = $pdo->prepare($sql);
     $myBoards->execute($params);
     return $myBoards->fetch(PDO::FETCH_ASSOC);

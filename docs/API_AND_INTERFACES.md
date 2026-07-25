@@ -182,9 +182,14 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
    - bevorzugt `decoded_payload.macAddress`
    - sonst als Legacy-Fallback `device_id`
    - sonst als Legacy-Fallback `dev_eui`
+   - bekannte aktuelle FPort-1- und FPort-2-Payloads werden zusaetzlich aus
+     `frm_payload` serverseitig dekodiert; dadurch kann ein veralteter TTN-
+     Formatter keine Messbytes als falsche MAC-Adresse interpretieren
 3. MDS sucht das Board ueber:
    - primaer `boardConfig.macAddress`
    - fallback `ttnAppId` plus `ttnDevId`
+   - wenn sowohl `device_id` als auch `dev_eui` auf alte Datensaetze zeigen,
+     hat die exakte TTN-`device_id` Vorrang
 4. Falls das Board nicht existiert:
    - wird ein Board automatisch angelegt
    - wenn `macAddress` vorhanden ist, wird diese direkt als Board-MAC gespeichert

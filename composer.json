@@ -24,6 +24,7 @@
       "php tests/SensorCleanupServiceTest.php",
       "php tests/SessionSupportTest.php",
       "php tests/LogFileManagerTest.php",
+      "php tests/TtnPayloadDecoderTest.php",
       "php tests/SeoMetadataTest.php"
     ]
   }

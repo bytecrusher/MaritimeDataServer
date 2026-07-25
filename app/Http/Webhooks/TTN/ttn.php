@@ -32,6 +32,7 @@
 // load configuration data
 require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
+require_once(dirname(__DIR__, 3) . "/Application/TtnPayloadDecoder.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Database/dbConfig.func.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Logging/writeToLogFunction.func.php");
 header('Content-Type: application/json; charset=utf-8');
@@ -86,12 +87,38 @@ if(strlen($ttn_post) > 0) {
     $sensor_relay = 0;
 
     $uplinkMessage = $data->uplink_message;
+    $sensor_raw_payload = $uplinkMessage->frm_payload ?? null;
     $decodedPayload = ttnExtractMeasurementPayload($uplinkMessage);
+    $ttnReportedPayloadType = (string)ttnPayloadValue($decodedPayload, array('payloadType'), 'measurements');
+    $ttnReportedPayloadSchema = (int)ttnPayloadValue($decodedPayload, array('payloadSchema'), 1);
+    $serverDecodedPayload = TtnPayloadDecoder::decodeKnownPayload(
+        (int)($uplinkMessage->f_port ?? 0),
+        $sensor_raw_payload
+    );
+    $payloadDecoderSource = 'ttn';
+    if ($serverDecodedPayload !== null) {
+        $serverPayloadType = (string)($serverDecodedPayload['payloadType'] ?? 'measurements');
+        $serverPayloadSchema = (int)($serverDecodedPayload['payloadSchema'] ?? 1);
+        if ($ttnReportedPayloadType !== $serverPayloadType || $ttnReportedPayloadSchema !== $serverPayloadSchema) {
+            writeToLogFunction::warning(
+                'TTN decoded payload metadata did not match the raw payload. Server-side decoder used.',
+                $_SERVER["SCRIPT_FILENAME"],
+                array(
+                    'fPort' => (int)($uplinkMessage->f_port ?? 0),
+                    'ttnPayloadType' => $ttnReportedPayloadType,
+                    'ttnPayloadSchema' => $ttnReportedPayloadSchema,
+                    'rawPayloadType' => $serverPayloadType,
+                    'rawPayloadSchema' => $serverPayloadSchema
+                )
+            );
+        }
+        $decodedPayload = json_decode(json_encode($serverDecodedPayload));
+        $payloadDecoderSource = 'mdsRaw';
+    }
     $payloadType = (string)ttnPayloadValue($decodedPayload, array('payloadType'), 'measurements');
     $payloadSchema = (int)ttnPayloadValue($decodedPayload, array('payloadSchema'), 1);
     $isDeviceConfigPayload = $payloadType === 'deviceConfig';
     $isNamedMeasurementPayload = $payloadType === 'measurements' && $payloadSchema >= 2;
-    $sensor_raw_payload = $uplinkMessage->frm_payload ?? null;
     $bestRxMetadata = ttnSelectBestRxMetadata($uplinkMessage->rx_metadata ?? array());
 
     // Sensor Data
@@ -153,6 +180,7 @@ if(strlen($ttn_post) > 0) {
             'frameCounter' => $frame_counter,
             'payloadType' => $payloadType,
             'payloadSchema' => $payloadSchema,
+            'payloadDecoderSource' => $payloadDecoderSource,
             'hasDecodedPayload' => isset($uplinkMessage->decoded_payload),
             'hasNormalizedPayload' => isset($uplinkMessage->normalized_payload)
         )
