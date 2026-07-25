@@ -22,6 +22,8 @@
       "php tests/DeviceEventTimelineCalculatorTest.php",
       "php tests/SensorNamingServiceTest.php",
       "php tests/SensorCleanupServiceTest.php",
+      "php tests/SessionSupportTest.php",
+      "php tests/LogFileManagerTest.php",
       "php tests/SeoMetadataTest.php"
     ]
   }

@@ -33,6 +33,7 @@ class configuration {
     static $defaultChartWindowDays = null;
     static $privacyContactEmail = null;
     static $logRetentionDays = null;
+    static $logMaxFileSizeMb = null;
     static $passwordResetRetentionDays = null;
     static $telemetryRetentionDays = null;
     static $gpsRetentionDays = null;
@@ -176,7 +177,12 @@ class configuration {
 
             self::$logRetentionDays = '90';
             if (array_key_exists('logRetentionDays', $jsonData) && is_numeric($jsonData['logRetentionDays'])) {
-                self::$logRetentionDays = (string)max(1, (int)$jsonData['logRetentionDays']);
+                self::$logRetentionDays = (string)min(3650, max(1, (int)$jsonData['logRetentionDays']));
+            }
+
+            self::$logMaxFileSizeMb = '10';
+            if (array_key_exists('logMaxFileSizeMb', $jsonData) && is_numeric($jsonData['logMaxFileSizeMb'])) {
+                self::$logMaxFileSizeMb = (string)min(1024, max(1, (int)$jsonData['logMaxFileSizeMb']));
             }
 
             self::$passwordResetRetentionDays = '30';
@@ -245,7 +251,8 @@ class configuration {
             self::$defaultDashboardOnlineOnly = $post['defaultDashboardOnlineOnly'] ?? '0';
             self::$defaultChartWindowDays = (string)$defaultChartWindowDays;
             self::$privacyContactEmail = trim((string)($post['privacyContactEmail'] ?? self::$privacyContactEmail));
-            self::$logRetentionDays = (string)max(1, (int)($post['logRetentionDays'] ?? self::$logRetentionDays ?: 90));
+            self::$logRetentionDays = (string)min(3650, max(1, (int)($post['logRetentionDays'] ?? self::$logRetentionDays ?: 90)));
+            self::$logMaxFileSizeMb = (string)min(1024, max(1, (int)($post['logMaxFileSizeMb'] ?? self::$logMaxFileSizeMb ?: 10)));
             self::$passwordResetRetentionDays = (string)max(1, (int)($post['passwordResetRetentionDays'] ?? self::$passwordResetRetentionDays ?: 30));
             self::$telemetryRetentionDays = (string)max(1, (int)($post['telemetryRetentionDays'] ?? self::$telemetryRetentionDays ?: 365));
             self::$gpsRetentionDays = (string)max(1, (int)($post['gpsRetentionDays'] ?? self::$gpsRetentionDays ?: 90));
@@ -274,6 +281,7 @@ class configuration {
             $jsonData['defaultChartWindowDays'] = self::$defaultChartWindowDays;
             $jsonData['privacyContactEmail'] = self::$privacyContactEmail;
             $jsonData['logRetentionDays'] = self::$logRetentionDays;
+            $jsonData['logMaxFileSizeMb'] = self::$logMaxFileSizeMb;
             $jsonData['passwordResetRetentionDays'] = self::$passwordResetRetentionDays;
             $jsonData['telemetryRetentionDays'] = self::$telemetryRetentionDays;
             $jsonData['gpsRetentionDays'] = self::$gpsRetentionDays;

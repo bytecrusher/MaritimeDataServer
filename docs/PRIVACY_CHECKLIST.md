@@ -51,6 +51,7 @@ Diese Checkliste ist projektspezifisch und soll helfen, den Betrieb des Systems 
 ```bash
 php tools/maintenance/sendmail.php
 php tools/maintenance/privacy_cleanup.php
+php tools/maintenance/log_cleanup.php
 ```
 
 ## Wichtige Konfigurationswerte
@@ -59,6 +60,7 @@ In `config/config.json` bzw. `config/config_template.json`:
 
 - `privacyContactEmail`
 - `logRetentionDays`
+- `logMaxFileSizeMb`
 - `passwordResetRetentionDays`
 - `sendEmails`
 - `systemEmailAddress`

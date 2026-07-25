@@ -1364,7 +1364,19 @@ th.rotated-text > div > span {
               <div class="row">
                 <label for="logRetentionDays" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.log_retention_days'), ENT_QUOTES, 'UTF-8'); ?></label>
                 <div class="col col-sm-4">
-                  <input class="form-control" id="logRetentionDays" name="logRetentionDays" type="number" min="1" value="<?php echo htmlspecialchars((string)($config::$logRetentionDays ?? '90'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                  <input class="form-control" id="logRetentionDays" name="logRetentionDays" type="number" min="1" max="3650" value="<?php echo htmlspecialchars((string)($config::$logRetentionDays ?? '90'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="form-group">
+              <div class="row">
+                <label for="logMaxFileSizeMb" class="col col-sm-2 control-label"><?php echo htmlspecialchars(mds_t('settings.log_max_file_size'), ENT_QUOTES, 'UTF-8'); ?></label>
+                <div class="col col-sm-4">
+                  <input class="form-control" id="logMaxFileSizeMb" name="logMaxFileSizeMb" type="number" min="1" max="1024" value="<?php echo htmlspecialchars((string)($config::$logMaxFileSizeMb ?? '10'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                  <div class="form-text"><?php echo htmlspecialchars(mds_t('settings.log_rotation_help'), ENT_QUOTES, 'UTF-8'); ?></div>
                 </div>
               </div>
             </div>

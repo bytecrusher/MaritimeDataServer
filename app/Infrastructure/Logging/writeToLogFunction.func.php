@@ -6,6 +6,8 @@
  * @license: TBD
  */
 
+require_once __DIR__ . '/LogFileManager.php';
+
 class writeToLogFunction
 {
     private static $handlersRegistered = false;
@@ -69,11 +71,12 @@ class writeToLogFunction
         );
         $month = date('n');
         $year = date('Y');
-        $logDirectory = dirname(__FILE__, 4) . '/var/log';
-        if (!is_dir($logDirectory)) {
+        $projectRoot = dirname(__FILE__, 4);
+        $logDirectory = $projectRoot . '/var/log';
+
+        if (!is_dir($logDirectory) || !is_writable($logDirectory)) {
             @mkdir($logDirectory, 0775, true);
         }
-
         if (!is_dir($logDirectory) || !is_writable($logDirectory)) {
             error_log(
                 sprintf(
@@ -87,10 +90,6 @@ class writeToLogFunction
         $filename = $logDirectory . '/log_' . $months[$month] . '_' . $year . '.log';
         $header = 'Date Time Level Source Message';
 
-        if (!file_exists($filename)) {
-            error_log($header . PHP_EOL, 3, $filename);
-        }
-
         $normalizedSource = self::normalizeSource($source);
         $context = self::buildContext($context);
         $message = self::stringify($text);
@@ -103,7 +102,18 @@ class writeToLogFunction
             self::formatContext($context)
         );
 
-        error_log($line . PHP_EOL, 3, $filename);
+        $settings = self::loggingSettings($projectRoot);
+        $writeResult = LogFileManager::append(
+            $logDirectory,
+            basename($filename),
+            $header,
+            $line,
+            $settings['maxFileSizeBytes'],
+            $settings['retentionDays']
+        );
+        if (empty($writeResult['success'])) {
+            error_log('[MDS][' . strtoupper((string)$level) . '] Application log write failed. ' . $line);
+        }
     }
 
     public static function info($text, $source, array $context = array())
@@ -226,6 +236,46 @@ class writeToLogFunction
         }
 
         return $ipAddress;
+    }
+
+    private static function loggingSettings($projectRoot)
+    {
+        static $settings = null;
+        if ($settings !== null) {
+            return $settings;
+        }
+
+        $maxFileSizeMb = LogFileManager::DEFAULT_MAX_FILE_SIZE_MB;
+        $retentionDays = LogFileManager::DEFAULT_RETENTION_DAYS;
+        $configPath = rtrim((string)$projectRoot, DIRECTORY_SEPARATOR) . '/config/config.json';
+        if (is_file($configPath)) {
+            $decoded = json_decode((string)@file_get_contents($configPath), true);
+            if (is_array($decoded)) {
+                if (isset($decoded['logMaxFileSizeMb']) && is_numeric($decoded['logMaxFileSizeMb'])) {
+                    $maxFileSizeMb = (int)$decoded['logMaxFileSizeMb'];
+                }
+                if (isset($decoded['logRetentionDays']) && is_numeric($decoded['logRetentionDays'])) {
+                    $retentionDays = (int)$decoded['logRetentionDays'];
+                }
+            }
+        }
+
+        $environmentMaxFileSizeMb = getenv('MDS_LOG_MAX_FILE_SIZE_MB');
+        if ($environmentMaxFileSizeMb !== false && is_numeric($environmentMaxFileSizeMb)) {
+            $maxFileSizeMb = (int)$environmentMaxFileSizeMb;
+        }
+        $environmentRetentionDays = getenv('MDS_LOG_RETENTION_DAYS');
+        if ($environmentRetentionDays !== false && is_numeric($environmentRetentionDays)) {
+            $retentionDays = (int)$environmentRetentionDays;
+        }
+
+        $maxFileSizeMb = min(1024, max(1, $maxFileSizeMb));
+        $retentionDays = min(3650, max(1, $retentionDays));
+        $settings = array(
+            'maxFileSizeBytes' => $maxFileSizeMb * 1024 * 1024,
+            'retentionDays' => $retentionDays,
+        );
+        return $settings;
     }
 }
 

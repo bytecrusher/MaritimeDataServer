@@ -30,12 +30,16 @@ class dbConfig {
       );
       self::$pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
     }
-    catch(PDOException $e)
-    {
-        //$e->getMessage());
-        writeToLogFunction::write_to_log("Error while create PDO object: ", $_SERVER["SCRIPT_FILENAME"]);
-        writeToLogFunction::write_to_log($e, $_SERVER["SCRIPT_FILENAME"]);
-        exit();
+    catch (PDOException $e) {
+        writeToLogFunction::error(
+          'Database connection could not be established.',
+          __FILE__,
+          array(
+            'sqlState' => (string)$e->getCode(),
+            'error' => $e->getMessage(),
+          )
+        );
+        throw new RuntimeException('Database connection unavailable.', 0, $e);
     }
   }
 

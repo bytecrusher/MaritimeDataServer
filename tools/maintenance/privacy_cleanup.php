@@ -3,9 +3,9 @@
 require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
 require_once dirname(__DIR__, 2) . "/app/Infrastructure/Database/dbConfig.func.php";
 require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
+require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/LogFileManager.php";
 
 $config = new configuration();
-$pdo = dbConfig::getInstance();
 
 $logRetentionDays = max(1, (int)($config::$logRetentionDays ?: 90));
 $passwordResetRetentionDays = max(1, (int)($config::$passwordResetRetentionDays ?: 30));
@@ -16,7 +16,9 @@ $securityTokenRetentionDays = max(1, (int)($config::$securityTokenRetentionDays 
 $projectRoot = dirname(__DIR__, 2);
 $logDirectory = $projectRoot . '/var/log';
 
-$deletedLogs = 0;
+$logCleanupResult = LogFileManager::cleanup($logDirectory, $logRetentionDays);
+$deletedLogs = (int)$logCleanupResult['deletedFiles'];
+$pdo = dbConfig::getInstance();
 $resetCodesCleared = 0;
 $telemetryRowsDeleted = 0;
 $gpsRowsDeleted = 0;
@@ -35,23 +37,6 @@ writeToLogFunction::info(
         'securityTokenRetentionDays' => $securityTokenRetentionDays,
     )
 );
-
-if (is_dir($logDirectory)) {
-    $cutoffTimestamp = time() - ($logRetentionDays * 86400);
-    $logFiles = glob($logDirectory . '/*.log') ?: array();
-    foreach ($logFiles as $logFile) {
-        if (!is_file($logFile)) {
-            continue;
-        }
-
-        $modifiedAt = @filemtime($logFile);
-        if ($modifiedAt !== false && $modifiedAt < $cutoffTimestamp) {
-            if (@unlink($logFile)) {
-                $deletedLogs++;
-            }
-        }
-    }
-}
 
 $statement = $pdo->prepare(
     "UPDATE users
@@ -105,6 +90,8 @@ writeToLogFunction::info(
     __FILE__,
     array(
         'deletedLogs' => $deletedLogs,
+        'deletedLogBytes' => (int)$logCleanupResult['deletedBytes'],
+        'failedLogDeletes' => (int)$logCleanupResult['failedFiles'],
         'resetCodesCleared' => $resetCodesCleared,
         'telemetryRowsDeleted' => $telemetryRowsDeleted,
         'gpsRowsDeleted' => $gpsRowsDeleted,
@@ -117,6 +104,8 @@ echo json_encode(
     array(
         'status' => 'ok',
         'deletedLogs' => $deletedLogs,
+        'deletedLogBytes' => (int)$logCleanupResult['deletedBytes'],
+        'failedLogDeletes' => (int)$logCleanupResult['failedFiles'],
         'resetCodesCleared' => $resetCodesCleared,
         'telemetryRowsDeleted' => $telemetryRowsDeleted,
         'gpsRowsDeleted' => $gpsRowsDeleted,

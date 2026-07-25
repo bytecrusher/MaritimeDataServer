@@ -50,10 +50,36 @@ function mds_cookie_options($expires = 0, $sameSite = 'Lax')
     return $options;
 }
 
+function mds_session_storage_path()
+{
+    $configuredPath = trim((string)getenv('MDS_SESSION_SAVE_PATH'));
+    $preferredPath = $configuredPath !== ''
+        ? $configuredPath
+        : dirname(__DIR__, 2) . '/var/sessions';
+
+    $effectiveUserId = function_exists('posix_geteuid') ? (string)posix_geteuid() : (string)getmyuid();
+    $fallbackPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
+        . DIRECTORY_SEPARATOR
+        . 'mds-sessions-'
+        . substr(hash('sha256', dirname(__DIR__, 2) . '|' . $effectiveUserId), 0, 16);
+    $candidates = array_values(array_unique(array($preferredPath, $fallbackPath)));
+
+    foreach ($candidates as $sessionPath) {
+        if (!is_dir($sessionPath) && !@mkdir($sessionPath, 0700, true) && !is_dir($sessionPath)) {
+            continue;
+        }
+        if (is_writable($sessionPath)) {
+            return $sessionPath;
+        }
+    }
+
+    return null;
+}
+
 function mds_start_session()
 {
     if (session_status() === PHP_SESSION_ACTIVE) {
-        return;
+        return true;
     }
 
     $headersFile = '';
@@ -69,7 +95,18 @@ function mds_start_session()
                 )
             );
         }
-        return;
+        return false;
+    }
+
+    $sessionPath = mds_session_storage_path();
+    if ($sessionPath !== null) {
+        ini_set('session.save_path', $sessionPath);
+    } elseif (class_exists('writeToLogFunction')) {
+        writeToLogFunction::error(
+            'Dedicated session storage is unavailable; PHP session storage fallback will be used.',
+            __FILE__,
+            array('configuredPath' => (string)getenv('MDS_SESSION_SAVE_PATH'))
+        );
     }
 
     ini_set('session.use_only_cookies', '1');
@@ -85,7 +122,19 @@ function mds_start_session()
         'httponly' => true,
         'samesite' => 'Lax',
     ));
-    session_start();
+    $started = session_start();
+    if (!$started && class_exists('writeToLogFunction')) {
+        writeToLogFunction::error(
+            'PHP session could not be started.',
+            __FILE__,
+            array(
+                'sessionSavePath' => session_save_path(),
+                'sessionName' => session_name(),
+            )
+        );
+    }
+
+    return $started;
 }
 
 function mds_start_session_if_present()

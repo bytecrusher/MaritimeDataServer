@@ -33,7 +33,10 @@ Recommended recurring jobs:
 ```text
 php tools/maintenance/sendmail.php
 php tools/maintenance/privacy_cleanup.php
+php tools/maintenance/log_cleanup.php
 ```
+
+Application logs are split by month and rotated when the configured maximum file size is reached. The defaults are 10 MB per file and 90 days retention. Both values can be changed under `Settings -> Server Setting`. Retention cleanup runs automatically at most once per day while logging; `log_cleanup.php` can additionally be scheduled as a daily cron job.
 
 ## Localization
 
