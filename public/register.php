@@ -7,6 +7,18 @@ require_once dirname(__DIR__) . "/app/Application/NotificationService.php";
 require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
 
 $config = new configuration();
+$registrationFormToken = '';
+
+$logRegistrationBlock = static function ($mechanism, $email = '') {
+    writeToLogFunction::warning(
+        'Registration blocked by spam protection.',
+        __FILE__,
+        array(
+            'mechanism' => (string)$mechanism,
+            'emailFingerprint' => $email !== '' ? substr(hash('sha256', strtolower(trim((string)$email))), 0, 16) : null,
+        )
+    );
+};
 
 $sendActivationEmail = static function ($userId, $toEmail, $firstName) use ($config) {
     $actualLink = mds_absolute_url('activate.php?id=' . (int)$userId);
@@ -44,30 +56,47 @@ if (count($_POST) > 0) {
         $type = "error";
     }
     if (!isset($message)) {
-        $rateLimit = mds_rate_limit_attempt(
-            'register',
-            strtolower(trim((string)($_POST["userEmail"] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+        if (trim((string)($_POST['companyWebsite'] ?? '')) !== '') {
+            $logRegistrationBlock('honeypot', $_POST['userEmail'] ?? '');
+            $message = mds_t('register.spam_rejected');
+            $type = 'error';
+        }
+    }
+    if (!isset($message)) {
+        if (!mds_validate_form_challenge('register', $_POST['registrationFormToken'] ?? '', 2, 7200)) {
+            $logRegistrationBlock('form_challenge', $_POST['userEmail'] ?? '');
+            $message = mds_t('register.form_expired');
+            $type = 'error';
+        }
+    }
+    if (!isset($message)) {
+        $clientRateLimit = mds_rate_limit_attempt(
+            'register-client',
+            (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
             5,
             3600
         );
-        if (!$rateLimit['allowed']) {
+        if (!$clientRateLimit['allowed']) {
+            $logRegistrationBlock(
+                empty($clientRateLimit['storageAvailable']) ? 'rate_limit_storage' : 'client_rate_limit',
+                $_POST['userEmail'] ?? ''
+            );
             $message = mds_t('register.too_many');
             $type = "error";
+            http_response_code(429);
+            header('Retry-After: ' . max(1, (int)$clientRateLimit['retryAfter']));
         }
     }
     /* Form Required Field Validation */
-    foreach ($_POST as $key => $value) {
-        if ($key === 'csrf_token' || $key === 'terms') {
-            continue;
-        }
-        if (!isset($message) && empty($_POST[$key])) {
+    foreach (array('firstName', 'lastName', 'password', 'confirm_password', 'userEmail') as $key) {
+        if (!isset($message) && trim((string)($_POST[$key] ?? '')) === '') {
             $message = ucwords($key) . " field is required";
             $type = "error";
             break;
         }
     }
     /* Password Matching Validation */
-    if (($_POST['password'] ?? '') !== ($_POST['confirm_password'] ?? '')) {
+    if (!isset($message) && ($_POST['password'] ?? '') !== ($_POST['confirm_password'] ?? '')) {
         $message = 'Passwords should be same<br>';
         $type = "error";
     }
@@ -77,6 +106,21 @@ if (count($_POST) > 0) {
         if (! filter_var($_POST["userEmail"], FILTER_VALIDATE_EMAIL)) {
             $message = "Invalid UserEmail";
             $type = "error";
+        }
+    }
+
+    if (!isset($message)) {
+        $userEmail = strtolower(trim((string)$_POST['userEmail']));
+        $emailRateLimit = mds_rate_limit_attempt('register-email', $userEmail, 3, 86400);
+        if (!$emailRateLimit['allowed']) {
+            $logRegistrationBlock(
+                empty($emailRateLimit['storageAvailable']) ? 'rate_limit_storage' : 'email_rate_limit',
+                $userEmail
+            );
+            $message = mds_t('register.too_many');
+            $type = 'error';
+            http_response_code(429);
+            header('Retry-After: ' . max(1, (int)$emailRateLimit['retryAfter']));
         }
     }
 
@@ -121,6 +165,10 @@ if (count($_POST) > 0) {
     }
 }
 include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
+
+if (!isset($message)) {
+    $registrationFormToken = mds_issue_form_challenge('register');
+}
 ?>
     <?php
     if(isset($error_msg) && !empty($error_msg)) {
@@ -135,34 +183,39 @@ include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
             <div class="message <?php echo mds_h($type); ?>"><?php echo mds_h($message); ?></div>
         </div>
         <?php } else { ?>
-        <form name="frmRegistration" method="post" action="">
+        <form name="frmRegistration" method="post" action="" onsubmit="showLoader();">
             <?php echo mds_csrf_input(); ?>
+            <input type="hidden" name="registrationFormToken" value="<?php echo mds_h($registrationFormToken); ?>">
+            <div class="registration-honeypot" aria-hidden="true">
+                <label for="companyWebsite">Website</label>
+                <input type="text" id="companyWebsite" name="companyWebsite" tabindex="-1" autocomplete="off" value="">
+            </div>
             <h2><?php echo htmlspecialchars(mds_t('register.heading'), ENT_QUOTES, 'UTF-8'); ?></h2>
             <div class="form-group">
                 <label for="firstName"><?php echo htmlspecialchars(mds_t('register.first_name'), ENT_QUOTES, 'UTF-8'); ?>:</label>
-                <input type="text" id="firstName" size="40" maxlength="250" name="firstName" class="form-control" required value="<?php if(isset($_POST['firstName'])) echo $_POST['firstName']; ?>">
+                <input type="text" id="firstName" size="40" maxlength="250" name="firstName" class="form-control" autocomplete="given-name" required value="<?php if(isset($_POST['firstName'])) echo mds_h($_POST['firstName']); ?>">
             </div>
             <div class="form-group">
                 <label for="lastName"><?php echo htmlspecialchars(mds_t('register.last_name'), ENT_QUOTES, 'UTF-8'); ?>:</label>
-                <input type="text" id="lastName" size="40" maxlength="250" name="lastName" class="form-control" required value="<?php if(isset($_POST['lastName'])) echo $_POST['lastName']; ?>">
+                <input type="text" id="lastName" size="40" maxlength="250" name="lastName" class="form-control" autocomplete="family-name" required value="<?php if(isset($_POST['lastName'])) echo mds_h($_POST['lastName']); ?>">
             </div>
             <div class="form-group">
                 <label for="password"><?php echo htmlspecialchars(mds_t('common.password'), ENT_QUOTES, 'UTF-8'); ?>:</label>
-                <input type="password" id="password" size="40"  maxlength="250" name="password" class="form-control" required value="">
+                <input type="password" id="password" size="40"  maxlength="250" name="password" class="form-control" autocomplete="new-password" required value="">
             </div>
             <div class="form-group">
                 <label for="confirm_password"><?php echo htmlspecialchars(mds_t('register.password_repeat'), ENT_QUOTES, 'UTF-8'); ?>:</label>
-                <input type="password" id="confirm_password" size="40" maxlength="250" name="confirm_password" class="form-control" required value="">
+                <input type="password" id="confirm_password" size="40" maxlength="250" name="confirm_password" class="form-control" autocomplete="new-password" required value="">
             </div>
             <div class="form-group">
                 <label for="userEmail"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?>:</label>
-                <input type="email" id="userEmail" size="40" maxlength="250" name="userEmail" class="form-control" required value="<?php if(isset($_POST['userEmail'])) echo mds_h($_POST['userEmail']); ?>">
+                <input type="email" id="userEmail" size="40" maxlength="250" name="userEmail" class="form-control" autocomplete="email" required value="<?php if(isset($_POST['userEmail'])) echo mds_h($_POST['userEmail']); ?>">
             </div>
             <div class="form-group">
                 <input type="checkbox" name="terms"> <?php echo htmlspecialchars(mds_t('register.accept_terms'), ENT_QUOTES, 'UTF-8'); ?>
             </div>
             <div class="form-group mt-2">
-                <button type="submit" class="btn btn-lg btn-primary btn-block" name="submit" id="btn-submit" value="Register" onclick="showLoader();"><?php echo htmlspecialchars(mds_t('register.submit'), ENT_QUOTES, 'UTF-8'); ?></button>
+                <button type="submit" class="btn btn-lg btn-primary btn-block" name="submit" id="btn-submit" value="Register"><?php echo htmlspecialchars(mds_t('register.submit'), ENT_QUOTES, 'UTF-8'); ?></button>
             </div>
             <div id="loader-icon" class="loader">
                 <img src="register/loader.gif" />
@@ -170,6 +223,15 @@ include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
         </form>
     <?php } ?>
     </div>
+    <style>
+    .registration-honeypot {
+        position: absolute !important;
+        left: -10000px !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+    }
+    </style>
     <script>
     function showLoader() {
         document.getElementById("loader-icon").style.display = 'block';

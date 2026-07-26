@@ -188,26 +188,120 @@ function mds_h($value)
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function mds_rate_limit_attempt($bucket, $subject, $limit, $windowSeconds, $consumeAttempt = true)
+function mds_issue_form_challenge($purpose)
+{
+    if (session_status() !== PHP_SESSION_ACTIVE && !mds_start_session()) {
+        return '';
+    }
+
+    $purpose = preg_replace('/[^a-z0-9_-]/i', '', (string)$purpose);
+    if ($purpose === '') {
+        return '';
+    }
+
+    $token = bin2hex(random_bytes(24));
+    if (!isset($_SESSION['form_challenges']) || !is_array($_SESSION['form_challenges'])) {
+        $_SESSION['form_challenges'] = array();
+    }
+    if (!isset($_SESSION['form_challenges'][$purpose]) || !is_array($_SESSION['form_challenges'][$purpose])) {
+        $_SESSION['form_challenges'][$purpose] = array();
+    }
+
+    $now = time();
+    $_SESSION['form_challenges'][$purpose] = array_filter(
+        $_SESSION['form_challenges'][$purpose],
+        function ($startedAt) use ($now) {
+            return is_numeric($startedAt) && (int)$startedAt >= ($now - 7200);
+        }
+    );
+    $_SESSION['form_challenges'][$purpose][$token] = $now;
+    if (count($_SESSION['form_challenges'][$purpose]) > 10) {
+        $_SESSION['form_challenges'][$purpose] = array_slice(
+            $_SESSION['form_challenges'][$purpose],
+            -10,
+            null,
+            true
+        );
+    }
+
+    return $token;
+}
+
+function mds_validate_form_challenge($purpose, $token, $minimumAgeSeconds = 2, $maximumAgeSeconds = 7200)
+{
+    if (session_status() !== PHP_SESSION_ACTIVE && !mds_start_session()) {
+        return false;
+    }
+
+    $purpose = preg_replace('/[^a-z0-9_-]/i', '', (string)$purpose);
+    $token = (string)$token;
+    $challenges = $_SESSION['form_challenges'][$purpose] ?? array();
+    if ($purpose === '' || $token === '' || !is_array($challenges) || !isset($challenges[$token])) {
+        return false;
+    }
+
+    $startedAt = (int)$challenges[$token];
+    unset($_SESSION['form_challenges'][$purpose][$token]);
+    $age = time() - $startedAt;
+    return $age >= max(0, (int)$minimumAgeSeconds)
+        && $age <= max((int)$minimumAgeSeconds, (int)$maximumAgeSeconds);
+}
+
+function mds_rate_limit_attempt($bucket, $subject, $limit, $windowSeconds, $consumeAttempt = true, $now = null)
 {
     $limit = max(1, (int)$limit);
     $windowSeconds = max(1, (int)$windowSeconds);
+    $now = $now === null ? time() : (int)$now;
 
-    $storageDir = dirname(__DIR__, 2) . '/var/status';
-    if (!is_dir($storageDir)) {
-        @mkdir($storageDir, 0775, true);
-    }
-
-    $storageFile = $storageDir . '/rate_limits.json';
-    $now = time();
     $key = sha1($bucket . '|' . $subject);
     $payload = array();
 
-    if (file_exists($storageFile)) {
-        $decoded = json_decode((string)file_get_contents($storageFile), true);
-        if (is_array($decoded)) {
-            $payload = $decoded;
+    $configuredStorageFile = trim((string)getenv('MDS_RATE_LIMIT_STORAGE_FILE'));
+    if ($configuredStorageFile !== '') {
+        $storageFiles = array($configuredStorageFile);
+    } else {
+        $effectiveUserId = function_exists('posix_geteuid') ? (string)posix_geteuid() : (string)getmyuid();
+        $storageFiles = array(
+            dirname(__DIR__, 2) . '/var/status/rate_limits.json',
+            rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
+                . DIRECTORY_SEPARATOR
+                . 'mds-rate-limits-'
+                . substr(hash('sha256', dirname(__DIR__, 2) . '|' . $effectiveUserId), 0, 16)
+                . '.json',
+        );
+    }
+
+    $handle = false;
+    foreach (array_unique($storageFiles) as $storageFile) {
+        $storageDir = dirname($storageFile);
+        if (!is_dir($storageDir) && !@mkdir($storageDir, 0700, true) && !is_dir($storageDir)) {
+            continue;
         }
+
+        $candidateHandle = @fopen($storageFile, 'c+');
+        if ($candidateHandle === false) {
+            continue;
+        }
+        if (flock($candidateHandle, LOCK_EX)) {
+            $handle = $candidateHandle;
+            break;
+        }
+
+        fclose($candidateHandle);
+    }
+
+    if ($handle === false) {
+        return array('allowed' => false, 'retryAfter' => $windowSeconds, 'storageAvailable' => false);
+    }
+
+    $contents = stream_get_contents($handle);
+    $decoded = json_decode((string)$contents, true);
+    if (is_array($decoded)) {
+        $payload = $decoded;
+    } elseif (trim((string)$contents) !== '') {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+        return array('allowed' => false, 'retryAfter' => $windowSeconds, 'storageAvailable' => false);
     }
 
     foreach ($payload as $payloadKey => $entry) {
@@ -244,24 +338,46 @@ function mds_rate_limit_attempt($bucket, $subject, $limit, $windowSeconds, $cons
         $oldest = (int)$entry['timestamps'][0];
         $retryAfter = max(1, ($oldest + $windowSeconds) - $now);
         $payload[$key] = $entry;
-        @file_put_contents($storageFile, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $storageAvailable = mds_write_rate_limit_payload($handle, $payload);
+        flock($handle, LOCK_UN);
+        fclose($handle);
 
         return array(
             'allowed' => false,
             'retryAfter' => $retryAfter,
+            'storageAvailable' => $storageAvailable,
         );
     }
 
     if ($consumeAttempt) {
         $entry['timestamps'][] = $now;
         $payload[$key] = $entry;
-        @file_put_contents($storageFile, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        if (!mds_write_rate_limit_payload($handle, $payload)) {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+            return array('allowed' => false, 'retryAfter' => $windowSeconds, 'storageAvailable' => false);
+        }
     }
+
+    flock($handle, LOCK_UN);
+    fclose($handle);
 
     return array(
         'allowed' => true,
         'retryAfter' => 0,
+        'storageAvailable' => true,
     );
+}
+
+function mds_write_rate_limit_payload($handle, array $payload)
+{
+    $encoded = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false || !rewind($handle) || !ftruncate($handle, 0)) {
+        return false;
+    }
+
+    $bytesWritten = fwrite($handle, $encoded);
+    return $bytesWritten === strlen($encoded) && fflush($handle);
 }
 
 function mds_set_remember_login_cookies($identifier, $securityToken, $ttlSeconds = 2592000)

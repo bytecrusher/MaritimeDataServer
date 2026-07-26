@@ -416,6 +416,14 @@ Die Logansicht unterscheidet folgende Faelle:
 
 Bei einem bereits registrierten, aber noch nicht aktivierten Konto kann das Registrierungsformular erneut abgesendet werden. MDS versendet dann eine neue Aktivierungsmail, statt den Account dauerhaft zu blockieren.
 
+Die Registrierung ist ohne externen CAPTCHA-Dienst gegen automatisierte Anmeldungen geschuetzt:
+
+- CSRF-Token und ein zeitgebundener, nur einmal verwendbarer Formular-Token muessen gueltig sein.
+- Ein fuer normale Besucher unsichtbares Honeypot-Feld erkennt einfache Formular-Bots.
+- Pro Client sind maximal 5 Registrierungsversuche pro Stunde und pro E-Mail-Adresse maximal 3 Versuche pro Tag erlaubt.
+- Bei Ueberschreitung antwortet der Server mit HTTP `429` und einem `Retry-After`-Header.
+- Rate-Limit-Schluessel sowie protokollierte E-Mail-Merkmale werden nur als Hash gespeichert; ein externer CAPTCHA-Anbieter erhaelt keine Besucherdaten.
+
 ### Offline-Benachrichtigungen
 
 Offline-Mails werden ueber diesen Wartungspfad verarbeitet:
