@@ -1034,14 +1034,26 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
-  #internalTabs {
-    gap: 0.3rem;
+  .internal-tabs-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     padding: 0.55rem;
     border: 1px solid rgba(15, 23, 42, 0.09);
     border-radius: 1.25rem;
     background: rgba(255, 255, 255, 0.82);
     box-shadow: 0 15px 35px rgba(15, 23, 42, 0.07);
     backdrop-filter: blur(16px);
+  }
+  #internalTabs {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.3rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
   #internalTabs .nav-link {
     display: inline-flex;
@@ -1077,14 +1089,14 @@
     gap: 1.25rem;
     padding: 0;
   }
-  .dashboard-toolbar {
-    position: relative;
-    justify-content: flex-end;
-    padding: 0.8rem;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 1.1rem;
-    background: rgba(255, 255, 255, 0.72);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  .dashboard-tab-tools {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .dashboard-tab-tools[hidden] {
+    display: none !important;
   }
   .dashboard-stat-pill {
     min-height: 2.7rem;
@@ -1093,7 +1105,7 @@
     background: #fff;
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
   }
-  .dashboard-toolbar .form-switch {
+  .dashboard-tab-tools .form-switch {
     display: flex;
     align-items: center;
     gap: 0.55rem;
@@ -1333,9 +1345,18 @@
     .internal-hero-status {
       width: min(100%, 340px);
     }
+    .internal-tabs-bar {
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
     #internalTabs {
+      flex: 1 1 100%;
       overflow-x: auto;
       flex-wrap: nowrap;
+    }
+    .dashboard-tab-tools {
+      width: 100%;
+      justify-content: flex-end;
     }
   }
   @media (max-width: 767.98px) {
@@ -1378,12 +1399,12 @@
     .internal-tab-shell > .tab-pane {
       padding: 0.85rem 0 0;
     }
-    .dashboard-toolbar,
-    .dashboard-toolbar-meta {
+    .dashboard-tab-tools {
       width: 100%;
-    }
-    .dashboard-toolbar-meta:last-child {
       justify-content: space-between;
+    }
+    .dashboard-tab-tools .form-switch {
+      min-width: 0;
     }
     .dashboard-board-header {
       padding: 1rem;
@@ -1561,7 +1582,7 @@
     <div id="alert-container">
       <?php
         if($showInstallAlert) {
-          echo "<div class='mds-alert alert-dismissible' role='alert'><div><strong>" . htmlspecialchars(mds_t('internal.deployment_notice'), ENT_QUOTES, 'UTF-8') . "</strong><p>" . htmlspecialchars(mds_t('internal.remove_install'), ENT_QUOTES, 'UTF-8') . "</p></div><button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
+          echo "<div class='alert mds-alert alert-dismissible show' id='deployment-notice' role='alert'><div><strong>" . htmlspecialchars(mds_t('internal.deployment_notice'), ENT_QUOTES, 'UTF-8') . "</strong><p>" . htmlspecialchars(mds_t('internal.remove_install'), ENT_QUOTES, 'UTF-8') . "</p></div><button type='button' class='btn-close' id='deployment-notice-dismiss' aria-label='" . htmlspecialchars(mds_t('common.close'), ENT_QUOTES, 'UTF-8') . "'></button></div>";
         }
 
         if (!$hasBoards) {
@@ -1570,7 +1591,39 @@
         ?>
     </div>
 
-    <!-- Nav tabs -->
+    <?php if ($showInstallAlert) { ?>
+    <script>
+    (function () {
+      const notice = document.getElementById('deployment-notice');
+      const dismissButton = document.getElementById('deployment-notice-dismiss');
+      if (!notice || !dismissButton) {
+        return;
+      }
+
+      const storageKey = 'mds.deploymentNoticeDismissed';
+      try {
+        if (window.sessionStorage.getItem(storageKey) === '1') {
+          notice.remove();
+          return;
+        }
+      } catch (error) {
+        // Closing remains available when browser storage is disabled.
+      }
+
+      dismissButton.addEventListener('click', function () {
+        try {
+          window.sessionStorage.setItem(storageKey, '1');
+        } catch (error) {
+          // The visual dismissal must not depend on browser storage.
+        }
+        notice.remove();
+      });
+    }());
+    </script>
+    <?php } ?>
+
+    <!-- Nav tabs and dashboard-only controls -->
+    <div class="internal-tabs-bar">
     <ul class="nav nav-tabs" id="internalTabs" role="tablist">
       <li class="nav-item">
         <a class="nav-link active" data-bs-toggle="tab" href="#dashboard" role="tab"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i><?php echo htmlspecialchars(mds_t('internal.dashboard'), ENT_QUOTES, 'UTF-8'); ?></a>
@@ -1592,23 +1645,22 @@
         }
         ?>
     </ul>
+    <div class="dashboard-tab-tools" id="dashboard-tab-tools">
+      <button type="button" class="dashboard-layout-button" id="click_lockUnlock" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
+        <i class="bi bi-lock-fill" aria-hidden="true"></i><span><?php echo htmlspecialchars(mds_current_language() === 'de' ? 'Layout' : 'Layout', ENT_QUOTES, 'UTF-8'); ?></span>
+      </button>
+      <div class="form-check form-switch m-0">
+        <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle" <?php if ((int)$dashboardOnlineOnlyDefault === 1) { echo 'checked'; } ?>>
+        <label class="form-check-label" for="dashboard-online-only-toggle"><?php echo htmlspecialchars(mds_t('internal.only_online_devices'), ENT_QUOTES, 'UTF-8'); ?></label>
+      </div>
+    </div>
+    </div>
 
     <div class="tab-content internal-tab-shell">
 
       <!-- Show dashboard -->
       <div class="container tab-pane fade show active position-relative" id="dashboard">
         <div class="dashboard-shell">
-          <div class="dashboard-toolbar">
-            <div class="dashboard-toolbar-meta">
-              <button type="button" class="dashboard-layout-button" id="click_lockUnlock" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
-                <i class="bi bi-lock-fill" aria-hidden="true"></i><span><?php echo htmlspecialchars(mds_current_language() === 'de' ? 'Layout' : 'Layout', ENT_QUOTES, 'UTF-8'); ?></span>
-              </button>
-              <div class="form-check form-switch m-0">
-                <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle" <?php if ((int)$dashboardOnlineOnlyDefault === 1) { echo 'checked'; } ?>>
-                <label class="form-check-label" for="dashboard-online-only-toggle"><?php echo htmlspecialchars(mds_t('internal.only_online_devices'), ENT_QUOTES, 'UTF-8'); ?></label>
-              </div>
-            </div>
-          </div>
           <div class="page-content page-container" id="page-content" style="--bs-gutter-x: 0rem; "></div>
           <div class="container" style="--bs-gutter-x: 0; padding-right: 0px; padding-left: 0px;">
             <?php
@@ -2188,6 +2240,7 @@
 
           $('#internalTabs a[href="' + targetSelector + '"]').addClass('active').attr('aria-selected', 'true');
           $(targetSelector).addClass('active show');
+          $('#dashboard-tab-tools').prop('hidden', targetSelector !== '#dashboard');
 
           if (targetSelector === '#mapContainer' && typeof initInternalMap === 'function') {
             window.setTimeout(function() {
