@@ -88,6 +88,28 @@ if(strlen($ttn_post) > 0) {
 
     $uplinkMessage = $data->uplink_message;
     $sensor_raw_payload = $uplinkMessage->frm_payload ?? null;
+    $hasDecodedPayload = isset($uplinkMessage->decoded_payload)
+        && is_object($uplinkMessage->decoded_payload)
+        && count(get_object_vars($uplinkMessage->decoded_payload)) > 0;
+    $hasNormalizedPayload = ttnHasNormalizedPayload($uplinkMessage);
+    $hasRawPayload = is_string($sensor_raw_payload) && trim($sensor_raw_payload) !== '';
+
+    if (!$hasDecodedPayload && !$hasNormalizedPayload && !$hasRawPayload) {
+        writeToLogFunction::info(
+            'TTN uplink contained no application payload and was ignored.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'fPort' => (int)($uplinkMessage->f_port ?? 0),
+                'ttnDeviceId' => $data->end_device_ids->device_id ?? null,
+                'ttnDevEui' => $data->end_device_ids->dev_eui ?? null
+            )
+        );
+        ttnJsonResponse(202, array(
+            'status' => 'ignored',
+            'reason' => 'TTN uplink contained no application payload.'
+        ));
+    }
+
     $decodedPayload = ttnExtractMeasurementPayload($uplinkMessage);
     $ttnReportedPayloadType = (string)ttnPayloadValue($decodedPayload, array('payloadType'), 'measurements');
     $ttnReportedPayloadSchema = (int)ttnPayloadValue($decodedPayload, array('payloadSchema'), 1);
@@ -99,12 +121,15 @@ if(strlen($ttn_post) > 0) {
     if ($serverDecodedPayload !== null) {
         $serverPayloadType = (string)($serverDecodedPayload['payloadType'] ?? 'measurements');
         $serverPayloadSchema = (int)($serverDecodedPayload['payloadSchema'] ?? 1);
-        if ($ttnReportedPayloadType !== $serverPayloadType || $ttnReportedPayloadSchema !== $serverPayloadSchema) {
+        if (($hasDecodedPayload || $hasNormalizedPayload)
+            && ($ttnReportedPayloadType !== $serverPayloadType || $ttnReportedPayloadSchema !== $serverPayloadSchema)) {
             writeToLogFunction::warning(
                 'TTN decoded payload metadata did not match the raw payload. Server-side decoder used.',
                 $_SERVER["SCRIPT_FILENAME"],
                 array(
                     'fPort' => (int)($uplinkMessage->f_port ?? 0),
+                    'ttnDeviceId' => $data->end_device_ids->device_id ?? null,
+                    'ttnDevEui' => $data->end_device_ids->dev_eui ?? null,
                     'ttnPayloadType' => $ttnReportedPayloadType,
                     'ttnPayloadSchema' => $ttnReportedPayloadSchema,
                     'rawPayloadType' => $serverPayloadType,
@@ -114,6 +139,21 @@ if(strlen($ttn_post) > 0) {
         }
         $decodedPayload = json_decode(json_encode($serverDecodedPayload));
         $payloadDecoderSource = 'mdsRaw';
+    } elseif (!$hasDecodedPayload && !$hasNormalizedPayload) {
+        writeToLogFunction::warning(
+            'TTN uplink payload could not be decoded.',
+            $_SERVER["SCRIPT_FILENAME"],
+            array(
+                'fPort' => (int)($uplinkMessage->f_port ?? 0),
+                'ttnDeviceId' => $data->end_device_ids->device_id ?? null,
+                'ttnDevEui' => $data->end_device_ids->dev_eui ?? null,
+                'rawPayloadBytes' => ttnEncodedPayloadByteLength($sensor_raw_payload)
+            )
+        );
+        ttnJsonResponse(422, array(
+            'error' => 'TTN uplink payload could not be decoded.',
+            'fPort' => (int)($uplinkMessage->f_port ?? 0)
+        ));
     }
     $payloadType = (string)ttnPayloadValue($decodedPayload, array('payloadType'), 'measurements');
     $payloadSchema = (int)ttnPayloadValue($decodedPayload, array('payloadSchema'), 1);
@@ -181,16 +221,20 @@ if(strlen($ttn_post) > 0) {
             'payloadType' => $payloadType,
             'payloadSchema' => $payloadSchema,
             'payloadDecoderSource' => $payloadDecoderSource,
-            'hasDecodedPayload' => isset($uplinkMessage->decoded_payload),
-            'hasNormalizedPayload' => isset($uplinkMessage->normalized_payload)
+            'hasDecodedPayload' => $hasDecodedPayload,
+            'hasNormalizedPayload' => $hasNormalizedPayload
         )
     );
 
-    if (!isset($uplinkMessage->decoded_payload) || $uplinkMessage->decoded_payload === null) {
-        writeToLogFunction::warning(
+    if (!$hasDecodedPayload) {
+        writeToLogFunction::info(
             'TTN uplink arrived without decoded_payload. Fallback extraction used.',
             $_SERVER["SCRIPT_FILENAME"],
-            array('rawPayload' => $sensor_raw_payload)
+            array(
+                'ttnDeviceId' => $ttn_device_id,
+                'ttnDevEui' => $ttn_dev_eui,
+                'fallbackSource' => $payloadDecoderSource
+            )
         );
     }
 
@@ -662,15 +706,51 @@ function ttnExtractMeasurementPayload($uplinkMessage) {
 
     if (isset($uplinkMessage->normalized_payload)) {
         $normalizedPayload = $uplinkMessage->normalized_payload;
-        if (is_array($normalizedPayload) && !empty($normalizedPayload) && is_object($normalizedPayload[0])) {
-            return $normalizedPayload[0];
+        if (is_array($normalizedPayload)) {
+            foreach ($normalizedPayload as $payload) {
+                if (is_object($payload) && count(get_object_vars($payload)) > 0) {
+                    return $payload;
+                }
+            }
         }
-        if (is_object($normalizedPayload)) {
+        if (is_object($normalizedPayload) && count(get_object_vars($normalizedPayload)) > 0) {
             return $normalizedPayload;
         }
     }
 
     return (object)array();
+}
+
+function ttnHasNormalizedPayload($uplinkMessage) {
+    if (!isset($uplinkMessage->normalized_payload)) {
+        return false;
+    }
+
+    $normalizedPayload = $uplinkMessage->normalized_payload;
+    if (is_object($normalizedPayload)) {
+        return count(get_object_vars($normalizedPayload)) > 0;
+    }
+
+    if (!is_array($normalizedPayload) || empty($normalizedPayload)) {
+        return false;
+    }
+
+    foreach ($normalizedPayload as $payload) {
+        if (is_object($payload) && count(get_object_vars($payload)) > 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function ttnEncodedPayloadByteLength($encodedPayload) {
+    if (!is_string($encodedPayload) || trim($encodedPayload) === '') {
+        return 0;
+    }
+
+    $decodedPayload = base64_decode($encodedPayload, true);
+    return $decodedPayload === false ? null : strlen($decodedPayload);
 }
 
 function ttnPayloadValue($payload, array $paths, $default = 0) {

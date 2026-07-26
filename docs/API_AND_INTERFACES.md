@@ -120,6 +120,26 @@ Beispiel:
 https://mds-git.derguntmar.de/webhooks/ttn.php
 ```
 
+### TTN-Uplink-Formatter
+
+In der TTN Console muss unter `Payload formatters -> Uplink -> Custom
+Javascript formatter` der aktuelle Decoder aus dem LoRa-Boat-Monitor-Repository
+eingetragen werden:
+
+```text
+src/Payload_Formats_TTN_V3.js
+```
+
+Der aktuelle Formatter liefert:
+
+- auf FPort 1: `payloadType = measurements`, `payloadSchema = 3`
+- auf FPort 2: `payloadType = deviceConfig`, `payloadSchema = 1`
+
+Wenn im MDS-Log `TTN decoded payload metadata did not match the raw payload`
+erscheint, ist der in TTN hinterlegte Formatter veraltet oder einer anderen
+Payload-Version zugeordnet. MDS verwendet dann sicherheitshalber seinen
+serverseitigen Decoder; der TTN-Formatter sollte trotzdem aktualisiert werden.
+
 ### Optionaler Secret-Header
 
 TTN kann zusaetzliche Header an den Webhook senden. MDS unterstuetzt optional ein Shared Secret ueber die Konfiguration:
@@ -264,6 +284,12 @@ Hinweis:
 - der Endpunkt erwartet ein valides TLS-Zertifikat bei HTTPS
 - TTN lehnt den Webhook ab, wenn das Zertifikat ungueltig ist
 - wenn `decoded_payload` fehlt, versucht MDS jetzt einen Fallback ueber `normalized_payload`
+- bekannte FPort-1- und FPort-2-Rohdaten werden bei fehlendem oder veraltetem
+  TTN-Formatter serverseitig dekodiert
+- leere Uplinks ohne `decoded_payload`, `normalized_payload` und `frm_payload`
+  werden mit HTTP `202` ignoriert und nicht als Nullmessung gespeichert
+- unbekannte Rohformate ohne nutzbaren TTN-Decoder werden mit HTTP `422`
+  abgewiesen, statt ungueltige Sensordaten zu erzeugen
 
 
 ## JSON Ingest
