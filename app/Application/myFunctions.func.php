@@ -1438,9 +1438,52 @@ class myFunctions {
   */
   public static function getAllUsers() {
     $pdo = dbConfig::getInstance();
-    $statement = $pdo->prepare("SELECT * FROM users ORDER BY id");
-    $result = $statement->execute();
-    return $statement->fetchAll();
+    $sharedAccessQueries = array();
+    if (self::tableExists($pdo, 'board_permissions')) {
+      $sharedAccessQueries[] = "SELECT userId, boardId FROM board_permissions WHERE canView = 1";
+    }
+    if (self::tableExists($pdo, 'sensor_permissions')) {
+      $sharedAccessQueries[] =
+        "SELECT sensor_permissions.userId, sensorConfig.boardId
+         FROM sensor_permissions
+         INNER JOIN sensorConfig ON sensorConfig.id = sensor_permissions.sensorId
+         WHERE sensor_permissions.canView = 1";
+    }
+
+    $sharedJoin = "LEFT JOIN (SELECT NULL AS userId, 0 AS sharedBoardCount) shared ON 1 = 0";
+    if (!empty($sharedAccessQueries)) {
+      $sharedUnion = implode(" UNION ", $sharedAccessQueries);
+      $sharedJoin =
+        "LEFT JOIN (
+           SELECT sharedAccess.userId, COUNT(DISTINCT sharedAccess.boardId) AS sharedBoardCount
+           FROM ($sharedUnion) sharedAccess
+           INNER JOIN boardConfig sharedBoard ON sharedBoard.id = sharedAccess.boardId
+           WHERE sharedBoard.ownerUserId IS NULL OR sharedBoard.ownerUserId <> sharedAccess.userId
+           GROUP BY sharedAccess.userId
+         ) shared ON shared.userId = users.id";
+    }
+
+    $statement = $pdo->prepare(
+      "SELECT users.id,
+              users.email,
+              users.firstName,
+              users.lastName,
+              users.active,
+              users.userGroupAdmin,
+              COALESCE(owned.ownedBoardCount, 0) AS ownedBoardCount,
+              COALESCE(shared.sharedBoardCount, 0) AS sharedBoardCount
+       FROM users
+       LEFT JOIN (
+         SELECT ownerUserId, COUNT(*) AS ownedBoardCount
+         FROM boardConfig
+         WHERE ownerUserId IS NOT NULL
+         GROUP BY ownerUserId
+       ) owned ON owned.ownerUserId = users.id
+       $sharedJoin
+       ORDER BY users.id"
+    );
+    $statement->execute();
+    return $statement->fetchAll(PDO::FETCH_ASSOC);
   }
 
   /*

@@ -4,6 +4,7 @@ require_once(__DIR__ . '/InternalPageService.php');
 require_once(__DIR__ . '/dbUpdateData.php');
 require_once(__DIR__ . '/myFunctions.func.php');
 require_once(__DIR__ . '/NotificationService.php');
+require_once(__DIR__ . '/UserAdministrationService.php');
 require_once(__DIR__ . '/../Infrastructure/Database/dbConfig.func.php');
 require_once(__DIR__ . '/../Infrastructure/Logging/writeToLogFunction.func.php');
 
@@ -49,11 +50,27 @@ class SettingsPageService
                 if (!myFunctions::isUserAdmin((int)$userObj->getId())) {
                     throw new RuntimeException('Admin permissions required.');
                 }
-                dbUpdateData::updateUserStatus($post);
-                $result['success_msg'] = 'User Status updated.';
-            } catch (Exception $e) {
-                $result['error_msg'] = 'Error on update User Status.';
-                self::logException($result['error_msg'], $e);
+                if (($post['userAction'] ?? 'update') === 'delete') {
+                    $deletion = UserAdministrationService::deleteUsers(
+                        (int)$userObj->getId(),
+                        $post['selectedUserIds'] ?? array()
+                    );
+                    $result['success_msg'] = mds_t('settings.users_deleted', array((int)$deletion['users']));
+                } else {
+                    dbUpdateData::updateUserStatus($post);
+                    $result['success_msg'] = mds_t('settings.users_updated');
+                }
+            } catch (Throwable $e) {
+                $knownUserMessages = array(
+                    'Select at least one user.' => 'settings.user_delete_none_selected',
+                    'You cannot delete your own user account here.' => 'settings.user_delete_self',
+                    'The selected users no longer exist.' => 'settings.user_delete_missing',
+                    'The last administrator cannot be deleted.' => 'settings.user_delete_last_admin',
+                );
+                $messageKey = $knownUserMessages[$e->getMessage()] ?? null;
+                $result['error_msg'] = mds_t('settings.users_action_failed')
+                    . ($messageKey !== null ? ' ' . mds_t($messageKey) : '');
+                self::logException('User administration action failed.', $e);
             }
         } elseif ($save === 'addNewUserToBoard') {
             try {

@@ -85,6 +85,14 @@ Auswirkungen auf Schnittstellen:
 - Board-/Sensor-Freigaben werden in `settings.php` im Tab `Freigaben` verwaltet.
 - Benachrichtigungen gehen an Owner und an freigegebene User/Observer mit `canReceiveAlerts = 1`, sofern deren persoenliche Benachrichtigungsschalter aktiv sind.
 
+Administratoren sehen im Tab `Benutzer` getrennte Zaehler fuer eigene und geteilte Boards. Als geteilt gilt ein fremdes Board, auf das ein Benutzer ueber eine Board- oder Sensorfreigabe zugreifen darf. Mehrere Benutzer koennen dort gemeinsam geloescht werden. Dabei gelten folgende Schutzregeln:
+
+- der aktuell eingeloggte Administrator kann sich nicht selbst markieren
+- der letzte Administrator kann nicht geloescht werden
+- Boards geloeschter Benutzer bleiben erhalten und werden lediglich auf `ownerUserId = NULL` gesetzt
+- Login-Tokens, globale Rollen sowie Board- und Sensorfreigaben der geloeschten Benutzer werden transaktional entfernt
+- bestehende Eintraege im Rechte-Audit bleiben erhalten, ihre geloeschten Benutzerreferenzen werden anonymisiert
+
 
 ## TTN Integration
 

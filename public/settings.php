@@ -201,6 +201,46 @@ th.rotated-text > div > span {
     overflow-wrap: anywhere;
 }
 
+.settings-user-table {
+    overflow-x: auto;
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-radius: 1rem;
+}
+
+.settings-user-table .table {
+    min-width: 920px;
+    margin-bottom: 0;
+}
+
+.settings-user-table thead th {
+    white-space: nowrap;
+    background: #f8fafc;
+}
+
+.settings-user-count {
+    display: inline-flex;
+    min-width: 2.25rem;
+    justify-content: center;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    background: #e8f2f3;
+    color: #0f5962;
+    font-weight: 750;
+}
+
+.settings-user-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.settings-user-selection-count {
+    color: #64748b;
+    font-weight: 650;
+}
+
 #settings-log-content {
     display: block;
     width: 100%;
@@ -1003,50 +1043,73 @@ th.rotated-text > div > span {
         <p style="margin-bottom: 0px; margin-top: 1rem;"><?php echo htmlspecialchars(mds_t('settings.users_hint'), ENT_QUOTES, 'UTF-8'); ?></p>
         <form action="?save=users" method="post" class="form-horizontal">
           <?php echo mds_csrf_input(); ?>
-          <div class="panel panel-default">
-          <table class="table">
-          <tr>
-            <th>#</th><th><?php echo htmlspecialchars(mds_t('common.active'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('settings.first_name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('settings.last_name'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></th><th><?php echo htmlspecialchars(mds_t('common.admin'), ENT_QUOTES, 'UTF-8'); ?></th>
-          </tr>
+          <div class="settings-user-table mt-3">
+          <table class="table table-hover align-middle">
+          <thead><tr>
+            <th scope="col">
+              <input type="checkbox" class="form-check-input" id="select-all-users" aria-label="<?php echo mds_h(mds_t('settings.select_user')); ?>">
+            </th>
+            <th scope="col">#</th>
+            <th scope="col"><?php echo htmlspecialchars(mds_t('common.active'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th scope="col"><?php echo htmlspecialchars(mds_t('settings.first_name'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th scope="col"><?php echo htmlspecialchars(mds_t('settings.last_name'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th scope="col"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th scope="col"><?php echo htmlspecialchars(mds_t('settings.owned_boards'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th scope="col"><?php echo htmlspecialchars(mds_t('settings.shared_boards'), ENT_QUOTES, 'UTF-8'); ?></th>
+            <th scope="col"><?php echo htmlspecialchars(mds_t('common.admin'), ENT_QUOTES, 'UTF-8'); ?></th>
+          </tr></thead>
+          <tbody>
           <?php
           if($isAdmin) {
             $count = 1;
             foreach($allUsers as $singleRowUser) {
+              $listedUserId = (int)$singleRowUser['id'];
+              $isCurrentUser = $listedUserId === (int)$userObj->getId();
               ?>
               <tr>
+                <td>
+                  <input type="checkbox"
+                         class="form-check-input user-delete-checkbox"
+                         name="selectedUserIds[]"
+                         value="<?php echo $listedUserId; ?>"
+                         aria-label="<?php echo mds_h(mds_t('settings.select_user')); ?>"
+                         <?php echo $isCurrentUser ? 'disabled' : ''; ?>>
+                </td>
                 <td><?php echo $count++ ?></td>
                 <?php
                 if(isset($singleRowUser['active']) && $singleRowUser['active'] == '1')
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
-                  <input type='checkbox' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='1' checked></td>
+                  <td><input type='hidden' name='active[<?php echo $listedUserId; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='active<?php echo $listedUserId; ?>' name='active[<?php echo $listedUserId; ?>]' value='1' checked></td>
                 <?php
                 }
                 else
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
-                  <input type='checkbox' class='form-check-input' id='active<?php echo (int)$singleRowUser['id']; ?>' name='active[<?php echo (int)$singleRowUser['id']; ?>]' value='1'></td>
+                  <td><input type='hidden' name='active[<?php echo $listedUserId; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='active<?php echo $listedUserId; ?>' name='active[<?php echo $listedUserId; ?>]' value='1'></td>
                 <?php
                 }
                 ?>
                 <td><?php echo mds_h($singleRowUser['firstName']); ?></td>
                 <td><?php echo mds_h($singleRowUser['lastName']); ?></td>
                 <td><a href="mailto:<?php echo mds_h($singleRowUser['email']); ?>"><?php echo mds_h($singleRowUser['email']); ?></a></td>
+                <td><span class="settings-user-count"><?php echo (int)($singleRowUser['ownedBoardCount'] ?? 0); ?></span></td>
+                <td><span class="settings-user-count"><?php echo (int)($singleRowUser['sharedBoardCount'] ?? 0); ?></span></td>
                 <?php
                 if(isset($singleRowUser['userGroupAdmin']) && $singleRowUser['userGroupAdmin'] == '1')
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
-                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='1' checked></td>
+                  <td><input type='hidden' name='userGroupAdmin[<?php echo $listedUserId; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo $listedUserId; ?>' name='userGroupAdmin[<?php echo $listedUserId; ?>]' value='1' checked></td>
                 <?php
                 }
                 else
                 {
                 ?>
-                  <td><input type='hidden' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='0'>
-                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo (int)$singleRowUser['id']; ?>' name='userGroupAdmin[<?php echo (int)$singleRowUser['id']; ?>]' value='1'></td>
+                  <td><input type='hidden' name='userGroupAdmin[<?php echo $listedUserId; ?>]' value='0'>
+                  <input type='checkbox' class='form-check-input' id='userGroupAdmin<?php echo $listedUserId; ?>' name='userGroupAdmin[<?php echo $listedUserId; ?>]' value='1'></td>
                 <?php
                 }
                 ?>
@@ -1055,14 +1118,45 @@ th.rotated-text > div > span {
             }
           }
           ?>
-          </table>
+          </tbody></table>
           </div>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-            <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
-            </div>
+          <div class="settings-user-actions">
+            <button type="submit" class="btn btn-primary" name="userAction" value="update"><?php echo htmlspecialchars(mds_t('common.save'), ENT_QUOTES, 'UTF-8'); ?></button>
+            <button type="submit"
+                    class="btn btn-outline-danger"
+                    name="userAction"
+                    value="delete"
+                    data-confirm-message="<?php echo mds_h(mds_t('settings.delete_users_confirm')); ?>"
+                    onclick="return confirm(this.dataset.confirmMessage);">
+              <?php echo htmlspecialchars(mds_t('settings.delete_selected_users'), ENT_QUOTES, 'UTF-8'); ?>
+            </button>
+            <span class="settings-user-selection-count"><span id="selected-user-count">0</span> <?php echo htmlspecialchars(mds_t('settings.selected_users'), ENT_QUOTES, 'UTF-8'); ?></span>
           </div>
         </form>
+        <script>
+        (function () {
+          const selectAll = document.getElementById('select-all-users');
+          const checkboxes = Array.from(document.querySelectorAll('.user-delete-checkbox:not(:disabled)'));
+          const selectedCount = document.getElementById('selected-user-count');
+          if (!selectAll || !selectedCount) {
+            return;
+          }
+
+          function updateSelectionState() {
+            const checkedCount = checkboxes.filter((checkbox) => checkbox.checked).length;
+            selectedCount.textContent = String(checkedCount);
+            selectAll.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+          }
+
+          selectAll.addEventListener('change', function () {
+            checkboxes.forEach((checkbox) => { checkbox.checked = selectAll.checked; });
+            updateSelectionState();
+          });
+          checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelectionState));
+          updateSelectionState();
+        }());
+        </script>
       </div>
 
       <!-- Modification of Server Setting -->
