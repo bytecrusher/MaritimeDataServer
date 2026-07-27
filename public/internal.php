@@ -944,10 +944,10 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
-    gap: 2rem;
-    min-height: 210px;
-    padding: clamp(1.75rem, 4vw, 3rem);
-    margin-bottom: 1.25rem;
+    gap: 1.25rem;
+    min-height: 150px;
+    padding: clamp(1.2rem, 2.5vw, 1.75rem);
+    margin-bottom: 0.8rem;
     border-radius: 1.75rem;
     background:
       linear-gradient(rgba(125, 211, 252, 0.05) 1px, transparent 1px),
@@ -975,7 +975,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.45rem;
     color: #86efac;
     font-size: 0.74rem;
     font-weight: 800;
@@ -993,16 +993,16 @@
   .mds-page-internal .internal-hero h1 {
     max-width: 780px;
     color: #f8fafc !important;
-    font-size: clamp(2rem, 4vw, 3.45rem);
+    font-size: clamp(1.85rem, 3vw, 2.65rem);
     line-height: 1.02;
     text-shadow: 0 2px 20px rgba(2, 8, 23, 0.28);
   }
   .internal-hero p {
     max-width: 680px;
-    margin-top: 0.85rem;
+    margin-top: 0.5rem;
     color: rgba(226, 232, 240, 0.86);
-    font-size: 1.05rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    line-height: 1.45;
   }
   .internal-hero-status {
     display: grid;
@@ -1010,8 +1010,8 @@
     gap: 0.65rem;
   }
   .internal-hero-stat {
-    min-width: 140px;
-    padding: 1rem 1.1rem;
+    min-width: 120px;
+    padding: 0.75rem 0.9rem;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 1rem;
     background: rgba(3, 16, 35, 0.44);
@@ -1094,6 +1094,49 @@
     flex: 0 0 auto;
     align-items: center;
     gap: 0.55rem;
+  }
+  .dashboard-gauge-size-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    min-height: 2.7rem;
+    padding: 0.25rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.8rem;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  }
+  .dashboard-gauge-size-picker-label {
+    padding: 0 0.45rem 0 0.55rem;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+  .dashboard-gauge-size-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.6rem;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 850;
+    transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  }
+  .dashboard-gauge-size-button:hover,
+  .dashboard-gauge-size-button:focus-visible {
+    color: #087a99;
+    background: #eef7f8;
+  }
+  .dashboard-gauge-size-button.is-active {
+    color: #fff;
+    background: linear-gradient(135deg, #0f766e, #087a99);
+    box-shadow: 0 6px 14px rgba(8, 122, 153, 0.22);
   }
   .dashboard-tab-tools[hidden] {
     display: none !important;
@@ -1323,6 +1366,68 @@
     line-height: 1;
     text-transform: uppercase;
   }
+  #dashboard[data-gauge-size="small"] .dashboard-board-gauges {
+    grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+    gap: 0.7rem;
+  }
+  #dashboard[data-gauge-size="small"] .dashboard-gauge-card {
+    min-height: 230px;
+    padding: 0.9rem;
+  }
+  #dashboard[data-gauge-size="small"] .dashboard-gauge-headline strong {
+    font-size: 0.94rem;
+  }
+  #dashboard[data-gauge-size="small"] .dashboard-gauge-headline span {
+    font-size: 0.7rem;
+  }
+  #dashboard[data-gauge-size="small"] .dashboard-gauge-value-number {
+    font-size: 1.65rem;
+  }
+  #dashboard[data-gauge-size="small"] .dashboard-gauge-visual {
+    min-height: 120px;
+    height: 120px;
+  }
+  #dashboard[data-gauge-size="small"] .dashboard-gauge-card .gauge,
+  #dashboard[data-gauge-size="small"] .dashboard-gauge-card svg.gauge {
+    max-width: 190px;
+    max-height: 125px;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-board-gauges {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.15rem;
+    padding: 1.2rem;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-card {
+    min-height: 350px;
+    padding: 1.35rem;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-headline strong {
+    font-size: 1.25rem;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-headline span {
+    font-size: 0.9rem;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-value-number {
+    font-size: clamp(2.35rem, 4vw, 3rem);
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-value-unit {
+    font-size: 1.05rem;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-visual {
+    min-height: 210px;
+    height: 210px;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-card .gauge,
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-card svg.gauge {
+    max-width: 325px;
+    max-height: 215px;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-scale {
+    font-size: 0.92rem;
+  }
+  #dashboard[data-gauge-size="large"] .dashboard-gauge-scale small {
+    font-size: 0.7rem;
+  }
   .tab-section-card {
     padding: clamp(1rem, 2.5vw, 1.5rem);
     border-radius: 1.25rem;
@@ -1364,31 +1469,36 @@
       width: calc(100% - 20px);
     }
     .internal-hero {
-      gap: 1rem;
-      padding: 1.35rem;
+      gap: 0.55rem;
+      padding: 1.05rem 1.15rem;
       border-radius: 1.2rem;
     }
     .mds-page-internal .internal-hero h1 {
-      font-size: clamp(2rem, 9vw, 2.65rem);
+      font-size: clamp(1.7rem, 8vw, 2.2rem);
       line-height: 1.04;
     }
     .internal-hero p {
-      margin-top: 0.7rem;
-      font-size: 0.98rem;
-      line-height: 1.5;
+      margin-top: 0.45rem;
+      font-size: 0.92rem;
+      line-height: 1.4;
     }
     .internal-hero-status {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      width: 100%;
+      display: flex;
+      width: auto;
     }
     .internal-hero-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
       min-width: 0;
-      padding: 0.75rem 0.85rem;
+      width: max-content;
+      padding: 0.5rem 0.7rem;
     }
     .internal-hero-stat strong {
       font-size: 1.25rem;
     }
     .internal-hero-stat span {
+      margin-top: 0;
       font-size: 0.68rem;
     }
     #internalTabs .nav-link {
@@ -1401,7 +1511,19 @@
     }
     .dashboard-tab-tools {
       width: 100%;
-      justify-content: space-between;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .dashboard-gauge-size-picker-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     .dashboard-tab-tools .form-switch {
       min-width: 0;
@@ -1412,6 +1534,17 @@
     .dashboard-board-gauges {
       grid-template-columns: 1fr;
       padding: 0.8rem;
+    }
+    #dashboard[data-gauge-size] .dashboard-board-gauges {
+      grid-template-columns: 1fr;
+    }
+    #dashboard[data-gauge-size="large"] .dashboard-gauge-card {
+      min-height: 330px;
+      padding: 1.15rem;
+    }
+    #dashboard[data-gauge-size="large"] .dashboard-gauge-visual {
+      min-height: 195px;
+      height: 195px;
     }
     .dashboard-gauge-card {
       min-height: 260px;
@@ -1649,6 +1782,12 @@
       <button type="button" class="dashboard-layout-button" id="click_lockUnlock" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false">
         <i class="bi bi-lock-fill" aria-hidden="true"></i><span><?php echo htmlspecialchars(mds_current_language() === 'de' ? 'Layout' : 'Layout', ENT_QUOTES, 'UTF-8'); ?></span>
       </button>
+      <div class="dashboard-gauge-size-picker" id="dashboard-gauge-size-picker" role="group" aria-label="<?php echo htmlspecialchars(mds_t('internal.gauge_size'), ENT_QUOTES, 'UTF-8'); ?>">
+        <span class="dashboard-gauge-size-picker-label"><?php echo htmlspecialchars(mds_t('internal.gauge_size'), ENT_QUOTES, 'UTF-8'); ?></span>
+        <button type="button" class="dashboard-gauge-size-button" data-gauge-size="small" aria-pressed="false" title="<?php echo htmlspecialchars(mds_t('internal.gauge_size_small'), ENT_QUOTES, 'UTF-8'); ?>">S</button>
+        <button type="button" class="dashboard-gauge-size-button" data-gauge-size="medium" aria-pressed="true" title="<?php echo htmlspecialchars(mds_t('internal.gauge_size_medium'), ENT_QUOTES, 'UTF-8'); ?>">M</button>
+        <button type="button" class="dashboard-gauge-size-button" data-gauge-size="large" aria-pressed="false" title="<?php echo htmlspecialchars(mds_t('internal.gauge_size_large'), ENT_QUOTES, 'UTF-8'); ?>">L</button>
+      </div>
       <div class="form-check form-switch m-0">
         <input class="form-check-input" type="checkbox" id="dashboard-online-only-toggle" <?php if ((int)$dashboardOnlineOnlyDefault === 1) { echo 'checked'; } ?>>
         <label class="form-check-label" for="dashboard-online-only-toggle"><?php echo htmlspecialchars(mds_t('internal.only_online_devices'), ENT_QUOTES, 'UTF-8'); ?></label>
@@ -1659,7 +1798,7 @@
     <div class="tab-content internal-tab-shell">
 
       <!-- Show dashboard -->
-      <div class="container tab-pane fade show active position-relative" id="dashboard">
+      <div class="container tab-pane fade show active position-relative" id="dashboard" data-gauge-size="medium">
         <div class="dashboard-shell">
           <div class="page-content page-container" id="page-content" style="--bs-gutter-x: 0rem; "></div>
           <div class="container" style="--bs-gutter-x: 0; padding-right: 0px; padding-left: 0px;">

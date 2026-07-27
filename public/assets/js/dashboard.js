@@ -148,6 +148,7 @@ function getGaugeStyleConfig(gaugeStyle) {
 
 function initializeDashboardToolbar() {
   initializeDashboardGaugeToggles();
+  initializeDashboardGaugeSize();
 
   const onlineToggle = document.getElementById('dashboard-online-only-toggle');
   if (!onlineToggle) {
@@ -157,6 +158,54 @@ function initializeDashboardToolbar() {
   toggleDashboardOnlineOnly(onlineToggle.checked);
   onlineToggle.addEventListener('change', function () {
     toggleDashboardOnlineOnly(onlineToggle.checked);
+  });
+}
+
+function initializeDashboardGaugeSize() {
+  const dashboard = document.getElementById('dashboard');
+  const sizePicker = document.getElementById('dashboard-gauge-size-picker');
+  if (!dashboard || !sizePicker) {
+    return;
+  }
+
+  const allowedSizes = ['small', 'medium', 'large'];
+  let selectedSize = 'medium';
+  try {
+    const storedSize = window.localStorage.getItem('mds.dashboard.gaugeSize');
+    if (allowedSizes.includes(storedSize)) {
+      selectedSize = storedSize;
+    }
+  } catch (error) {
+    // The size picker remains functional when browser storage is unavailable.
+  }
+
+  setDashboardGaugeSize(dashboard, sizePicker, selectedSize);
+  sizePicker.addEventListener('click', function (event) {
+    const button = event.target.closest('[data-gauge-size]');
+    if (!button || !sizePicker.contains(button)) {
+      return;
+    }
+
+    const size = button.dataset.gaugeSize;
+    if (!allowedSizes.includes(size)) {
+      return;
+    }
+
+    setDashboardGaugeSize(dashboard, sizePicker, size);
+    try {
+      window.localStorage.setItem('mds.dashboard.gaugeSize', size);
+    } catch (error) {
+      // The selected size still applies for the current page view.
+    }
+  });
+}
+
+function setDashboardGaugeSize(dashboard, sizePicker, size) {
+  dashboard.dataset.gaugeSize = size;
+  sizePicker.querySelectorAll('[data-gauge-size]').forEach(function (button) {
+    const isActive = button.dataset.gaugeSize === size;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
 }
 
