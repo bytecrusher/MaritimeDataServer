@@ -11,6 +11,7 @@ require_once(dirname(__FILE__, 2) . '/../Infrastructure/Config/configuration.php
 require_once(dirname(__FILE__, 2) . "/../Infrastructure/Logging/writeToLogFunction.func.php");
 require_once(dirname(__FILE__, 2) . "/../Application/myFunctions.func.php");
 require_once(dirname(__FILE__, 2) . "/../Application/SensorNamingService.php");
+require_once(dirname(__FILE__, 2) . "/../Application/DevicePowerState.php");
 require_once(dirname(__FILE__, 2) . "/../Domain/Board/board.class.php");
 
 header('Content-Type: application/json; charset=utf-8');
@@ -95,13 +96,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
                 $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                 $payloadContainsExplicitWakeupEvent = payloadContainsWakeupStandbyEvent($sensors);
-                if (!$payloadContainsExplicitWakeupEvent) {
-                    syncWakeupStandbyEventFromBoardActivity($boardObj, $boardSensors, $pdo2);
-                }
-                $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                 $standbyState = extractStandbyStateFromBoardPayload($boardData);
-                if ($standbyState !== null) {
+                if (!$payloadContainsExplicitWakeupEvent && $standbyState === 'wakeup') {
+                    // A resumed payload can close an unreported standby gap before applying the current state.
+                    syncWakeupStandbyEventFromBoardActivity($boardObj, $boardSensors, $pdo2);
+                    $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                     syncWakeupStandbyEventFromBoardState($macAddressId, $boardSensors, $pdo2, $standbyState);
+                    $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
+                } elseif (!$payloadContainsExplicitWakeupEvent && $standbyState !== null) {
+                    syncWakeupStandbyEventFromBoardState($macAddressId, $boardSensors, $pdo2, $standbyState);
+                    $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
+                } elseif (!$payloadContainsExplicitWakeupEvent) {
+                    syncWakeupStandbyEventFromBoardActivity($boardObj, $boardSensors, $pdo2);
                     $boardSensors = myFunctions::getAllSensorsOfBoard($macAddressId);
                 }
                 $boardSensorCount = is_array($boardSensors) ? count($boardSensors) : 0;
@@ -549,18 +555,6 @@ function syncWakeupStandbyEventFromBoardActivity(board $boardObj, array $boardSe
 
 function syncWakeupStandbyEventFromBoardState($boardId, array $boardSensors, PDO $pdo2, $standbyState)
 {
-    if ($standbyState !== 'always_online') {
-        writeToLogFunction::info(
-            'Transient standbyState received. Event durations continue to be inferred from payload activity.',
-            $_SERVER["SCRIPT_FILENAME"],
-            array(
-                'boardId' => (int)$boardId,
-                'standbyState' => $standbyState
-            )
-        );
-        return;
-    }
-
     $wakeupSensor = resolveWakeupStandbySensor($boardSensors, $boardId, $pdo2);
     if ($wakeupSensor === null) {
         return;
@@ -641,26 +635,7 @@ function getLatestBoardPayloadReadingTime($boardId, PDO $pdo2)
 
 function determineWakeupStandbyStateFromRow($sensorRow)
 {
-    if (!is_array($sensorRow)) {
-        return null;
-    }
-
-    foreach (array('value1', 'value3') as $fieldName) {
-        $normalizedState = normalizeBoardStandbyStateValue($sensorRow[$fieldName] ?? null);
-        if ($normalizedState !== null) {
-            return $normalizedState;
-        }
-    }
-
-    $value1 = trim((string)($sensorRow['value1'] ?? ''));
-    $value2 = trim((string)($sensorRow['value2'] ?? ''));
-    $value3 = trim((string)($sensorRow['value3'] ?? ''));
-    $value4 = trim((string)($sensorRow['value4'] ?? ''));
-    if ($value1 === '0' && $value2 === '1' && $value3 === '0' && $value4 === '0') {
-        return 'standby';
-    }
-
-    return null;
+    return DevicePowerState::fromSensorRow($sensorRow);
 }
 
 function buildWakeupStandbyStateLabels($standbyState)
@@ -734,36 +709,7 @@ function insertWakeupStandbyEventRow($sensorId, $standbyState, DateTimeImmutable
 
 function normalizeBoardStandbyStateValue($value)
 {
-    if (is_bool($value)) {
-        return $value ? 'wakeup' : 'standby';
-    }
-
-    if (is_int($value) || is_float($value)) {
-        return ((int)$value) === 0 ? 'standby' : 'wakeup';
-    }
-
-    if (!is_string($value)) {
-        return null;
-    }
-
-    $normalizedValue = mb_strtolower(trim($value));
-    if ($normalizedValue === '') {
-        return null;
-    }
-
-    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson'), true)) {
-        return 'always_online';
-    }
-
-    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled', 'wakeup', 'wake', 'awake', 'active', 'online'), true) || str_contains($normalizedValue, 'wake')) {
-        return 'wakeup';
-    }
-
-    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled', 'standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
-        return 'standby';
-    }
-
-    return null;
+    return DevicePowerState::normalize($value);
 }
 
 function summarizeSensorPayloadForLog(array $sensor)

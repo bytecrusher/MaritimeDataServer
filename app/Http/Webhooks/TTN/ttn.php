@@ -33,6 +33,7 @@
 require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnPayloadDecoder.php");
+require_once(dirname(__DIR__, 3) . "/Application/DevicePowerState.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Database/dbConfig.func.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Logging/writeToLogFunction.func.php");
 header('Content-Type: application/json; charset=utf-8');
@@ -802,36 +803,7 @@ function ttnMacAddress($payload) {
 }
 
 function ttnNormalizeStandbyStateValue($value) {
-    if (is_bool($value)) {
-        return $value ? 'wakeup' : 'standby';
-    }
-
-    if (is_int($value) || is_float($value)) {
-        return ((int)$value) === 0 ? 'standby' : 'wakeup';
-    }
-
-    if (!is_string($value)) {
-        return null;
-    }
-
-    $normalizedValue = mb_strtolower(trim($value));
-    if ($normalizedValue === '') {
-        return null;
-    }
-
-    if (in_array($normalizedValue, array('always_online', 'always-online', 'always online', 'alwayson'), true)) {
-        return 'always_online';
-    }
-
-    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled', 'wakeup', 'wake', 'awake', 'active', 'online'), true) || str_contains($normalizedValue, 'wake')) {
-        return 'wakeup';
-    }
-
-    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled', 'standby', 'sleep', 'sleeping'), true) || str_contains($normalizedValue, 'standby')) {
-        return 'standby';
-    }
-
-    return null;
+    return DevicePowerState::normalize($value);
 }
 
 function ttnNormalizeBooleanValue($value) {

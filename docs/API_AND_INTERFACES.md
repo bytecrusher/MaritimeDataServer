@@ -349,9 +349,9 @@ Optionale Board-Felder:
   - numerische oder boolesche Zustandswerte werden ebenfalls interpretiert:
     - `1`, `true`, `on`, `online` => `wakeup`
     - `0`, `false`, `off` => `standby`
-  - wenn `always_online` uebertragen wird, erzeugt MDS bei Bedarf ein persistentes ESP-Ereignis `Always online`
-  - `wakeup` und `standby` werden als aktueller Zustands-Hinweis akzeptiert, steuern aber nicht direkt die Dauerberechnung im Verlauf
-  - Wakeup-/Standby-Dauern werden primaer aus Telemetrie-Aktivitaet und Payload-Luecken abgeleitet, damit am Ende eines Sendezyklus gemeldete Schlafhinweise die Zeiten nicht vertauschen
+  - jeder tatsaechliche Zustandswechsel zwischen `wakeup`, `standby` und `always_online` wird als ESP-Ereignis gespeichert; unveraenderte Wiederholungen erzeugen keine Duplikate
+  - `always_online` erzeugt ein persistentes ESP-Ereignis und wird bis zum naechsten uebermittelten Zustandswechsel als online dargestellt
+  - bei `wakeup` kann MDS eine seit dem letzten Payload nicht gemeldete Standby-Luecke ergaenzen; der uebermittelte aktuelle Zustand bleibt dabei massgeblich
   - wenn kein `standbyState` uebertragen wird, versucht MDS weiterhin Wakeup-/Standby-Ereignisse vollstaendig aus Telemetrie-Luecken abzuleiten
   - dabei gilt: nach Ablauf von `offlineDataTimer` ohne neue Nutzdaten wird ein `Standby` angenommen; beim naechsten Datenempfang wird ein `Wakeup` erzeugt
   - wenn der Payload einen expliziten Sensor `sensorType = WakeupStan` oder `sensorName = WakeupLog` enthaelt, hat dieses Device-Ereignis Vorrang; MDS erzeugt dann keine zusaetzliche inferierte Wakeup-/Standby-Zeile aus Payload-Luecken
@@ -420,9 +420,9 @@ Empfehlung fuer externe Devices:
 - einzelne Messwert-/Kanalnamen wie `Voltage`, `Capacity` oder `Tank 1` werden in `sensorChannelConfig` verwaltet und koennen in den Sensor-Einstellungen frei angepasst werden
 - LoRa Boat Monitor uebertraegt Gruppen-, aber keine frei konfigurierten Kanalnamen; beim automatischen Anlegen vergibt MDS daher passende Standard-Kanalnamen
 - wenn am Operation Mode Input 12 V anliegen und das Device absichtlich dauerhaft online bleibt, `board.standbyState = "always_online"` mitsenden
-- wenn das Device gerade aufgeweckt wurde, kann `board.standbyState = "wakeup"` als Zustands-Hinweis mitgesendet werden
-- wenn das Device gerade in den Schlafzustand gegangen ist oder sich dort befindet, kann `board.standbyState = "standby"` als Zustands-Hinweis mitgesendet werden
-- fuer die Verlaufsdauer ist jedoch die Payload-Aktivitaet die fuehrende Quelle; `always_online` bleibt der einzige Zustand, der den Verlauf direkt fest auf online setzt
+- wenn das Device gerade aufgeweckt wurde, `board.standbyState = "wakeup"` mitsenden
+- unmittelbar bevor das Device in den Schlafzustand geht, `board.standbyState = "standby"` mitsenden
+- MDS speichert nur Zustandswechsel; wiederholt gesendete identische Werte erzeugen keine zusaetzlichen Ereignisse
 - dann zeigt MDS unter `ESP-Ereignisse` den aktuellen Zustand und den Verlauf ohne zusaetzliche Speziallogik aus einer Konfiguration an
 
 Verhalten bei neuen oder unvollstaendig provisionierten Boards:
