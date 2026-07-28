@@ -11,6 +11,7 @@ require_once(__DIR__ . '/../Infrastructure/Database/dbConfig.func.php');
 require_once(__DIR__ . '/../Infrastructure/Config/configuration.php');
 require_once(__DIR__ . '/../Infrastructure/Logging/writeToLogFunction.func.php');
 require_once(__DIR__ . '/../Support/RandomColor.php');
+require_once(__DIR__ . '/SensorGroupPolicy.php');
 use \Colors\RandomColor;
 //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
@@ -879,14 +880,22 @@ class myFunctions {
   /*
   * Add SensorConfig Object if a given board id
   */
-	  public function addSensorConfig($boardId, $typIdName, $sensorName) {
-	    $pdo = dbConfig::getInstance();
-	    $valuesDefined = false;
+		  public function addSensorConfig($boardId, $typIdName, $sensorName, &$created = null) {
+		    $pdo = dbConfig::getInstance();
+		    $created = false;
+		    $valuesDefined = false;
 	    $sensorTypeStatement = $pdo->prepare("SELECT id, name FROM sensorTypes WHERE name = ? LIMIT 1");
 	    $sensorTypeStatement->execute(array($typIdName));
 	    $mySensorTypId = $sensorTypeStatement->fetchObject('sensorTyp');
     if (!$mySensorTypId) {
       throw new Exception('Unknown sensor type: ' . $typIdName);
+    }
+    $singletonSensorType = SensorGroupPolicy::isSingletonType($mySensorTypId->name);
+    if ($singletonSensorType) {
+      $existingSensorId = SensorGroupPolicy::findExistingSensorId($pdo, $boardId, $mySensorTypId->id);
+      if ($existingSensorId !== null) {
+        return $existingSensorId;
+      }
     }
     $sensorTypeMeta = $pdo->prepare("SELECT * FROM sensorTypes WHERE id = ? LIMIT 1");
     $sensorTypeMeta->execute(array($mySensorTypId->id));
@@ -1385,12 +1394,29 @@ class myFunctions {
 
     if ($valuesDefined == true) {
       $defaultGaugeStyle = configuration::$defaultGaugeStyle ?: 'classic';
+      $singletonLockName = null;
       try {
+        if ($singletonSensorType) {
+          $singletonLockName = SensorGroupPolicy::acquireCreationLock($pdo, $boardId, $mySensorTypId->id);
+          $existingSensorId = SensorGroupPolicy::findExistingSensorId($pdo, $boardId, $mySensorTypId->id);
+          if ($existingSensorId !== null) {
+            SensorGroupPolicy::releaseCreationLock($pdo, $singletonLockName);
+            return $existingSensorId;
+          }
+        }
+
         $statement = $pdo->prepare("INSERT INTO sensorConfig (boardId, typId, name," .
         "NrOfUsedSensors, onDashboard ) VALUES (?, ?, ?, ?, ?)");
         $statement->execute(array($boardId, $mySensorTypId->id, $sensorName, $defaultValues['NrOfUsedSensors'], 1));
         $neue_id = $pdo->lastInsertId();
+        if ($singletonLockName !== null) {
+          SensorGroupPolicy::releaseCreationLock($pdo, $singletonLockName);
+          $singletonLockName = null;
+        }
       } catch (PDOException $e) {
+        if ($singletonLockName !== null) {
+          SensorGroupPolicy::releaseCreationLock($pdo, $singletonLockName);
+        }
         writeToLogFunction::write_to_log("Error: Sensor config not updated successfully.", $_SERVER["SCRIPT_FILENAME"]);
         writeToLogFunction::write_to_log("Error: " . $e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
         throw new Exception('Sensor not updated successfully.');
@@ -1407,6 +1433,7 @@ class myFunctions {
           throw new Exception('sensorChannelConfig not updated successfully.');
         }
       }
+      $created = true;
       return $neue_id;
     }
   }

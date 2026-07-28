@@ -368,6 +368,12 @@ Unterstuetzte Zuordnungen:
    - `board.macAddress`
    - optionalen Hinweisen wie `sensorType`, `type`, `sensorName`, `name`
    - Anzahl der uebergebenen Werte `value1..value4`
+
+Singleton-Sensorgruppen:
+
+- `GPS`, `Lora`, `WakeupStan`/`WakeupLog` und `OtaStatus` werden pro Board hoechstens einmal angelegt
+- erneute oder parallele Imports verwenden die bereits vorhandene Gruppe; sie erzeugen weder Duplikate noch benennen sie die bestehende Gruppe um
+- Messgruppen wie `ADC`, `Digital`, `DS18B20` und `BME280` duerfen weiterhin mehrfach pro Board vorkommen
    - bevorzugt ueber die Kombination `sensorType + sensorName`
    - danach ueber eindeutige Einzelhinweise
 4. wenn noch kein passender `sensorConfig`-Eintrag existiert:

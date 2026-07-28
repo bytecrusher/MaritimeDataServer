@@ -971,12 +971,13 @@ function ensureBoardSensorConfigExists(array $sensor, $boardId, array &$boardSen
 
     try {
         $myFunctions = new myFunctions();
-        $createdSensorId = $myFunctions->addSensorConfig($boardId, $canonicalTypeName, $canonicalTypeName);
-        if ($createdSensorId && $sensorName !== $canonicalTypeName) {
+        $sensorConfigCreated = false;
+        $createdSensorId = $myFunctions->addSensorConfig($boardId, $canonicalTypeName, $canonicalTypeName, $sensorConfigCreated);
+        if ($createdSensorId && $sensorConfigCreated && $sensorName !== $canonicalTypeName) {
             $renameStatement = $pdo2->prepare("UPDATE sensorConfig SET name = ? WHERE id = ?");
             $renameStatement->execute(array($sensorName, $createdSensorId));
         }
-        if ($createdSensorId) {
+        if ($createdSensorId && $sensorConfigCreated) {
             applyPayloadSensorNamingDefaults($pdo2, $createdSensorId, $canonicalTypeName, $sensorName);
         }
         $boardSensors = myFunctions::getAllSensorsOfBoard($boardId);

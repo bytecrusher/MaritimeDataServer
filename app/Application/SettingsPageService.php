@@ -436,6 +436,13 @@ class SettingsPageService
                     array('type' => 'index', 'table' => 'sensor_permissions', 'index' => 'uniq_sensor_permissions_sensor_user'),
                 ),
             ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-07-28_singleton_sensor_groups.sql',
+                'label' => 'Singleton sensor groups per board',
+                'checks' => array(
+                    array('type' => 'no_rows', 'table' => 'sensorConfig', 'where' => 'duplicate singleton sensor groups'),
+                ),
+            ),
         );
     }
 
@@ -466,6 +473,9 @@ class SettingsPageService
         }
         if (!self::migrationDefinitionPassed($pdo, $migrations[5])) {
             $executedActions += self::runRolesAndPermissionsMigrationActions($pdo);
+        }
+        if (!self::migrationDefinitionPassed($pdo, $migrations[6])) {
+            $executedActions += self::runSingletonSensorGroupMigrationActions($pdo);
         }
 
         writeToLogFunction::write_to_log(
@@ -720,6 +730,69 @@ class SettingsPageService
         );
     }
 
+    private static function runSingletonSensorGroupMigrationActions(PDO $pdo)
+    {
+        $statements = array(
+            "DROP TEMPORARY TABLE IF EXISTS `tmp_singleton_sensor_duplicates`",
+            "CREATE TEMPORARY TABLE `tmp_singleton_sensor_duplicates` (
+                `duplicateId` int NOT NULL PRIMARY KEY,
+                `keeperId` int NOT NULL,
+                KEY `idx_tmp_singleton_keeper` (`keeperId`)
+             ) ENGINE=InnoDB",
+            "INSERT INTO `tmp_singleton_sensor_duplicates` (`duplicateId`, `keeperId`)
+             SELECT `sensorConfig`.`id`, singletonGroups.`keeperId`
+             FROM `sensorConfig`
+             INNER JOIN (
+               SELECT groupedSensors.`boardId`, groupedSensors.`typId`, MAX(groupedSensors.`id`) AS `keeperId`
+               FROM `sensorConfig` groupedSensors
+               INNER JOIN `sensorTypes` groupedTypes ON groupedTypes.`id` = groupedSensors.`typId`
+               WHERE groupedSensors.`boardId` IS NOT NULL
+                 AND LOWER(REPLACE(REPLACE(REPLACE(groupedTypes.`name`, ' ', ''), '_', ''), '-', ''))
+                 IN ('gps', 'lora', 'otastatus', 'wakeup', 'wakeuplog', 'wakeupstan')
+               GROUP BY groupedSensors.`boardId`, groupedSensors.`typId`
+               HAVING COUNT(*) > 1
+             ) singletonGroups
+               ON singletonGroups.`boardId` = `sensorConfig`.`boardId`
+              AND singletonGroups.`typId` = `sensorConfig`.`typId`
+             WHERE `sensorConfig`.`id` <> singletonGroups.`keeperId`",
+            "UPDATE `sensorData`
+             INNER JOIN `tmp_singleton_sensor_duplicates` duplicateSensors
+               ON duplicateSensors.`duplicateId` = `sensorData`.`sensorId`
+             SET `sensorData`.`sensorId` = duplicateSensors.`keeperId`",
+            "INSERT INTO `sensor_permissions`
+               (`sensorId`, `userId`, `role`, `canView`, `canEdit`, `canReceiveAlerts`, `createdAt`, `updatedAt`)
+             SELECT duplicateSensors.`keeperId`, permissions.`userId`, permissions.`role`,
+                    permissions.`canView`, permissions.`canEdit`, permissions.`canReceiveAlerts`,
+                    permissions.`createdAt`, permissions.`updatedAt`
+             FROM `sensor_permissions` permissions
+             INNER JOIN `tmp_singleton_sensor_duplicates` duplicateSensors
+               ON duplicateSensors.`duplicateId` = permissions.`sensorId`
+             ON DUPLICATE KEY UPDATE
+               `canView` = GREATEST(`sensor_permissions`.`canView`, VALUES(`canView`)),
+               `canEdit` = GREATEST(`sensor_permissions`.`canEdit`, VALUES(`canEdit`)),
+               `canReceiveAlerts` = GREATEST(`sensor_permissions`.`canReceiveAlerts`, VALUES(`canReceiveAlerts`))",
+            "DELETE permissions
+             FROM `sensor_permissions` permissions
+             INNER JOIN `tmp_singleton_sensor_duplicates` duplicateSensors
+               ON duplicateSensors.`duplicateId` = permissions.`sensorId`",
+            "DELETE channels
+             FROM `sensorChannelConfig` channels
+             INNER JOIN `tmp_singleton_sensor_duplicates` duplicateSensors
+               ON duplicateSensors.`duplicateId` = channels.`sensorConfigId`",
+            "DELETE configs
+             FROM `sensorConfig` configs
+             INNER JOIN `tmp_singleton_sensor_duplicates` duplicateSensors
+               ON duplicateSensors.`duplicateId` = configs.`id`",
+            "DROP TEMPORARY TABLE IF EXISTS `tmp_singleton_sensor_duplicates`",
+        );
+
+        foreach ($statements as $statement) {
+            self::executeMigrationStatement($pdo, $statement);
+        }
+
+        return count($statements);
+    }
+
     private static function addColumnIfMissing(PDO $pdo, $tableName, $columnName, $columnDefinition)
     {
         if (self::migrationCheckPassed($pdo, array('type' => 'column', 'table' => $tableName, 'column' => $columnName))) {
@@ -844,6 +917,18 @@ class SettingsPageService
                 "SELECT COUNT(*) AS badRows FROM `sensorTypes` WHERE `name` = 'GPS' AND `description` = 'Coorinates'",
             "sensorConfig|`name` = 'Wakeup unknown'" =>
                 "SELECT COUNT(*) AS badRows FROM `sensorConfig` WHERE `name` = 'Wakeup unknown'",
+            "sensorConfig|duplicate singleton sensor groups" =>
+                "SELECT COUNT(*) AS badRows
+                 FROM (
+                   SELECT sensorConfig.boardId, sensorConfig.typId
+                   FROM sensorConfig
+                   INNER JOIN sensorTypes ON sensorTypes.id = sensorConfig.typId
+                   WHERE sensorConfig.boardId IS NOT NULL
+                     AND LOWER(REPLACE(REPLACE(REPLACE(sensorTypes.name, ' ', ''), '_', ''), '-', ''))
+                     IN ('gps', 'lora', 'otastatus', 'wakeup', 'wakeuplog', 'wakeupstan')
+                   GROUP BY sensorConfig.boardId, sensorConfig.typId
+                   HAVING COUNT(*) > 1
+                 ) duplicateSingletonGroups",
         );
 
         return $queries[$key] ?? null;
