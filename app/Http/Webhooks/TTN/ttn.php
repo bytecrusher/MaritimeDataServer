@@ -10,7 +10,7 @@
 
 /*
       "decoded_payload":{
-            "alarm1":1,           // DIGITAL
+            "mainPowerOn":1,      // DIGITAL; legacy alias: alarm1
             "altitude":1,         // GPS
             "counter":0,          // LORA
             "dewpoint":0,         // (BME) calculated in ESP
@@ -74,7 +74,7 @@ if(strlen($ttn_post) > 0) {
     $sensor_humidity = 0;
     $sensor_battery = 0;
     $sensor_battery2 = 0;
-    $sensor_alarm1 = 0;
+    $sensor_main_power_on = 0;
     $sensor_altitude = 0;
     $frame_counter = 0;
     $sensor_dewpoint = 0;
@@ -163,7 +163,7 @@ if(strlen($ttn_post) > 0) {
     $bestRxMetadata = ttnSelectBestRxMetadata($uplinkMessage->rx_metadata ?? array());
 
     // Sensor Data
-    $sensor_alarm1 = ttnPayloadValue($decodedPayload, array('alarm1'), 0);
+    $sensor_main_power_on = ttnPayloadValue($decodedPayload, array('mainPowerOn', 'alarm1'), 0);
     $sensor_altitude = ttnPayloadValue($decodedPayload, array('altitude'), 0);
     $frame_counter = ttnPayloadValue($decodedPayload, array('counter'), 0);
     $sensor_dewpoint = ttnPayloadValue($decodedPayload, array('dewpoint'), 0);
@@ -429,6 +429,7 @@ if(strlen($ttn_post) > 0) {
     if ($standbyState !== null) {
       $boardInfos["standbyState"] = $standbyState;
     }
+    $boardInfos["mainPowerOn"] = ttnNormalizeBooleanValue($sensor_main_power_on);
 
     $dateNow = date("d.m.Y");
     $timeNow = date("H:i:s");   
@@ -453,7 +454,7 @@ if(strlen($ttn_post) > 0) {
       ));
       $sensors[] = array_merge($commonSensorFields, array(
         "sensorType" => "Digital", "type" => "Digital", "sensorName" => "Status", "name" => "Status",
-        "value1" => $sensor_alarm1, "value2" => $sensor_relay,
+        "value1" => $sensor_main_power_on, "value2" => $sensor_relay,
         "value3" => $sensor_temperature_2, "value4" => 0
       ));
       $sensors[] = array_merge($commonSensorFields, array(
@@ -783,6 +784,14 @@ function ttnStandbyState($payload) {
     $normalizedState = ttnNormalizeStandbyStateValue($stateValue);
     if ($normalizedState !== null) {
         return $normalizedState;
+    }
+
+    $mainPowerOn = ttnPayloadValue($payload, array('mainPowerOn', 'alarm1'), null);
+    if ($mainPowerOn !== null) {
+        $normalizedMainPowerOn = ttnNormalizeBooleanValue($mainPowerOn);
+        if ($normalizedMainPowerOn !== null) {
+            return $normalizedMainPowerOn ? 'always_online' : 'wakeup';
+        }
     }
 
     return null;

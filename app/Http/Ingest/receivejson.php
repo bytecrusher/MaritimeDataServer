@@ -480,6 +480,15 @@ function extractStandbyStateFromBoardPayload(array $boardData)
         }
     }
 
+    foreach (array('mainPowerOn', 'main_power_on') as $fieldName) {
+        if (array_key_exists($fieldName, $boardData)) {
+            $mainPowerOn = normalizeBoardBooleanValue($boardData[$fieldName]);
+            if ($mainPowerOn !== null) {
+                return $mainPowerOn ? 'always_online' : 'wakeup';
+            }
+        }
+    }
+
     return null;
 }
 
@@ -710,6 +719,29 @@ function insertWakeupStandbyEventRow($sensorId, $standbyState, DateTimeImmutable
 function normalizeBoardStandbyStateValue($value)
 {
     return DevicePowerState::normalize($value);
+}
+
+function normalizeBoardBooleanValue($value)
+{
+    if (is_bool($value)) {
+        return $value;
+    }
+    if (is_int($value) || is_float($value)) {
+        return ((int)$value) !== 0;
+    }
+    if (!is_string($value)) {
+        return null;
+    }
+
+    $normalizedValue = mb_strtolower(trim($value));
+    if (in_array($normalizedValue, array('1', 'true', 'yes', 'on', 'enabled'), true)) {
+        return true;
+    }
+    if (in_array($normalizedValue, array('0', 'false', 'no', 'off', 'disabled'), true)) {
+        return false;
+    }
+
+    return null;
 }
 
 function summarizeSensorPayloadForLog(array $sensor)
@@ -1037,6 +1069,18 @@ function repairLegacyDuplicatedChannelNames(PDO $pdo, $sensorConfigId, $sensorTy
     $usedChannelCount = SensorNamingService::defaultUsedChannelCount($sensorType, $sensorName);
     if (empty($channelNames) || $usedChannelCount === null) {
         return;
+    }
+
+    if (normalizeSensorLookupValue($sensorType) === 'digital'
+        && normalizeSensorLookupValue($sensorName) === 'status') {
+        $statement = $pdo->prepare(
+            "UPDATE sensorChannelConfig
+             SET name = 'Main Power'
+             WHERE sensorConfigId = ?
+               AND channelNr = 1
+               AND LOWER(TRIM(name)) IN ('alarm', 'ch1', 'value 1')"
+        );
+        $statement->execute(array((int)$sensorConfigId));
     }
 
     $statement = $pdo->prepare(

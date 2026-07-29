@@ -68,6 +68,8 @@ assertTtnPayloadValue(13.625, $decodedMeasurements['voltage'] ?? null, 'Battery 
 assertTtnPayloadValue(-6.796773, $decodedMeasurements['longitude'] ?? null, 'Signed longitude was not decoded.');
 assertTtnPayloadValue(51.193901, $decodedMeasurements['latitude'] ?? null, 'Latitude was not decoded.');
 assertTtnPayloadValue('Wakeup Timer', $decodedMeasurements['wakeupCause'] ?? null, 'Wakeup cause was not decoded.');
+assertTtnPayloadValue(1, $decodedMeasurements['mainPowerOn'] ?? null, 'Main Power Input was not decoded.');
+assertTtnPayloadValue($decodedMeasurements['mainPowerOn'], $decodedMeasurements['alarm1'] ?? null, 'Legacy alarm1 alias must match mainPowerOn.');
 if (array_key_exists('macAddress', $decodedMeasurements)) {
     failTtnPayloadDecoderTest('Schema 3 measurements must not manufacture a MAC address from measurement bytes.');
 }

@@ -29,6 +29,9 @@ $tankNames = SensorNamingService::defaultChannelNames('ADC', 'Tanks');
 assertSensorNamingValue('Tank 2 ADC', $tankNames[4] ?? null, 'Tank channel names must describe their payload values.');
 assertSensorNamingValue(4, SensorNamingService::defaultUsedChannelCount('ADC', 'Tanks'), 'Tanks use all four payload channels.');
 
+$statusNames = SensorNamingService::defaultChannelNames('Digital', 'Status');
+assertSensorNamingValue('Main Power', $statusNames[1] ?? null, 'Status channel 1 must describe the battery main switch input.');
+
 $legacyAdcNames = SensorNamingService::legacyTypeChannelNames('ADC');
 assertSensorNamingValue('ADC1', $legacyAdcNames[1] ?? null, 'Legacy ADC defaults must be recognizable for safe repair.');
 assertSensorNamingValue('level2', $legacyAdcNames[4] ?? null, 'All legacy ADC channels must be recognizable.');

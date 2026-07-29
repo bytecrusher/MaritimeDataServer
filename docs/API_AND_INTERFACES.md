@@ -174,7 +174,8 @@ Der Code verarbeitet insbesondere:
 Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 
 - `macAddress` als primaere Board-ID, wenn der TTN-Decoder sie aus dem ESP-Payload liefert
-- `alarm1`
+- `mainPowerOn` (`1` = battery main switch on / 12 V / always on)
+- `alarm1` as a deprecated compatibility alias for `mainPowerOn`
 - `altitude`
 - `counter`
 - `dewpoint`
@@ -277,6 +278,7 @@ Hinweis:
 - alte TTN-Payloads koennen weiterhin ueber vorhandene `sensorId`-Zuordnungen verarbeitet werden
 - fuer externe Geraete ist `sensorId` inzwischen optional
 - wenn `decoded_payload` einen Zustandswert wie `standbyState`, `standby_state`, `powerState`, `deviceState` oder `sleepState` enthaelt, wird dieser in `board.standbyState` an `/ingest/receivejson.php` weitergereicht
+- ohne explizites Zustandsfeld leitet die Bridge den Zustand aus `mainPowerOn` ab; der Altname `alarm1` bleibt als Fallback akzeptiert
 
 ### Wichtige Hinweise
 
@@ -339,8 +341,8 @@ Optionale Board-Felder:
   - wird im Dashboard pro Device angezeigt
   - maximale gespeicherte Laenge: 64 Zeichen
 - `standbyState`, alternativ `standby_state`, `powerState`, `deviceState` oder `sleepState`
-  - Zustandsfeld fuer den aktuellen Device-Zustand, abgeleitet vom Operation Mode Input des ESP
-  - beim LoRa Boat Monitor bedeutet 12 V am Operation Mode Input `always_online`; ohne 12 V ist der Standby-/Wakeup-Modus aktiv
+  - Zustandsfeld fuer den aktuellen Device-Zustand, abgeleitet vom Main Power Input des ESP
+  - beim LoRa Boat Monitor bedeutet Batterie-Hauptschalter ein / 12 V am Main Power Input `always_online`; ohne 12 V ist der Sleep-/Wakeup-Modus aktiv
   - erlaubte Werte:
     - `always_online`
     - `wakeup`
@@ -425,7 +427,8 @@ Empfehlung fuer externe Devices:
 - dann kann MDS fehlende `sensorConfig`-Eintraege bei Bedarf automatisch anlegen
 - einzelne Messwert-/Kanalnamen wie `Voltage`, `Capacity` oder `Tank 1` werden in `sensorChannelConfig` verwaltet und koennen in den Sensor-Einstellungen frei angepasst werden
 - LoRa Boat Monitor uebertraegt Gruppen-, aber keine frei konfigurierten Kanalnamen; beim automatischen Anlegen vergibt MDS daher passende Standard-Kanalnamen
-- wenn am Operation Mode Input 12 V anliegen und das Device absichtlich dauerhaft online bleibt, `board.standbyState = "always_online"` mitsenden
+- wenn der Batterie-Hauptschalter eingeschaltet ist und am Main Power Input 12 V anliegen, `board.standbyState = "always_online"` mitsenden
+- `board.mainPowerOn` kann zusaetzlich als Boolean gesendet werden; `true` bedeutet Hauptschalter ein / dauerhaft an, `false` bedeutet Hauptschalter aus / Sleep-Wakeup-Betrieb
 - wenn das Device gerade aufgeweckt wurde, `board.standbyState = "wakeup"` mitsenden
 - unmittelbar bevor das Device in den Schlafzustand geht, `board.standbyState = "standby"` mitsenden
 - MDS speichert nur Zustandswechsel; wiederholt gesendete identische Werte erzeugen keine zusaetzlichen Ereignisse

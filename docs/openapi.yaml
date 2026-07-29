@@ -736,6 +736,13 @@ components:
           type: string
           maxLength: 64
           description: Alias für firmwareVersion
+        standbyState:
+          type: string
+          enum: [always_online, wakeup, standby]
+          description: Aktueller Betriebszustand des Devices.
+        mainPowerOn:
+          type: boolean
+          description: Batterie-Hauptschalter ein; 12 V am Main Power Input und dauerhaft aktiver Betrieb.
     ReceiveJsonSensor:
       type: object
       required: [date, time]
@@ -828,6 +835,10 @@ components:
                       type: string
                       example: "94:B9:7E:FE:F5:40"
                       description: Primaere Board-Kennung, wenn der TTN-Decoder sie aus dem ESP-Payload liefert.
+                    mainPowerOn:
+                      type: integer
+                      enum: [0, 1]
+                      description: Batterie-Hauptschalter aus/ein; `alarm1` wird als veralteter Alias akzeptiert.
                 - type: object
                   additionalProperties: true
             normalized_payload:

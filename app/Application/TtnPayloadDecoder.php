@@ -48,6 +48,7 @@ final class TtnPayloadDecoder
             'position' => array('value' => 0, 'context' => array('lat' => $latitude, 'lng' => $longitude)),
             'level1' => $bytes[22],
             'level2' => $bytes[23],
+            'mainPowerOn' => $status & 0x01,
             'alarm1' => $status & 0x01,
             'environmentPresent' => ($status & 0x04) !== 0,
             'vedirectPresent' => ($status & 0x08) !== 0,
