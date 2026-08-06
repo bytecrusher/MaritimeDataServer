@@ -94,13 +94,18 @@ jobs:
           mkdir -p "$DEPLOY_PATH"
           cd "$DEPLOY_PATH"
 
+          PRESERVED_PUBLIC_OTA="/tmp/mds-public-ota-bin"
+          rm -rf "$PRESERVED_PUBLIC_OTA"
+          if [ -d ./public/ota/bin ]; then
+            mkdir -p "$PRESERVED_PUBLIC_OTA"
+            cp -a ./public/ota/bin/. "$PRESERVED_PUBLIC_OTA/"
+          fi
+
           find . -mindepth 1 \( \
             -path './.env' -o \
             -path './config.json' -o \
             -path './config' -o \
             -path './config/config.json' -o \
-            -path './public/ota/bin' -o \
-            -path './public/ota/bin/*' -o \
             -path './var' -o \
             -path './var/*' \
           \) -prune -o -exec rm -rf {} +
@@ -109,6 +114,10 @@ jobs:
           rm -f /tmp/mds-git-deploy.tar.gz
 
           mkdir -p public/ota/bin var/log var/status var/sessions var/ota
+          if [ -d "$PRESERVED_PUBLIC_OTA" ]; then
+            cp -a "$PRESERVED_PUBLIC_OTA/." public/ota/bin/
+            rm -rf "$PRESERVED_PUBLIC_OTA"
+          fi
           chmod 755 public/ota/bin var var/log var/status var/ota
           chmod 700 var/sessions
 

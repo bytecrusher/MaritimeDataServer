@@ -31,4 +31,4 @@ The web server root should point to the `public/` directory below this target pa
 - Uses `tar`, `scp` and `ssh`; server-side `rsync` is not required.
 - Deletes deployed application files on the server that no longer exist in the repository while preserving runtime configuration and data.
 - Runs a PHP syntax check on the server with `DEPLOY_PHP_BINARY` after upload.
-- Keeps runtime data out of deployment: `.env`, `config.json`, `config/config.json`, SQL dumps, logs, status JSON files and OTA runtime files are excluded. Existing files below both `var/ota/` and `public/ota/bin/` are preserved during application deployments.
+- Keeps runtime data out of deployment: `.env`, `config.json`, `config/config.json`, SQL dumps, logs, status JSON files and OTA runtime files are excluded. Existing files below `var/ota/` remain in place; `public/ota/bin/` is copied aside before replacing `public/` and restored afterwards.
