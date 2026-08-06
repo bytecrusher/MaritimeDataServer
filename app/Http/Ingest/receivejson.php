@@ -288,6 +288,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             }
                         }
                         if ($sensorId !== null) {
+                            if (!empty($owSensorAddress) && substr($owSensorAddress, 0, 2) === 'bm') {
+                                $bindStableAddress = $pdo2->prepare(
+                                    "UPDATE sensorConfig SET sensorAddress = ? WHERE id = ? AND boardId = ? AND (sensorAddress IS NULL OR sensorAddress = '')"
+                                );
+                                $bindStableAddress->execute(array($owSensorAddress, $sensorId, $macAddressId));
+                            }
                             repairLegacyDuplicatedChannelNames(
                                 $pdo2,
                                 $sensorId,
@@ -843,8 +849,8 @@ function check_macAddress($macAddress, $pdo2)
 function checkOwSensorAddress($sensorAddress, $macAddressId, $pdo2)
 {
     try {
-        $statement = $pdo2->prepare("SELECT id FROM sensorConfig WHERE sensorAddress = ? LIMIT 1");
-        $statement->execute(array($sensorAddress));
+        $statement = $pdo2->prepare("SELECT id FROM sensorConfig WHERE sensorAddress = ? AND boardId = ? LIMIT 1");
+        $statement->execute(array($sensorAddress, $macAddressId));
         $sensorAddressId = $statement->fetch();
         if ($sensorAddress != "00000000") {
             if (!$sensorAddressId) { // if no sensor found in DB, it should be created.
@@ -852,6 +858,9 @@ function checkOwSensorAddress($sensorAddress, $macAddressId, $pdo2)
                 $statementType = $pdo2->prepare("SELECT id FROM sensorTypes WHERE oneWireFamilyCode = ? LIMIT 1");
                 $statementType->execute(array($sensorAddressFamilyCode));
                 $idSensorTypes = $statementType->fetch();
+                if (!$idSensorTypes || !isset($idSensorTypes['id'])) {
+                    return false;
+                }
                 $statement2 = $pdo2->prepare("INSERT INTO sensorConfig (boardId, sensorAddress, typId) VALUES (?, ?, ?)");
                 $insertSuccess = $statement2->execute(array($macAddressId, $sensorAddress, $idSensorTypes['id']));
                 writeToLogFunction::info(

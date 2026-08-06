@@ -34,6 +34,7 @@ require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnPayloadDecoder.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnMeasurementSensorFactory.php");
+require_once(dirname(__DIR__, 3) . "/Application/SensorMetadataService.php");
 require_once(dirname(__DIR__, 3) . "/Application/DevicePowerState.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Database/dbConfig.func.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Logging/writeToLogFunction.func.php");
@@ -572,6 +573,22 @@ if(strlen($ttn_post) > 0) {
         }
       //}   
     }
+    if ($payloadMacAddress !== null && $payloadMacAddress !== '') {
+      foreach ($sensors as &$namedSensor) {
+        if (!is_array($namedSensor) || isset($namedSensor['sensorId'])) {
+          continue;
+        }
+        $sensorKey = SensorMetadataService::keyForSensor(
+          $namedSensor['sensorType'] ?? ($namedSensor['type'] ?? ''),
+          $namedSensor['sensorName'] ?? ($namedSensor['name'] ?? '')
+        );
+        if ($sensorKey !== null) {
+          $namedSensor['sensorAddress'] = SensorMetadataService::stableAddress($payloadMacAddress, $sensorKey);
+        }
+      }
+      unset($namedSensor);
+    }
+
     $payload = json_encode(array(
       "board" => $boardInfos,
       "sensors" => $sensors

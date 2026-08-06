@@ -1,5 +1,13 @@
 # API And External Interfaces
 
+## Sensor metadata synchronization
+
+`POST /ingest/sensormetadata.php` synchronizes device-owned sensor names without repeating them in every measurement payload. Authentication uses the same `board.apiKey`, `board.protocolVersion` and `board.macAddress` fields as `receivejson.php`.
+
+The device sends `metadataHash` on regular checks. It includes `sensors` only during initial registration or after a local name change. Each definition contains a stable `key`, `sensorType`, `sensorAddress` and `name`. Set `pushNames` to `true` only after a name was edited on the device; otherwise an existing MDS name remains authoritative and is returned to the device.
+
+The response contains the current `metadataHash` and, when the hash differs, the managed sensor names. Measurement payloads subsequently identify the sensor using `sensorAddress`; Wi-Fi and TTN therefore resolve to the same `sensorConfig` row.
+
 Stand: 2026-04-22
 
 Diese Datei dokumentiert die aktuell aktiven HTTP-Schnittstellen des Maritime Data Server (MDS) mit Fokus auf:

@@ -21,6 +21,7 @@
     "test": [
       "php tests/DeviceEventTimelineCalculatorTest.php",
       "php tests/SensorNamingServiceTest.php",
+      "php tests/SensorMetadataServiceTest.php",
       "php tests/SensorCleanupServiceTest.php",
       "php tests/SessionSupportTest.php",
       "php tests/RegistrationProtectionTest.php",

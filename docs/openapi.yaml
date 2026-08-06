@@ -133,6 +133,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /ingest/sensormetadata.php:
+    post:
+      tags: [Ingest]
+      summary: Sensor-Namen zwischen Geraet und MDS synchronisieren
+      description: |
+        Registriert stabile Sensoradressen und synchronisiert Anzeigenamen.
+        Ohne `pushNames` bleiben vorhandene MDS-Namen massgeblich. Mit
+        `pushNames: true` werden lokal geaenderte Namen einmalig uebernommen.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [board, metadataHash]
+              properties:
+                board:
+                  $ref: '#/components/schemas/ReceiveJsonBoard'
+                metadataHash:
+                  type: string
+                  pattern: '^[0-9a-fA-F]{8}$'
+                pushNames:
+                  type: boolean
+                sensors:
+                  type: array
+                  items:
+                    type: object
+                    required: [key, sensorType, sensorAddress, name]
+                    properties:
+                      key: { type: string }
+                      sensorType: { type: string }
+                      sensorAddress: { type: string }
+                      name: { type: string, maxLength: 17 }
+      responses:
+        '200':
+          description: Metadaten synchronisiert
+        '400':
+          description: Ungueltige Anfrage
+        '403':
+          description: API-Key ungueltig
+        '500':
+          description: Synchronisation fehlgeschlagen
+
   /ingest/receivejson.php:
     post:
       tags: [Ingest]
