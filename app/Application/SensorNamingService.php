@@ -19,7 +19,8 @@ class SensorNamingService
         $channelNames = array(
             'adc:battery' => array(1 => 'Voltage', 2 => 'Capacity', 3 => 'Value 3', 4 => 'Value 4'),
             'adc:tanks' => array(1 => 'Tank 1', 2 => 'Tank 1 ADC', 3 => 'Tank 2', 4 => 'Tank 2 ADC'),
-            'digital:status' => array(1 => 'Main Power', 2 => 'Relay', 3 => 'Temperature', 4 => 'Status'),
+            'digital:status' => array(1 => 'Main Power', 2 => 'Relay'),
+            'ds18b20:ds18b20' => array(1 => 'Temperature'),
             'gps:gps' => array(1 => 'Latitude', 2 => 'Longitude', 3 => 'Speed', 4 => 'Course'),
             'bme280:environment' => array(1 => 'Temperature', 2 => 'Humidity', 3 => 'Pressure', 4 => 'Altitude'),
             'bme280:dewpoint' => array(1 => 'Dewpoint', 2 => 'Value 2', 3 => 'Value 3', 4 => 'Value 4'),
@@ -36,7 +37,8 @@ class SensorNamingService
         $channelCounts = array(
             'adc:battery' => 2,
             'adc:tanks' => 4,
-            'digital:status' => 3,
+            'digital:status' => 2,
+            'ds18b20:ds18b20' => 1,
             'gps:gps' => 4,
             'bme280:environment' => 4,
             'bme280:dewpoint' => 1,

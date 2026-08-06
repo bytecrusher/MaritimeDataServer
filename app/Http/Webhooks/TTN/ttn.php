@@ -33,6 +33,7 @@
 require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnPayloadDecoder.php");
+require_once(dirname(__DIR__, 3) . "/Application/TtnMeasurementSensorFactory.php");
 require_once(dirname(__DIR__, 3) . "/Application/DevicePowerState.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Database/dbConfig.func.php");
 require_once(dirname(__DIR__, 3) . "/Infrastructure/Logging/writeToLogFunction.func.php");
@@ -452,11 +453,14 @@ if(strlen($ttn_post) > 0) {
         "value1" => $sensor_level1, "value2" => $sensor_tank1_adc,
         "value3" => $sensor_level2, "value4" => $sensor_tank2_adc
       ));
-      $sensors[] = array_merge($commonSensorFields, array(
-        "sensorType" => "Digital", "type" => "Digital", "sensorName" => "Status", "name" => "Status",
-        "value1" => $sensor_main_power_on, "value2" => $sensor_relay,
-        "value3" => $sensor_temperature_2, "value4" => 0
-      ));
+      foreach (TtnMeasurementSensorFactory::buildStatusAndTemperatureSensors(
+        $commonSensorFields,
+        $sensor_main_power_on,
+        $sensor_relay,
+        $sensor_temperature_2
+      ) as $statusSensor) {
+        $sensors[] = $statusSensor;
+      }
       $sensors[] = array_merge($commonSensorFields, array(
         "sensorType" => "GPS", "type" => "GPS", "sensorName" => "GPS", "name" => "GPS",
         "value1" => $sensor_latitude, "value2" => $sensor_longitude,

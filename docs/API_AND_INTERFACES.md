@@ -224,7 +224,8 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
    - wenn `macAddress` vorhanden ist, wird diese direkt als Board-MAC gespeichert
    - alte automatisch angelegte TTN-Boards mit `fakeMacAddress...` werden beim naechsten passenden Uplink auf die echte MAC migriert
 5. Bei modernen Mess-Payloads (`payloadType = measurements`, Schema 2 oder neuer):
-   - verwendet MDS die Gruppen `Battery`, `Tanks`, `Status`, `GPS`, `Environment`, `Dewpoint`, `VEdirect` und `Lora`
+   - verwendet MDS die Gruppen `Battery`, `Tanks`, `Status`, `DS18B20`, `GPS`, `Environment`, `Dewpoint`, `VEdirect` und `Lora`
+   - `tempbattery` wird als Messwert der Gruppe `DS18B20` gespeichert; `Status` enthaelt nur `mainPowerOn` und `relay`
    - `sensorType` bleibt der technische Typ wie `ADC`; `sensorName` bezeichnet die Gruppe wie `Battery`
    - fehlende Gruppen werden durch den Ingest automatisch angelegt
    - alte Payloads bleiben ueber die bisherige typbasierte Zuordnung kompatibel
