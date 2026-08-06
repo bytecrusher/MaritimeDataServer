@@ -99,6 +99,8 @@ jobs:
             -path './config.json' -o \
             -path './config' -o \
             -path './config/config.json' -o \
+            -path './public/ota/bin' -o \
+            -path './public/ota/bin/*' -o \
             -path './var' -o \
             -path './var/*' \
           \) -prune -o -exec rm -rf {} +
@@ -106,8 +108,8 @@ jobs:
           tar -xzf /tmp/mds-git-deploy.tar.gz -C "$DEPLOY_PATH"
           rm -f /tmp/mds-git-deploy.tar.gz
 
-          mkdir -p var/log var/status var/sessions var/ota
-          chmod 755 var var/log var/status var/ota
+          mkdir -p public/ota/bin var/log var/status var/sessions var/ota
+          chmod 755 public/ota/bin var var/log var/status var/ota
           chmod 700 var/sessions
 
           PHP_CANDIDATES="$PHP_BINARY /opt/plesk/php/8.3/bin/php /opt/plesk/php/8.2/bin/php /opt/plesk/php/8.1/bin/php /usr/bin/php php"
