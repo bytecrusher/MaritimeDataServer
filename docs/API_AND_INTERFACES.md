@@ -357,6 +357,8 @@ Optionale Board-Felder:
   - wenn kein `standbyState` uebertragen wird, versucht MDS weiterhin Wakeup-/Standby-Ereignisse vollstaendig aus Telemetrie-Luecken abzuleiten
   - dabei gilt: nach Ablauf von `offlineDataTimer` ohne neue Nutzdaten wird ein `Standby` angenommen; beim naechsten Datenempfang wird ein `Wakeup` erzeugt
   - wenn der Payload einen expliziten Sensor `sensorType = WakeupStan` oder `sensorName = WakeupLog` enthaelt, hat dieses Device-Ereignis Vorrang; MDS erzeugt dann keine zusaetzliche inferierte Wakeup-/Standby-Zeile aus Payload-Luecken
+  - die Wakeup-Dauer reicht vom Wakeup bis zum folgenden Standby; die Standby-Dauer reicht vom Standby bis zum folgenden Wakeup
+  - fehlen zwischen zwei nicht-persistenten Ereignissen fuer mehr als das Doppelte von `offlineDataTimer` verlaessliche Zustandswechsel, wird dieser Zeitraum als unbekannte Datenluecke statt als Online- oder Standby-Zeit ausgewiesen
 
 ### Sensor-Mapping
 

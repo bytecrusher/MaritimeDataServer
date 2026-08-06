@@ -1685,6 +1685,7 @@
     'openEnded' => mds_t('js.open_ended'),
     'onlineHours' => mds_t('js.online_hours'),
     'standbyHours' => mds_t('js.standby_hours'),
+    'unknownHours' => mds_t('js.unknown_hours'),
     'windowHours' => mds_t('js.window_hours'),
     'sensorOrderSaved' => mds_t('js.sensor_order_saved'),
     'sensorOrderFailed' => mds_t('js.sensor_order_failed'),
@@ -2124,6 +2125,8 @@
                                       }
                                       if (isset($eventTimelineEntry['durationSeconds']) && $eventTimelineEntry['durationSeconds'] !== null) {
                                         $detailParts[] = mds_t('internal.event_duration', array(mds_format_internal_duration($eventTimelineEntry['durationSeconds'])));
+                                      } elseif (!empty($eventTimelineEntry['durationUnknown'])) {
+                                        $detailParts[] = mds_t('internal.event_duration_unknown');
                                       } elseif (!empty($eventTimelineEntry['durationOpen'])) {
                                         $detailParts[] = mds_t('internal.event_duration_open');
                                       }

@@ -702,6 +702,7 @@ function updateEventTimeline24hChart() {
         timestamp: point.timestamp,
         openEnded: point.openEnded === true,
         persistentOnline: point.persistentOnline === true,
+        gapAfter: point.gapAfter === true,
       };
     }).filter(function (point) {
       return Number.isFinite(point.x) && Number.isFinite(point.y);
@@ -728,7 +729,13 @@ function updateEventTimeline24hChart() {
       borderWidth: mdsIsMobileChartViewport() ? 3 : 2.25,
       segment: {
         borderColor: function (context) {
+          if (context.p0.raw?.gapAfter === true) {
+            return 'rgba(148, 163, 184, 0.3)';
+          }
           return Number(context.p0.raw?.state) === 1 ? boardColor.wakeupBorder : boardColor.standbyBorder;
+        },
+        borderDash: function (context) {
+          return context.p0.raw?.gapAfter === true ? [5, 6] : [];
         },
         backgroundColor: function (context) {
           return Number(context.p0.raw?.state) === 1 ? boardColor.wakeupFill : boardColor.standbyFill;
@@ -792,6 +799,7 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
       timestamp: point.timestamp,
       openEnded: point.openEnded === true,
       persistentOnline: point.persistentOnline === true,
+      gapAfter: point.gapAfter === true,
     };
   }).filter(function (point) {
     return Number.isFinite(point.x) && Number.isFinite(point.y);
@@ -812,13 +820,14 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
     }
   });
 
-  if (lastPointBeforeWindow) {
+  if (lastPointBeforeWindow && lastPointBeforeWindow.gapAfter !== true) {
     clippedPoints.unshift({
       x: windowStartMs,
       y: lastPointBeforeWindow.y,
       timestamp: formatEventTimelineTimestamp(windowStartMs),
       openEnded: lastPointBeforeWindow.openEnded === true,
       persistentOnline: lastPointBeforeWindow.persistentOnline === true,
+      gapAfter: false,
     });
   }
 
@@ -839,6 +848,7 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
   clippedPoints.forEach(function (point) {
     const previousPoint = deduplicatedPoints[deduplicatedPoints.length - 1];
     if (previousPoint && previousPoint.x === point.x && previousPoint.y === point.y) {
+      previousPoint.gapAfter = previousPoint.gapAfter === true || point.gapAfter === true;
       return;
     }
     deduplicatedPoints.push(point);
@@ -851,9 +861,11 @@ function clipEventTimelineEntry(timelineEntry, windowStartMs, windowEndMs, selec
     points: deduplicatedPoints,
     onlineHours: windowStats.onlineHours,
     standbyHours: windowStats.standbyHours,
+    unknownHours: windowStats.unknownHours,
     windowHours: selectedWindowHours,
     onlinePercent: windowStats.onlinePercent,
     standbyPercent: windowStats.standbyPercent,
+    unknownPercent: windowStats.unknownPercent,
   };
 }
 
@@ -865,6 +877,9 @@ function calculateEventWindowStats(points, selectedWindowHours) {
     const segmentStart = points[pointIndex];
     const segmentEnd = points[pointIndex + 1];
     const segmentMs = Math.max(0, segmentEnd.x - segmentStart.x);
+    if (segmentStart.gapAfter === true) {
+      continue;
+    }
     if (Number(segmentStart.y) === 1) {
       onlineMs += segmentMs;
     } else if (Number(segmentStart.y) === 0) {
@@ -873,11 +888,14 @@ function calculateEventWindowStats(points, selectedWindowHours) {
   }
 
   const windowMs = Math.max(1, selectedWindowHours * 60 * 60 * 1000);
+  const unknownMs = Math.max(0, windowMs - onlineMs - standbyMs);
   return {
     onlineHours: Math.round((onlineMs / 3600000) * 100) / 100,
     standbyHours: Math.round((standbyMs / 3600000) * 100) / 100,
+    unknownHours: Math.round((unknownMs / 3600000) * 100) / 100,
     onlinePercent: Math.round((onlineMs / windowMs) * 1000) / 10,
     standbyPercent: Math.round((standbyMs / windowMs) * 1000) / 10,
+    unknownPercent: Math.round((unknownMs / windowMs) * 1000) / 10,
   };
 }
 
@@ -890,7 +908,8 @@ function updateEventTimelineWindowSummary(visibleTimelines) {
   const summaryItems = visibleTimelines.filter(function (timelineEntry) {
     const onlineHours = Number(timelineEntry.onlineHours) || 0;
     const standbyHours = Number(timelineEntry.standbyHours) || 0;
-    return (Array.isArray(timelineEntry.points) && timelineEntry.points.length > 0) || onlineHours > 0 || standbyHours > 0;
+    const unknownHours = Number(timelineEntry.unknownHours) || 0;
+    return (Array.isArray(timelineEntry.points) && timelineEntry.points.length > 0) || onlineHours > 0 || standbyHours > 0 || unknownHours > 0;
   });
 
   if (summaryItems.length === 0) {
@@ -901,6 +920,7 @@ function updateEventTimelineWindowSummary(visibleTimelines) {
   const summaryCards = summaryItems.map(function (timelineEntry) {
     const onlineHours = Number(timelineEntry.onlineHours) || 0;
     const standbyHours = Number(timelineEntry.standbyHours) || 0;
+    const unknownHours = Number(timelineEntry.unknownHours) || 0;
     const windowHours = Number(timelineEntry.windowHours) || Number(window.eventTimelineWindowHours) || 24;
     const onlinePercent = Math.max(0, Math.min(100, Number(timelineEntry.onlinePercent) || 0));
     const standbyPercent = Math.max(0, Math.min(100, Number(timelineEntry.standbyPercent) || 0));
@@ -916,6 +936,7 @@ function updateEventTimelineWindowSummary(visibleTimelines) {
     metrics.className = 'event-window-metrics';
     metrics.appendChild(createEventWindowMetric(onlineHours.toFixed(2) + ' h', mdsLabel('onlineHours', 'Online hours')));
     metrics.appendChild(createEventWindowMetric(standbyHours.toFixed(2) + ' h', mdsLabel('standbyHours', 'Standby hours')));
+    metrics.appendChild(createEventWindowMetric(unknownHours.toFixed(2) + ' h', mdsLabel('unknownHours', 'Unknown')));
     metrics.appendChild(createEventWindowMetric(windowHours.toFixed(0) + ' h', mdsLabel('windowHours', 'Window')));
     card.appendChild(metrics);
 

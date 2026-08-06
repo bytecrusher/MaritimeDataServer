@@ -164,8 +164,10 @@ class InternalPageService
                 }
 
                 $boardId = (int)$eventBoardObj->getId();
+                $offlineDataTimerMinutes = max(1, (int)$eventBoardObj->getOfflineDataTimer());
                 $eventTimelineBoards[$boardId]['boardId'] = $boardId;
                 $eventTimelineBoards[$boardId]['boardName'] = $eventBoardObj->getName();
+                $eventTimelineBoards[$boardId]['maxTransitionGapSeconds'] = max(300, $offlineDataTimerMinutes * 2 * 60);
                 $eventTimelineBoards[$boardId]['events'] = $eventTimelineBoards[$boardId]['events'] ?? array();
 
                 foreach (self::buildEventEntriesFromRows($eventRows, $eventSensor['name'] ?? 'WakeupStan') as $eventEntry) {
@@ -190,7 +192,8 @@ class InternalPageService
                 $eventTimelineBoard['events'],
                 $eventTimelineSummaryBuckets,
                 $eventWindowStart,
-                $eventWindowEnd
+                $eventWindowEnd,
+                $eventTimelineBoard['maxTransitionGapSeconds']
             );
 
             $eventTimelineLast24h[] = DeviceEventTimelineCalculator::buildTimelineChartData(
@@ -199,7 +202,11 @@ class InternalPageService
                 $eventWindowEnd
             );
             $eventTimelineBoard['events'] = self::sortEventsDescending($eventTimelineBoard['events']);
-            $eventTimelineBoard['events'] = DeviceEventTimelineCalculator::addDurationDetails($eventTimelineBoard['events'], $eventWindowEnd);
+            $eventTimelineBoard['events'] = DeviceEventTimelineCalculator::addDurationDetails(
+                $eventTimelineBoard['events'],
+                $eventWindowEnd,
+                $eventTimelineBoard['maxTransitionGapSeconds']
+            );
             $eventTimelineBoard['events'] = array_slice($eventTimelineBoard['events'], 0, 80);
             $eventTimelineSummary[] = array(
                 'boardId' => (int)$eventTimelineBoard['boardId'],

@@ -187,7 +187,29 @@ th.rotated-text > div > span {
 .settings-log-table-scroll {
     max-height: 360px;
     overflow: auto;
-    scrollbar-width: thin;
+    scrollbar-width: auto;
+    scrollbar-color: #475569 #e2e8f0;
+}
+
+.settings-log-table-scroll::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.settings-log-table-scroll::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 999px;
+}
+
+.settings-log-table-scroll::-webkit-scrollbar-thumb {
+    min-height: 42px;
+    border: 2px solid #e2e8f0;
+    border-radius: 999px;
+    background: #475569;
+}
+
+.settings-log-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #1e293b;
 }
 
 .settings-log-table-scroll thead th {
@@ -248,7 +270,29 @@ th.rotated-text > div > span {
     min-height: 280px;
     resize: vertical;
     font-family: "SFMono-Regular", Consolas, monospace;
-    scrollbar-width: thin;
+    scrollbar-width: auto;
+    scrollbar-color: #67e8f9 #172033;
+}
+
+#settings-log-content::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+#settings-log-content::-webkit-scrollbar-track {
+    background: #172033;
+    border-radius: 999px;
+}
+
+#settings-log-content::-webkit-scrollbar-thumb {
+    min-height: 48px;
+    border: 3px solid #172033;
+    border-radius: 999px;
+    background: #67e8f9;
+}
+
+#settings-log-content::-webkit-scrollbar-thumb:hover {
+    background: #a5f3fc;
 }
 
 @media (max-width: 767.98px) {

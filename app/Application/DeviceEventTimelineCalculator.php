@@ -33,17 +33,16 @@ class DeviceEventTimelineCalculator
         });
 
         $transitionEvents = array();
-        $lastStateClass = null;
+        $lastStateSignature = null;
         foreach ($sortedEvents as $eventEntry) {
-            if (($eventEntry['stateClass'] ?? null) === $lastStateClass) {
-                unset($eventEntry['sortTimestamp']);
-                $transitionEvents[count($transitionEvents) - 1] = $eventEntry;
+            $stateSignature = ($eventEntry['stateClass'] ?? '') . '|' . (!empty($eventEntry['persistentOnline']) ? '1' : '0');
+            if ($stateSignature === $lastStateSignature) {
                 continue;
             }
 
             unset($eventEntry['sortTimestamp']);
             $transitionEvents[] = $eventEntry;
-            $lastStateClass = $eventEntry['stateClass'] ?? null;
+            $lastStateSignature = $stateSignature;
         }
 
         return $transitionEvents;
@@ -78,7 +77,7 @@ class DeviceEventTimelineCalculator
         );
     }
 
-    public static function addDurationDetails(array $events, DateTimeImmutable $windowEnd)
+    public static function addDurationDetails(array $events, DateTimeImmutable $windowEnd, $maxTransitionGapSeconds = null)
     {
         $durationByEventKey = array();
         $normalizedEvents = self::eventsAscending($events);
@@ -94,11 +93,17 @@ class DeviceEventTimelineCalculator
             $durationByEventKey[$eventKey] = array(
                 'durationSeconds' => null,
                 'durationOpen' => false,
+                'durationUnknown' => false,
                 'persistentOnline' => $persistentOnline,
             );
 
             if ($nextEventDateTime instanceof DateTimeImmutable && $nextEventDateTime > $eventDateTime) {
-                $durationByEventKey[$eventKey]['durationSeconds'] = $nextEventDateTime->getTimestamp() - $eventDateTime->getTimestamp();
+                $durationSeconds = $nextEventDateTime->getTimestamp() - $eventDateTime->getTimestamp();
+                if (self::isUnreliableGap($durationSeconds, $persistentOnline, $maxTransitionGapSeconds)) {
+                    $durationByEventKey[$eventKey]['durationUnknown'] = true;
+                } else {
+                    $durationByEventKey[$eventKey]['durationSeconds'] = $durationSeconds;
+                }
             } elseif ($stateClass === 'is-wakeup' && !$persistentOnline) {
                 $durationByEventKey[$eventKey]['durationOpen'] = true;
             } elseif ($windowEnd > $eventDateTime) {
@@ -109,6 +114,7 @@ class DeviceEventTimelineCalculator
         foreach ($events as $eventIndex => $eventEntry) {
             $events[$eventIndex]['durationSeconds'] = null;
             $events[$eventIndex]['durationOpen'] = false;
+            $events[$eventIndex]['durationUnknown'] = false;
             $events[$eventIndex]['persistentOnline'] = !empty($eventEntry['persistentOnline']);
 
             $eventDateTime = self::parseEventDatetime($eventEntry);
@@ -130,7 +136,8 @@ class DeviceEventTimelineCalculator
         $eventEntries = $eventTimelineBoard['events'] ?? array();
         $points = array();
         $timelineEvents = self::eventsAscending($eventEntries);
-        $timelineSummary = self::buildWindowSummary($eventEntries, $windowStart, $windowEnd);
+        $maxTransitionGapSeconds = $eventTimelineBoard['maxTransitionGapSeconds'] ?? null;
+        $timelineSummary = self::buildWindowSummary($eventEntries, $windowStart, $windowEnd, $maxTransitionGapSeconds);
         $activeStateAtWindowStart = null;
 
         foreach ($timelineEvents as $timelineEvent) {
@@ -173,16 +180,19 @@ class DeviceEventTimelineCalculator
             if ((int)$lastPoint['y'] === 1 && empty($lastPoint['persistentOnline'])) {
                 $points[$lastPointIndex]['openEnded'] = true;
             } else {
-                $points[] = self::buildTimelinePoint(
+                $syntheticEndPoint = self::buildTimelinePoint(
                     $windowEnd,
                     (int)$lastPoint['y'] === 1 ? 'is-wakeup' : 'is-standby',
                     $lastPoint['label'] ?? ((int)$lastPoint['y'] === 1 ? 'Always online' : 'Standby'),
                     !empty($lastPoint['persistentOnline'])
                 );
+                $syntheticEndPoint['syntheticEnd'] = true;
+                $points[] = $syntheticEndPoint;
             }
         }
 
         $points = self::deduplicateTimelinePoints($points);
+        $points = self::markUnreliableTimelineGaps($points, $maxTransitionGapSeconds);
 
         return array_merge(array(
             'boardId' => (int)($eventTimelineBoard['boardId'] ?? 0),
@@ -191,9 +201,9 @@ class DeviceEventTimelineCalculator
         ), $timelineSummary);
     }
 
-    public static function buildWindowSummary(array $eventEntries, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    public static function buildWindowSummary(array $eventEntries, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd, $maxTransitionGapSeconds = null)
     {
-        $totals = self::accumulateSegments($eventEntries, $windowStart, $windowEnd);
+        $totals = self::accumulateSegments($eventEntries, $windowStart, $windowEnd, $maxTransitionGapSeconds);
         $windowSeconds = max(1, $windowEnd->getTimestamp() - $windowStart->getTimestamp());
 
         return array(
@@ -205,12 +215,12 @@ class DeviceEventTimelineCalculator
         );
     }
 
-    public static function buildDailySummary(array $eventEntries, array $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    public static function buildDailySummary(array $eventEntries, array $bucketDates, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd, $maxTransitionGapSeconds = null)
     {
         $onlineDailySeconds = array_fill(0, count($bucketDates), 0);
         $standbyDailySeconds = array_fill(0, count($bucketDates), 0);
 
-        foreach (self::segments($eventEntries, $windowStart, $windowEnd) as $segment) {
+        foreach (self::segments($eventEntries, $windowStart, $windowEnd, $maxTransitionGapSeconds) as $segment) {
             foreach ($bucketDates as $bucketIndex => $bucketDate) {
                 $bucketStart = new DateTimeImmutable($bucketDate . ' 00:00:00');
                 $bucketEnd = $bucketStart->modify('+1 day');
@@ -248,10 +258,10 @@ class DeviceEventTimelineCalculator
         );
     }
 
-    private static function accumulateSegments(array $eventEntries, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    private static function accumulateSegments(array $eventEntries, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd, $maxTransitionGapSeconds = null)
     {
         $totals = array('onlineSeconds' => 0, 'standbySeconds' => 0);
-        foreach (self::segments($eventEntries, $windowStart, $windowEnd) as $segment) {
+        foreach (self::segments($eventEntries, $windowStart, $windowEnd, $maxTransitionGapSeconds) as $segment) {
             $seconds = $segment['end']->getTimestamp() - $segment['start']->getTimestamp();
             if ($segment['stateClass'] === 'is-wakeup') {
                 $totals['onlineSeconds'] += $seconds;
@@ -263,7 +273,7 @@ class DeviceEventTimelineCalculator
         return $totals;
     }
 
-    private static function segments(array $eventEntries, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd)
+    private static function segments(array $eventEntries, DateTimeImmutable $windowStart, DateTimeImmutable $windowEnd, $maxTransitionGapSeconds = null)
     {
         $segments = array();
         $normalizedEvents = self::eventsAscending($eventEntries);
@@ -278,6 +288,10 @@ class DeviceEventTimelineCalculator
 
             $segmentStart = $event['dateTime'];
             $segmentEnd = $hasNextEvent ? $normalizedEvents[$eventIndex + 1]['dateTime'] : $windowEnd;
+            $segmentSeconds = $segmentEnd->getTimestamp() - $segmentStart->getTimestamp();
+            if ($hasNextEvent && self::isUnreliableGap($segmentSeconds, !empty($event['persistentOnline']), $maxTransitionGapSeconds)) {
+                continue;
+            }
             if ($segmentEnd <= $windowStart || $segmentStart >= $windowEnd || $segmentEnd <= $segmentStart) {
                 continue;
             }
@@ -372,5 +386,30 @@ class DeviceEventTimelineCalculator
         });
 
         return $deduplicatedPoints;
+    }
+
+    private static function markUnreliableTimelineGaps(array $points, $maxTransitionGapSeconds)
+    {
+        for ($pointIndex = 0; $pointIndex < count($points) - 1; $pointIndex++) {
+            if (!empty($points[$pointIndex + 1]['syntheticEnd'])) {
+                continue;
+            }
+            $pointTime = new DateTimeImmutable((string)$points[$pointIndex]['x']);
+            $nextPointTime = new DateTimeImmutable((string)$points[$pointIndex + 1]['x']);
+            $gapSeconds = $nextPointTime->getTimestamp() - $pointTime->getTimestamp();
+            if (self::isUnreliableGap($gapSeconds, !empty($points[$pointIndex]['persistentOnline']), $maxTransitionGapSeconds)) {
+                $points[$pointIndex]['gapAfter'] = true;
+            }
+        }
+
+        return $points;
+    }
+
+    private static function isUnreliableGap($durationSeconds, $persistentOnline, $maxTransitionGapSeconds)
+    {
+        return !$persistentOnline
+            && is_numeric($maxTransitionGapSeconds)
+            && (int)$maxTransitionGapSeconds > 0
+            && (int)$durationSeconds > (int)$maxTransitionGapSeconds;
     }
 }

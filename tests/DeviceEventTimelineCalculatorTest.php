@@ -64,6 +64,50 @@ $duplicates = array(
 );
 $normalized = DeviceEventTimelineCalculator::normalizeSequence($duplicates);
 assertSameValue(2, count($normalized), 'Repeated equal states must collapse into one transition.');
-assertSameValue('14.07.2026 10:00:30', $normalized[0]['timestamp'], 'The latest duplicate state must be retained.');
+assertSameValue('14.07.2026 10:00:00', $normalized[0]['timestamp'], 'The first equal state must remain the start of its phase.');
+
+$deviceCycleEvents = array(
+    eventAt('is-standby', '14.07.2026 10:00:00'),
+    eventAt('is-wakeup', '14.07.2026 10:15:00'),
+    eventAt('is-standby', '14.07.2026 10:16:00'),
+);
+$deviceCycleSummary = DeviceEventTimelineCalculator::buildWindowSummary(
+    $deviceCycleEvents,
+    new DateTimeImmutable('2026-07-14 10:00:00'),
+    new DateTimeImmutable('2026-07-14 10:16:00'),
+    1920
+);
+assertSameValue(0.02, $deviceCycleSummary['onlineHours'], 'Wakeup time must run from wakeup to the following standby.');
+assertSameValue(0.25, $deviceCycleSummary['standbyHours'], 'Standby time must run from standby to the following wakeup.');
+
+$missingEventGap = array(
+    eventAt('is-wakeup', '14.07.2026 10:00:00'),
+    eventAt('is-standby', '14.07.2026 12:00:00'),
+);
+$missingEventSummary = DeviceEventTimelineCalculator::buildWindowSummary(
+    $missingEventGap,
+    new DateTimeImmutable('2026-07-14 10:00:00'),
+    new DateTimeImmutable('2026-07-14 12:00:00'),
+    1920
+);
+assertSameValue(0.0, $missingEventSummary['onlineHours'], 'A long event gap must not be counted as continuous wakeup time.');
+$missingEventDetails = DeviceEventTimelineCalculator::addDurationDetails(
+    $missingEventGap,
+    new DateTimeImmutable('2026-07-14 12:00:00'),
+    1920
+);
+assertSameValue(true, $missingEventDetails[0]['durationUnknown'], 'A long event gap must be marked as an unknown duration.');
+
+$persistentGap = array(
+    eventAt('is-wakeup', '14.07.2026 10:00:00', true),
+    eventAt('is-standby', '14.07.2026 12:00:00'),
+);
+$persistentGapSummary = DeviceEventTimelineCalculator::buildWindowSummary(
+    $persistentGap,
+    new DateTimeImmutable('2026-07-14 10:00:00'),
+    new DateTimeImmutable('2026-07-14 12:00:00'),
+    1920
+);
+assertSameValue(2.0, $persistentGapSummary['onlineHours'], 'An explicit always-online phase must remain valid across a long gap.');
 
 fwrite(STDOUT, "DeviceEventTimelineCalculator tests passed.\n");
