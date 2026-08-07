@@ -7,7 +7,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-netcup-mds-git
+  # Versioned so a GitHub-hosted runner allocation stuck before job creation
+  # cannot permanently block later deployments in the previous group.
+  group: deploy-netcup-mds-git-v2
   cancel-in-progress: true
 
 jobs:
