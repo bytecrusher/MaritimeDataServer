@@ -10,6 +10,7 @@ if ( count($_GET) == 0 ) {
   die("Parameter error.");
 }
 header('Content-Type: application/json');
+header('Cache-Control: no-store, private');
 
 $sessionUserId = isset($_SESSION['userId']) ? (int)$_SESSION['userId'] : 0;
 $maxValues = isset($_GET['maxValues']) ? (int)$_GET['maxValues'] : 0;
@@ -34,6 +35,8 @@ if (!myFunctions::canUserAccessSensor($sessionUserId, $sensorId)) {
 }
 
 $maxValues = min($maxValues, 1000);
+// Release the session lock before loading history for concurrent chart requests.
+session_write_close();
 $statement = $pdo->prepare(
   "SELECT * FROM (
     SELECT id, sensorId, value1, value2, value3, value4, val_date, val_time, reading_time

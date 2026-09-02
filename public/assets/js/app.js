@@ -44,7 +44,6 @@ function mdsLineChartOptions() {
     maintainAspectRatio: false,
     responsive: true,
     resizeDelay: 120,
-    normalized: true,
     interaction: {
       mode: 'nearest',
       intersect: false,
@@ -77,12 +76,18 @@ function mdsLineChartOptions() {
         },
       },
       tooltip: {
-        mode: 'index',
+        mode: 'nearest',
         intersect: false,
+        callbacks: {
+          title: function (items) {
+            return items.length ? new Date(items[0].parsed.x).toLocaleString() : '';
+          },
+        },
       },
     },
     scales: {
       x: {
+        type: 'linear',
         grid: {
           display: false,
         },
@@ -95,7 +100,12 @@ function mdsLineChartOptions() {
             size: isMobile ? 10 : 12,
           },
           callback: function (value) {
-            return mdsFormatChartXAxisLabel(this.getLabelForValue(value));
+            const hasVisibleData = this.chart.data.datasets.some((dataset, index) =>
+              this.chart.isDatasetVisible(index) && dataset.data.length > 0);
+            if (!hasVisibleData) return '';
+            return new Date(value).toLocaleString(undefined, {
+              day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+            });
           },
         },
       },
@@ -149,123 +159,123 @@ function mdsSetEventTimelineChartHeight(visibleLaneCount) {
   eventTimelineInner.style.height = dynamicHeight + 'px';
 }
 
-//function sleep(ms) {
-//  return new Promise(resolve => setTimeout(resolve, ms));
-//}
+// Load each sensor group once per refresh, sharing its rows across all channels.
+let sensorChartsRefreshPromise = null;
 
-// Chart view. Runs on click on "Charts" tab, and collects data to show
-$(document).ready(async function(){
-  var backgroundColor = null;
-  var borderColor = null;
-  var hoverBackgroundColor = 'rgba(0, 100, 0, 1)';
-  var hoverBorderColor = 'rgba(0, 100, 0, 1)';
-  var varSensorId = null;
+$(document).ready(function () {
   InitialSetupChart();
   initializeChartBoardFilters();
   initializeEventTimeline();
-  const defaultChartMaxValues = getDefaultChartMaxValues();
-  // TODO: Check, how to add values with timestamp (currently it begins from the left to add values, indepented from the timestampt).
-
-  for (let i in gaugesArrayHelperBig) {
-    var randomColor = gaugesArrayHelperBig[i]["ChartColor"];
-    var backgroundColor = randomColor;
-    var borderColor = randomColor;
-
-    if ( (gaugesArrayHelperBig[i]["typename"] == "DS18B20") || (gaugesArrayHelperBig[i]["NameOfSensors"] == "BME280.Temp") ) {
-      addDataToChart(window.myChart, 'temperature', gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
-      addLabelsToChart(window.myChart, gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
+  refreshSensorCharts();
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && document.getElementById('charts')?.classList.contains('active')) {
+      refreshSensorCharts();
     }
-
-    if (gaugesArrayHelperBig[i]["typename"] == "ADC") {
-      addDataToChart(window.myChart2, 'adc', gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"], gaugesArrayHelperBig[i]["channelNr"]-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
-      addLabelsToChart(window.myChart2, gaugesArrayHelperBig[i]["sensorId"], defaultChartMaxValues, gaugesArrayHelperBig[i]["sensorId"], backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
-    }
-
-    if ( (gaugesArrayHelperBig[i]["typename"] != "DS18B20") && (gaugesArrayHelperBig[i]["NameOfSensors"] != "BME280.Temp") && (gaugesArrayHelperBig[i]["typename"] != "ADC")) {
-      varSensorId = gaugesArrayHelperBig[i]["sensorId"];
-      typId = gaugesArrayHelperBig[i]["typId"];
-      typename = gaugesArrayHelperBig[i]["typename"];
-      sensorname = gaugesArrayHelperBig[i]["BoardName"] + "." + gaugesArrayHelperBig[i]["NameOfSensors"];
-      sensorChannel = gaugesArrayHelperBig[i]["channelNr"];
-
-      addDataToChart(window.myChart3, 'other', varSensorId, defaultChartMaxValues, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor, sensorname, sensorChannel-1, gaugesArrayHelperBig[i]["BoardId"], gaugesArrayHelperBig[i]["BoardName"]);
-      addLabelsToChart(window.myChart3, varSensorId, defaultChartMaxValues, varSensorId, backgroundColor, borderColor, hoverBackgroundColor, hoverBorderColor);
-    }
-  }
+  });
 });
 
-function getDefaultChartMaxValues() {
-  const preferredChartWindowDays = Number.parseInt(window.preferredChartWindowDays || '7', 10);
-  if (preferredChartWindowDays <= 1) {
-    return 50;
+function sensorChartTimestamp(row) {
+  // Parse device timestamps explicitly; Safari cannot parse DD.MM.YYYY reliably.
+  const deviceDate = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(row.val_date || ''));
+  const time = /^(\d{2}):(\d{2}):(\d{2})$/.exec(String(row.val_time || ''));
+  if (deviceDate && time) {
+    const parts = [+deviceDate[3], +deviceDate[2] - 1, +deviceDate[1], +time[1], +time[2], +time[3]];
+    const date = new Date(...parts);
+    if (date.getFullYear() === parts[0] && date.getMonth() === parts[1]
+        && date.getDate() === parts[2] && date.getHours() === parts[3]
+        && date.getMinutes() === parts[4] && date.getSeconds() === parts[5]) {
+      return date.getTime();
+    }
   }
-  if (preferredChartWindowDays <= 7) {
-    return 200;
-  }
-  if (preferredChartWindowDays <= 14) {
-    return 400;
-  }
-  return 800;
+  return Date.parse(String(row.reading_time || '').replace(' ', 'T'));
 }
 
-function addDataToChart(destinationChart, chartKey, varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor, sensorname, sensorChannel, boardId, boardName) {
-  if (varSensorId != null) {
-    // TODO: make more efficient: call get function with the channel name and receive only these channels
-    $.getJSON('api/getSensorDataSet.php', { sensorId:varSensorId, maxValues:varMaxValues}, async function(data, textStatus, jqXHR){
-      var id = [];
-      var value1 = [];
-      for(var i in data) {
-        id.push("id " + data[i].id);
-        if (sensorChannel == 0) {
-          //value1.push(data[i].value1);
-          if (data[i].value1 !== undefined && data[i].value1 !== null && data[i].value1 !== "") {
-            value1.push(data[i].value1);
-          }
-        } else if (sensorChannel == 1) {
-          if (data[i].value2 !== undefined && data[i].value2 !== null && data[i].value2 !== "") {
-            value1.push(data[i].value2);
-          }
-        } else if (sensorChannel == 2) {
-          //value1.push(data[i].value3);
-          if (data[i].value3 !== undefined && data[i].value3 !== null && data[i].value3 !== "") {
-            value1.push(data[i].value3);
-          }
-        } else if (sensorChannel == 3) {
-          //value1.push(data[i].value4);
-          if (data[i].value4 !== undefined && data[i].value4 !== null && data[i].value4 !== "") {
-            value1.push(data[i].value4);
-          }
-        }
-      }
+function sensorChartPoints(rows, channelNr) {
+  const points = new Map();
+  rows.forEach(function (row) {
+    const x = sensorChartTimestamp(row);
+    const raw = row['value' + channelNr];
+    const value = (typeof raw === 'number' || typeof raw === 'string') && String(raw).trim() !== ''
+      ? Number(raw) : NaN;
+    if (Number.isFinite(x)) {
+      points.set(x, { x: x, y: Number.isFinite(value) ? value : null });
+    }
+  });
+  return Array.from(points.values()).sort(function (a, b) { return a.x - b.x; });
+}
 
-      const data1 = window.myChart.data;
-      const data2 = window.myChart2.data;
-      const data3 = window.myChart3.data;
-      const dsColor = varBackgroundColor;
-      const newDataset = {
-        label: sensorname,
-        backgroundColor: dsColor,
-        borderColor: dsColor,
-        data: value1,
-        fill: false,
-        spanGaps: true,
-        boardId: String(boardId),
-        boardName: boardName,
-        chartKey: chartKey,
-        hidden: chartBoardVisibility[chartKey].get(String(boardId)) === false,
-      };
-      destinationChart.data.datasets.push(newDataset);
-      destinationChart.update();
-    })
-    .done(function () {
-      //alert('Request done!');
-    })
-    .fail(function (jqxhr,settings,ex) {
-      //alert('failed (addDataToChart), ' + varSensorId + ", " + ex);
-      console.log('failed (addDataToChart), ' + varSensorId + ", for: " + varLabel + ", " + ex);
-      //console.log(data);
-    });
+function updateSensorChartDataset(info, rows) {
+  const chartKey = getChartKeyForDataset(info);
+  const chart = getChartInstance(chartKey);
+  if (!chart) {
+    return;
   }
+  const key = String(info.sensorId) + ':' + String(info.channelNr);
+  let dataset = chart.data.datasets.find(function (entry) { return entry.sensorChannelKey === key; });
+  if (!dataset) {
+    dataset = {
+      sensorChannelKey: key,
+      label: info.BoardName + '.' + info.NameOfSensors,
+      backgroundColor: info.ChartColor,
+      borderColor: info.ChartColor,
+      fill: false,
+      spanGaps: false,
+      boardId: String(info.BoardId),
+      boardName: info.BoardName,
+      chartKey: chartKey,
+      hidden: chartBoardVisibility[chartKey].get(String(info.BoardId)) === false,
+    };
+    chart.data.datasets.push(dataset);
+  }
+  dataset.data = sensorChartPoints(rows, info.channelNr);
+  chart.update('none');
+}
+
+function refreshSensorCharts() {
+  if (sensorChartsRefreshPromise) {
+    return sensorChartsRefreshPromise;
+  }
+  const groups = new Map();
+  (typeof gaugesArrayHelperBig !== 'undefined' ? gaugesArrayHelperBig : []).forEach(function (info) {
+    const id = String(info.sensorId);
+    if (!groups.has(id)) {
+      groups.set(id, []);
+    }
+    groups.get(id).push(info);
+  });
+  const queue = Array.from(groups.entries());
+  async function worker() {
+    while (queue.length) {
+      const [sensorId, channels] = queue.shift();
+      try {
+        const rows = await $.ajax({
+          url: 'api/getSensorDataSet.php',
+          data: { sensorId: sensorId, maxValues: getDefaultChartMaxValues() },
+          dataType: 'json',
+          cache: false,
+          timeout: 20000,
+        });
+        if (!Array.isArray(rows)) {
+          throw new Error('Invalid sensor history response');
+        }
+        channels.forEach(function (info) { updateSensorChartDataset(info, rows); });
+      } catch (error) {
+        // Preserve the previous series on transient failures instead of clearing it.
+        console.error('Sensor chart refresh failed for sensor ' + sensorId, error);
+      }
+    }
+  }
+  sensorChartsRefreshPromise = Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker))
+    .finally(function () { sensorChartsRefreshPromise = null; });
+  return sensorChartsRefreshPromise;
+}
+
+function getDefaultChartMaxValues() {
+  const days = Number.parseInt(window.preferredChartWindowDays || '7', 10);
+  if (days <= 1) return 50;
+  if (days <= 7) return 200;
+  if (days <= 14) return 400;
+  return 800;
 }
 
 function initializeChartBoardFilters() {
@@ -423,7 +433,8 @@ function getChartInstance(chartKey) {
 }
 
 function getChartKeyForDataset(datasetInfo) {
-  if ((datasetInfo["typename"] == "DS18B20") || (datasetInfo["NameOfSensors"] == "BME280.Temp")) {
+  if (datasetInfo.typename === 'DS18B20'
+      || (datasetInfo.typename === 'BME280' && Number(datasetInfo.channelNr) === 1)) {
     return 'temperature';
   }
   if (datasetInfo["typename"] == "ADC") {
@@ -1231,23 +1242,6 @@ function updateEventTimelineVisibility() {
   }
 }
 
-function addLabelsToChart(destinationChart, varSensorId, varMaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor) {
-  if (varSensorId != null) {
-    $.getJSON('api/getSensorDataSet.php', { sensorId:varSensorId, maxValues:varMaxValues}, async function(data, textStatus, jqXHR){
-      var val_time = [];
-      for(var i in data) {
-        val_time.push(data[i].val_date + " " + data[i].val_time);
-      }
-      destinationChart.data.labels = val_time;
-      destinationChart.update();
-    })
-    .done(function () {
-    })
-    .fail(function (jqxhr,settings,ex) {
-      alert('failed (addLabelsToChart), '+ ex);
-    });
-  }
-}
 
 
 function InitialSetupChart(varSensorId, varmaxValues, varLabel, varBackgroundColor, varBorderColor, varHoverBackgroundColor, varHoverBorderColor) {

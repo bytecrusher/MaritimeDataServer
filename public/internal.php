@@ -1691,8 +1691,11 @@
     'sensorOrderFailed' => mds_t('js.sensor_order_failed'),
   ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   setInterval(function() {
-    // run every 30 seconds
     updateGauges();
+    if (!document.hidden && document.getElementById('charts')?.classList.contains('active')
+        && typeof refreshSensorCharts === 'function') {
+      refreshSensorCharts();
+    }
   }, DashboardUpdateInterval);
 </script>
 
@@ -2396,6 +2399,7 @@
           }
 
           if (targetSelector === '#charts' && typeof refreshChartsTabViews === 'function') {
+            refreshSensorCharts();
             window.setTimeout(function() {
               refreshChartsTabViews();
             }, 80);

@@ -36,7 +36,9 @@ jobs:
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
       - name: Run regression tests
-        run: composer test
+        run: |
+          composer test
+          node tests/SensorChartsTest.cjs
 
       - name: Validate deployment secrets
         env:

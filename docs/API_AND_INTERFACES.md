@@ -666,6 +666,18 @@ Fehlerantworten:
 
 Liefert historische Sensordaten fuer Chart.js.
 
+Die Antwort wird nicht gecacht. Die Sensor-Charts laden beim Seitenstart, beim
+Wechsel auf den Charts-Tab und im Dashboard-Aktualisierungsintervall neue Daten
+(nur bei sichtbarem Charts-Tab). Pro Sensorgruppe erfolgt eine Anfrage fuer alle
+Kanaele gemeinsam, mit maximal vier gleichzeitigen Anfragen. Wie bisher bestimmt
+die Verlaufseinstellung die Anzahl der neuesten Datensaetze (50/200/400/800),
+nicht eine garantierte Anzahl vollstaendig abgedeckter Tage. Jeder Messpunkt verwendet seinen eigenen
+Messzeitpunkt; fehlende/nichtnumerische Kanalwerte bleiben Luecken. Filter bleiben
+beim Aktualisieren erhalten. BME280-Temperaturen werden unabhaengig vom
+individuell vergebenen Anzeigenamen im Temperatur-Chart einsortiert.
+Der Regressionstest `node tests/SensorChartsTest.cjs` prueft Aktualisierung,
+Zeitzuordnung, Luecken, Filtererhalt und das Anfrage-Limit auch im Deployment.
+
 Authentifizierung:
 
 - nur ueber eingeloggte PHP-Session
