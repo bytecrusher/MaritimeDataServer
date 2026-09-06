@@ -66,12 +66,12 @@ $pages = array(
         'sections' => $isGerman ? array(
             array('Endpunkt', 'GET /ota/getupdate.php verarbeitet die vom ESP32 gesendete MAC-Adresse, aktuelle Firmware-Version und den gewünschten Update-Kanal.'),
             array('Authentifizierung', 'Das Gerät sendet X-MDS-OTA-Secret. Der Server vergleicht den Wert mit dem in den Server-Einstellungen hinterlegten OTA-Secret.'),
-            array('Auslieferung', 'Nur eine passende neuere Firmware wird ausgeliefert. Andernfalls antwortet der Endpunkt ohne unnötigen Binärtransfer.'),
+            array('Auslieferung', 'Bei aktivierter Update-Freigabe wird eine passende Firmware mit abweichendem MD5-Hash ausgeliefert. Eine abweichende Datei ist nicht automatisch eine neuere Version.'),
             array('Nachvollziehbarkeit', 'OTA-Anfragen und Ergebnisse werden protokolliert und können vom Administrator in den Einstellungen eingesehen werden.'),
         ) : array(
             array('Endpoint', 'GET /ota/getupdate.php processes the MAC address, current firmware version and requested update channel sent by the ESP32.'),
             array('Authentication', 'The device sends X-MDS-OTA-Secret. The server compares it with the OTA secret stored in server settings.'),
-            array('Delivery', 'Only a matching newer firmware is delivered. Otherwise the endpoint responds without an unnecessary binary transfer.'),
+            array('Delivery', 'When board updates are enabled, a matching firmware file with a different MD5 hash is delivered. A different file is not automatically a newer version.'),
             array('Traceability', 'OTA requests and outcomes are logged and available to administrators in settings.'),
         ),
     ),
@@ -95,5 +95,6 @@ include_once dirname(__DIR__) . '/app/Presentation/Common/header.inc.php';
       <a href="<?php echo mds_h(mds_route_path(mds_seo_route($related, $language))); ?>"><?php echo mds_h(ucfirst($related === 'ttn' ? 'TTN' : $related)); ?></a>
     <?php } ?>
   </nav>
+  <?php include dirname(__DIR__) . '/app/Presentation/Common/setup-guide.inc.php'; ?>
 </main>
 <?php include_once dirname(__DIR__) . '/app/Presentation/Common/footer.inc.php'; ?>

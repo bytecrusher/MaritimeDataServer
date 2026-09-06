@@ -300,6 +300,29 @@ body {
   z-index: 1020;
 }
 
+.mds-skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 1rem;
+  z-index: 2000;
+  transform: translateY(-200%);
+  padding: 0.8rem 1.2rem;
+  background: #fff;
+  color: #06283d;
+  border: 3px solid #087f8c;
+  border-radius: 0.5rem;
+}
+.mds-skip-link:focus { transform: translateY(0); }
+.mds-demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.mds-demo-grid article { padding: 1.5rem; border: 1px solid #b7d3db; border-radius: 1.2rem; background: #fff; }
+.mds-demo-grid h3 { font-size: 1.1rem; }
+.mds-demo-grid .mds-demo-value { font-size: clamp(1.6rem, 3vw, 2.3rem); font-weight: 750; color: #06283d; }
+.mds-demo-value small { font-size: 1rem; }
+.mds-demo-grid meter { width: 100%; height: 1rem; }
+.mds-guide { margin: 2rem 0; padding: clamp(1rem, 4vw, 2rem); background: #fff; border: 1px solid #b7d3db; border-radius: 1.2rem; }
+.mds-guide li { margin-bottom: 0.8rem; }
+.mds-guide pre { max-width: 100%; overflow-x: auto; padding: 1rem; background: #082437; color: #e7f5fa; border-radius: 0.8rem; }
+.mds-guide pre:focus-visible { outline: 3px solid #087f8c; outline-offset: 3px; }
 .mds-public-main {
   width: min(1200px, calc(100% - 24px));
   margin: 0 auto;

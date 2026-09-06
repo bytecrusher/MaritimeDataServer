@@ -60,7 +60,7 @@ include_once dirname(__DIR__) . '/app/Presentation/Common/header.inc.php';
 ?>
 <main class="mds-public-main">
   <section class="mds-public-hero">
-    <img class="mds-public-hero-art" src="<?php echo mds_h(mds_asset_path('img/mds-social-preview.png')); ?>" width="1200" height="630" alt="<?php echo mds_h($isGerman ? 'Segelboot und Boje mit ESP32-, LoRaWAN-, GPS- und Telemetrie-Verbindungen' : 'Sailboat and buoy connected through ESP32, LoRaWAN, GPS and telemetry'); ?>" fetchpriority="high">
+    <img class="mds-public-hero-art" src="<?php echo mds_h(mds_asset_path('img/mds-hero-1200.webp')); ?>" srcset="<?php echo mds_h(mds_asset_path('img/mds-hero-640.webp')); ?> 640w, <?php echo mds_h(mds_asset_path('img/mds-hero-1200.webp')); ?> 1200w" sizes="(max-width: 1224px) calc(100vw - 24px), 1200px" width="1200" height="630" alt="<?php echo mds_h($isGerman ? 'Segelboot und Boje mit ESP32-, LoRaWAN-, GPS- und Telemetrie-Verbindungen' : 'Sailboat and buoy connected through ESP32, LoRaWAN, GPS and telemetry'); ?>" fetchpriority="high">
     <div class="mds-public-hero-copy">
       <span class="mds-eyebrow"><?php echo mds_h($content['eyebrow']); ?></span>
       <h1><?php echo mds_h($content['title']); ?></h1>
@@ -83,9 +83,19 @@ include_once dirname(__DIR__) . '/app/Presentation/Common/header.inc.php';
           <span class="mds-feature-number" aria-hidden="true"><?php echo str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT); ?></span>
           <h3><?php echo mds_h($card[0]); ?></h3>
           <p><?php echo mds_h($card[1]); ?></p>
-          <a href="<?php echo mds_h(mds_route_path(mds_seo_route($card[2], $language))); ?>"><?php echo mds_h($isGerman ? 'Mehr erfahren' : 'Learn more'); ?><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M4 10h11M11 6l4 4-4 4"/></svg></a>
+          <a href="<?php echo mds_h(mds_route_path(mds_seo_route($card[2], $language))); ?>"><?php echo mds_h($card[0] . ($isGerman ? ' entdecken' : ': learn more')); ?><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M4 10h11M11 6l4 4-4 4"/></svg></a>
         </article>
       <?php } ?>
+    </div>
+  </section>
+
+  <section class="mds-public-section mds-demo" aria-labelledby="demo-heading">
+    <h2 id="demo-heading"><?php echo $isGerman ? 'So werden Messwerte sichtbar' : 'Your readings at a glance'; ?></h2>
+    <p><?php echo $isGerman ? 'Beispielansicht mit erfundenen Demodaten. Keine Live-Verbindung und keine privaten Geraetedaten.' : 'Illustrative preview with fictional demo data. No live connection or private device data.'; ?></p>
+    <div class="mds-demo-grid">
+      <article><h3><?php echo $isGerman ? 'Bordbatterie' : 'House battery'; ?></h3><p class="mds-demo-value">12.6 <small>V</small></p><meter min="10" max="15" value="12.6" aria-label="<?php echo $isGerman ? 'Batteriespannung: 12,6 Volt' : 'Battery voltage: 12.6 volts'; ?>">12.6 V</meter></article>
+      <article><h3><?php echo $isGerman ? 'Kabinentemperatur' : 'Cabin temperature'; ?></h3><p class="mds-demo-value">18.4 <small>°C</small></p><p><?php echo $isGerman ? 'Innerhalb der eingestellten Grenzen' : 'Within configured thresholds'; ?></p></article>
+      <article><h3><?php echo $isGerman ? 'Geraetezustand' : 'Device state'; ?></h3><p class="mds-demo-value">Standby</p><p><?php echo $isGerman ? 'Letzter Wakeup vor 8 Minuten (Demo)' : 'Last wakeup 8 minutes ago (demo)'; ?></p></article>
     </div>
   </section>
 

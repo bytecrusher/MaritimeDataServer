@@ -21,7 +21,7 @@ context.$ = () => ({ ready(callback) { ready = callback; } });
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../public/assets/js/app.js'), 'utf8'), context);
 
-const row = (time, value1, value2 = '100') => ({ val_date: '02.09.2026', val_time: time, value1, value2 });
+const row = (time, value1, value2 = '100') => ({ timestamp: Date.parse('2026-09-02T' + time + '+02:00'), value1, value2 });
 
 async function run() {
   const points = context.sensorChartPoints([
@@ -31,7 +31,11 @@ async function run() {
   assert.equal(points.length, 5);
   assert.deepEqual(Array.from(points, point => point.y), [12, null, 14, null, 0]);
   assert.equal(points[2].x - points[0].x, 120000);
-  assert.ok(Number.isFinite(context.sensorChartTimestamp({ val_date: '31.02.2026', val_time: '12:00:00', reading_time: '2026-09-02 12:00:00' })));
+  assert.equal(context.sensorChartTimestamp(row('12:00:00', 1)), Date.parse('2026-09-02T10:00:00Z'));
+  assert.ok(Number.isNaN(context.sensorChartTimestamp({ val_date: '02.09.2026', val_time: '12:00:00' })), 'Do not guess a browser timezone for legacy wall-clock strings.');
+  assert.equal(context.getSensorChartWindowDays(), 7);
+  context.window.preferredChartWindowDays = 30;
+  assert.equal(context.getSensorChartWindowDays(), 30);
   assert.ok(Number.isNaN(context.sensorChartTimestamp({})));
   assert.equal(context.getChartKeyForDataset({ typename: 'BME280', channelNr: 1, NameOfSensors: 'Renamed' }), 'temperature');
   assert.equal(context.getChartKeyForDataset({ typename: 'BME280', channelNr: 2 }), 'other');
@@ -47,6 +51,7 @@ async function run() {
   assert.equal(context.refreshSensorCharts(), first, 'Overlapping refreshes must share one request batch.');
   assert.equal(calls.length, 2, 'Each sensor group must be fetched only once for all its channels.');
   assert.ok(calls.every(call => call.cache === false && call.timeout === 20000));
+  assert.ok(calls.every(call => call.data.days === 30 && call.data.maxValues === 1000));
   replies[0]([row('12:01:00', '21')]);
   replies[1]([row('12:02:00', '12.5')]);
   await first;

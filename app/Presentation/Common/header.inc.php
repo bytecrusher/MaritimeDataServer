@@ -286,6 +286,7 @@
   </head>
 
 <body class="<?php echo mds_h(implode(' ', $mdsBodyClasses)); ?>">
+  <a class="mds-skip-link" href="#mds-main-content"><?php echo mds_current_language() === 'de' ? 'Zum Inhalt' : 'Skip to content'; ?></a>
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark mds-navbar">
   <div class="container-fluid">
     <a class="navbar-brand" href="<?php echo mds_h($publicHomePath); ?>">
@@ -332,3 +333,4 @@
     <?php endif; ?>
   </div>
   </nav>
+  <div id="mds-main-content" tabindex="-1"></div>

@@ -3,7 +3,6 @@ require_once dirname(__DIR__) . '/bootstrap/app.php';
 
 header('Content-Type: application/xml; charset=UTF-8');
 header('Cache-Control: public, max-age=3600, s-maxage=86400');
-$lastModified = gmdate('Y-m-d', max(filemtime(__FILE__), filemtime(dirname(__DIR__) . '/app/Support/seo.func.php')));
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 ?>
@@ -11,7 +10,6 @@ echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 <?php foreach (mds_seo_public_routes() as $page) { foreach (mds_supported_languages() as $language) { ?>
   <url>
     <loc><?php echo htmlspecialchars(mds_absolute_url(mds_seo_route($page, $language)), ENT_XML1, 'UTF-8'); ?></loc>
-    <lastmod><?php echo $lastModified; ?></lastmod>
     <?php foreach (mds_supported_languages() as $alternateLanguage) { ?>
     <xhtml:link rel="alternate" hreflang="<?php echo $alternateLanguage; ?>" href="<?php echo htmlspecialchars(mds_absolute_url(mds_seo_route($page, $alternateLanguage)), ENT_XML1, 'UTF-8'); ?>" />
     <?php } ?>

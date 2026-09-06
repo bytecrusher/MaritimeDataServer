@@ -395,11 +395,21 @@ paths:
             minimum: 1
         - name: maxValues
           in: query
-          required: true
+          required: false
           schema:
             type: integer
             minimum: 1
             maximum: 1000
+            default: 1000
+          description: Response point budget; values below 14 are raised to 14. Dense data retains endpoints, extremes and missing-value representatives per bucket.
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 7, 14, 30]
+            default: 7
+          description: Rolling window in 24-hour days, ending at server time.
       responses:
         '200':
           description: Zeitreihe für Chart.js
@@ -737,6 +747,14 @@ components:
           type: string
         reading_time:
           type: string
+        timestamp:
+          type: integer
+          format: int64
+          description: Chart API measurement instant as Unix milliseconds; independent of browser timezone.
+        measuredAt:
+          type: string
+          format: date-time
+          description: Chart API measurement instant in UTC.
       required:
         - id
         - sensorId

@@ -19,6 +19,7 @@
   },
   "scripts": {
     "test": [
+      "php tests/SensorChartHistoryTest.php",
       "php tests/DeviceEventTimelineCalculatorTest.php",
       "php tests/SensorNamingServiceTest.php",
       "php tests/SensorMetadataServiceTest.php",

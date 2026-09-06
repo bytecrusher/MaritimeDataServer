@@ -669,14 +669,24 @@ Liefert historische Sensordaten fuer Chart.js.
 Die Antwort wird nicht gecacht. Die Sensor-Charts laden beim Seitenstart, beim
 Wechsel auf den Charts-Tab und im Dashboard-Aktualisierungsintervall neue Daten
 (nur bei sichtbarem Charts-Tab). Pro Sensorgruppe erfolgt eine Anfrage fuer alle
-Kanaele gemeinsam, mit maximal vier gleichzeitigen Anfragen. Wie bisher bestimmt
-die Verlaufseinstellung die Anzahl der neuesten Datensaetze (50/200/400/800),
-nicht eine garantierte Anzahl vollstaendig abgedeckter Tage. Jeder Messpunkt verwendet seinen eigenen
+Kanaele gemeinsam, mit maximal vier gleichzeitigen Anfragen. `days=1|7|14|30`
+filtert das echte Zeitfenster bis zur Serverzeit (Tage zu je 24 Stunden), Standard: 7.
+`maxValues` begrenzt die Antwort auf 14 bis 1000 repraesentative Messpunkte.
+Bei dichten Reihen bleiben je Zeitabschnitt Anfang, Ende, Minima, Maxima und
+eine Luecke pro Kanal erhalten; keine Mittelwerte. Kleine Reihen bleiben komplett.
+Jeder Messpunkt verwendet seinen eigenen
 Messzeitpunkt; fehlende/nichtnumerische Kanalwerte bleiben Luecken. Filter bleiben
 beim Aktualisieren erhalten. BME280-Temperaturen werden unabhaengig vom
 individuell vergebenen Anzeigenamen im Temperatur-Chart einsortiert.
 Der Regressionstest `node tests/SensorChartsTest.cjs` prueft Aktualisierung,
 Zeitzuordnung, Luecken, Filtererhalt und das Anfrage-Limit auch im Deployment.
+Der Browser verwendet ausschliesslich `timestamp` (Unix-Millisekunden).
+Die vorhandenen zeitzonenlosen `val_date`/`val_time` werden entsprechend dem
+TTN-Ingest als Europe/Berlin interpretiert. Bei ungueltigen/fehlenden Geraetezeiten
+wird der Datenbank-Empfangszeitpunkt verwendet, ohne dessen Zeitzone neu zu raten.
+Historische Daten aus anderen Geraetezeitzonen sowie die doppelte Stunde bei
+der Herbst-Zeitumstellung lassen sich ohne zusaetzliche Zeitinformation nicht
+eindeutig rekonstruieren. Die Anzeige erfolgt weiterhin in der lokalen Browserzeit.
 
 Authentifizierung:
 
@@ -685,12 +695,13 @@ Authentifizierung:
 Query-Parameter:
 
 - `sensorId`
-- `maxValues`
+- `days` (1, 7, 14 oder 30; Standard 7)
+- `maxValues` (Standard 1000; auf 14 bis 1000 begrenzt)
 
 Beispiel:
 
 ```text
-/api/getSensorDataSet.php?sensorId=17&maxValues=200
+/api/getSensorDataSet.php?sensorId=17&days=7&maxValues=1000
 ```
 
 Response:
@@ -706,7 +717,9 @@ Response:
     "value4": "7.2",
     "val_date": "22.04.2026",
     "val_time": "09:30:15",
-    "reading_time": "2026-04-22 09:30:15"
+    "reading_time": "2026-04-22 09:30:15",
+    "timestamp": 1776843015000,
+    "measuredAt": "2026-04-22T07:30:15Z"
   }
 ]
 ```

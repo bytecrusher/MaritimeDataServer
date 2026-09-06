@@ -175,19 +175,7 @@ $(document).ready(function () {
 });
 
 function sensorChartTimestamp(row) {
-  // Parse device timestamps explicitly; Safari cannot parse DD.MM.YYYY reliably.
-  const deviceDate = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(row.val_date || ''));
-  const time = /^(\d{2}):(\d{2}):(\d{2})$/.exec(String(row.val_time || ''));
-  if (deviceDate && time) {
-    const parts = [+deviceDate[3], +deviceDate[2] - 1, +deviceDate[1], +time[1], +time[2], +time[3]];
-    const date = new Date(...parts);
-    if (date.getFullYear() === parts[0] && date.getMonth() === parts[1]
-        && date.getDate() === parts[2] && date.getHours() === parts[3]
-        && date.getMinutes() === parts[4] && date.getSeconds() === parts[5]) {
-      return date.getTime();
-    }
-  }
-  return Date.parse(String(row.reading_time || '').replace(' ', 'T'));
+  return typeof row.timestamp === 'number' && Number.isFinite(row.timestamp) ? row.timestamp : NaN;
 }
 
 function sensorChartPoints(rows, channelNr) {
@@ -250,7 +238,7 @@ function refreshSensorCharts() {
       try {
         const rows = await $.ajax({
           url: 'api/getSensorDataSet.php',
-          data: { sensorId: sensorId, maxValues: getDefaultChartMaxValues() },
+          data: { sensorId: sensorId, days: getSensorChartWindowDays(), maxValues: 1000 },
           dataType: 'json',
           cache: false,
           timeout: 20000,
@@ -270,12 +258,9 @@ function refreshSensorCharts() {
   return sensorChartsRefreshPromise;
 }
 
-function getDefaultChartMaxValues() {
+function getSensorChartWindowDays() {
   const days = Number.parseInt(window.preferredChartWindowDays || '7', 10);
-  if (days <= 1) return 50;
-  if (days <= 7) return 200;
-  if (days <= 14) return 400;
-  return 800;
+  return [1, 7, 14, 30].includes(days) ? days : 7;
 }
 
 function initializeChartBoardFilters() {

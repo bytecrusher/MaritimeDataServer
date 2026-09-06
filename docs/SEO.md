@@ -21,6 +21,7 @@ The public website uses stable, crawlable German and English URLs. The protected
 - Sitemap: `https://mds-git.derguntmar.de/sitemap.xml`
 - Robots file: `https://mds-git.derguntmar.de/robots.txt`
 - `public/sitemap.php` generates the XML from the central route map in `app/Support/seo.func.php`.
+- `lastmod` is intentionally omitted: deployment file modification times do not identify real per-page content changes.
 - Authenticated pages and machine endpoints emit or receive `noindex`/robots exclusions and do not belong in the sitemap.
 
 ## Google Search Console
@@ -36,6 +37,12 @@ MDS does not add analytics or tracking by default. This avoids additional consen
 ## Social preview
 
 `public/assets/img/mds-social-preview.png` is used as the Open Graph and Twitter preview image. It is 1200 x 630 pixels. Public pages provide individual titles and descriptions while sharing this branded visual.
+
+The homepage uses 640px and 1200px WebP versions through `srcset`. The original
+PNG remains unchanged for social previews. A static dashboard illustration uses
+explicitly fictional demo values and never loads private sensor data. Public
+topic pages include bilingual setup steps, request examples and troubleshooting.
+The shared header provides a keyboard-visible skip-to-content link.
 
 ## Operational checks
 
