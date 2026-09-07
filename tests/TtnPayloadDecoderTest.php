@@ -105,4 +105,40 @@ assertTtnPayloadValue('WifiFirst', $decodedDevice['transmitPriority'] ?? null, '
 
 assertTtnPayloadValue(null, TtnPayloadDecoder::decodeKnownPayload(1, base64_encode('legacy')), 'Unknown payload must remain on the TTN decoder fallback.');
 
-fwrite(STDOUT, "TtnPayloadDecoder tests passed.\n");
+$compactBlocks = array(64 => array(10, 11, 25), 1 => array(12, 13), 2 => range(3, 9),
+    4 => array_merge(range(14, 21), range(30, 35)), 8 => range(36, 41),
+    16 => array(22, 23, 26, 27, 28, 29), 32 => range(42, 50));
+$compactFields = array(64 => 'voltage', 1 => 'tempbattery', 2 => 'temperature',
+    4 => 'longitude', 8 => 'vedirectCurrent', 16 => 'tank1Adc', 32 => 'standbyEpoch');
+for ($mask = 0; $mask < 128; $mask++) {
+    $compact = array(4, $mask, 0x94, 0xb9, 0x7e, 0xfe, 0xf5, 0x40,
+        $measurements[1], $measurements[2], $measurements[24]);
+    foreach ($compactBlocks as $bit => $offsets) {
+        if (!($mask & $bit)) continue;
+        foreach ($offsets as $offset) $compact[] = $measurements[$offset];
+    }
+    $result = TtnPayloadDecoder::decodeKnownPayload(3, encodeTtnTestPayload($compact));
+    if (count($compact) > 51) {
+        assertTtnPayloadValue(null, $result, 'Oversized schema 4 must be rejected.');
+        continue;
+    }
+    assertTtnPayloadValue(4, $result['payloadSchema'], 'Compact version.');
+    assertTtnPayloadValue('94:B9:7E:FE:F5:40', $result['macAddress'], 'Compact MAC.');
+    foreach ($compactFields as $bit => $field) {
+        assertTtnPayloadValue((bool)($mask & $bit), array_key_exists($field, $result), 'Absent fields must not become zero: ' . $field);
+        if ($mask & $bit) assertTtnPayloadValue($decodedMeasurements[$field], $result[$field], 'Compact value: ' . $field);
+    }
+    assertTtnPayloadValue((bool)($mask & 4), $result['gpsFix'], 'GPS presence, not stale status bits, determines fix.');
+    for ($length = 0; $length < count($compact); $length++) {
+        assertTtnPayloadValue(null, TtnPayloadDecoder::decodeKnownPayload(3,
+            encodeTtnTestPayload(array_slice($compact, 0, $length))), 'Truncated compact payload.');
+    }
+    $compact[] = 0;
+    assertTtnPayloadValue(null, TtnPayloadDecoder::decodeKnownPayload(3, encodeTtnTestPayload($compact)), 'Trailing bytes.');
+}
+assertTtnPayloadValue(null, TtnPayloadDecoder::decodeKnownPayload(3,
+    encodeTtnTestPayload(array(4, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0))), 'Reserved mask bit.');
+assertTtnPayloadValue(null, TtnPayloadDecoder::decodeKnownPayload(3,
+    encodeTtnTestPayload(array(5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))), 'Unknown compact version.');
+
+fwrite(STDOUT, "TtnPayloadDecoder tests passed (including compact schema 4).\n");

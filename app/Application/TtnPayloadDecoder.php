@@ -10,6 +10,9 @@ final class TtnPayloadDecoder
         }
 
         $bytes = array_values(unpack('C*', $rawPayload));
+        if ((int)$fPort === 3 && $bytes[0] === 4) {
+            return self::decodeMeasurementsSchema4($bytes);
+        }
         if ((int)$fPort === 1 && count($bytes) === 51 && $bytes[0] === 3) {
             return self::decodeMeasurementsSchema3($bytes);
         }
@@ -19,6 +22,46 @@ final class TtnPayloadDecoder
         }
 
         return null;
+    }
+
+    private static function decodeMeasurementsSchema4(array $bytes)
+    {
+        if (count($bytes) < 11 || count($bytes) > 51 || ($bytes[1] & 0x80)) {
+            return null;
+        }
+        // Expand the compact blocks to the tested schema-3 field layout.
+        $expanded = array_fill(0, 51, 0);
+        $expanded[1] = $bytes[8];
+        $expanded[2] = $bytes[9];
+        $expanded[24] = $bytes[10] & 0x31;
+        $blocks = array(
+            array(64, array(10, 11, 25), array('voltage', 'batteryCapacity')),
+            array(1, array(12, 13), array('tempbattery')),
+            array(2, range(3, 9), array('temperature', 'pressure', 'humidity', 'dewpoint')),
+            array(4, array_merge(range(14, 21), range(30, 35)), array('longitude', 'latitude', 'position', 'speed', 'course', 'altitude')),
+            array(8, range(36, 41), array('vedirectVoltage', 'vedirectCurrent', 'vedirectTemperature')),
+            array(16, array(22, 23, 26, 27, 28, 29), array('level1', 'level2', 'tank1Adc', 'tank2Adc')),
+            array(32, range(42, 50), array('standbyEpoch', 'wakeupEpoch', 'standbyCause', 'wakeupCause')),
+        );
+        $offset = 11;
+        foreach ($blocks as [$bit, $targets]) {
+            if (($bytes[1] & $bit) === 0) continue;
+            if ($offset + count($targets) > count($bytes)) return null;
+            foreach ($targets as $target) $expanded[$target] = $bytes[$offset++];
+        }
+        if ($offset !== count($bytes)) return null;
+        $decoded = self::decodeMeasurementsSchema3($expanded);
+        foreach ($blocks as [$bit, $targets, $fields]) {
+            if ($bytes[1] & $bit) continue;
+            foreach ($fields as $field) unset($decoded[$field]);
+        }
+        $decoded['payloadSchema'] = 4;
+        $decoded['macAddress'] = self::formatMacAddress($bytes, 2);
+        foreach (array(64 => 'measurementsPresent', 1 => 'temperaturePresent', 2 => 'environmentPresent',
+            4 => 'gpsFix', 8 => 'vedirectPresent', 16 => 'tanksPresent', 32 => 'wakeupEventPresent') as $bit => $name) {
+            $decoded[$name] = ($bytes[1] & $bit) !== 0;
+        }
+        return $decoded;
     }
 
     private static function decodeMeasurementsSchema3(array $bytes)

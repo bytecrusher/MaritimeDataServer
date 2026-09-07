@@ -142,6 +142,28 @@ Der aktuelle Formatter liefert:
 
 - auf FPort 1: `payloadType = measurements`, `payloadSchema = 3`
 - auf FPort 2: `payloadType = deviceConfig`, `payloadSchema = 1`
+- auf FPort 3: `payloadType = measurements`, `payloadSchema = 4` (kompakt, MAC immer enthalten)
+
+Schema 4 verwendet einen 11-Byte-Header: Version `4`, Presence-Maske,
+6 MAC-Bytes in Darstellungsreihenfolge, 16-Bit-Little-Endian-Zaehler und
+Status (Main-Power Bit 0, Relay Bits 4-5). Danach folgen nur vorhandene Bloecke,
+in dieser Reihenfolge: Batterie (Maskenbit 6, 3 Bytes), DS18B20 (Bit 0, 2 Bytes),
+Umgebung (Bit 1, 7 Bytes), GPS (Bit 2, 14 Bytes), VE.Direct (Bit 3, 6 Bytes),
+Tanks (Bit 4, 6 Bytes), Ereignis (Bit 5, 9 Bytes). Skalierungen entsprechen
+Schema 3. Bit 7 ist reserviert; die maximale Paketlaenge betraegt 51 Bytes.
+Die Bytebelegung steht in `LoRa-Boat-Monitor/docs/LORAWAN_PAYLOADS.md`.
+
+Fehlende Bloecke werden nicht als Nullwerte gespeichert. `gpsFix=false`
+verhindert GPS-Sensoreintraege auch bei Schema 3. Temperaturwerte bleiben
+Celsius; echte 0 Grad sind gueltig, Lesefehler werden ausgelassen.
+Bei alten Paketen ohne MAC verwendet MDS fuer stabile Sensoradressen die MAC
+des bereits aufgeloesten Boards. Die MAC ist eine Identifikation, kein Secret.
+
+Umstellung: zuerst MDS deployen, dann den TTN-Formatter aktualisieren (auch
+abweichende Device-Formatter pruefen), zuletzt Firmware installieren. Eigene
+FPort-Filter muessen Port 3 zulassen. Alte FPort-1/2-Formate bleiben unterstuetzt.
+Ungueltige FPort-3-Rohdaten werden mit HTTP 422 abgewiesen und nicht durch ein
+moeglicherweise veraltetes `decoded_payload` ersetzt.
 
 Wenn im MDS-Log `TTN decoded payload metadata did not match the raw payload`
 erscheint, ist der in TTN hinterlegte Formatter veraltet oder einer anderen
