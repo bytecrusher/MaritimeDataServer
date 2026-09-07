@@ -1567,6 +1567,7 @@
   }
 </style>
 
+<script src="<?php echo mds_h(mds_asset_path('js/gauge-status.js')); ?>"></script>
 <script>
   $(document).ready(function() {
     updateGauges();
@@ -1610,9 +1611,13 @@
         method: "POST",
         url: "api/getdata.php",
         dataType: "json",
-        data: { identifier: varIdent, securityToken: varToken, data: varData, sensorId: varSensorId, NrOfValues: varNrOfValues }
+        data: { identifier: varIdent, securityToken: varToken, data: varData, sensorId: varSensorId, NrOfValues: varNrOfValues, includeStatus: '1' }
       })
       .done(function( response ) {
+        if (response && Array.isArray(response.values)) {
+          updateGaugeStatus(varSensorId, response);
+          response = response.values;
+        }
         text = response;
         if (response === '.' || response === null || response === undefined) {
           return;
@@ -1657,6 +1662,10 @@
                   }
                 }
               } else {
+                const card = document.getElementById("gauge" + obj[0] + "." + i4);
+                const valueNode = card && card.querySelector('.dashboard-gauge-value-number');
+                if (valueNode) valueNode.textContent = '\u2014';
+                if (card) card.classList.add('disabled');
                 console.warn("non-numeric gauge value for sensor " + obj[0] + "." + i4, obj[i4]);
               }
             }
@@ -1833,9 +1842,9 @@
                         </div>
                       </div>
                       <div class="dashboard-board-badges">
-                        <span class="badge <?php echo $deviceOnline ? 'bg-success' : 'bg-danger'; ?>"><?php echo htmlspecialchars($deviceOnline ? mds_t('common.online') : mds_t('common.offline'), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span data-board-status class="badge <?php echo $deviceOnline ? 'bg-success' : 'bg-danger'; ?>"><?php echo htmlspecialchars($deviceOnline ? mds_t('common.online') : mds_t('common.offline'), ENT_QUOTES, 'UTF-8'); ?></span>
                         <span
-                          class="badge text-bg-light"
+                          data-sensor-activity class="badge text-bg-light"
                           title="<?php echo htmlspecialchars(mds_t('internal.sensor_activity_hint', array($sensorActivitySummary['configured'], $sensorActivitySummary['withData'], $sensorActivitySummary['current'])), ENT_QUOTES, 'UTF-8'); ?>"
                         ><?php echo htmlspecialchars(mds_t('internal.sensor_activity_badge', array($sensorActivitySummary['current'], $sensorActivitySummary['configured'])), ENT_QUOTES, 'UTF-8'); ?></span>
                         <?php if (is_array($boardEventStatus) && !empty($boardEventStatus['modeLabel'])) { ?>
@@ -1876,8 +1885,8 @@
                         $SensorChannelConfigSingle = myFunctions::getSensorChannelConfig($singleRowMySensors['id'], $i);
                         $currentChannelValue = $singleRowMySensorsLastTimeSeen['value' . $i] ?? null;
                         $numericCurrentChannelValue = is_numeric($currentChannelValue) ? (float)$currentChannelValue : null;
-                        $sensorReadingTimestamp = strtotime((string)($singleRowMySensorsLastTimeSeen['reading_time'] ?? ''));
-                        $sensorDataCurrent = $sensorReadingTimestamp !== false && $sensorReadingTimestamp >= time() - ($sensorMaxAgeMinutes * 60);
+                        $sensorReadingTimestamp = (int)($singleRowMySensorsLastTimeSeen['receivedAt'] ?? 0);
+                        $sensorDataCurrent = $sensorReadingTimestamp > 0 && $sensorReadingTimestamp >= time() - ($sensorMaxAgeMinutes * 60);
                         $unitValue = html_entity_decode((string)($sensortype['siUnitVal' . $i] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
                         if (($mySensors != null) && (is_array($SensorChannelConfigSingle)) && ($SensorChannelConfigSingle['onDashboard'] == 1) && ($numericCurrentChannelValue !== null)) {
                           $boardGaugeCount++;
@@ -1928,6 +1937,7 @@
                                 <span class="dashboard-gauge-value-unit"><?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?></span>
                               </div>
                             </div>
+                            <small data-gauge-freshness><?php echo mds_h(mds_current_language() === 'de' ? ($sensorDataCurrent ? 'Aktuell' : 'Veraltet / keine neuen Daten') : ($sensorDataCurrent ? 'Current' : 'Stale / no new data')); ?><?php if ($sensorReadingTimestamp > 0) { echo ' · ' . mds_h(date('d.m.Y H:i:s', $sensorReadingTimestamp)); } ?></small>
                             <div id='div_click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='multi-collapse' style='display:none; z-index: 100; position:absolute; top:12px; right:12px;'>
                               <i id='click_settings<?php echo $singleRowMySensors['id'] . "." . $i; ?>' class='bi bi-gear-fill' data-bs-toggle='modal' data-bs-target='#exampleModal' style='font-size:20px; color: #007bff'></i>
                             </div>

@@ -39,6 +39,7 @@ jobs:
         run: |
           composer test
           node tests/SensorChartsTest.cjs
+          node tests/GaugeStatusTest.cjs
 
       - name: Validate deployment secrets
         env:

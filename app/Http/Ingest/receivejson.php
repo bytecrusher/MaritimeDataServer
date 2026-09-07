@@ -326,6 +326,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             continue;
                         }
 
+                        $resolvedConfig = myFunctions::getSensorConfig($sensorId);
+                        $resolvedType = myFunctions::getSensorType($resolvedConfig['typId']);
+                        if (($resolvedType['name'] ?? '') === 'DS18B20' && !TemperatureReading::valid($value1)) {
+                            $skippedSensorRows++;
+                            writeToLogFunction::warning('Invalid or missing DS18B20 reading skipped.', __FILE__, array('sensorId' => $sensorId, 'boardId' => $macAddressId));
+                            continue;
+                        }
                         try {
                             $insertStatement->execute(array(
                                 $sensorId,

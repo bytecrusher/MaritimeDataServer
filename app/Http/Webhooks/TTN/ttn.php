@@ -178,7 +178,13 @@ if(strlen($ttn_post) > 0) {
     $position_lng = ttnPayloadValue($decodedPayload, array('position.context.lng', 'position.longitude'), 0);
     $sensor_pressure = ttnPayloadValue($decodedPayload, array('pressure', 'air.pressure'), 0);
     $sensor_relay = ttnPayloadValue($decodedPayload, array('relay'), 0);
-    $sensor_temperature_2 = ttnPayloadValue($decodedPayload, array('tempbattery'), 0);
+    $sensor_temperature_2 = ttnPayloadValue($decodedPayload, array('tempbattery'), null);
+    if (!TemperatureReading::valid($sensor_temperature_2)) {
+        if ($sensor_temperature_2 !== null) {
+            writeToLogFunction::warning('Invalid TTN DS18B20 temperature skipped.', __FILE__, array('field' => 'tempbattery'));
+        }
+        $sensor_temperature_2 = null;
+    }
     $sensor_battery = ttnPayloadValue($decodedPayload, array('BatV', 'voltage', 'battery'), 0);
     $sensor_temperature = ttnPayloadValue($decodedPayload, array('temperature', 'TempC_SHT', 'air.temperature'), 0);
     $sensor_battery2 = ttnPayloadValue($decodedPayload, array('voltage2'), 0);
@@ -507,6 +513,9 @@ if(strlen($ttn_post) > 0) {
     }
 
     if (!$isDeviceConfigPayload && !$isNamedMeasurementPayload) foreach($allSensorsOfBoard AS $eachsensor) {
+      if ($eachsensor['sensorTypesName'] === 'DS18B20' && $sensor_temperature_2 === null) {
+        continue;
+      }
       $sensor1 = null;
       //writeToLogFunction::write_to_log($eachsensor['boardid'], $_SERVER["SCRIPT_FILENAME"]);
       //if ($eachsensor['ttn_payload_id'] != null) {

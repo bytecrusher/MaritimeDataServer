@@ -33,7 +33,7 @@ function checkDeviceIsOnline($boardId) {
     }
 
     $statement = $pdo->prepare(
-        "SELECT MAX(sensorData.reading_time) AS latestReadingTime
+        "SELECT UNIX_TIMESTAMP(MAX(sensorData.reading_time)) AS latestReadingTime
         FROM sensorData
         INNER JOIN sensorConfig ON sensorConfig.id = sensorData.sensorId
         WHERE sensorConfig.boardId = ?"
@@ -50,6 +50,6 @@ function checkDeviceIsOnline($boardId) {
         return false;
     }
 
-    $dbTimestamp = strtotime($latestRow['latestReadingTime']);
-    return ($dbTimestamp !== false) && ($dbTimestamp >= $maxTimeout);
+    $dbTimestamp = (int)$latestRow['latestReadingTime'];
+    return ($dbTimestamp > 0) && ($dbTimestamp >= $maxTimeout);
 }

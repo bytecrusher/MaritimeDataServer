@@ -537,6 +537,27 @@ Migration:
 
 ## Dashboard-Gauges
 
+Aktualitaet wird pro Sensorgruppe anhand des letzten Empfangszeitpunkts und des
+Offline-Timers des Boards bestimmt, unabhaengig vom Online-Zustand anderer Gruppen.
+Das Dashboard fordert bei `POST /api/getdata.php` zusaetzlich `includeStatus=1` an.
+Diese opt-in Antwort enthaelt `values` (bisheriges Wertearray), `current`,
+`boardOnline`, `lastReceivedAt` (UTC), `freshnessLabel`, `boardLabel`,
+`activityLabel` und `activityHint`. Ohne das Flag bleibt das alte Arrayformat erhalten.
+Der Zaehler umfasst nur Sensorgruppen, auf die der Benutzer zugreifen darf.
+Grau-Markierung, Board-Status, Online-Filter und Aktualitaetszaehler werden mit
+jedem erfolgreichen Abruf erneuert. Empfangszeit und Aktualitaet sind sichtbar;
+bei fehlgeschlagenen Abrufen bleiben die vorherigen Werte erhalten.
+
+DS18B20: Fehlende, nichtnumerische oder ausserhalb -55 bis 125 Grad Celsius liegende
+Werte werden nicht als Messung gespeichert. Das gilt fuer den JSON-Ingest und
+die TTN-Zuordnung. Echte 0 Grad und 85 Grad bleiben gueltige Messwerte; eine vom
+Device ausdruecklich gesendete numerische Null kann der Server nicht als Fehler erkennen.
+Vorhandene Daten werden nicht geloescht oder nachtraeglich umgeschrieben.
+Fehlende DS18B20-Einheiten erhalten beim Lesen `Grad Celsius`; eindeutig boolesche
+Platzhalterbereiche 0..1 werden beim Lesen als -55..125 dargestellt. Individuelle
+Bereiche und Alarmgrenzen bleiben erhalten. Die korrigierten Bereiche werden auch
+im Einstellungsformular verwendet und bei dessen Speichern dauerhaft uebernommen.
+
 ### Gauge-Stile
 
 Pro Sensor-Kanal kann in `formSensors.php` ein Gauge-Stil gewaehlt werden.

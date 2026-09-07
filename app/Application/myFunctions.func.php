@@ -12,6 +12,7 @@ require_once(__DIR__ . '/../Infrastructure/Config/configuration.php');
 require_once(__DIR__ . '/../Infrastructure/Logging/writeToLogFunction.func.php');
 require_once(__DIR__ . '/../Support/RandomColor.php');
 require_once(__DIR__ . '/SensorGroupPolicy.php');
+require_once(__DIR__ . '/TemperatureReading.php');
 use \Colors\RandomColor;
 //writeToLogFunction::write_to_log("test", $_SERVER["SCRIPT_FILENAME"]);
 
@@ -344,7 +345,7 @@ class myFunctions {
     $placeholders = implode(', ', array_fill(0, count($sensorIds), '?'));
     $pdo = dbConfig::getInstance();
     $statement = $pdo->prepare(
-      "SELECT sensorId, MAX(reading_time) AS lastReading
+      "SELECT sensorId, UNIX_TIMESTAMP(MAX(reading_time)) AS lastReading
        FROM sensorData
        WHERE sensorId IN ($placeholders)
        GROUP BY sensorId"
@@ -354,8 +355,8 @@ class myFunctions {
     $summary['withData'] = count($latestReadings);
     $currentThreshold = time() - ($maxAgeMinutes * 60);
     foreach ($latestReadings as $latestReading) {
-      $readingTimestamp = strtotime((string)($latestReading['lastReading'] ?? ''));
-      if ($readingTimestamp !== false && $readingTimestamp >= $currentThreshold) {
+      $readingTimestamp = (int)($latestReading['lastReading'] ?? 0);
+      if ($readingTimestamp > 0 && $readingTimestamp >= $currentThreshold) {
         $summary['current']++;
       }
     }
@@ -375,7 +376,7 @@ class myFunctions {
 	      }
 	      $maxNrOfValue = max(1, (int)$maxNrOfValue);
 	      $placeholders = implode(', ', array_fill(0, count($sensorIds), '?'));
-	      $mySensors = $pdo->prepare("SELECT * FROM sensorData WHERE sensorId IN ($placeholders) ORDER BY id DESC LIMIT $maxNrOfValue");
+	      $mySensors = $pdo->prepare("SELECT *, UNIX_TIMESTAMP(reading_time) AS receivedAt FROM sensorData WHERE sensorId IN ($placeholders) ORDER BY id DESC LIMIT $maxNrOfValue");
 	      $mySensors->execute($sensorIds);
 	      $SensorData = $mySensors->fetchAll(PDO::FETCH_ASSOC);
 	      return $SensorData;
@@ -870,10 +871,13 @@ class myFunctions {
   */
   public static function getSensorChannelConfig($id, $channelNr) {
     $pdo = dbConfig::getInstance();
-    $mySensorsChannels = $pdo->prepare("SELECT * FROM sensorChannelConfig WHERE sensorConfigId = ? AND channelNr = ? ORDER BY id ");
+    $mySensorsChannels = $pdo->prepare("SELECT sensorChannelConfig.*, sensorTypes.name AS resolvedType FROM sensorChannelConfig JOIN sensorConfig ON sensorConfig.id = sensorChannelConfig.sensorConfigId JOIN sensorTypes ON sensorTypes.id = sensorConfig.typId WHERE sensorConfigId = ? AND channelNr = ? ORDER BY sensorChannelConfig.id ");
     $mySensorsChannels->execute(array($id, $channelNr));
     //$mySensorsChannelsOfBoard = $mySensorsChannels->fetchAll(PDO::FETCH_ASSOC);
     $mySensorsChannelsOfBoard = $mySensorsChannels->fetch(PDO::FETCH_ASSOC);
+    if (is_array($mySensorsChannelsOfBoard) && $mySensorsChannelsOfBoard['resolvedType'] === 'DS18B20') {
+      $mySensorsChannelsOfBoard = TemperatureReading::channelDefaults($mySensorsChannelsOfBoard);
+    }
     return $mySensorsChannelsOfBoard;
   }
 
@@ -1107,7 +1111,7 @@ class myFunctions {
       $defaultValues['NrOfUsedSensors'] = 4;
       $valuesDefined = true;
 
-    } elseif ($sensorName == "DS18B20") {
+    } elseif ($mySensorTypId->name == "DS18B20") {
       $defaultValuesPerChannel['name'] = "Ch1";
       $defaultValuesPerChannel['description'] = "Ch1";
       $defaultValuesPerChannel['channelNr'] = 1;
@@ -1446,6 +1450,13 @@ class myFunctions {
     $sensortyps = $pdo->prepare("SELECT * FROM sensorTypes WHERE id = ? ORDER BY id LIMIT 1");
     $sensortyps->execute(array($sensorTypId));
     $SensorData2 = $sensortyps->fetch(PDO::FETCH_ASSOC);
+    if (is_array($SensorData2) && ($SensorData2['name'] ?? '') === 'DS18B20') {
+      for ($channel = 1; $channel <= 4; $channel++) {
+        if (trim((string)($SensorData2['siUnitVal' . $channel] ?? '')) === '') {
+          $SensorData2['siUnitVal' . $channel] = '&deg;C';
+        }
+      }
+    }
     return $SensorData2;
   }
 
