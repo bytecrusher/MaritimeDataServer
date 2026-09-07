@@ -121,6 +121,10 @@ if(strlen($ttn_post) > 0) {
         $sensor_raw_payload
     );
     $payloadDecoderSource = 'ttn';
+    if ((int)($uplinkMessage->f_port ?? 0) === 3 && $serverDecodedPayload === null) {
+        writeToLogFunction::warning('Invalid compact LoRa payload rejected.', $_SERVER["SCRIPT_FILENAME"]);
+        ttnJsonResponse(422, array('error' => 'Invalid compact LoRa payload.'));
+    }
     if ($serverDecodedPayload !== null) {
         $serverPayloadType = (string)($serverDecodedPayload['payloadType'] ?? 'measurements');
         $serverPayloadSchema = (int)($serverDecodedPayload['payloadSchema'] ?? 1);
@@ -451,15 +455,19 @@ if(strlen($ttn_post) > 0) {
         "time" => $timeNow,
         "transmissionPath" => "2"
       );
-      $sensors[] = array_merge($commonSensorFields, array(
+      if ($payloadSchema < 4 || ttnPayloadValue($decodedPayload, array('measurementsPresent'), false)) {
+        $sensors[] = array_merge($commonSensorFields, array(
         "sensorType" => "ADC", "type" => "ADC", "sensorName" => "Battery", "name" => "Battery",
         "value1" => $sensor_battery, "value2" => $sensor_battery_capacity, "value3" => 0, "value4" => 0
-      ));
-      $sensors[] = array_merge($commonSensorFields, array(
+        ));
+      }
+      if ($payloadSchema < 4 || ttnPayloadValue($decodedPayload, array('tanksPresent'), false)) {
+        $sensors[] = array_merge($commonSensorFields, array(
         "sensorType" => "ADC", "type" => "ADC", "sensorName" => "Tanks", "name" => "Tanks",
         "value1" => $sensor_level1, "value2" => $sensor_tank1_adc,
         "value3" => $sensor_level2, "value4" => $sensor_tank2_adc
-      ));
+        ));
+      }
       foreach (TtnMeasurementSensorFactory::buildStatusAndTemperatureSensors(
         $commonSensorFields,
         $sensor_main_power_on,
@@ -468,11 +476,14 @@ if(strlen($ttn_post) > 0) {
       ) as $statusSensor) {
         $sensors[] = $statusSensor;
       }
-      $sensors[] = array_merge($commonSensorFields, array(
+      if (ttnNormalizeBooleanValue(ttnPayloadValue($decodedPayload, array('gpsFix'), true))
+          && abs($sensor_latitude) <= 90 && abs($sensor_longitude) <= 180) {
+        $sensors[] = array_merge($commonSensorFields, array(
         "sensorType" => "GPS", "type" => "GPS", "sensorName" => "GPS", "name" => "GPS",
         "value1" => $sensor_latitude, "value2" => $sensor_longitude,
         "value3" => $sensor_speed, "value4" => $sensor_course
-      ));
+        ));
+      }
       if ($environment_present) {
         $sensors[] = array_merge($commonSensorFields, array(
           "sensorType" => "BME280", "type" => "BME280", "sensorName" => "Environment", "name" => "Environment",
@@ -582,7 +593,8 @@ if(strlen($ttn_post) > 0) {
         }
       //}   
     }
-    if ($payloadMacAddress !== null && $payloadMacAddress !== '') {
+    $resolvedSensorMac = $payloadMacAddress ?: ttnMacAddress((object)array('macAddress' => $singleRowBoardIdbyTTN['macAddress'] ?? ''));
+    if ($resolvedSensorMac !== null && $resolvedSensorMac !== '') {
       foreach ($sensors as &$namedSensor) {
         if (!is_array($namedSensor) || isset($namedSensor['sensorId'])) {
           continue;
@@ -592,7 +604,7 @@ if(strlen($ttn_post) > 0) {
           $namedSensor['sensorName'] ?? ($namedSensor['name'] ?? '')
         );
         if ($sensorKey !== null) {
-          $namedSensor['sensorAddress'] = SensorMetadataService::stableAddress($payloadMacAddress, $sensorKey);
+          $namedSensor['sensorAddress'] = SensorMetadataService::stableAddress($resolvedSensorMac, $sensorKey);
         }
       }
       unset($namedSensor);
