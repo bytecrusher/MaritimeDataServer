@@ -39,6 +39,11 @@ async function run() {
   assert.ok(Number.isNaN(context.sensorChartTimestamp({})));
   assert.equal(context.getChartKeyForDataset({ typename: 'BME280', channelNr: 1, NameOfSensors: 'Renamed' }), 'temperature');
   assert.equal(context.getChartKeyForDataset({ typename: 'BME280', channelNr: 2 }), 'other');
+  assert.equal(context.getChartKeyForDataset({ typename: 'ADC', chartKey: 'other', unit: '%' }), 'other');
+  assert.equal(context.getChartKeyForDataset({ typename: 'ADC', chartKey: 'adc', unit: 'V' }), 'adc');
+  context.updateSensorChartDataset({ sensorId: 77, channelNr: 1, typename: 'ADC', chartKey: 'other', unit: '%', BoardId: 10 }, [row('12:00:00', 100)]);
+  assert.equal(context.window.myChart2.data.datasets.length, 0, 'Tank levels stay out of voltage scale.');
+  assert.equal(context.window.myChart3.data.datasets.length, 1);
   assert.equal(context.mdsLineChartOptions().scales.x.type, 'linear');
 
   let calls = [];

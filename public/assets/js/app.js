@@ -203,7 +203,7 @@ function updateSensorChartDataset(info, rows) {
   if (!dataset) {
     dataset = {
       sensorChannelKey: key,
-      label: info.BoardName + '.' + info.NameOfSensors,
+      label: info.BoardName + '.' + info.NameOfSensors + (info.unit ? ' (' + info.unit + ')' : ''),
       backgroundColor: info.ChartColor,
       borderColor: info.ChartColor,
       fill: false,
@@ -418,6 +418,9 @@ function getChartInstance(chartKey) {
 }
 
 function getChartKeyForDataset(datasetInfo) {
+  if (['temperature', 'adc', 'other'].includes(datasetInfo.chartKey)) {
+    return datasetInfo.chartKey;
+  }
   if (datasetInfo.typename === 'DS18B20'
       || (datasetInfo.typename === 'BME280' && Number(datasetInfo.channelNr) === 1)) {
     return 'temperature';

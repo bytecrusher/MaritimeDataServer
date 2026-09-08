@@ -10,6 +10,7 @@
   require_once dirname(__DIR__) . "/app/Infrastructure/Database/dbConfig.func.php";
   require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
   require_once dirname(__DIR__) . "/app/Application/InternalPageService.php";
+  require_once dirname(__DIR__) . "/app/Application/SensorChannelPresentation.php";
   require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
   require_once dirname(__DIR__) . "/app/Domain/Board/board.class.php";
   require_once dirname(__DIR__) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
@@ -1887,7 +1888,15 @@
                         $numericCurrentChannelValue = is_numeric($currentChannelValue) ? (float)$currentChannelValue : null;
                         $sensorReadingTimestamp = (int)($singleRowMySensorsLastTimeSeen['receivedAt'] ?? 0);
                         $sensorDataCurrent = $sensorReadingTimestamp > 0 && $sensorReadingTimestamp >= time() - ($sensorMaxAgeMinutes * 60);
-                        $unitValue = html_entity_decode((string)($sensortype['siUnitVal' . $i] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                        if (!is_array($SensorChannelConfigSingle)) {
+                          continue;
+                        }
+                        $presentation = SensorChannelPresentation::resolve($sensConfig, $sensortype, $SensorChannelConfigSingle);
+                        if ($presentation['technical']) {
+                          continue;
+                        }
+                        $SensorChannelConfigSingle = $presentation['channel'];
+                        $unitValue = $presentation['unit'];
                         if (($mySensors != null) && (is_array($SensorChannelConfigSingle)) && ($SensorChannelConfigSingle['onDashboard'] == 1) && ($numericCurrentChannelValue !== null)) {
                           $boardGaugeCount++;
                           ?>
@@ -1899,6 +1908,8 @@
                             data-sensor-id="<?php echo $singleRowMySensors['id']; ?>"
                             data-typ-id="<?php echo $singleRowMySensors['typId']; ?>"
                             data-typename="<?php echo htmlspecialchars($singleRowMySensors['typename'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-chart-key="<?php echo htmlspecialchars($presentation['chartKey'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-unit="<?php echo htmlspecialchars($unitValue, ENT_QUOTES, 'UTF-8'); ?>"
                             data-nr-of-sensors="<?php echo $singleRowMySensors['NrOfUsedSensors']; ?>"
                             data-channel-nr="<?php echo $SensorChannelConfigSingle['channelNr']; ?>"
                             data-sensor-display-name="<?php echo htmlspecialchars($singleRowMySensors['name'] . "." . $SensorChannelConfigSingle['name'], ENT_QUOTES, 'UTF-8'); ?>"

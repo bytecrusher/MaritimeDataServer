@@ -72,6 +72,8 @@ function initializeDashboardCards() {
       sensorId: String(sensorId),
       typId: String(card.dataset.typId || ''),
       typename: typename,
+      chartKey: card.dataset.chartKey || '',
+      unit: card.dataset.unit || '',
       NrOfSensors: String(card.dataset.nrOfSensors || ''),
       channelNr: String(channelNr),
       NameOfSensors: chartEntryName,
