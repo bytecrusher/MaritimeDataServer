@@ -1,0 +1,183 @@
+<?php
+/**
+ *
+ * @author: Guntmar Höche
+ */
+
+require_once dirname(__DIR__) . "/bootstrap/app.php";
+mds_start_session();
+require_once dirname(__DIR__) . "/app/Infrastructure/Database/dbConfig.func.php";
+require_once dirname(__DIR__) . "/app/Application/myFunctions.func.php";
+require_once dirname(__DIR__) . "/app/Domain/User/user.class.php";
+require_once dirname(__DIR__) . "/app/Application/dbUpdateData.php";
+require_once dirname(__DIR__) . "/app/Application/NotificationService.php";
+include(dirname(__DIR__) . "/app/Presentation/Common/header.inc.php");
+require_once dirname(__DIR__) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
+$config  = new configuration();
+?>
+<div class="container small-container-330">
+	<h2><?php echo htmlspecialchars(mds_t('reset.title'), ENT_QUOTES, 'UTF-8'); ?></h2>
+	<?php
+		$showForm = true;
+		if (isset($_GET['send'])) {
+			if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+				$error = "<b>" . htmlspecialchars(mds_t('login.csrf'), ENT_QUOTES, 'UTF-8') . "</b>";
+			} else if (!isset($_POST['email']) || empty($_POST['email'])) {
+				$error = "<b>Please enter your mail address.</b>";
+			} else {
+				$rateLimit = mds_rate_limit_attempt(
+					'password-reset-request',
+					strtolower(trim((string)($_POST['email'] ?? ''))) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+					5,
+					1800
+				);
+				if (!$rateLimit['allowed']) {
+					$error = "<b>Too many reset requests. Please try again later.</b>";
+				} else {
+					$user = null;
+					try {
+						$user = new user($_POST['email']);
+					} catch (Exception $e) {
+						$user = null;
+					}
+
+					if ($user !== null && $user !== false && $user->isActive()) {
+					$passwordCode = myFunctions::random_string();
+					try {
+						$result = dbUpdateData::updateUserPasswordCode($passwordCode, $user->getId());
+					} catch (Exception $e) {
+						$error_msg = $e->getMessage();
+					}
+				
+				$mailTo = strval($user->getEmail());
+				$reference = "New password for your account on " . $config::$applicationName;
+				$url_passwordCode = myFunctions::getSiteURL() . 'resetPassword.php?userId=' . $user->getId() . '&code=' . $passwordCode . "&action=reset";
+				$text = "Hi " . $user->getFirstName() . ",\r\n";
+				$text .= "you requested a new password for your account on " . $config::$applicationName . "\r\n \r\n";
+					$text .= "To enter a new password open the following link within the next 24h: " . $url_passwordCode . "\r\n \r\n";
+					$text .= "You can ignore this mail, if remember your password again, or didn't requested a new password.\r\n \r\n";
+					$text .= "best regards,\r\n";
+					$text .= "your " . $config::$applicationName . " Team\r\n";
+					NotificationService::sendTransactionalEmail(
+						$mailTo,
+						$reference,
+						$text,
+						'password-reset',
+						$config
+					);
+					}
+					echo "If the email address is known, a password reset link has been sent.";
+					$showForm = false;
+				}
+			}
+		}
+	?>
+
+	<?php
+		$error = "";
+		if (isset($_GET["code"]) && isset($_GET["userId"]) && isset($_GET["action"]) && ($_GET["action"]=="reset") && !isset($_POST["action"])){
+			$key = $_GET["code"];
+			$userId = $_GET["userId"];
+			$curDate = date("Y-m-d H:i:s");
+			$userObj = dbUpdateData::readUserPasswordCode($_GET["code"], $_GET["userId"]);
+
+			if ($userObj==""){
+				$error .= '<h2>Invalid Link</h2>
+				<p>The link is invalid/expired. Either you did not copy the correct link
+				from the email, or you have already used the key in which case it is 
+				deactivated.</p>';
+			}else{
+				$expDate = $userObj['passwordCodeTime'];
+				if ($expDate >= $curDate){
+					?>
+					<br />
+					<form method="post" action="" name="update">
+					<input type="hidden" name="action" value="update" />
+					<br /><br />
+					<label><strong><?php echo htmlspecialchars(mds_t('reset.new_password'), ENT_QUOTES, 'UTF-8'); ?>:</strong></label><br />
+						<input class="form-control" type="password" name="pass1" maxlength="128" required />
+					<br /><br />
+						<label><strong><?php echo htmlspecialchars(mds_t('reset.new_password_repeat'), ENT_QUOTES, 'UTF-8'); ?>:</strong></label><br />
+							<input class="form-control" type="password" name="pass2" maxlength="128" required/>
+						<br /><br />
+						<input type="hidden" name="userId" value="<?php echo $userId;?>"/>
+						<input type="hidden" name="code" value="<?php echo htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>"/>
+						<?php echo mds_csrf_input(); ?>
+							<input class="btn btn-primary" type="submit" value="<?php echo htmlspecialchars(mds_t('reset.submit'), ENT_QUOTES, 'UTF-8'); ?>" />
+						</form>
+					<?php
+				}else{
+					$error .= "<h2>Link Expired</h2>
+					<p>The link is expired. You are trying to use the expired link which 
+					as valid only 24 hours (1 days after request).<br /><br /></p>";
+				}
+			}
+			if($error!=""){
+				echo "<div class='error'>".$error."</div><br />";
+			}
+			$showForm = false;
+		} // isset userId key validate end
+
+			if(isset($_POST["userId"]) && isset($_POST["action"]) && ($_POST["action"]=="update")){
+				$error="";
+				if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
+					$error.= "<p>The form session has expired. Please request a new password reset link.<br /><br /></p>";
+				}
+				$rateLimit = mds_rate_limit_attempt(
+					'password-reset-update',
+					(string)($_POST["userId"] ?? '') . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+					10,
+					1800
+				);
+				if (!$rateLimit['allowed']) {
+					$error.= "<p>Too many reset attempts. Please request a new link later.<br /><br /></p>";
+				}
+				$userObj_temp = dbGetData::getUserById($_POST["userId"]);
+				$userObj = new user($userObj_temp["email"]);
+				$resetUserObj = dbUpdateData::readUserPasswordCode($_POST["code"] ?? '', $_POST["userId"]);
+				if ($resetUserObj == "") {
+					$error.= "<p>The password reset link is invalid or expired.<br /><br /></p>";
+				}
+
+				$pass1 = trim($_POST['pass1']);
+				$pass2 = trim($_POST['pass2']);
+			$curDate = date("Y-m-d H:i:s");
+			if ($pass1!=$pass2){
+				$error.= "<p>Password do not match, both password should be same.<br /><br /></p>";
+			}
+			if($error!=""){
+				echo "<div class='error'>".$error."</div><br />";
+			}else{
+				$password_hash = password_hash($pass1, PASSWORD_DEFAULT);
+				$userObj->setUserPassword($password_hash);
+				dbUpdateData::updateUserPasswordCode("", $userObj->getId());
+				echo '<div class="error"><p>Congratulations! Your password has been updated successfully.</p></div><br />';
+			}
+			$showForm = false;
+		}
+	?>
+	
+	<?php
+	if ($showForm) :
+	?>
+		Enter your email address to receive an new password.<br><br>
+		<?php
+		if (isset($error) && !empty($error)) {
+			echo $error;
+		}
+		?>
+			<form action="?send=1" method="post">
+				<?php echo mds_csrf_input(); ?>
+				<label for="inputEmail"><?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?></label>
+			<input class="form-control" placeholder="<?php echo htmlspecialchars(mds_t('common.email'), ENT_QUOTES, 'UTF-8'); ?>" name="email" type="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email'], ENT_QUOTES, 'UTF-8') : ''; ?>" required>
+			<br>
+			<input class="btn btn-lg btn-primary btn-block" type="submit" value="<?php echo htmlspecialchars(mds_t('reset.submit'), ENT_QUOTES, 'UTF-8'); ?>">
+		</form>
+	<?php
+	endif; //Endif von if($showForm)
+	?>
+</div>
+
+<?php
+include(dirname(__DIR__) . "/app/Presentation/Common/footer.inc.php")
+?>
