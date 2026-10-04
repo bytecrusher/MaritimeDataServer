@@ -19,6 +19,7 @@
   },
   "scripts": {
     "test": [
+      "php tests/PasswordResetTokenTest.php",
       "php tests/SensorChartHistoryTest.php",
       "php tests/TemperatureReadingTest.php",
       "php tests/DeviceEventTimelineCalculatorTest.php",

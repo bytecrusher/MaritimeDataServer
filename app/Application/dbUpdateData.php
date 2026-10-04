@@ -173,9 +173,12 @@ class dbUpdateData {
   * @throws Exception — Return Exception message on error.
   */
   public static function readUserPasswordCode($passwordCode, $userId) {
+    if (!is_string($passwordCode) || trim($passwordCode) === '') {
+      return false;
+    }
     $pdo = dbConfig::getInstance();
     try {
-      $statement = $pdo->prepare("SELECT * FROM users WHERE id = :userId AND (passwordCode = :passwordCodeHash OR passwordCode = :passwordCodeLegacy)");
+      $statement = $pdo->prepare("SELECT * FROM users WHERE id = :userId AND passwordCodeTime >= NOW() AND (passwordCode = :passwordCodeHash OR passwordCode = :passwordCodeLegacy)");
       $statement->execute(array('passwordCodeHash' => hash('sha256', (string)$passwordCode), 'passwordCodeLegacy' => $passwordCode, 'userId' => $userId));
       //$sensortyps->execute();
       //$SensorData2 = $sensortyps->fetchAll(PDO::FETCH_ASSOC);

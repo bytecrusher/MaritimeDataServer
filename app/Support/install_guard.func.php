@@ -28,6 +28,7 @@ function mds_deny_finished_install($jsonResponse = false)
     }
 
     http_response_code(403);
+    header('Cache-Control: no-store');
     if ($jsonResponse) {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(array('error' => true, 'error_text' => 'Installation is locked.'));

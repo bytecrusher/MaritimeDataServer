@@ -1,3 +1,7 @@
+<?php
+require_once dirname(__DIR__, 2) . '/app/Support/install_guard.func.php';
+mds_deny_finished_install(false);
+?>
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -95,8 +99,8 @@
     $var_dbName = $config::$dbName;
     $var_dbUserName = $config::$dbUser;
     $var_dbPassword = $config::$dbPassword;
-    $var_apiKey = $config::$apiKey;
-    $var_md5secretString = $config::$md5secretString;
+    $var_apiKey = "";
+    $var_md5secretString = "";
   ?>
 
   <div class="container mt-3">
@@ -162,19 +166,19 @@
               <div class="form-group row">
                 <label for="dbHostName" class="col-sm-4 col-form-label">Database Hostname</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" id="dbHostName" name="dbHostName" value="<?php echo $var_dbHostName;?>"  required>
+                  <input type="text" class="form-control" id="dbHostName" name="dbHostName" value="<?php echo htmlspecialchars($var_dbHostName, ENT_QUOTES, 'UTF-8');?>"  required>
                 </div>
               </div>
               <div class="form-group row">
                 <label for="dbName" class="col-sm-4 col-form-label">Database Name</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" id="dbName" name="dbName" value="<?php echo $var_dbName;?>" required>
+                  <input type="text" class="form-control" id="dbName" name="dbName" value="<?php echo htmlspecialchars($var_dbName, ENT_QUOTES, 'UTF-8');?>" required>
                 </div>
               </div>
               <div class="form-group row">
                 <label for="dbUserName" class="col-sm-4 col-form-label">Database Username</label>
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" id="dbUserName" name="dbUserName" value="<?php echo $var_dbUserName;?>" required>
+                  <input type="text" class="form-control" id="dbUserName" name="dbUserName" value="<?php echo htmlspecialchars($var_dbUserName, ENT_QUOTES, 'UTF-8');?>" required>
                 </div>
               </div>
               <div class="form-group row">
@@ -234,7 +238,7 @@
         <div class="form-group row">
           <label for="apiKey" class="col-sm-4 col-form-label">API key</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="apiKey" name="apiKey" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_apiKey;?>" required>
+            <input type="text" class="form-control" id="apiKey" name="apiKey" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo htmlspecialchars($var_apiKey, ENT_QUOTES, 'UTF-8');?>" required>
           </div>
           <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('apiKey').value = generatePassword(32);">generate</button>
         </div>
@@ -242,7 +246,7 @@
         <div class="form-group row">
           <label for="md5secretString" class="col-sm-4 col-form-label">Your Secret String (Replace with a string of your choice (>12 characters))</label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="md5secretString" name="md5secretString" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo $var_md5secretString;?>" required>
+            <input type="text" class="form-control" id="md5secretString" name="md5secretString" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo htmlspecialchars($var_md5secretString, ENT_QUOTES, 'UTF-8');?>" required>
           </div>
           <button type="button" name="action" class="col-sm-2 me-3 btn btn-primary" onclick="document.getElementById('md5secretString').value = generatePassword(32);">generate</button>
         </div>
