@@ -9,6 +9,7 @@ require_once("func/writeToLogFunction.func.php");
 
 $error_msg = "";
 if(isset($_POST['email']) && isset($_POST['password'])) {
+	unset($_SESSION['userObj'], $_SESSION['userId']);
 	$email = $_POST['email'];
 	$password = $_POST['password'];
 	$userObj = new user($email);
@@ -19,10 +20,10 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
 	} else {
 		//var_dump($myError);
 		if ($userObj->userExist() != false) {
-			$_SESSION['userObj'] = serialize($userObj);
 			if ($userObj->isActive() == true) {
 				//Check Password
 				if ($userObj !== false && password_verify($password, $userObj->getPassword()) && $userObj->isActive() != false) {
+					$_SESSION['userObj'] = serialize($userObj);
 					$_SESSION['userId'] = $userObj->getId();
 		
 					//Does the user want to stay logged in?
