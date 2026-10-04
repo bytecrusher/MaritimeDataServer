@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . "/app/Infrastructure/Logging/writeToLogFunction.
 
 $error_msg = "";
 if(isset($_POST['email']) && isset($_POST['password'])) {
+  unset($_SESSION['userObj'], $_SESSION['userId']);
   if (!mds_verify_csrf_token($_POST['csrf_token'] ?? '')) {
     $error_msg = "<div class='alert alert-danger' role='alert'>" . htmlspecialchars(mds_t('login.csrf'), ENT_QUOTES, 'UTF-8') . "</div>";
   } else {
@@ -33,11 +34,11 @@ if(isset($_POST['email']) && isset($_POST['password'])) {
   } else {
     //var_dump($myError);
     if ($userObj->userExist() != false) {
-      $_SESSION['userObj'] = serialize($userObj);
       if ($userObj->isActive() == true) {
         //Check Password
         if ($userObj !== false && password_verify($password, $userObj->getPassword()) && $userObj->isActive() != false) {
           session_regenerate_id(true);
+          $_SESSION['userObj'] = serialize($userObj);
           $_SESSION['userId'] = $userObj->getId();
           mds_set_current_language($userObj->getLanguage());
     

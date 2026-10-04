@@ -19,6 +19,7 @@
   },
   "scripts": {
     "test": [
+      "php tests/LoginSessionTest.php",
       "php tests/InstallerAdminGuardTest.php",
       "php tests/PasswordResetTokenTest.php",
       "php tests/SensorChartHistoryTest.php",
