@@ -1,4 +1,6 @@
 <?php
+require_once(__DIR__ . '/install_guard.php');
+mdsAbortIfInstallFinished(true);
 $var_dbName = $var_dbUserName = $var_dbPassword = $pdo = $rtn = null;
 $var_dbHostName = "localhost";
 if (isset($_POST["action"])) {
@@ -44,22 +46,12 @@ if (isset($_POST["action"])) {
         }
       }
       
-      if (!file_exists(__DIR__ . '/../config.json')) {
-        touch(__DIR__ . '/../config.json');
-      }
-      $path = __DIR__ . '/../config.json';
-
-      $jsonString = file_get_contents($path);
-      $jsonData = json_decode($jsonString, true);
+      $jsonData = mdsReadInstallConfig();
       $jsonData['dbHost'] = $var_dbHostName;
       $jsonData['dbName'] = $var_dbName;
       $jsonData['dbUser'] = $var_dbUserName;
       $jsonData['dbPassword'] = $var_dbPassword;
-      $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
-      // Write in the file
-      $fp = fopen($path, 'w');
-      fwrite($fp, $jsonString);
-      fclose($fp);
+      mdsWriteInstallConfig($jsonData);
 
     } else {
       $rtn = array("error"=>"true", "error_text"=>$error_msg);

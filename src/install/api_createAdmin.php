@@ -1,12 +1,12 @@
 <?php
+require_once(__DIR__ . '/install_guard.php');
+mdsAbortIfInstallFinished(true);
 require_once("../frontend/func/myFunctions.func.php");
 require_once("../frontend/func/dbUpdateData.php");
 require_once("../frontend/func/writeToLogFunction.func.php");
 
 
-$path = __DIR__ . '/../config.json';
-$jsonString = file_get_contents($path);
-$jsonData = json_decode($jsonString, true);
+$jsonData = mdsReadInstallConfig();
 
 $var_dbHostName = $jsonData['dbHost'];
 $var_dbName = $jsonData['dbName'];
@@ -82,11 +82,7 @@ if (isset($_POST["action"])) {
       //$jsonData['baseurl'] = $var_baseurl;
       $jsonData['demoMode'] = $var_demoMode;
       $jsonData['installFinished'] = true;
-      $jsonString = json_encode($jsonData, JSON_PRETTY_PRINT);
-      // Write in the file
-      $fp = fopen($path, 'w');
-      fwrite($fp, $jsonString);
-      fclose($fp);
+      mdsWriteInstallConfig($jsonData);
     }
   }
   http_response_code(200);
