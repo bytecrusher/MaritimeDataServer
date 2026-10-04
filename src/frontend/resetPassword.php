@@ -29,7 +29,7 @@ $config  = new configuration();
 			}
 			if ($user === false) {
 				$error = "<b>Username not found</b>";
-			} else if (!$user->isActive()){ 
+			} else if (!$user->isActive()){
 				echo '<div class="alert alert-danger" role="alert">Your Account is not active.</div>';
 				$showForm = false;
 			} else {
@@ -40,7 +40,7 @@ $config  = new configuration();
 				} catch (Exception $e) {
 					$error_msg = $e->getMessage();
 				}
-				
+
 				$mailTo = strval($user->getEmail());
 				$reference = "New password for your account on " . $config::$applicationName;
 				$from = "From: " . $config::$applicationName . " <" . $config::$systemEmailAddress . ">";
@@ -66,15 +66,15 @@ $config  = new configuration();
 	<?php
 		$error = "";
 		if (isset($_GET["code"]) && isset($_GET["userId"]) && isset($_GET["action"]) && ($_GET["action"]=="reset") && !isset($_POST["action"])){
-			$key = $_GET["code"];
+			$key = trim($_GET["code"]);
 			$userId = $_GET["userId"];
 			$curDate = date("Y-m-d H:i:s");
-			$userObj = dbUpdateData::readUserPasswordCode($_GET["code"], $_GET["userId"]);
+			$userObj = $key === "" ? "" : dbUpdateData::readUserPasswordCode($key, $_GET["userId"]);
 
 			if ($userObj==""){
 				$error .= '<h2>Invalid Link</h2>
 				<p>The link is invalid/expired. Either you did not copy the correct link
-				from the email, or you have already used the key in which case it is 
+				from the email, or you have already used the key in which case it is
 				deactivated.</p>';
 			}else{
 				$expDate = $userObj['passwordCodeTime'];
@@ -90,13 +90,14 @@ $config  = new configuration();
 					<label><strong>Re-Enter New Password:</strong></label><br />
 					<input type="password" name="pass2" maxlength="15" required/>
 					<br /><br />
-					<input type="hidden" name="userId" value="<?php echo $userId;?>"/>
+					<input type="hidden" name="userId" value="<?php echo htmlentities($userId);?>"/>
+					<input type="hidden" name="code" value="<?php echo htmlentities($key);?>"/>
 					<input type="submit" value="Reset Password" />
 					</form>
 					<?php
 				}else{
 					$error .= "<h2>Link Expired</h2>
-					<p>The link is expired. You are trying to use the expired link which 
+					<p>The link is expired. You are trying to use the expired link which
 					as valid only 24 hours (1 days after request).<br /><br /></p>";
 				}
 			}
@@ -106,16 +107,24 @@ $config  = new configuration();
 			$showForm = false;
 		} // isset userId key validate end
 
-		if(isset($_POST["userId"]) && isset($_POST["action"]) && ($_POST["action"]=="update")){
+		if(isset($_POST["userId"]) && isset($_POST["code"]) && isset($_POST["action"]) && ($_POST["action"]=="update")){
 			$error="";
-			$userObj_temp = dbGetData::getUserById($_POST["userId"]);
-			$userObj = new user($userObj_temp["email"]);
-
-			$pass1 = trim($_POST['pass1']);
-			$pass2 = trim($_POST['pass2']);
 			$curDate = date("Y-m-d H:i:s");
-			if ($pass1!=$pass2){
-				$error.= "<p>Password do not match, both password should be same.<br /><br /></p>";
+			$key = trim($_POST["code"]);
+			$userObj_temp = $key === "" ? "" : dbUpdateData::readUserPasswordCode($key, $_POST["userId"]);
+			if ($userObj_temp=="" || $userObj_temp['passwordCodeTime'] < $curDate){
+				$error .= '<h2>Invalid Link</h2>
+				<p>The link is invalid/expired. Either you did not copy the correct link
+				from the email, or you have already used the key in which case it is
+				deactivated.</p>';
+			}else{
+				$userObj = new user($userObj_temp["email"]);
+
+				$pass1 = trim($_POST['pass1']);
+				$pass2 = trim($_POST['pass2']);
+				if ($pass1!=$pass2){
+					$error.= "<p>Password do not match, both password should be same.<br /><br /></p>";
+				}
 			}
 			if($error!=""){
 				echo "<div class='error'>".$error."</div><br />";
@@ -128,7 +137,7 @@ $config  = new configuration();
 			$showForm = false;
 		}
 	?>
-	
+
 	<?php
 	if ($showForm) :
 	?>
