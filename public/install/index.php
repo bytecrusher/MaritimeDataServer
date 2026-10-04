@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__DIR__, 2) . '/app/Support/install_guard.func.php';
 mds_deny_finished_install(false);
+require_once dirname(__DIR__, 2) . '/bootstrap/app.php';
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -12,9 +13,6 @@ mds_deny_finished_install(false);
   <link rel="icon" type="image/x-icon" href="<?php echo htmlspecialchars(mds_route_path('favicon.ico'), ENT_QUOTES, 'UTF-8'); ?>">
 
   <?php
-    require_once dirname(__DIR__, 2) . "/bootstrap/app.php";
-    require_once dirname(__DIR__, 2) . "/app/Support/install_guard.func.php";
-    mds_deny_finished_install(false);
     include(dirname(__DIR__, 2) . "/app/Presentation/Common/includes.php");
   ?>
 
