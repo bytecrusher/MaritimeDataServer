@@ -5,6 +5,13 @@ function mds_install_config_path()
     return dirname(__DIR__, 2) . '/config/config.json';
 }
 
+function mds_install_has_admin(PDO $pdo)
+{
+    $statement = $pdo->prepare('SELECT id FROM users WHERE userGroupAdmin = 1 LIMIT 1');
+    $statement->execute();
+    return $statement->fetch(PDO::FETCH_ASSOC) !== false;
+}
+
 function mds_install_is_finished()
 {
     $configPath = mds_install_config_path();
