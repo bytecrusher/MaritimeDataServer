@@ -1,4 +1,7 @@
 <?php
+require_once(__DIR__ . "/installGuard.php");
+installer_block_if_finished(true);
+
 require_once("../frontend/func/myFunctions.func.php");
 require_once("../frontend/func/dbUpdateData.php");
 require_once("../frontend/func/writeToLogFunction.func.php");

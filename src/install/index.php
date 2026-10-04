@@ -6,7 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Install script</title>
 
-  <?php include(__DIR__ . "/../frontend/common/includes.php"); ?>
+  <?php
+    require_once(__DIR__ . "/installGuard.php");
+    installer_block_if_finished(false);
+    include(__DIR__ . "/../frontend/common/includes.php");
+  ?>
 
   <style>
     #pageMessages {

@@ -1,4 +1,7 @@
 <?php
+require_once(__DIR__ . "/installGuard.php");
+installer_block_if_finished(true);
+
 $var_dbName = $var_dbUserName = $var_dbPassword = $pdo = $rtn = null;
 $var_dbHostName = "localhost";
 if (isset($_POST["action"])) {
