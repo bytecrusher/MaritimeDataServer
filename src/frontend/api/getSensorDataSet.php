@@ -1,38 +1,46 @@
 <?php
-// TODO Find a way to secure the function. Only logged in user shall be able to receive Data.
+// Get historical sensor data for a logged-in user's sensor.
 session_start();
 
 require_once("../func/dbConfig.func.php");
 require_once("../func/myFunctions.func.php");
-require_once("../func/user.class.php");
 
-$userObj = unserialize($_SESSION['userObj']);
-
-$pdo = dbConfig::getInstance();
-if ( count($_GET) == 0 ) {
-  die("Parameter error.");
-}
 header('Content-Type: application/json');
 
-$maxValues = $_GET['maxValues'];
-$sensorId = $_GET['sensorId'];
-
-// TODO change to pdo
-if (!$sensorId == null) {
-  $query = sprintf("SELECT * FROM (SELECT id, sensorId, value1, value2, value3, value4, val_date, val_time, reading_time FROM sensorData WHERE sensorId = " . $sensorId . " ORDER BY id DESC LIMIT " . $maxValues . ") sensorData ORDER BY id ASC");
-  $result = $pdo->query($query);
-
-
-  //$statement = $pdo->prepare("SELECT * FROM (SELECT id, sensorId, value1, value2, val_date, val_time, reading_time FROM sensorData WHERE sensorId = " . $sensorId . " ORDER BY id DESC LIMIT " . $maxValues . ") sensorData ORDER BY id ASC VALUES (?, ?)");
-  //$statement->execute(array($sensorId, $maxValues));
-  //$neue_id = $pdo->lastInsertId();
-  //$result = $sensortyps->fetchAll(PDO::FETCH_ASSOC);
-
-
-
-  $data = array();
-  foreach ($result as $row) {
-    $data[] = $row;
-  }
-  echo json_encode($data);
+if (!myFunctions::is_checked_in()) {
+  http_response_code(401);
+  echo json_encode(array('error' => 'Authentication required.'));
+  exit;
 }
+
+if (!isset($_GET['maxValues']) || !isset($_GET['sensorId'])) {
+  http_response_code(400);
+  echo json_encode(array('error' => 'Parameter error.'));
+  exit;
+}
+
+$maxValues = filter_input(INPUT_GET, 'maxValues', FILTER_VALIDATE_INT, array('options' => array('min_range' => 1)));
+$sensorId = filter_input(INPUT_GET, 'sensorId', FILTER_VALIDATE_INT, array('options' => array('min_range' => 1)));
+
+if ($maxValues === false || $sensorId === false || $maxValues === null || $sensorId === null) {
+  http_response_code(400);
+  echo json_encode(array('error' => 'Parameter error.'));
+  exit;
+}
+
+$maxValues = (int) $maxValues;
+$sensorId = (int) $sensorId;
+
+$pdo = dbConfig::getInstance();
+$statement = $pdo->prepare("SELECT * FROM (
+    SELECT sensorData.id, sensorData.sensorId, sensorData.value1, sensorData.value2, sensorData.value3, sensorData.value4, sensorData.val_date, sensorData.val_time, sensorData.reading_time
+    FROM sensorData
+    INNER JOIN sensorConfig ON sensorConfig.id = sensorData.sensorId
+    INNER JOIN boardConfig ON boardConfig.id = sensorConfig.boardId
+    WHERE sensorData.sensorId = :sensorId AND boardConfig.ownerUserId = :userId
+    ORDER BY sensorData.id DESC
+    LIMIT " . $maxValues . "
+  ) sensorData ORDER BY id ASC");
+$statement->execute(array('sensorId' => $sensorId, 'userId' => $_SESSION['userId']));
+
+echo json_encode($statement->fetchAll(PDO::FETCH_ASSOC));
