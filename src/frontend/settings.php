@@ -25,6 +25,7 @@ if (isset($_SESSION['userObj'])) {
 } else {
 	$userObj = false;
 	header("Location: ./index.php");
+	exit;
 }
 
 function fixObject (&$object)
@@ -127,13 +128,19 @@ if(isset($_GET['save'])) {
 	} else if ($save == 'allBoards') {
 
 	} else if($save == 'users') {
-		try {
-			dbUpdateData::updateUserStatus($_POST);
-			$success_msg = "User Status updated.";
-		} catch (Exception $e) {
-			$error_msg = "Error on update User Status.";
+		if($userObj->getUserGroupAdmin() != 1) {
+			http_response_code(403);
+			$error_msg = "You are not allowed to update user status.";
 			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
-			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+		} else {
+			try {
+				dbUpdateData::updateUserStatus($_POST);
+				$success_msg = "User Status updated.";
+			} catch (Exception $e) {
+				$error_msg = "Error on update User Status.";
+				writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+				writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+			}
 		}
 	} else if($save == 'addNewUserToBoard') {
 		try {
@@ -152,18 +159,24 @@ if(isset($_GET['save'])) {
 		}
 	}
 	else if($save == 'serverSetting') {
-		try {
-			$config->saveServerSettings($_POST);
-			$varDemoMode = $config::$demoMode;
-			$varShowQrCode = $config::$ShowQrCode;
-			$var_apiKey = $config::$apiKey;
-			$varSend_emails = $config::$sendEmails;
-			$success_msg = "Server settings saved.";
-			//header("Refresh:0; url=settings.php");
-		} catch (Exception $e) {
-			writeToLogFunction::write_to_log("Server settings not saved.", $_SERVER["SCRIPT_FILENAME"]);
-			writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
-			$error_msg = $e->getMessage();
+		if($userObj->getUserGroupAdmin() != 1) {
+			http_response_code(403);
+			$error_msg = "You are not allowed to update server settings.";
+			writeToLogFunction::write_to_log($error_msg, $_SERVER["SCRIPT_FILENAME"]);
+		} else {
+			try {
+				$config->saveServerSettings($_POST);
+				$varDemoMode = $config::$demoMode;
+				$varShowQrCode = $config::$ShowQrCode;
+				$var_apiKey = $config::$apiKey;
+				$varSend_emails = $config::$sendEmails;
+				$success_msg = "Server settings saved.";
+				//header("Refresh:0; url=settings.php");
+			} catch (Exception $e) {
+				writeToLogFunction::write_to_log("Server settings not saved.", $_SERVER["SCRIPT_FILENAME"]);
+				writeToLogFunction::write_to_log($e->getMessage(), $_SERVER["SCRIPT_FILENAME"]);
+				$error_msg = $e->getMessage();
+			}
 		}
 	}
 }
