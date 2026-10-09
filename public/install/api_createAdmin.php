@@ -69,9 +69,15 @@ if (isset($_POST["action"])) {
     }
 
     $testDbConnectionReturn = testDbConnection($var_dbHostName, $var_dbName, $var_dbUserName, $var_dbPassword);
-    if (!$testDbConnectionReturn) {
+    if ($testDbConnectionReturn !== true) {
       http_response_code(200);
       print json_encode(array("error"=>"true", "error_text"=>$testDbConnectionReturn));
+      exit;
+    }
+
+    if (mds_install_has_admin($pdo)) {
+      http_response_code(403);
+      print json_encode(array("error"=>"true", "error_text"=>"Admin user already exists."));
       exit;
     }
 
