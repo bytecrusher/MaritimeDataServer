@@ -11,6 +11,10 @@ require_once(dirname(__FILE__, 2) . '/../Infrastructure/Config/configuration.php
 require_once(dirname(__FILE__, 2) . "/../Infrastructure/Logging/writeToLogFunction.func.php");
 require_once(dirname(__FILE__, 2) . "/../Application/myFunctions.func.php");
 require_once(dirname(__FILE__, 2) . "/../Application/SensorNamingService.php");
+require_once(dirname(__FILE__, 2) . "/../Application/TtnBoardIdentity.php");
+require_once(dirname(__FILE__, 2) . "/../Application/SecurityPolicy.php");
+require_once(dirname(__FILE__, 2) . "/../Application/BoardCredential.php");
+require_once(dirname(__FILE__, 2) . "/../Application/TemperatureAlertTransfer.php");
 require_once(dirname(__FILE__, 2) . "/../Application/DevicePowerState.php");
 require_once(dirname(__FILE__, 2) . "/../Domain/Board/board.class.php");
 
@@ -44,6 +48,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $boardData = $data['board'] ?? array();
     $sensors = $data['sensors'] ?? array();
+    if (!is_array($boardData) || !is_array($sensors)) {
+        ingestJsonResponse(400, array('error' => 'Invalid board or sensors payload.'));
+    }
+    if (array_key_exists('ttnIdentity', $boardData) && !SecurityPolicy::validForwarding(
+        $ttn_post, $_SERVER['HTTP_X_MDS_TTN_TIME'] ?? '', $_SERVER['HTTP_X_MDS_TTN_SIGNATURE'] ?? '', $config::$ttnWebhookSecret
+    )) {
+        ingestJsonResponse(403, array('error' => 'Untrusted TTN forwarding context.'));
+    }
     writeToLogFunction::info(
         'receivejson request received.',
         $_SERVER["SCRIPT_FILENAME"],
@@ -63,7 +75,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         writeToLogFunction::warning("Missing API key in board payload.", $_SERVER["SCRIPT_FILENAME"]);
     }
 
-    if ($apiKey == $apiKey_value) {
+    $credentialBoardId = BoardCredential::boardId($apiKey, $config::$boardApiKeyHashes);
+    if ($credentialBoardId !== null || SecurityPolicy::secretMatches($apiKey_value, $apiKey)) {
         writeToLogFunction::info(
             'receivejson API key accepted.',
             $_SERVER["SCRIPT_FILENAME"],
@@ -87,7 +100,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     ingestJsonResponse(400, array('error' => 'Missing board.macAddress.'));
                 }
                 $macAddress = myFunctions::normalizeMacAddress(test_input($boardData['macAddress']));
-                $macAddressId = check_macAddress($macAddress, $pdo2);
+                if ($credentialBoardId !== null) {
+                    try {
+                        $credentialBoard = BoardCredential::resolve($pdo2, $apiKey, $boardData['macAddress'], $config::$boardApiKeyHashes);
+                        $macAddressId = (int)$credentialBoard['id'];
+                    } catch (DomainException $error) {
+                        ingestJsonResponse(403, array('error' => 'Board credential mismatch.'));
+                    }
+                } elseif (array_key_exists('ttnIdentity', $boardData)) {
+                    try {
+                        $macAddressId = TtnBoardIdentity::forwardedBoardId($pdo2, $boardData);
+                    } catch (DomainException $error) {
+                        writeToLogFunction::warning('Forwarded TTN board identity rejected.', __FILE__, array('reason' => $error->getMessage()));
+                        ingestJsonResponse(403, array('error' => 'Forwarded TTN board identity rejected.'));
+                    }
+                } else {
+                    $macAddressId = check_macAddress($macAddress, $pdo2);
+                    if (isset($config::$boardApiKeyHashes[(string)$macAddressId])) {
+                        ingestJsonResponse(403, array('error' => 'This board requires its board-specific API key.'));
+                    }
+                }
                 $responseBoardId = $macAddressId;
                 $boardObj = new board($macAddressId);
                 $firmwareVersion = extractFirmwareVersionFromBoardPayload($boardData);
@@ -148,6 +180,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         );
                         $mySensorId = $owSensorAddress = null;
                         if (isset($sensor["sensorId"])) {
+                            try {
+                                SecurityPolicy::assertSensorBoard($pdo2, $sensor['sensorId'], (int)$macAddressId);
+                            } catch (DomainException $error) {
+                                writeToLogFunction::warning('Cross-board sensor identity rejected.', __FILE__);
+                                ingestJsonResponse(403, array('error' => 'Invalid sensor identity.'));
+                            }
                             $mySensorId = test_input($sensor["sensorId"]);
                             $sensorId = $mySensorId;
                             $sensorMappingSource = 'payload.sensorId';
@@ -301,8 +339,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $sensor['sensorName'] ?? ($sensor['name'] ?? null)
                             );
                         }
-                        $date = test_input($sensor["date"]);
-                        $time = test_input($sensor["time"]);
+                        $date = is_string($sensor['date'] ?? null) ? $sensor['date'] : '';
+                        $time = is_string($sensor['time'] ?? null) ? $sensor['time'] : '';
+                        if (!preg_match('/^\d{2}\.\d{2}\.\d{4}$/D', $date) || !preg_match('/^\d{2}:\d{2}:\d{2}$/D', $time)) {
+                            $date = $time = ''; // History uses the trusted receipt timestamp.
+                        }
 
                         if(isset($sensor["transmissionPath"])) {
                             $transmissionPath = test_input($sensor["transmissionPath"]);
@@ -344,6 +385,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $time,
                                 $transmissionPath
                             ));
+                            if (($resolvedType['name'] ?? '') === 'DS18B20' && isset($boardData['ttnIdentity'])) {
+                                try {
+                                    TemperatureAlertTransfer::migrate($pdo2, (int)$macAddressId, (int)$sensorId);
+                                } catch (Throwable $error) {
+                                    writeToLogFunction::warning('Temperature alert transfer requires attention; legacy alert retained.', __FILE__, array('boardId' => $macAddressId, 'reason' => $error->getMessage()));
+                                }
+                            }
                             writeToLogFunction::info(
                                 'sensorData row inserted.',
                                 $_SERVER["SCRIPT_FILENAME"],

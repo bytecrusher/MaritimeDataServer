@@ -7,7 +7,11 @@ final class SensorChartHistory
     {
         $zone = new DateTimeZone('Europe/Berlin');
         $value = ($row['val_date'] ?? '') . ' ' . ($row['val_time'] ?? '');
-        $date = DateTimeImmutable::createFromFormat('!d.m.Y H:i:s', $value, $zone);
+        try {
+            $date = DateTimeImmutable::createFromFormat('!d.m.Y H:i:s', $value, $zone);
+        } catch (ValueError $error) {
+            $date = false;
+        }
         $errors = DateTimeImmutable::getLastErrors();
         if ($date && (!$errors || (!$errors['warning_count'] && !$errors['error_count']))
             && $date->format('d.m.Y H:i:s') === $value) {

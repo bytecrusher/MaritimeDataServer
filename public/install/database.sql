@@ -79,6 +79,19 @@ CREATE TABLE `securityTokens` (
 -- Tabellenstruktur für Tabelle `sensorChannelConfig`
 --
 
+CREATE TABLE IF NOT EXISTS accountActivationTokens (
+  userId INT NOT NULL PRIMARY KEY,
+  tokenHash CHAR(64) NOT NULL,
+  expiresAt BIGINT NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS temperatureChannelTransfers (
+  sourceChannelId INT NOT NULL PRIMARY KEY,
+  targetChannelId INT NOT NULL,
+  sourceSnapshot TEXT NOT NULL,
+  targetSnapshot TEXT NOT NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE `sensorChannelConfig` (
   `id` int NOT NULL,
   `sensorConfigId` int NOT NULL,

@@ -2,8 +2,8 @@
 $mapBoardNames = isset($mapBoardNames) && is_array($mapBoardNames) ? $mapBoardNames : array();
 $mapGpsData = isset($mapGpsData) && is_array($mapGpsData) ? $mapGpsData : array();
 ?>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.css" crossorigin=""/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.js" crossorigin=""></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.css" integrity="sha384-kxXhFDZB0L84bBV/apPOb8zGC+fsQ1dBPpKXPUXc1zRymi4BaueVyC27iDDPdssp" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.2/leaflet.js" integrity="sha384-zrFQ4BIvCMUhUb6NKv9N6+lGhC7+M9l7lyLfVaa/dqQtK4PLTS6LZNvAyPJvls7U" crossorigin="anonymous"></script>
 <div id="map" style="height: 50vh; min-height: 420px; width: 100%;"></div>
 <div id="mapFallback" class="alert alert-warning mt-3" style="display:none;"></div>
 

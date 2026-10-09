@@ -7,6 +7,11 @@ PassengerEnabled off
 
 RewriteEngine On
 
+<FilesMatch "(?i)^(config(?:_template)?\.json|\.env(?:\..*)?)$">
+Require all denied
+</FilesMatch>
+RewriteRule ^(?:src/)?logs(?:/|$) - [F,L,NC]
+
 RewriteRule ^(?:app|bootstrap|config|docs|tools|var|vendor)(?:/|$) - [F,L]
 
 RewriteCond %{REQUEST_URI} !^/public/

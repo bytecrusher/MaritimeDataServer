@@ -8,7 +8,7 @@ function mds_trim_slashes(string $path): string
 function mds_mount_path(): string
 {
     $config = new configuration();
-    $baseUrlPath = parse_url($config::$baseurl ?? '', PHP_URL_PATH);
+    $baseUrlPath = parse_url($config::$baseurl ?? '', PHP_URL_PATH) ?: $config::$mountPath;
 
     if (!is_string($baseUrlPath) || $baseUrlPath === '') {
         return '';
@@ -46,6 +46,8 @@ function mds_route_path(string $path = ''): string
 function mds_absolute_url(string $path = ''): string
 {
     $config = new configuration();
+
+    if (!$config::$baseurl) throw new RuntimeException('Configure canonicalBaseUrl or MDS_BASE_URL before sending absolute URLs.');
 
     return rtrim($config::$baseurl, '/') . '/' . mds_trim_slashes($path);
 }

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/SensorNamingService.php';
+require_once __DIR__ . '/SensorColor.php';
 /**
  * class for updating data into DB
  * 
@@ -257,18 +258,12 @@ class dbUpdateData {
   * @return bool — TRUE on success or FALSE on failure.
   * @throws Exception — Return Exception message on error.
   */
-  public static function activateUserStatus($userId) {
+  public static function activateUserStatus($userId, $token = '') {
+    require_once __DIR__ . '/AccountActivation.php';
     $pdo = dbConfig::getInstance();
     $result = null;
     try {
-      $statement = $pdo->prepare("UPDATE users SET active =1 WHERE id =?");
-      $pdoResult = $statement->execute(array($userId));
-      $changedRows = $statement->rowCount();
-      if($changedRows == 1 ) {
-        return true;
-      } else {
-        return false;
-      }
+      return AccountActivation::consume($pdo, (int)$userId, $token);
         
     } catch (PDOException $e) {
       writeToLogFunction::write_to_log("Error: User Status in DB not successfully updated for userId: " . $userId, $_SERVER["SCRIPT_FILENAME"]);
@@ -560,6 +555,7 @@ class dbUpdateData {
   * @throws Exception — Return Exception message on error.
   */
   public static function updateSensor($post) {
+    $post = SensorColor::validatePost($post);
     $pdo = dbConfig::getInstance();
     $sensorId = (int)($post['id'] ?? 0);
     $usedChannelCount = max(1, min(4, (int)($post['NrOfUsedSensors'] ?? 1)));
@@ -659,6 +655,7 @@ class dbUpdateData {
   * @throws Exception — Return Exception message on error.
   */
   public static function updateSensorModal($post) {
+    $post = SensorColor::validatePost($post);
     $pdo = dbConfig::getInstance();
     $onDashboardVar = isset($post['onDashboard']) ? 1 : 0;
     $channelNr = (int)($post['channel'] ?? 1);
@@ -705,6 +702,7 @@ class dbUpdateData {
   * @throws Exception — Return Exception message on error.
   */
   public static function updateSensorChannelModal($post) {
+    $post = SensorColor::validatePost($post);
     $pdo = dbConfig::getInstance();
 
     $onDashboardVar = 1;
@@ -729,6 +727,9 @@ class dbUpdateData {
   * @throws Exception — Return Exception message on error.
   */
   public static function addNewBoardToUser($post, $userId) {
+    if (!myFunctions::isUserAdmin((int)$userId)) {
+      throw new RuntimeException('Board claiming requires administrator approval.');
+    }
     $pdo = dbConfig::getInstance();
     $return = false;
     if ( ($post['valueType'] == "ttn") && (json_encode($post['inputValue']) != null) ) {

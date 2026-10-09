@@ -47,7 +47,7 @@ $ttnSensors = TtnMeasurementSensorFactory::buildStatusAndTemperatureSensors(
     18.75
 );
 assertSensorNamingValue('Digital', $ttnSensors[0]['sensorType'] ?? null, 'TTN status values must retain the Digital type.');
-assertSensorNamingValue(null, $ttnSensors[0]['value3'] ?? null, 'TTN status must no longer contain the DS18B20 temperature.');
+assertSensorNamingValue(18.75, $ttnSensors[0]['value3'] ?? null, 'Legacy temperature alarms must remain supplied during migration.');
 assertSensorNamingValue('DS18B20', $ttnSensors[1]['sensorType'] ?? null, 'TTN temperature must target the DS18B20 type.');
 assertSensorNamingValue(18.75, $ttnSensors[1]['value1'] ?? null, 'TTN temperature must be forwarded as DS18B20 value 1.');
 

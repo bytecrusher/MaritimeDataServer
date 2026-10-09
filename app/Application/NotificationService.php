@@ -297,7 +297,7 @@ class NotificationService
                         'currentValue' => $currentValue,
                     )
                 );
-                self::updateChannelAlertState((int)$channelRow['id'], null);
+                // Missing telemetry is not evidence that a threshold alarm has cleared.
                 continue;
             }
 

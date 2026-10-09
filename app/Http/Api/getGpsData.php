@@ -25,6 +25,9 @@ if (!isset($_POST['functionName'])) {
     $myBoards = myFunctions::getMyBoards($sessionUserId);
     foreach ($myBoards as $myBoard) {
         $myGpsData = myFunctions::getAllGpsData($myBoard['id']);
+        if (is_array($myGpsData)) {
+            $myGpsData = array_values(array_filter($myGpsData, static fn($row) => myFunctions::canUserAccessSensor($sessionUserId, (int)$row['sensorId'])));
+        }
         if ($myGpsData != 0) {
             $aResult[$myBoard['id']] = $myGpsData;
         }

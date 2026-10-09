@@ -19,6 +19,9 @@
   },
   "scripts": {
     "test": [
+      "php tests/SensorColorSecurityTest.php",
+      "php tests/SecurityRegressionTest.php",
+      "php tests/TtnBoardIdentityTest.php",
       "php tests/PasswordResetTokenTest.php",
       "php tests/SensorChartHistoryTest.php",
       "php tests/TemperatureReadingTest.php",

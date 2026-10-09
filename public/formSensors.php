@@ -258,7 +258,7 @@
 
                 <div class='input-group'>
                   <span class='input-group-text' for="GaugeRedAreaLowColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.color'), ENT_QUOTES, 'UTF-8'); ?></span>
-                  <input type="color" class="form-control form-control-color" id="GaugeRedAreaLowColor" name="GaugeRedAreaLowColor" value="<?php echo $mySingleSensorChannelConfig['GaugeRedAreaLowColor'] ?>" title="Choose your color">
+                  <input type="color" class="form-control form-control-color" id="GaugeRedAreaLowColor" name="GaugeRedAreaLowColor" value="<?php echo mds_h(SensorColor::forDisplay($mySingleSensorChannelConfig['GaugeRedAreaLowColor'] ?? null)); ?>" title="Choose your color">
                 </div>
               </fieldset>
 
@@ -271,13 +271,13 @@
 
                 <div class='input-group'>
                   <span class='input-group-text' for="GaugeRedAreaHighColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.color'), ENT_QUOTES, 'UTF-8'); ?></span>
-                  <input type="color" class="form-control form-control-color" id="GaugeRedAreaHighColor" name="GaugeRedAreaHighColor" value="<?php echo $mySingleSensorChannelConfig['GaugeRedAreaHighColor'] ?>" title="Choose your color">
+                  <input type="color" class="form-control form-control-color" id="GaugeRedAreaHighColor" name="GaugeRedAreaHighColor" value="<?php echo mds_h(SensorColor::forDisplay($mySingleSensorChannelConfig['GaugeRedAreaHighColor'] ?? null)); ?>" title="Choose your color">
                 </div>
               </fieldset>
 
               <div class='input-group mt-3'>
                 <span class='input-group-text' for="GaugeNormalAreaColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.normal_area_color'), ENT_QUOTES, 'UTF-8'); ?></span>
-                <input type="color" class="form-control form-control-color" id="GaugeNormalAreaColor" name="GaugeNormalAreaColor" value="<?php echo $mySingleSensorChannelConfig['GaugeNormalAreaColor'] ?>" title="Choose your color">
+                <input type="color" class="form-control form-control-color" id="GaugeNormalAreaColor" name="GaugeNormalAreaColor" value="<?php echo mds_h(SensorColor::forDisplay($mySingleSensorChannelConfig['GaugeNormalAreaColor'] ?? null)); ?>" title="Choose your color">
               </div>
 
               <div class='input-group mt-3'>
@@ -330,7 +330,7 @@
               <legend  class="float-none w-auto mySensorsFieldsetLegend"><?php echo htmlspecialchars(mds_t('internal.charts'), ENT_QUOTES, 'UTF-8'); ?></legend>
               <div class='input-group'>
                 <span class='input-group-text' for="ChartColor" style='width: 50%'><?php echo htmlspecialchars(mds_t('form.sensor.chart_color'), ENT_QUOTES, 'UTF-8'); ?></span>
-                <input type="color" class="form-control form-control-color" id="ChartColor" name="ChartColor" value="<?php echo $mySingleSensorChannelConfig['ChartColor'] ?>" title="Choose your color">
+                <input type="color" class="form-control form-control-color" id="ChartColor" name="ChartColor" value="<?php echo mds_h(SensorColor::forDisplay($mySingleSensorChannelConfig['ChartColor'] ?? null)); ?>" title="Choose your color">
               </div>
             </fieldset>
 

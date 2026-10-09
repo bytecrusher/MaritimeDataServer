@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/SensorColor.php';
 /**
  * a set of functions for handle some user and board functions.
  *
@@ -863,7 +864,7 @@ class myFunctions {
     $mySensorsChannels = $pdo->prepare("SELECT * FROM sensorChannelConfig WHERE sensorConfigId = ? ORDER BY id ");
     $mySensorsChannels->execute(array($id));
     $mySensorsChannelsOfBoard = $mySensorsChannels->fetchAll(PDO::FETCH_ASSOC);
-    return $mySensorsChannelsOfBoard;
+    return array_map(array(SensorColor::class, 'channel'), $mySensorsChannelsOfBoard);
   }
 
   /*
@@ -878,7 +879,7 @@ class myFunctions {
     if (is_array($mySensorsChannelsOfBoard) && $mySensorsChannelsOfBoard['resolvedType'] === 'DS18B20') {
       $mySensorsChannelsOfBoard = TemperatureReading::channelDefaults($mySensorsChannelsOfBoard);
     }
-    return $mySensorsChannelsOfBoard;
+    return is_array($mySensorsChannelsOfBoard) ? SensorColor::channel($mySensorsChannelsOfBoard) : $mySensorsChannelsOfBoard;
   }
 
   /*

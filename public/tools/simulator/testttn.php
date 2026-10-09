@@ -247,6 +247,8 @@ try {
     curl_setopt($cURL, CURLOPT_POSTFIELDS, $payloadJson);
     curl_setopt($cURL, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($cURL, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($cURL, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($cURL, CURLOPT_TIMEOUT, 15);
 
     $result = curl_exec($cURL);
 

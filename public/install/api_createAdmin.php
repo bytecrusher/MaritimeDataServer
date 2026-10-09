@@ -9,16 +9,16 @@ require_once dirname(__DIR__, 2) . "/app/Application/dbUpdateData.php";
 require_once dirname(__DIR__, 2) . "/app/Infrastructure/Logging/writeToLogFunction.func.php";
 
 $path = dirname(__FILE__, 2) . '/../config/config.json';
-$jsonString = file_get_contents($path);
+$jsonString = is_file($path) ? file_get_contents($path) : '{}';
 $jsonData = json_decode($jsonString, true);
 if (!is_array($jsonData)) {
   $jsonData = array();
 }
 
-$var_dbHostName = $jsonData['dbHost'];
-$var_dbName = $jsonData['dbName'];
-$var_dbUserName = $jsonData['dbUser'];
-$var_dbPassword = $jsonData['dbPassword'];
+$var_dbHostName = $jsonData['dbHost'] ?? '';
+$var_dbName = $jsonData['dbName'] ?? '';
+$var_dbUserName = $jsonData['dbUser'] ?? '';
+$var_dbPassword = $jsonData['dbPassword'] ?? '';
 
 $pdo = $rtn = null;
 if (isset($_POST["action"])) {
@@ -28,11 +28,22 @@ if (isset($_POST["action"])) {
   $var_password = $_POST["password"];
   $var_password2 = $_POST["password2"];
   $var_apiKey = trim($_POST["apiKey"]);
-  $var_demoMode = trim($_POST["demoMode"]);
+  $var_demoMode = filter_var($_POST['demoMode'] ?? false, FILTER_VALIDATE_BOOLEAN);
   $var_md5secretString = trim($_POST["md5secretString"]);
   //$var_baseurl = trim($_POST["baseurl"]);
   
   if ($_POST["action"] == "createadmin") {
+    $canonicalBaseUrl = SecurityPolicy::canonicalUrl($_POST['canonicalBaseUrl'] ?? '');
+    if ($canonicalBaseUrl === '') {
+      http_response_code(400);
+      echo json_encode(array('error' => 'true', 'error_text' => 'Canonical HTTP(S) base URL required.'));
+      exit;
+    }
+    if (strlen($var_apiKey) < 16 || strlen($var_md5secretString) < 16) {
+      http_response_code(400);
+      echo json_encode(array('error' => 'true', 'error_text' => 'API key and signing secret must contain at least 16 characters.'));
+      exit;
+    }
     if (empty($var_firstName) || empty($var_lastName) || empty($var_email)) {
       http_response_code(200);
       print json_encode(array("error"=>"true", "error_text"=>"Please enter all fields."));
@@ -88,6 +99,7 @@ if (isset($_POST["action"])) {
     }
 
     $jsonData['apiKey'] = $var_apiKey;
+    $jsonData['canonicalBaseUrl'] = $canonicalBaseUrl;
     $jsonData['md5secretString'] = $var_md5secretString;
     $jsonData['demoMode'] = $var_demoMode;
     if (!isset($jsonData['applicationName']) || trim((string)$jsonData['applicationName']) === '') {

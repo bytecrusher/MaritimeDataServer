@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/Infrastructure/Config/configuration.php';
 require_once dirname(__DIR__, 2) . '/Infrastructure/Logging/writeToLogFunction.func.php';
 require_once dirname(__DIR__, 2) . '/Application/myFunctions.func.php';
 require_once dirname(__DIR__, 2) . '/Application/SensorMetadataService.php';
+require_once dirname(__DIR__, 2) . '/Application/BoardCredential.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -26,8 +27,8 @@ if (!is_array($payload)) {
 
 $config = new configuration();
 $board = $payload['board'] ?? array();
-if (!hash_equals((string)$config::$apiKey, (string)($board['apiKey'] ?? $board['api_key'] ?? ''))) {
-    sensorMetadataResponse(403, array('status' => 'error', 'error' => 'Invalid API key.'));
+if (!is_array($board) || BoardCredential::boardId($board['apiKey'] ?? $board['api_key'] ?? null, $config::$boardApiKeyHashes) === null) {
+    sensorMetadataResponse(403, array('status' => 'error', 'error' => 'Board-specific API key required.'));
 }
 if ((string)($board['protocolVersion'] ?? '') !== '1') {
     sensorMetadataResponse(400, array('status' => 'error', 'error' => 'Unsupported protocol version.'));
@@ -40,17 +41,8 @@ if (!preg_match('/^[A-F0-9]{2}(:[A-F0-9]{2}){5}$/', $macAddress)) {
 
 try {
     $pdo = dbConfig::getInstance();
-    $macHex = strtoupper(preg_replace('/[^A-F0-9]/', '', $macAddress));
-    $boardQuery = $pdo->prepare(
-        "SELECT id FROM boardConfig WHERE REPLACE(REPLACE(UPPER(macAddress), ':', ''), '-', '') = ? LIMIT 1"
-    );
-    $boardQuery->execute(array($macHex));
-    $boardId = $boardQuery->fetchColumn();
-    if ($boardId === false) {
-        $createBoard = $pdo->prepare("INSERT INTO boardConfig (macAddress, ownerUserId, name) VALUES (?, 1, '- new imported -')");
-        $createBoard->execute(array($macAddress));
-        $boardId = $pdo->lastInsertId();
-    }
+    $authenticatedBoard = BoardCredential::resolve($pdo, $board['apiKey'] ?? $board['api_key'] ?? null, $macAddress, $config::$boardApiKeyHashes);
+    $boardId = (int)$authenticatedBoard['id'];
 
     $definitions = is_array($payload['sensors'] ?? null) ? $payload['sensors'] : array();
     $pdo->beginTransaction();
@@ -74,6 +66,8 @@ try {
         $response['sensors'] = $sensors;
     }
     sensorMetadataResponse(200, $response);
+} catch (DomainException $exception) {
+    sensorMetadataResponse(403, array('status' => 'error', 'error' => 'Board credential mismatch.'));
 } catch (Throwable $exception) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();

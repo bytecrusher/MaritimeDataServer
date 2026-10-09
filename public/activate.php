@@ -4,7 +4,7 @@ mds_start_session();
 require_once dirname(__DIR__) . "/app/Application/dbUpdateData.php";
 
 if (! empty($_GET["id"])) {
-    $result = dbUpdateData::activateUserStatus($_GET["id"]);
+    $result = dbUpdateData::activateUserStatus((int)$_GET['id'], $_GET['token'] ?? '');
 
     if ($result) {
         $message = mds_current_language() === 'de' ? "Dein Account ist aktiviert." : "Your account is activated.";

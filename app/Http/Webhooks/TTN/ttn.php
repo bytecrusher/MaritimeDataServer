@@ -33,6 +33,7 @@
 require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnPayloadDecoder.php");
+require_once(dirname(__DIR__, 3) . "/Application/TtnBoardIdentity.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnMeasurementSensorFactory.php");
 require_once(dirname(__DIR__, 3) . "/Application/SensorMetadataService.php");
 require_once(dirname(__DIR__, 3) . "/Application/DevicePowerState.php");
@@ -69,6 +70,9 @@ if(strlen($ttn_post) > 0) {
             array('requestHeaders' => ttnFilterHeadersForLogging($requestHeaders))
         );
         ttnJsonResponse(403, array('error' => 'TTN webhook secret validation failed.'));
+    }
+    if (!$config::$baseurl) {
+        ttnJsonResponse(503, array('error' => 'Canonical forwarding URL is not configured.'));
     }
 
     $sensor_temperature = 0;
@@ -281,70 +285,22 @@ if(strlen($ttn_post) > 0) {
       ));
     }
 
-    $boardResolvedBy = null;
-    $singleRowBoardIdbyTTN = null;
-    if ($payloadMacAddress !== null && $payloadMacAddress !== '') {
-        $singleRowBoardIdbyTTN = myFunctions::getBoardByMacAddress($payloadMacAddress);
-        if ($singleRowBoardIdbyTTN) {
-            $boardResolvedBy = 'macAddress';
-            myFunctions::updateBoardTTNIdentifiersIfEmpty($singleRowBoardIdbyTTN['id'], $ttn_app_id, $ttn_board_identifier);
-        }
+    try {
+        $ttnIdentity = TtnBoardIdentity::identity($ttn_app_id, $ttn_device_id, $ttn_dev_eui);
+        $singleRowBoardIdbyTTN = TtnBoardIdentity::resolve($pdo2, $ttnIdentity, $payloadMacAddress);
+    } catch (DomainException $error) {
+        writeToLogFunction::warning('TTN board identity rejected.', __FILE__, array(
+            'ttnAppId' => $ttn_app_id, 'ttnDeviceId' => $ttn_device_id,
+            'ttnDevEui' => $ttn_dev_eui, 'payloadMacAddress' => $payloadMacAddress,
+            'reason' => $error->getMessage()
+        ));
+        ttnJsonResponse(403, array('error' => 'TTN board identity rejected. Check the configured TTN binding.'));
+    } catch (Throwable $error) {
+        writeToLogFunction::exception($error, __FILE__);
+        ttnJsonResponse(503, array('error' => 'TTN board identity resolution unavailable.'));
     }
-
-    if (!$singleRowBoardIdbyTTN) {
-        $singleRowBoardIdbyTTN = myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
-        if ($singleRowBoardIdbyTTN) {
-            $boardResolvedBy = 'ttnLegacy';
-        }
-    }
-
+    $boardResolvedBy = 'verifiedTtnIdentity';
     $myFunctions = new myFunctions();
-    
-    // if board not exist, create it.
-    if (!$singleRowBoardIdbyTTN) {
-        $newId = myFunctions::addBoardByTTN($ttn_app_id, $ttn_board_identifier, $payloadMacAddress);
-        writeToLogFunction::info(
-            'New board created from TTN uplink.',
-            $_SERVER["SCRIPT_FILENAME"],
-            array(
-                'boardId' => $newId,
-                'ttnAppId' => $ttn_app_id,
-                'ttnDeviceIdentifier' => $ttn_board_identifier,
-                'payloadMacAddress' => $payloadMacAddress
-            )
-        );
-        $singleRowBoardIdbyTTN = $payloadMacAddress !== null && $payloadMacAddress !== ''
-            ? myFunctions::getBoardByMacAddress($payloadMacAddress)
-            : myFunctions::getBoardByTTN($ttn_app_id, $ttn_dev_eui, $ttn_device_id);
-        $boardResolvedBy = $payloadMacAddress !== null && $payloadMacAddress !== '' ? 'macAddress.created' : 'ttnLegacy.created';
-    } elseif ($payloadMacAddress !== null && $payloadMacAddress !== '' && $boardResolvedBy === 'ttnLegacy') {
-        $macAddressUpdated = myFunctions::updateBoardMacAddressIfPlaceholder($singleRowBoardIdbyTTN['id'], $payloadMacAddress);
-        if ($macAddressUpdated) {
-            $singleRowBoardIdbyTTN['macAddress'] = $payloadMacAddress;
-            writeToLogFunction::info(
-                'Existing TTN board migrated from placeholder MAC to payload MAC.',
-                $_SERVER["SCRIPT_FILENAME"],
-                array(
-                    'boardId' => $singleRowBoardIdbyTTN['id'],
-                    'payloadMacAddress' => $payloadMacAddress,
-                    'ttnAppId' => $ttn_app_id,
-                    'ttnDeviceIdentifier' => $ttn_board_identifier
-                )
-            );
-        } elseif (myFunctions::normalizeMacAddress($singleRowBoardIdbyTTN['macAddress'] ?? '') !== $payloadMacAddress) {
-            writeToLogFunction::warning(
-                'TTN payload MAC differs from existing board MAC. Keeping existing board MAC to avoid accidental re-assignment.',
-                $_SERVER["SCRIPT_FILENAME"],
-                array(
-                    'boardId' => $singleRowBoardIdbyTTN['id'],
-                    'existingMacAddress' => $singleRowBoardIdbyTTN['macAddress'] ?? null,
-                    'payloadMacAddress' => $payloadMacAddress,
-                    'ttnAppId' => $ttn_app_id,
-                    'ttnDeviceIdentifier' => $ttn_board_identifier
-                )
-            );
-        }
-    }
 
     if (!$singleRowBoardIdbyTTN) {
       writeToLogFunction::error(
@@ -433,6 +389,7 @@ if(strlen($ttn_post) > 0) {
     $boardInfos = array(
         "apiKey" => $config::$apiKey,
         "macAddress" => $singleRowBoardIdbyTTN['macAddress'],
+        "ttnIdentity" => array_merge($ttnIdentity, array('boardId' => (int)$singleRowBoardIdbyTTN['id'])),
         "protocolVersion" => "1"   // Version of the used protocoll.
     );
     if ($firmwareVersion !== null) {
@@ -593,7 +550,7 @@ if(strlen($ttn_post) > 0) {
         }
       //}   
     }
-    $resolvedSensorMac = $payloadMacAddress ?: ttnMacAddress((object)array('macAddress' => $singleRowBoardIdbyTTN['macAddress'] ?? ''));
+    $resolvedSensorMac = ttnMacAddress((object)array('macAddress' => $singleRowBoardIdbyTTN['macAddress'] ?? ''));
     if ($resolvedSensorMac !== null && $resolvedSensorMac !== '') {
       foreach ($sensors as &$namedSensor) {
         if (!is_array($namedSensor) || isset($namedSensor['sensorId'])) {
@@ -624,7 +581,10 @@ if(strlen($ttn_post) > 0) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 
     // Set the content type to application/json
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+    $forwardTime = time();
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json',
+        'X-MDS-TTN-Time: ' . $forwardTime,
+        'X-MDS-TTN-Signature: ' . SecurityPolicy::forwardingSignature($payload, $forwardTime, (string)$config::$ttnWebhookSecret)));
 
     // Return response instead of outputting
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -694,8 +654,8 @@ if(strlen($ttn_post) > 0) {
 ttnJsonResponse(500, array('error' => 'Unexpected TTN webhook state.'));
 
 function ttnWebhookSecretIsValid(array $headers, string $expectedSecret) {
-    if ($expectedSecret === '') {
-        return true;
+    if (trim($expectedSecret) === '') {
+        return false;
     }
 
     $providedSecret = ttnHeaderValue($headers, array('X-MDS-Webhook-Secret', 'X-Webhook-Secret', 'X-TTN-Webhook-Secret'));
