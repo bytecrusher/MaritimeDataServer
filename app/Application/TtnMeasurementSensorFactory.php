@@ -17,6 +17,8 @@ final class TtnMeasurementSensorFactory
                 'name' => 'Status',
                 'value1' => $mainPowerOn,
                 'value2' => $relay,
+                // Keep legacy channel-3 alarms supplied until their transactional migration succeeds.
+                'value3' => TemperatureReading::valid($temperature) ? $temperature : '',
             )),
         );
         if (TemperatureReading::valid($temperature)) {

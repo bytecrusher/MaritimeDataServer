@@ -6,6 +6,11 @@ PassengerEnabled off
 
 RewriteEngine On
 
+<FilesMatch "(?i)^(config(?:_template)?\.json|\.env(?:\..*)?)$">
+Require all denied
+</FilesMatch>
+RewriteRule ^(?:src/)?logs(?:/|$) - [F,L,NC]
+
 # One canonical public URL per language. THE_REQUEST prevents rewrite loops.
 RewriteCond %{THE_REQUEST} \s/+index\.php(?:[?\s]) [NC]
 RewriteRule ^index\.php$ /en [R=301,L]

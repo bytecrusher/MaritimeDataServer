@@ -49,8 +49,8 @@ try {
   $pageData = array(
     'demoMode' => (bool) $config::$demoMode,
     'showQrCode' => $config::$ShowQrCode,
-    'apiKey' => $config::$apiKey,
-    'otaUpdateSecret' => $config::$otaUpdateSecret,
+    'apiKey' => myFunctions::isUserAdmin((int)$userObj->getId()) ? $config::$apiKey : '',
+    'otaUpdateSecret' => myFunctions::isUserAdmin((int)$userObj->getId()) ? $config::$otaUpdateSecret : '',
     'googleSiteVerification' => $config::$googleSiteVerification,
     'sendEmails' => $config::$sendEmails,
     'myBoards' => array(),
@@ -59,7 +59,7 @@ try {
     'accessBoards' => array(),
     'canManageAccess' => false,
     'timeZones' => SettingsPageService::getTimeZoneList(),
-    'currentLogContent' => SettingsPageService::getCurrentLogContent(),
+    'currentLogContent' => myFunctions::isUserAdmin((int)$userObj->getId()) ? SettingsPageService::getCurrentLogContent() : '',
     'otaUpdateLogs' => array(
       'path' => dirname(__DIR__) . '/var/ota/logs/log.csv',
       'entries' => array(),
@@ -327,9 +327,9 @@ th.rotated-text > div > span {
 }
 </style>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css" rel="stylesheet" integrity="sha384-PCXLeujsr2jIagvp+ybvkVZCcPj9ARO+X4SimoexSlEQriumZU/Olc1QzhqdPRo6" crossorigin="anonymous">
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/js/bootstrap5-toggle.jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/js/bootstrap5-toggle.jquery.min.js" integrity="sha384-SAoeBIQiS7MHM8sOxjfG8AzFwcaVi7XOp6j9c/z7WBiZt8HMo85+jL6YM/N1QeW1" crossorigin="anonymous"></script>
 
 <div class="jumbotron" style="padding: 1rem 1rem;">
   <div class="container">
@@ -1204,9 +1204,14 @@ th.rotated-text > div > span {
       </div>
 
       <!-- Modification of Server Setting -->
+      <?php if ($isAdmin) { ?>
       <div role="tabpanel" class="tab-pane" id="serverSetting">
         <form action="?save=serverSetting" method="post" class="form-horizontal">
           <?php echo mds_csrf_input(); ?>
+          <div class="mb-3">
+            <label for="canonicalBaseUrl" class="form-label">Canonical base URL</label>
+            <input type="url" class="form-control" id="canonicalBaseUrl" name="canonicalBaseUrl" value="<?php echo mds_h($config::$baseurl); ?>" placeholder="https://mds.example.org" required>
+          </div>
           <div class="panel panel-default">
             <div class="form-group">
               <div class="row">
@@ -1742,6 +1747,7 @@ th.rotated-text > div > span {
           </div>
         </details>
       </div>
+      <?php } ?>
     </div>
   </div>
 </div>
@@ -1785,7 +1791,7 @@ th.rotated-text > div > span {
   })
 
   $(function() {
-    var rawLogContent = <?php echo json_encode((string)$currentLogContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    var rawLogContent = <?php echo json_encode((string)$currentLogContent, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var logTextarea = $('#settings-log-content');
     var logCount = $('#log-filter-count');
     var logSummaryCount = $('#log-summary-count');

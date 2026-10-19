@@ -38,6 +38,7 @@ jobs:
       - name: Run regression tests
         run: |
           composer test
+          node tests/CdnIntegrityTest.cjs
           node tests/SensorChartsTest.cjs
           node tests/GaugeStatusTest.cjs
 

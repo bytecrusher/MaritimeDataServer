@@ -285,8 +285,8 @@ class SettingsPageService
         return array(
             'demoMode' => (bool) $config::$demoMode,
             'showQrCode' => $config::$ShowQrCode,
-            'apiKey' => $config::$apiKey,
-            'otaUpdateSecret' => $config::$otaUpdateSecret,
+            'apiKey' => $isAdmin ? $config::$apiKey : '',
+            'otaUpdateSecret' => $isAdmin ? $config::$otaUpdateSecret : '',
             'googleSiteVerification' => $config::$googleSiteVerification,
             'sendEmails' => $config::$sendEmails,
             'myBoards' => $myBoards,
@@ -295,8 +295,8 @@ class SettingsPageService
             'accessBoards' => $accessBoards,
             'canManageAccess' => $canManageAccess,
             'timeZones' => self::getTimeZoneList(),
-            'currentLogContent' => self::getCurrentLogContent(),
-            'otaUpdateLogs' => self::getOtaUpdateLogOverview(),
+            'currentLogContent' => $isAdmin ? self::getCurrentLogContent() : '',
+            'otaUpdateLogs' => $isAdmin ? self::getOtaUpdateLogOverview() : array(),
             'isAdmin' => $isAdmin,
             'notificationOverview' => $notificationOverview,
             'migrationStatus' => $migrationStatus,
@@ -443,6 +443,16 @@ class SettingsPageService
                     array('type' => 'no_rows', 'table' => 'sensorConfig', 'where' => 'duplicate singleton sensor groups'),
                 ),
             ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-10-05_account_activation.sql',
+                'label' => 'One-time account activation tokens',
+                'checks' => array(array('type' => 'column', 'table' => 'accountActivationTokens', 'column' => 'tokenHash')),
+            ),
+            array(
+                'file' => 'docs/db_design/migrations/2026-10-05_temperature_alert_transfer.sql',
+                'label' => 'Temperature alert transfer journal',
+                'checks' => array(array('type' => 'column', 'table' => 'temperatureChannelTransfers', 'column' => 'sourceChannelId')),
+            ),
         );
     }
 
@@ -476,6 +486,16 @@ class SettingsPageService
         }
         if (!self::migrationDefinitionPassed($pdo, $migrations[6])) {
             $executedActions += self::runSingletonSensorGroupMigrationActions($pdo);
+        }
+        foreach (array(7, 8) as $index) {
+            if (!self::migrationDefinitionPassed($pdo, $migrations[$index])) {
+                // Deployment excludes SQL documentation files; keep executable actions here.
+                $sql = $index === 7
+                    ? 'CREATE TABLE IF NOT EXISTS accountActivationTokens (userId INT NOT NULL PRIMARY KEY, tokenHash CHAR(64) NOT NULL, expiresAt BIGINT NOT NULL) ENGINE=InnoDB'
+                    : 'CREATE TABLE IF NOT EXISTS temperatureChannelTransfers (sourceChannelId INT NOT NULL PRIMARY KEY, targetChannelId INT NOT NULL, sourceSnapshot TEXT NOT NULL, targetSnapshot TEXT NOT NULL) ENGINE=InnoDB';
+                $pdo->exec($sql);
+                $executedActions++;
+            }
         }
 
         writeToLogFunction::write_to_log(

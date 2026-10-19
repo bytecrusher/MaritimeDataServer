@@ -7,6 +7,7 @@
  * @license: TBD
  */
 require_once(__DIR__ . '/../Logging/writeToLogFunction.func.php');
+require_once __DIR__ . '/../../Application/SecurityPolicy.php';
 
 class configuration {
     static $config_exist = null;
@@ -15,6 +16,7 @@ class configuration {
     static $dbUser = null;
     static $dbPassword = null;
     static $apiKey = null;
+    static $boardApiKeyHashes = array();
     static $baseurl = null;
     static $subDir = null;
     static $mountPath = null;
@@ -53,21 +55,8 @@ class configuration {
 
         #writeToLogFunction::write_to_log(self::$subDir, $_SERVER["SCRIPT_FILENAME"]);
 
-        if (isset($_SERVER['HTTP_HOST'])) {
-            $domain = $_SERVER['HTTP_HOST'];
-        } else {
-            $domain = "localhost";
-        }
-        if (isset($_SERVER['HTTPS']) &&
-            ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
-            isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-            $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-            $prefix = 'https://';
-        }
-        else {
-            $prefix = 'http://';
-        }
-        self::$baseurl = $prefix . $domain . self::$subDir;
+        // Never derive outbound secret-bearing requests from HTTP Host.
+        self::$baseurl = SecurityPolicy::canonicalUrl(getenv('MDS_BASE_URL') ?: '');
 
         $path = "";
         $path = $modernConfigDir . '/config.json';
@@ -75,10 +64,16 @@ class configuration {
         if (file_exists($path)) {
             $jsonString = file_get_contents($path);
             $jsonData = json_decode($jsonString, true);
-            self::$dbHost = $jsonData['dbHost'];
-            self::$dbName = $jsonData['dbName'];
-            self::$dbUser = $jsonData['dbUser'];
-            self::$dbPassword = $jsonData['dbPassword'];
+            if (!is_array($jsonData)) {
+                self::$config_exist = false;
+                return;
+            }
+            self::$baseurl = SecurityPolicy::canonicalUrl(getenv('MDS_BASE_URL') ?: ($jsonData['canonicalBaseUrl'] ?? ''));
+            self::$boardApiKeyHashes = is_array($jsonData['boardApiKeyHashes'] ?? null) ? $jsonData['boardApiKeyHashes'] : array();
+            self::$dbHost = $jsonData['dbHost'] ?? '';
+            self::$dbName = $jsonData['dbName'] ?? '';
+            self::$dbUser = $jsonData['dbUser'] ?? '';
+            self::$dbPassword = $jsonData['dbPassword'] ?? '';
             self::$apiKey = "";
             if (array_key_exists('apiKey', $jsonData)) {
                 self::$apiKey = $jsonData['apiKey'];
@@ -88,7 +83,7 @@ class configuration {
 
             self::$demoMode = "";
             if (array_key_exists('demoMode', $jsonData)) {
-                self::$demoMode = $jsonData['demoMode'];
+                self::$demoMode = filter_var($jsonData['demoMode'], FILTER_VALIDATE_BOOLEAN);
             } else {
                 writeToLogFunction::write_to_log("Missing demoMode in config.", $_SERVER["SCRIPT_FILENAME"]);
             }
@@ -225,6 +220,14 @@ class configuration {
     }
 
     function saveServerSettings($post) {
+        if (!is_string($post['apiKey'] ?? null) || strlen(trim($post['apiKey'])) < 16) {
+            throw new InvalidArgumentException('API key must contain at least 16 characters.');
+        }
+        $post['demoMode'] = filter_var($post['demoMode'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if (isset($post['canonicalBaseUrl'])) {
+            $post['canonicalBaseUrl'] = SecurityPolicy::canonicalUrl($post['canonicalBaseUrl']);
+            if ($post['canonicalBaseUrl'] === '') throw new InvalidArgumentException('Canonical base URL must be an absolute HTTP(S) URL without credentials, query or fragment.');
+        }
         try {
             $projectRoot = dirname(__FILE__, 4);
             $modernConfigDir = $projectRoot . '/config';
@@ -270,6 +273,7 @@ class configuration {
                 $jsonData = array();
             }
             $jsonData['apiKey'] = $post['apiKey'];
+            if (isset($post['canonicalBaseUrl'])) $jsonData['canonicalBaseUrl'] = $post['canonicalBaseUrl'];
             $jsonData['demoMode'] = $post['demoMode'];
             $jsonData['ShowQrCode'] = $post['ShowQrCode'];
             $jsonData['sendEmails'] = $post['sendEmails'];

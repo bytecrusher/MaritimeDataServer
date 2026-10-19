@@ -56,6 +56,7 @@ final class TtnPayloadDecoder
             foreach ($fields as $field) unset($decoded[$field]);
         }
         $decoded['payloadSchema'] = 4;
+        // Device-supplied metadata, not an authenticated board identity.
         $decoded['macAddress'] = self::formatMacAddress($bytes, 2);
         foreach (array(64 => 'measurementsPresent', 1 => 'temperaturePresent', 2 => 'environmentPresent',
             4 => 'gpsFix', 8 => 'vedirectPresent', 16 => 'tanksPresent', 32 => 'wakeupEventPresent') as $bit => $name) {

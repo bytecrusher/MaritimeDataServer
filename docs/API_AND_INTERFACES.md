@@ -2,7 +2,11 @@
 
 ## Sensor metadata synchronization
 
-`POST /ingest/sensormetadata.php` synchronizes device-owned sensor names without repeating them in every measurement payload. Authentication uses the same `board.apiKey`, `board.protocolVersion` and `board.macAddress` fields as `receivejson.php`.
+`POST /ingest/sensormetadata.php` synchronizes device-owned sensor names without repeating them in every measurement payload. Authentication uses the same `board.apiKey`, `board.protocolVersion` and `board.macAddress` fields as `receivejson.php`, but requires a **board-specific** key. The global ingestion key is never accepted for metadata reads, writes or registration. The authenticated key determines the board; the MAC must match it.
+
+Operators provision or rotate a key with `php tools/maintenance/issue_board_key.php BOARD_ID` and configure the returned key on that device. Only its SHA-256 digest is stored in `config/config.json` under `boardApiKeyHashes`. Provisioned boards also require this key for direct measurement ingestion; TTN uses signed internal forwarding. Not-yet-provisioned devices may temporarily use the legacy key for measurements only. See [security migration prerequisites](SECURITY_REVIEW_2026-10-05.md).
+
+Absolute outbound URLs require `canonicalBaseUrl` in configuration or `MDS_BASE_URL` in the PHP environment. Request Host headers are not used to choose destinations.
 
 The device sends `metadataHash` on regular checks. It includes `sensors` only during initial registration or after a local name change. Each definition contains a stable `key`, `sensorType`, `sensorAddress` and `name`. Set `pushNames` to `true` only after a name was edited on the device; otherwise an existing MDS name remains authoritative and is returned to the device.
 
@@ -170,13 +174,13 @@ erscheint, ist der in TTN hinterlegte Formatter veraltet oder einer anderen
 Payload-Version zugeordnet. MDS verwendet dann sicherheitshalber seinen
 serverseitigen Decoder; der TTN-Formatter sollte trotzdem aktualisiert werden.
 
-### Optionaler Secret-Header
+### Erforderlicher Secret-Header
 
-TTN kann zusaetzliche Header an den Webhook senden. MDS unterstuetzt optional ein Shared Secret ueber die Konfiguration:
+TTN muss einen Secret-Header an den Webhook senden. MDS benoetigt ein Shared Secret ueber die Konfiguration, damit `end_device_ids` als TTN-Identitaet vertraut werden kann:
 
 - `ttnWebhookSecret` in `config/config.json`
 
-Wenn gesetzt, erwartet MDS einen dieser Header:
+MDS erwartet einen dieser Header; bei leerem konfiguriertem Secret oder einem fehlenden/falschen Header wird HTTP 403 geliefert:
 
 - `X-MDS-Webhook-Secret`
 - `X-Webhook-Secret`
@@ -238,29 +242,30 @@ Aus `decoded_payload` werden aktuell u. a. diese Felder gelesen:
 
 1. TTN sendet einen Uplink an `/webhooks/ttn.php`
 2. MDS extrahiert Board-Identifier:
-   - bevorzugt `decoded_payload.macAddress`
-   - sonst als Legacy-Fallback `device_id`
-   - sonst als Legacy-Fallback `dev_eui`
+   - massgeblich ist `end_device_ids.application_ids.application_id` mit `device_id` oder `dev_eui`
+   - `decoded_payload.macAddress` ist nicht vertrauenswuerdige Geraete-Metadaten und kein Berechtigungsnachweis
    - bekannte aktuelle FPort-1- und FPort-2-Payloads werden zusaetzlich aus
      `frm_payload` serverseitig dekodiert; dadurch kann ein veralteter TTN-
      Formatter keine Messbytes als falsche MAC-Adresse interpretieren
 3. MDS sucht das Board ueber:
-   - primaer `boardConfig.macAddress`
-   - fallback `ttnAppId` plus `ttnDevId`
-   - wenn sowohl `device_id` als auch `dev_eui` auf alte Datensaetze zeigen,
-     hat die exakte TTN-`device_id` Vorrang
+   - `ttnAppId` plus `ttnDevId` (TTN-`device_id` oder historische DevEUI)
+   - widerspruechliche MAC-/TTN-Zuordnungen und mehrdeutige Treffer werden mit HTTP 403 abgewiesen, ohne Board-Bindungen oder Telemetrie zu veraendern
+   - bestehende Boards mit leerer oder unvollstaendiger TTN-Bindung werden nicht allein anhand einer Payload-MAC uebernommen; Owner/Admin muessen zuerst beide TTN-Felder in den Board-Einstellungen zuordnen
 4. Falls das Board nicht existiert:
-   - wird ein Board automatisch angelegt
+   - wird ein neues, unbesessenes Board mit vollstaendiger TTN-Bindung automatisch angelegt, sofern die MAC nicht schon existiert
    - wenn `macAddress` vorhanden ist, wird diese direkt als Board-MAC gespeichert
-   - alte automatisch angelegte TTN-Boards mit `fakeMacAddress...` werden beim naechsten passenden Uplink auf die echte MAC migriert
+   - alte automatisch angelegte TTN-Boards mit `fakeMacAddress...` werden nur bei passender TTN-Bindung und unbelegter Payload-MAC migriert
 5. Bei modernen Mess-Payloads (`payloadType = measurements`, Schema 2 oder neuer):
    - verwendet MDS die Gruppen `Battery`, `Tanks`, `Status`, `DS18B20`, `GPS`, `Environment`, `Dewpoint`, `VEdirect` und `Lora`
    - `tempbattery` wird als Messwert der Gruppe `DS18B20` gespeichert; `Status` enthaelt nur `mainPowerOn` und `relay`
    - `sensorType` bleibt der technische Typ wie `ADC`; `sensorName` bezeichnet die Gruppe wie `Battery`
    - fehlende Gruppen werden durch den Ingest automatisch angelegt
    - alte Payloads bleiben ueber die bisherige typbasierte Zuordnung kompatibel
-6. MDS baut eine interne JSON-Payload
+6. MDS baut eine interne JSON-Payload mit der verifizierten Board-MAC und `board.ttnIdentity` (Board-ID, App-ID, Device-ID, DevEUI); stabile Sensoradressen stammen nur von der verifizierten Board-MAC
 7. MDS sendet diese intern an `/ingest/receivejson.php`
+   - der Ingest prueft Board-ID, MAC und TTN-Bindung vor Firmware-, Sensor- und Ereignis-Aenderungen erneut; er sucht diese Requests nicht nochmals allein anhand der MAC
+   - der Weiterleitungs-Body wird mit `ttnWebhookSecret` per HMAC-SHA256 signiert (`X-MDS-TTN-Time`, `X-MDS-TTN-Signature`, maximal 60 Sekunden Zeitabweichung); ein globaler Ingest-Key allein darf keinen TTN-Kontext setzen
+   - WLAN-Requests nutzen den Board-Key; der globale Key funktioniert waehrend der Migration nur fuer noch nicht mit Board-Key provisionierte Boards
 8. Dort werden die Werte in `sensorData` gespeichert
 
 ### Interne Forward-Payload
@@ -611,7 +616,7 @@ Damit kann ein Wert optisch frueh auffaellig markiert werden, ohne sofort eine E
 
 ### Validierung
 
-- `board.apiKey` muss dem konfigurierten API-Key entsprechen
+- `board.apiKey` muss dem Board-Key entsprechen; nur nicht provisionierte Boards akzeptieren waehrend der Migration noch den nichtleeren globalen Messdaten-Key
 - `board.protocolVersion` muss aktuell `"1"` sein
 - `board.macAddress` wird auf `boardConfig` aufgeloest
 - falls das Board noch nicht existiert, wird es automatisch angelegt

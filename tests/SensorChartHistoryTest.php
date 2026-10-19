@@ -6,6 +6,7 @@ function checkHistory($condition, $message) {
 }
 $from = strtotime('2026-09-01T00:00:00Z');
 $to = $from + 7 * 86400;
+checkHistory(SensorChartHistory::timestamp(array('val_date' => "01.01.2026\0", 'val_time' => '12:00:00', 'receivedTimestamp' => $from)) === $from, 'NUL timestamp must fall back without crashing.');
 foreach (array('UTC', 'America/New_York', 'Asia/Tokyo') as $zone) {
     date_default_timezone_set($zone);
     checkHistory(SensorChartHistory::timestamp(array('val_date' => '02.09.2026', 'val_time' => '12:00:00')) === strtotime('2026-09-02T10:00:00Z'), 'Device timezone must not depend on PHP or browser timezone.');

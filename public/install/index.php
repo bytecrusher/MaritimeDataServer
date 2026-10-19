@@ -234,6 +234,10 @@ require_once dirname(__DIR__, 2) . '/bootstrap/app.php';
         </div>
 
         <div class="form-group row">
+          <label for="canonicalBaseUrl" class="col-sm-4 col-form-label">Canonical base URL (including installation subpath)</label>
+          <div class="col-sm-4"><input type="url" class="form-control" id="canonicalBaseUrl" name="canonicalBaseUrl" placeholder="https://mds.example.org" required></div>
+        </div>
+        <div class="form-group row">
           <label for="apiKey" class="col-sm-4 col-form-label">API key</label>
           <div class="col-sm-4">
             <input type="text" class="form-control" id="apiKey" name="apiKey" pattern="^[_A-Za-z0-9\-]{16,32}" maxlength="32" title="Mindestens 16, Höchstens 32 Zeichen sowie Groß und/oder Kleinbuchstaben, Zahlen und Bindestriche." value="<?php echo htmlspecialchars($var_apiKey, ENT_QUOTES, 'UTF-8');?>" required>
@@ -381,7 +385,7 @@ async function apiPostCreateAdmin() {
         method: "POST",
         dataType: "json",
         url: "api_createAdmin.php",
-        data: { action: "createadmin", firstName: firstName, lastName: lastName, email: email, password: password, password2: password2, apiKey: apiKey, md5secretString: md5secretString, demoMode: false }
+        data: { action: "createadmin", firstName: firstName, lastName: lastName, email: email, password: password, password2: password2, apiKey: apiKey, md5secretString: md5secretString, demoMode: false, canonicalBaseUrl: $("#canonicalBaseUrl").val() }
       });
 
       if(response["error"] === "true"){

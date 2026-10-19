@@ -1,17 +1,16 @@
 <?php
-require_once __DIR__ . '/../app/Application/TtnWebhookTarget.php';
-
+require_once __DIR__ . '/../app/Application/SecurityPolicy.php';
 function checkTtn($condition, $message) {
     if (!$condition) { throw new RuntimeException($message); }
 }
 $source = file_get_contents(__DIR__ . '/../app/Http/Webhooks/TTN/ttn.php');
 $start = strpos($source, 'function ttnWebhookSecretIsValid(');
 $end = strpos($source, 'function ttnSelectBestRxMetadata(');
-// Exercise the pure helpers without booting the webhook or touching a database.
+// Test pure helpers without opening a database or processing telemetry.
 eval(substr($source, $start, $end - $start));
 unset($_SERVER['HTTP_AUTHORIZATION'], $_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
-checkTtn(!ttnWebhookSecretIsValid(array(), ''), 'Empty secret must fail closed.');
-checkTtn(!ttnWebhookSecretIsValid(array(), 'secret'), 'Missing credential must fail.');
+checkTtn(!ttnWebhookSecretIsValid(array(), ''), 'Empty secret accepted.');
+checkTtn(!ttnWebhookSecretIsValid(array(), 'secret'), 'Missing credential accepted.');
 foreach (array('X-MDS-Webhook-Secret','X-Webhook-Secret','X-TTN-Webhook-Secret','X-MDS-TTN-Secret','X-API-Key') as $header) {
     checkTtn(ttnWebhookSecretIsValid(array(strtolower($header) => 'secret'), 'secret'), 'Supported header rejected.');
     checkTtn(!ttnWebhookSecretIsValid(array($header => 'wrong'), 'secret'), 'Wrong credential accepted.');
@@ -22,19 +21,17 @@ $_SERVER['REDIRECT_HTTP_AUTHORIZATION']='Bearer secret';
 checkTtn(ttnWebhookSecretIsValid(array(), 'secret'), 'CGI bearer rejected.');
 unset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
 checkTtn(ttnFilterHeadersForLogging(array('X-API-Key'=>'secret'))['X-API-Key']==='***', 'API key logged.');
-foreach (array('', '//evil.test', 'ftp://evil.test', 'https://user:pass@evil.test', "https://good.test\n", 'https://good.test?x=1', 'https://good.test/#x', 'https://good.test\\@evil.test') as $url) {
-    checkTtn(TtnWebhookTarget::validate($url)==='', 'Unsafe URL accepted.');
+$base = 'https://example.test/mds';
+checkTtn(count(SecurityPolicy::simulatorHeaders($base.'/webhooks/ttn.php', $base, 'secret')) === 2, 'Local simulator missing authentication.');
+foreach (array('https://attacker.test/webhooks/ttn.php', $base.'/webhooks/ttn.php?redirect=evil', 'https://example.test.evil/mds/webhooks/ttn.php', $base.'/other.php') as $target) {
+    checkTtn(count(SecurityPolicy::simulatorHeaders($target, $base, 'secret')) === 1, 'Simulator leaks local credential.');
 }
-checkTtn(TtnWebhookTarget::validate('https://example.test/mds/')==='https://example.test/mds', 'Subpath lost.');
-$old = getenv('MDS_BASE_URL');
-putenv('MDS_BASE_URL=https://example.test/mds');
-$_SERVER['HTTP_HOST']='attacker.test';
-$_SERVER['HTTP_X_FORWARDED_PROTO']='http';
-checkTtn(TtnWebhookTarget::baseUrl()==='https://example.test/mds', 'Host influenced forwarding target.');
-$old === false ? putenv('MDS_BASE_URL') : putenv('MDS_BASE_URL='.$old);
-checkTtn(strpos($source, 'if (!ttnWebhookSecretIsValid(') < strpos($source, "file_get_contents('php://input')"), 'Authenticate before reading payload.');
-checkTtn(strpos($source, '$url = $forwardingBaseUrl') !== false, 'Canonical forwarding target not wired.');
+foreach (array('', "secret\r\nX-Evil: yes") as $secret) {
+    try { SecurityPolicy::simulatorHeaders($base.'/webhooks/ttn.php', $base, $secret); throw new RuntimeException('Invalid secret accepted.'); }
+    catch (DomainException $expected) {}
+}
+$guard = strpos($source, 'if (!ttnWebhookSecretIsValid(');
+checkTtn($guard !== false && $guard < strpos($source, "file_get_contents('php://input')") && $guard < strpos($source, '$pdo2 = dbConfig::getInstance()'), 'Authenticate before reading body or connecting database.');
 $simulator = file_get_contents(__DIR__.'/../public/tools/simulator/testttn.php');
-checkTtn(strpos($simulator, '$normalizedUrl === $localTarget') !== false, 'Simulator must scope secret to canonical endpoint.');
-checkTtn(strpos($simulator, 'CURLOPT_FOLLOWLOCATION, false') !== false, 'Simulator redirects must remain disabled.');
+checkTtn(str_contains($simulator, 'SecurityPolicy::simulatorHeaders') && str_contains($simulator, 'CURLOPT_FOLLOWLOCATION, false'), 'Safe simulator headers/redirect policy missing.');
 echo "TTN webhook security tests passed.\n";

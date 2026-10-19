@@ -21,7 +21,14 @@ $logRegistrationBlock = static function ($mechanism, $email = '') {
 };
 
 $sendActivationEmail = static function ($userId, $toEmail, $firstName) use ($config) {
-    $actualLink = mds_absolute_url('activate.php?id=' . (int)$userId);
+    try {
+        require_once dirname(__DIR__) . '/app/Application/AccountActivation.php';
+        $token = AccountActivation::issue(dbConfig::getInstance(), (int)$userId);
+        $actualLink = mds_absolute_url('activate.php?id=' . (int)$userId . '&token=' . $token);
+    } catch (Throwable $error) {
+        writeToLogFunction::error('Activation unavailable: check canonical URL and accountActivationTokens migration.', __FILE__);
+        return false;
+    }
     $applicationName = trim((string)$config::$applicationName) ?: 'Maritime Data Server';
     if (mds_current_language() === 'de') {
         $subject = $applicationName . ' - Konto aktivieren';
