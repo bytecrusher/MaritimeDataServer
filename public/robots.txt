@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /debug/
+Disallow: /ingest/
+Disallow: /install/
+Disallow: /ota/
+Disallow: /tools/
+Disallow: /webhooks/
+Disallow: /activate.php
+Disallow: /formBoards.php
+Disallow: /formSensors.php
+Disallow: /internal.php
+Disallow: /login.php
+Disallow: /logout.php
+Disallow: /privacy_export.php
+Disallow: /register.php
+Disallow: /resetPassword.php
+Disallow: /settings.php
+
+Sitemap: https://mds-git.derguntmar.de/sitemap.xml

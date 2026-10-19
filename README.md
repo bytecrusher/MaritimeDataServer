@@ -14,7 +14,45 @@ You will find the **MDC** documentation under **https://github.com/bytecrusher/M
 The **Maritime Data Server** is a web application that stores data and display it to the user.
 It requires a MySQL database for storing the data and a web server with PHP support. To display the data some HTML, CSS and JS is used.
 The **MDS** can display the data (that come from sensors) in graph/gauges or charts.
-Also it is possible to configure boards and sensors, or add new boards to a user account.
+Also it is possible to configure boards and sensors, add new boards to a user account and send notification emails for offline boards or critical sensor values.
+
+## Privacy and data protection
+
+MDS processes user account data, device identifiers, telemetry, optional GPS locations and technical logs. The project therefore requires a deployment-specific privacy review before production use.
+
+Helpful project files:
+
+- privacy page: `public/privacy.php`
+- imprint page: `public/imprint.php`
+- user data export: `public/privacy_export.php`
+- privacy cleanup job: `tools/maintenance/privacy_cleanup.php`
+- checklist: `docs/PRIVACY_CHECKLIST.md`
+
+Recommended recurring jobs:
+
+```text
+php tools/maintenance/sendmail.php
+php tools/maintenance/privacy_cleanup.php
+php tools/maintenance/log_cleanup.php
+```
+
+Application logs are split by month and rotated when the configured maximum file size is reached. The defaults are 10 MB per file and 90 days retention. Both values can be changed under `Settings -> Server Setting`. Retention cleanup runs automatically at most once per day while logging; `log_cleanup.php` can additionally be scheduled as a daily cron job.
+
+## Localization
+
+Logged-in users can choose their UI language under `Settings -> Personal data`.
+The current implementation supports:
+
+- English (`en`)
+- German (`de`)
+
+Existing installations need to run:
+
+```text
+docs/db_design/migrations/2026-05-14_user_language.sql
+```
+
+The language is stored on the `users.language` column and is applied to the main app pages, navigation, tabs and common sub pages.
 
 ## Description
 The server is organized in a
@@ -29,31 +67,84 @@ For the frontend the user needs to login. Now the user is able to do some config
 
 ## Folder description
 
+- **app**
+     - **Application** application services and shared business logic
+     - **Bootstrap** bootstrap and path helpers for startup
+     - **Domain** board, sensor and user domain classes
+     - **Http** browser APIs, ingest endpoints and webhooks
+     - **Infrastructure** config, database and logging infrastructure
+     - **Support** utilities and helper libraries
+- **bootstrap**
+     - startup bootstrap for web and CLI entrypoints
+- **config**
+     - non-public runtime configuration like `config.json`
 - **docu_donotdeploy** folder contains data and images for documentation.
-- **src**
-     - **frontend** the frontend files for this web project
-          - **api** api files for requests from JS.
-          - **common** common files like "header" and "footer".
-          - **css** stylesheets
-          - **func** php functions for internal use (DB connection, users, boards...).
-          - **img** images for pages, i.e. board images.
-          - **js** javascript files.
-          - **register** Files for new user registering.
-     - **install** scripts to install and prepare sql DB, create the tables and the admin user.
-     - **logs** log files for debugging.
-     - **node_modules** (maybe not exist right now, because it will be created after running npm)
-     - **otafirmware** contains OTA files for update ESP.
-     - **receiver** functions for receiving Data from MDCs.
+- **public**
+     - preferred web root for web server configuration
+- **tools**
+     - maintenance scripts, notifications and helper tools
+- **var**
+     - **log** runtime log files
 
 
 #### Installation
-Copy all **MDS** files contained in the "src" folder to your htdocs dir.
+Copy the project to your hosting or deployment target and configure your web server to use the `public/` directory as the web root.
 Create a new database (for example with phpmyadmin) and create a new user with write privileges to this database.
 Open **http://yourdomain/** in your browser and step through the installation steps.
 Enter all necessary informations and fill out the text boxes.
 After install is finished, remove the dir named "install" (for security reasons).
 
 Now the **MDS** is available under **http://yourdomain/**
+
+#### Notifications
+
+MDS can send notification emails when:
+- a board stays offline longer than its configured offline timer
+- a sensor channel exceeds or falls below a configured critical threshold
+
+Users can configure separately:
+- general notification opt-in
+- offline board notifications
+- sensor threshold notifications
+
+Admins can configure in `Settings -> Server Setting`:
+- system sender address
+- application name
+- global email sending on/off
+- default gauge style for newly created sensor channels
+- default dashboard online-only behavior
+- default chart range
+
+The notification worker is:
+
+```text
+php tools/maintenance/sendmail.php
+```
+
+This script should be executed regularly by cron.
+
+The job writes its latest execution status to:
+
+```text
+var/status/notification_status.json
+```
+
+This status is also shown in `Settings`.
+
+#### Gauge Styles
+
+Per sensor channel you can choose a gauge style in `formSensors.php`.
+
+Currently available:
+- `classic`
+- `minimal`
+- `bold`
+- `arc`
+- `ring`
+- `clock`
+- `industrial`
+
+The `clock` style is a more circular, dial-like variant intended for a more instrument-like dashboard appearance.
 
 ![MDS Dashboard](docu_donotdeploy/images/MDS_Dashboard.png)
 ![MDS Graph](docu_donotdeploy/images/MDS_Graph.png)
