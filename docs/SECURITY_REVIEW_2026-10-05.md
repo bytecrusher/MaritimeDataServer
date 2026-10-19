@@ -1,5 +1,35 @@
 # Security finding reconciliation (local worktree)
 
+## Follow-up on 2026-10-19
+
+The live occurrence inventory still contains the same 29 open findings for
+MaritimeDataServer (98 occurrences across all repositories, no next page).
+The canonical-issue endpoint returns no matching records; that empty response
+does not supersede the open occurrence inventory. All 29 occurrence IDs are
+accounted for in the table below.
+
+The existing remediation is committed on development (c440561, integrated by
+ae91aa3), but absent from origin/main. This follow-up prepares the complete
+remediation for main without merging or deploying it. It also authenticates TTN
+before payload reading/database access, supports the header forms from PR #19,
+redacts X-API-Key, and authenticates simulator requests only to the configured
+local webhook. Redirect following is explicitly disabled for the simulator.
+The separate webhook secret is never replaced with the device ingestion key.
+
+TtnWebhookSecurityTest covers header compatibility, missing/wrong credentials,
+authentication ordering, secret scoping and header injection. The complete
+Composer suite and CDN/chart/gauge Node tests passed again. CDN integrity checks
+are now included in the deployment workflow. No Cloud finding was closed, no
+production credentials were rotated, and no fresh Cloud scan is claimed.
+
+Deployment/key migration caveats below remain applicable. In particular,
+unprovisioned devices still use the documented shared measurement-key transition;
+metadata writes already require board-specific keys. Device access is needed
+before rotating live keys without interrupting telemetry. Previously performed
+Netcup migration/configuration work is recorded in the chat, not re-executed here.
+
+## Original local review
+
 Reviewed against development at e40f858 plus the uncommitted fixes, not against
 the historical src/frontend and receiver paths. No production changes, pushes,
 deployment, PR operations or Security Cloud status changes were performed for

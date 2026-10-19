@@ -22,6 +22,20 @@ final class SecurityPolicy
         return hash_hmac('sha256', $timestamp . ':' . $body, $secret);
     }
 
+    public static function simulatorHeaders(string $target, string $baseUrl, string $secret): array
+    {
+        $headers = array('Content-Type: application/json');
+        $baseUrl = self::canonicalUrl($baseUrl);
+        // Additional simulator destinations must never receive the local secret.
+        if ($baseUrl !== '' && $target === $baseUrl . '/webhooks/ttn.php') {
+            if (trim($secret) === '' || preg_match('/[\r\n]/', $secret)) {
+                throw new DomainException('Configure a valid TTN webhook secret first.');
+            }
+            $headers[] = 'X-MDS-Webhook-Secret: ' . $secret;
+        }
+        return $headers;
+    }
+
     public static function validForwarding(string $body, $timestamp, $signature, $secret): bool
     {
         if (!is_string($secret) || trim($secret) === '' || !is_scalar($timestamp)

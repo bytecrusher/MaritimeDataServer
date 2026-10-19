@@ -245,7 +245,9 @@ try {
 
     curl_setopt($cURL, CURLOPT_POST, true);
     curl_setopt($cURL, CURLOPT_POSTFIELDS, $payloadJson);
-    curl_setopt($cURL, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    $config = new configuration();
+    curl_setopt($cURL, CURLOPT_HTTPHEADER, SecurityPolicy::simulatorHeaders($url, (string)$config::$baseurl, (string)$config::$ttnWebhookSecret));
+    curl_setopt($cURL, CURLOPT_FOLLOWLOCATION, false);
     curl_setopt($cURL, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($cURL, CURLOPT_CONNECTTIMEOUT, 5);
     curl_setopt($cURL, CURLOPT_TIMEOUT, 15);
