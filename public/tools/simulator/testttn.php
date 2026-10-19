@@ -75,7 +75,8 @@ function mds_simulator_allowed_urls()
 {
     $config = new configuration();
     $simulatorConfig = new mdsSimulatorConfig();
-    $urls = array((string)$config::$baseurl . '/webhooks/ttn.php');
+    require_once dirname(__DIR__, 3) . '/app/Application/TtnWebhookTarget.php';
+    $urls = array(TtnWebhookTarget::baseUrl() . '/webhooks/ttn.php');
     foreach ((array)$simulatorConfig::$mdsDestination as $destinationUrl) {
         $urls[] = (string)$destinationUrl;
     }
@@ -245,7 +246,18 @@ try {
 
     curl_setopt($cURL, CURLOPT_POST, true);
     curl_setopt($cURL, CURLOPT_POSTFIELDS, $payloadJson);
-    curl_setopt($cURL, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    $config = new configuration();
+    $headers = array('Content-Type: application/json');
+    // Never forward the local secret to an additional simulator destination.
+    $localTarget = mds_simulator_normalize_url(TtnWebhookTarget::baseUrl() . '/webhooks/ttn.php');
+    if ($localTarget !== null && $normalizedUrl === $localTarget) {
+        if (trim((string)$config::$ttnWebhookSecret) === '' || preg_match('/[\r\n]/', (string)$config::$ttnWebhookSecret)) {
+            throw new RuntimeException('Configure a valid TTN webhook secret first.');
+        }
+        $headers[] = 'X-MDS-Webhook-Secret: ' . $config::$ttnWebhookSecret;
+    }
+    curl_setopt($cURL, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($cURL, CURLOPT_FOLLOWLOCATION, false);
     curl_setopt($cURL, CURLOPT_RETURNTRANSFER, true);
 
     $result = curl_exec($cURL);

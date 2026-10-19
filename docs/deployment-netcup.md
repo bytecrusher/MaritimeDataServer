@@ -25,6 +25,20 @@ The web server root should point to the `public/` directory below this target pa
 
 ## Deployment behavior
 
+### TTN webhook security
+
+Configure a nonempty `ttnWebhookSecret` and send it in `X-MDS-Webhook-Secret`.
+Existing `X-Webhook-Secret` and `X-TTN-Webhook-Secret` headers remain supported;
+`X-MDS-TTN-Secret`, `X-API-Key`, and `Authorization: Bearer` also authenticate
+against the webhook secret, never the shared device ingestion API key.
+Authentication runs before reading or processing the payload.
+
+Set `canonicalBaseUrl` in `config/config.json` (including any installation
+subpath), or set `MDS_BASE_URL` in the PHP environment. Forwarding fails closed
+with HTTP 503 when this URL is missing or invalid. Request Host headers never
+select the forwarding destination. The simulator sends the local webhook secret
+only to this canonical webhook endpoint, not to additional allowlisted targets.
+
 - Runs automatically on pushes to `development`.
 - Can also be started manually via `Actions > Deploy to Netcup mds-git > Run workflow`.
 - Installs Composer production dependencies in GitHub Actions before upload.

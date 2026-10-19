@@ -33,6 +33,7 @@
 require_once(dirname(__DIR__, 3) . '/Infrastructure/Config/configuration.php');
 require_once(dirname(__DIR__, 3) . "/Application/myFunctions.func.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnPayloadDecoder.php");
+require_once(dirname(__DIR__, 3) . "/Application/TtnWebhookTarget.php");
 require_once(dirname(__DIR__, 3) . "/Application/TtnMeasurementSensorFactory.php");
 require_once(dirname(__DIR__, 3) . "/Application/SensorMetadataService.php");
 require_once(dirname(__DIR__, 3) . "/Application/DevicePowerState.php");
@@ -48,6 +49,15 @@ $pdo2 = dbConfig::getInstance();
 $config = new configuration();
 $requestHeaders = function_exists('getallheaders') ? getallheaders() : array();
 
+if (!ttnWebhookSecretIsValid($requestHeaders, (string)$config::$ttnWebhookSecret)) {
+    writeToLogFunction::warning('TTN webhook secret validation failed.', $_SERVER['SCRIPT_FILENAME']);
+    ttnJsonResponse(403, array('error' => 'TTN webhook secret validation failed.'));
+}
+$forwardingBaseUrl = TtnWebhookTarget::baseUrl();
+if ($forwardingBaseUrl === '') {
+    ttnJsonResponse(503, array('error' => 'Canonical forwarding URL is not configured.'));
+}
+
 $ttn_post = file_get_contents('php://input');
 $data = null;
 if(strlen($ttn_post) > 0) {
@@ -60,15 +70,6 @@ if(strlen($ttn_post) > 0) {
             array('rawPayload' => $ttn_post)
         );
         ttnJsonResponse(400, array('error' => 'TTN payload missing required uplink fields.'));
-    }
-
-    if (!ttnWebhookSecretIsValid($requestHeaders, (string)$config::$ttnWebhookSecret)) {
-        writeToLogFunction::warning(
-            'TTN webhook secret validation failed.',
-            $_SERVER["SCRIPT_FILENAME"],
-            array('requestHeaders' => ttnFilterHeadersForLogging($requestHeaders))
-        );
-        ttnJsonResponse(403, array('error' => 'TTN webhook secret validation failed.'));
     }
 
     $sensor_temperature = 0;
@@ -421,7 +422,7 @@ if(strlen($ttn_post) > 0) {
     }
     }
 
-    $url = $config::$baseurl . '/ingest/receivejson.php';
+    $url = $forwardingBaseUrl . '/ingest/receivejson.php';
     $ch = curl_init($url);
 
     writeToLogFunction::info(
@@ -694,11 +695,18 @@ if(strlen($ttn_post) > 0) {
 ttnJsonResponse(500, array('error' => 'Unexpected TTN webhook state.'));
 
 function ttnWebhookSecretIsValid(array $headers, string $expectedSecret) {
-    if ($expectedSecret === '') {
-        return true;
+    if (trim($expectedSecret) === '') {
+        return false;
     }
 
-    $providedSecret = ttnHeaderValue($headers, array('X-MDS-Webhook-Secret', 'X-Webhook-Secret', 'X-TTN-Webhook-Secret'));
+    $providedSecret = ttnHeaderValue($headers, array('X-MDS-Webhook-Secret', 'X-Webhook-Secret', 'X-TTN-Webhook-Secret', 'X-MDS-TTN-Secret', 'X-API-Key'));
+    if ($providedSecret === null) {
+        $authorization = ttnHeaderValue($headers, array('Authorization'))
+            ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+        if (is_string($authorization) && preg_match('/^Bearer\s+(\S+)$/i', $authorization, $matches)) {
+            $providedSecret = $matches[1];
+        }
+    }
     if ($providedSecret === null) {
         return false;
     }
@@ -709,7 +717,7 @@ function ttnWebhookSecretIsValid(array $headers, string $expectedSecret) {
 function ttnFilterHeadersForLogging(array $headers) {
     $filteredHeaders = array();
     foreach ($headers as $name => $value) {
-        if (stripos((string)$name, 'secret') !== false || stripos((string)$name, 'authorization') !== false) {
+        if (stripos((string)$name, 'secret') !== false || stripos((string)$name, 'authorization') !== false || strcasecmp((string)$name, 'X-API-Key') === 0) {
             $filteredHeaders[$name] = '***';
         } else {
             $filteredHeaders[$name] = $value;
