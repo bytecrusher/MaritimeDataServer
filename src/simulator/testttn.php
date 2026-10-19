@@ -7,7 +7,9 @@
  */
 
 require_once(dirname(__FILE__, 3) . "/src/frontend/func/writeToLogFunction.func.php");
+require_once(dirname(__FILE__, 3) . "/src/config/configuration.php");
 
+$config = new configuration();
 $url = $_POST['url'];
 $dev_eui = "devEuiSimulator";
 $application_id = "ttnSimulator";
@@ -125,8 +127,11 @@ try {
     // Attach encoded JSON string to the POST fields
     curl_setopt($cURL, CURLOPT_POSTFIELDS, $payload);
 
-    // Set the content type to application/json
-    curl_setopt($cURL, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+    // Set the content type to application/json and authenticate the TTN webhook request
+    curl_setopt($cURL, CURLOPT_HTTPHEADER, array(
+        'Content-Type:application/json',
+        'X-MDS-TTN-Secret:' . $config::$apiKey
+    ));
 
     // Return response instead of outputting
     curl_setopt($cURL, CURLOPT_RETURNTRANSFER, true);

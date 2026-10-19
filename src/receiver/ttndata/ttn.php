@@ -42,6 +42,73 @@ date_default_timezone_set('Europe/Berlin');
 $pdo2 = dbConfig::getInstance();
 $config = new configuration();
 
+function getBearerToken($authorizationHeader) {
+    if (preg_match('/^Bearer\s+(.+)$/i', trim($authorizationHeader), $matches)) {
+        return $matches[1];
+    }
+
+    return null;
+}
+
+function getTtnWebhookSecret() {
+    $authorizationHeader = null;
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $authorizationHeader = $_SERVER['HTTP_AUTHORIZATION'];
+    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $authorizationHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+
+    if ($authorizationHeader != null) {
+        $bearerToken = getBearerToken($authorizationHeader);
+        if ($bearerToken != null) {
+            return $bearerToken;
+        }
+    }
+
+    if (isset($_SERVER['HTTP_X_MDS_TTN_SECRET'])) {
+        return $_SERVER['HTTP_X_MDS_TTN_SECRET'];
+    }
+
+    if (isset($_SERVER['HTTP_X_API_KEY'])) {
+        return $_SERVER['HTTP_X_API_KEY'];
+    }
+
+    return null;
+}
+
+function isAuthorizedTtnWebhook($expectedSecret) {
+    $providedSecret = getTtnWebhookSecret();
+    return ($expectedSecret != null) && ($expectedSecret !== '')
+        && ($providedSecret != null) && hash_equals($expectedSecret, $providedSecret);
+}
+
+function getLocalReceiveJsonUrl() {
+    $port = 80;
+    if (isset($_SERVER['SERVER_PORT']) && is_numeric($_SERVER['SERVER_PORT'])) {
+        $port = (int) $_SERVER['SERVER_PORT'];
+    }
+
+    $portSuffix = '';
+    if ($port != 80) {
+        $portSuffix = ':' . $port;
+    }
+
+    $scriptName = '/receiver/ttndata/ttn.php';
+    if (isset($_SERVER['SCRIPT_NAME']) && $_SERVER['SCRIPT_NAME'] != '') {
+        $scriptName = $_SERVER['SCRIPT_NAME'];
+    }
+
+    $receiverPath = dirname(dirname($scriptName)) . '/receivejson.php';
+
+    return 'http://127.0.0.1' . $portSuffix . $receiverPath;
+}
+
+if (!isAuthorizedTtnWebhook($config::$apiKey)) {
+    http_response_code(401);
+    writeToLogFunction::write_to_log('Unauthorized TTN webhook request.', $_SERVER["SCRIPT_FILENAME"]);
+    exit;
+}
+
 $ttn_post = file('php://input');
 $data = null;
 //writeToLogFunction::write_to_log($ttn_post, $_SERVER["SCRIPT_FILENAME"]);
@@ -201,7 +268,7 @@ if(sizeof($ttn_post) > 0) {
       $myFunctions->addSensorConfig($singleRowBoardIdbyTTN['id'], "Digital", "Digital");
     }
 
-    $url = $config::$baseurl . '/receiver/receivejson.php';
+    $url = getLocalReceiveJsonUrl();
     $ch = curl_init($url);
 
     $boardInfos = array(
